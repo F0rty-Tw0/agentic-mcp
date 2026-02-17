@@ -1,0 +1,27 @@
+# Auto-label PRs based on changed files
+# Used with actions/labeler
+
+provider:
+  - changed-files:
+      - any-glob-to-any-file: "providers.json"
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/config/**"
+          - "src/types.ts"
+          - "providers.json"
+
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/server.ts"
+          - "src/tools/**"
+          - "src/session/**"
+          - "src/utils/**"
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
