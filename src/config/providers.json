@@ -9,26 +9,32 @@
       "defaultModel": "claude-opus-4-6",
       "timeout": 180000,
       "env": { "CLAUDECODE": "" },
-      "capabilities": {
-        "ask": true,
-        "sessions": true,
-        "autoMode": true,
-        "workingDirectory": true,
-        "fileContext": true,
-        "outputFormat": "json"
-      },
+      "outputFormat": "json",
       "commands": {
         "ask": {
-          "prePrompt": ["-p"],
-          "postPrompt": ["--output-format", "json"],
-          "modelFlag": "--model",
-          "autoModeFlags": ["--dangerously-skip-permissions"],
-          "workingDirFlag": "--add-dir",
-          "fileFlag": null
+          "args": ["-p"],
+          "trailingArgs": ["--output-format", "json"],
+          "flags": {
+            "model": "--model",
+            "autoMode": {
+              "flag": "--permission-mode",
+              "values": ["acceptEdits", "bypassPermissions", "default", "delegate", "dontAsk", "plan"]
+            },
+            "effort": {
+              "flag": "--effort",
+              "values": ["low", "medium", "high"]
+            },
+            "maxBudget": "--max-budget-usd",
+            "systemPrompt": "--system-prompt",
+            "workingDir": "--add-dir",
+            "file": null
+          }
         },
         "sessions": {
-          "resumeFlag": ["--resume"],
-          "continueFlag": ["--continue"]
+          "flags": {
+            "resume": ["--resume"],
+            "continue": ["--continue"]
+          }
         }
       },
       "input": { "method": "flag" }
@@ -40,38 +46,32 @@
       "defaultModel": "gpt-5.3-codex",
       "timeout": 120000,
       "env": {},
-      "capabilities": {
-        "ask": true,
-        "review": true,
-        "sessions": true,
-        "sandbox": "leveled",
-        "autoMode": true,
-        "workingDirectory": true,
-        "fileContext": true,
-        "outputFormat": "json"
-      },
+      "outputFormat": "json",
       "commands": {
         "ask": {
-          "prePrompt": ["exec"],
-          "postPrompt": ["--full-auto", "--json"],
-          "modelFlag": "-m",
-          "workingDirFlag": "-C",
-          "fileFlag": "--image"
+          "args": ["exec"],
+          "trailingArgs": ["--full-auto", "--json"],
+          "flags": {
+            "model": "-m",
+            "workingDir": "-C",
+            "file": "--image",
+            "sandbox": { "flag": "--sandbox", "values": ["read-only", "workspace-write", "danger-full-access"] }
+          }
         },
         "review": {
-          "subcommand": "review",
-          "uncommittedFlag": "--uncommitted",
-          "baseFlag": "--base",
-          "commitFlag": "--commit",
-          "modelFlag": "-m"
+          "args": ["review"],
+          "flags": {
+            "uncommitted": ["--uncommitted"],
+            "base": "--base",
+            "commit": "--commit",
+            "model": "-m"
+          }
         },
         "sessions": {
-          "resumeFlag": ["exec", "resume"],
-          "continueFlag": ["exec", "resume", "--last"]
-        },
-        "sandbox": {
-          "flag": "--sandbox",
-          "levels": ["read-only", "workspace-write", "danger-full-access"]
+          "flags": {
+            "resume": ["exec", "resume"],
+            "continue": ["exec", "resume", "--last"]
+          }
         }
       },
       "input": { "method": "positional" }
@@ -80,25 +80,25 @@
       "enabled": true,
       "description": "GitHub Copilot CLI — AI pair programmer",
       "command": "copilot",
-      "defaultModel": "",
+      "defaultModel": "gpt-5",
       "timeout": 120000,
       "env": {},
-      "capabilities": {
-        "ask": true,
-        "sessions": true,
-        "autoMode": true,
-        "outputFormat": "text"
-      },
+      "outputFormat": "text",
       "commands": {
         "ask": {
-          "prePrompt": ["-p"],
-          "postPrompt": ["--allow-all"],
-          "modelFlag": null,
-          "autoModeFlags": ["--yolo"]
+          "args": ["-p"],
+          "trailingArgs": ["--allow-all", "--disable-builtin-mcps", "--no-auto-update", "--no-ask-user", "-s", "--no-color"],
+          "flags": {
+            "model": "--model",
+            "autoMode": ["--yolo"],
+            "workingDir": "--add-dir"
+          }
         },
         "sessions": {
-          "resumeFlag": ["--resume"],
-          "continueFlag": ["--continue"]
+          "flags": {
+            "resume": ["--resume"],
+            "continue": ["--continue"]
+          }
         }
       },
       "input": { "method": "flag" }
@@ -110,17 +110,15 @@
       "defaultModel": "gemini-2.5-pro",
       "timeout": 120000,
       "env": {},
-      "capabilities": {
-        "ask": true,
-        "autoMode": true,
-        "outputFormat": "json"
-      },
+      "outputFormat": "json",
       "commands": {
         "ask": {
-          "prePrompt": ["-p"],
-          "postPrompt": ["--output-format", "json"],
-          "modelFlag": "-m",
-          "autoModeFlags": ["-y"]
+          "args": ["-p"],
+          "trailingArgs": ["--output-format", "json"],
+          "flags": {
+            "model": "-m",
+            "autoMode": ["-y"]
+          }
         }
       },
       "input": { "method": "flag" }
@@ -132,21 +130,20 @@
       "defaultModel": "anthropic/claude-sonnet-4-5",
       "timeout": 120000,
       "env": {},
-      "capabilities": {
-        "ask": true,
-        "sessions": true,
-        "fileContext": true,
-        "outputFormat": "json"
-      },
+      "outputFormat": "json",
       "commands": {
         "ask": {
-          "prePrompt": ["run"],
-          "postPrompt": ["--format", "json"],
-          "modelFlag": "-m",
-          "fileFlag": "--file"
+          "args": ["run"],
+          "trailingArgs": ["--format", "json"],
+          "flags": {
+            "model": "-m",
+            "file": "--file"
+          }
         },
         "sessions": {
-          "continueFlag": ["--continue"]
+          "flags": {
+            "continue": ["--continue"]
+          }
         }
       },
       "input": { "method": "positional" }
