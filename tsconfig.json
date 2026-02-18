@@ -28,6 +28,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "noEmitOnError": true,
 
     "skipLibCheck": true,

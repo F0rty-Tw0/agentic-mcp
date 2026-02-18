@@ -9,13 +9,14 @@
     "agentic-mcp": "./dist/index.js"
   },
   "files": [
-    "dist",
-    "providers.json"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "validate:providers": "tsx src/config/validate-providers.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
@@ -27,13 +28,14 @@
     "zod": "catalog:runtime"
   },
   "devDependencies": {
-    "@types/cross-spawn": "catalog:build",
-    "@types/node": "catalog:build",
-    "tsx": "catalog:build",
-    "typescript": "catalog:build",
-    "eslint": "catalog:lint",
-    "eslint-config-prettier": "catalog:lint",
-    "lint-suite": "catalog:lint"
+    "@types/cross-spawn": "catalog:dev",
+    "@types/node": "catalog:dev",
+    "tsx": "catalog:dev",
+    "typescript": "catalog:dev",
+    "vitest": "catalog:dev",
+    "eslint": "catalog:dev",
+    "eslint-config-prettier": "catalog:dev",
+    "lint-suite": "catalog:dev"
   },
   "engines": {
     "node": ">=22"

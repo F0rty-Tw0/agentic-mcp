@@ -2,15 +2,15 @@ packages:
   - .
 
 catalogs:
-  build:
+  dev:
     '@types/cross-spawn': ^6.0.6
     '@types/node': ^25.2.3
     tsx: ^4.21.0
     typescript: ^5.9.3
-  lint:
     eslint: 9.39.2
     eslint-config-prettier: 10.1.8
     lint-suite: 1.3.2
+    vitest: ^3.2.4
   runtime:
     '@modelcontextprotocol/sdk': ^1.26.0
     cross-spawn: ^7.0.6
