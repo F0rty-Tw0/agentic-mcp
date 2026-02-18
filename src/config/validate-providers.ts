@@ -7,7 +7,7 @@ import { providersFileSchema } from '../common/provider-config.schema.ts';
 const providersUrl = new URL('./providers.json', import.meta.url);
 const providersPath = fileURLToPath(providersUrl);
 
-function formatIssuePath(pathSegments: PropertyKey[]): string {
+const formatIssuePath = (pathSegments: PropertyKey[]): string => {
   if (pathSegments.length === 0) {
     return '(root)';
   }
@@ -25,9 +25,9 @@ function formatIssuePath(pathSegments: PropertyKey[]): string {
       return segment;
     })
     .join('.');
-}
+};
 
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   let rawJson: string;
 
   try {
@@ -60,7 +60,7 @@ async function main(): Promise<void> {
   }
 
   process.stdout.write(`Provider config is valid: ${providersPath}\n`);
-}
+};
 
 main().catch((error: unknown) => {
   const message =

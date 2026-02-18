@@ -7,11 +7,11 @@ import { providersFileSchema } from '../common/provider-config.schema.ts';
 const providersJsonUrl = new URL('./providers.json', import.meta.url);
 const providersSchemaUrl = new URL('./providers.schema.json', import.meta.url);
 
-async function readJson(url: URL): Promise<unknown> {
+const readJson = async (url: URL): Promise<unknown> => {
   const content = await fs.readFile(url, 'utf8');
 
   return JSON.parse(content) as unknown;
-}
+};
 
 describe('providers config', () => {
   it('declares a local $schema pointer', async () => {
@@ -66,10 +66,7 @@ describe('providers config', () => {
     };
 
     for (const [name, provider] of Object.entries(config.providers)) {
-      expect(
-        provider.outputFormat,
-        `${name} must have "outputFormat" at top level`,
-      ).toBeDefined();
+      expect(provider.outputFormat, `${name} must have "outputFormat" at top level`).toBeDefined();
     }
   });
 
