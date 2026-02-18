@@ -3,7 +3,7 @@ import type { McpErrorResponse } from './mcp-error-response.ts';
 import { ProviderNotFoundError } from './provider-not-found.error.ts';
 import { ValidationError } from './validation-error.ts';
 
-export function toMcpError(error: unknown): McpErrorResponse {
+export const toMcpError = (error: unknown): McpErrorResponse => {
   if (
     error instanceof ValidationError ||
     error instanceof CommandExecutionError ||
@@ -26,4 +26,4 @@ export function toMcpError(error: unknown): McpErrorResponse {
     isError: true,
     content: [{ type: 'text', text: `Error: ${message}` }],
   };
-}
+};

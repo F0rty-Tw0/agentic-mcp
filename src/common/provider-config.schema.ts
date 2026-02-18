@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { OutputFormat } from './provider-primitives.type.ts';
+export type OutputFormat = 'json' | 'stream-json' | 'text';
 
 export const leveledFlagSchema = z.object({
   flag: z.string(),
