@@ -1,26 +1,20 @@
 import type { z } from 'zod';
 
 import type {
-  askCommandSchema,
-  capabilitiesSchema,
+  commandDefSchema,
   commandsSchema,
+  flagValueSchema,
   inputSchema,
+  leveledFlagSchema,
   providerConfigSchema,
   providersFileSchema,
-  reviewCommandSchema,
-  sandboxCommandSchema,
-  sessionsCommandSchema,
-} from './provider-config.schema.js';
+} from './provider-config.schema.ts';
 
-export type AskCommand = z.infer<typeof askCommandSchema>;
+export type LeveledFlag = z.infer<typeof leveledFlagSchema>;
 
-export type ReviewCommand = z.infer<typeof reviewCommandSchema>;
+export type FlagValue = z.infer<typeof flagValueSchema>;
 
-export type SessionsCommand = z.infer<typeof sessionsCommandSchema>;
-
-export type SandboxCommand = z.infer<typeof sandboxCommandSchema>;
-
-export type Capabilities = z.infer<typeof capabilitiesSchema>;
+export type CommandDef = z.infer<typeof commandDefSchema>;
 
 export type Commands = z.infer<typeof commandsSchema>;
 

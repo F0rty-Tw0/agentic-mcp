@@ -1,7 +1,7 @@
-import { CommandExecutionError } from './command-execution.error.js';
-import type { McpErrorResponse } from './mcp-error-response.js';
-import { ProviderNotFoundError } from './provider-not-found.error.js';
-import { ValidationError } from './validation-error.js';
+import { CommandExecutionError } from './command-execution.error.ts';
+import type { McpErrorResponse } from './mcp-error-response.ts';
+import { ProviderNotFoundError } from './provider-not-found.error.ts';
+import { ValidationError } from './validation-error.ts';
 
 export function toMcpError(error: unknown): McpErrorResponse {
   if (
