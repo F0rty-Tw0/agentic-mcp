@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentic-mcp.local/providers.schema.json",
+  "title": "Agentic MCP Providers Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["configVersion", "providers"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "configVersion": {
+      "const": 1
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/providerConfig"
+      }
+    }
+  },
+  "$defs": {
+    "askCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prePrompt", "postPrompt", "modelFlag"],
+      "properties": {
+        "prePrompt": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "postPrompt": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "modelFlag": {
+          "type": ["string", "null"]
+        },
+        "outputFlags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "autoModeFlags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "workingDirFlag": {
+          "type": "string"
+        },
+        "fileFlag": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "reviewCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subcommand": { "type": "string" },
+        "prePrompt": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "uncommittedFlag": { "type": "string" },
+        "baseFlag": { "type": "string" },
+        "commitFlag": { "type": "string" },
+        "modelFlag": { "type": "string" }
+      }
+    },
+    "sessionsCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resumeFlag": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "continueFlag": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "listCommand": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "sandboxCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flag"],
+      "properties": {
+        "flag": { "type": "string" },
+        "levels": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ask"],
+      "properties": {
+        "ask": { "type": "boolean" },
+        "review": { "type": "boolean" },
+        "sessions": { "type": "boolean" },
+        "sandbox": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "const": "leveled" }
+          ]
+        },
+        "autoMode": { "type": "boolean" },
+        "workingDirectory": { "type": "boolean" },
+        "fileContext": { "type": "boolean" },
+        "outputFormat": {
+          "enum": ["json", "stream-json", "text"]
+        }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ask"],
+      "properties": {
+        "ask": { "$ref": "#/$defs/askCommand" },
+        "review": { "$ref": "#/$defs/reviewCommand" },
+        "sessions": { "$ref": "#/$defs/sessionsCommand" },
+        "sandbox": { "$ref": "#/$defs/sandboxCommand" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method"],
+      "properties": {
+        "method": {
+          "enum": ["flag", "positional", "stdin"]
+        }
+      }
+    },
+    "providerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "description",
+        "command",
+        "defaultModel",
+        "timeout",
+        "env",
+        "capabilities",
+        "commands",
+        "input"
+      ],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "description": { "type": "string" },
+        "command": { "type": "string" },
+        "defaultModel": { "type": "string" },
+        "timeout": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "null"]
+          }
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "versionCheck": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["flag"],
+          "properties": {
+            "flag": { "type": "string" },
+            "pattern": { "type": "string" }
+          }
+        },
+        "capabilities": { "$ref": "#/$defs/capabilities" },
+        "commands": { "$ref": "#/$defs/commands" },
+        "input": { "$ref": "#/$defs/input" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "properties": {
+                  "review": { "const": true }
+                },
+                "required": ["review"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "commands": {
+                "required": ["review"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "properties": {
+                  "sessions": { "const": true }
+                },
+                "required": ["sessions"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "commands": {
+                "required": ["sessions"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "properties": {
+                  "sandbox": {
+                    "enum": [true, "leveled"]
+                  }
+                },
+                "required": ["sandbox"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "commands": {
+                "required": ["sandbox"]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
