@@ -1,4 +1,4 @@
-import { base, javascript, typescript, json, prettier } from 'lint-suite';
+import { base, javascript, json, prettier, typescript } from 'lint-suite';
 
 export default [
   ...base,
