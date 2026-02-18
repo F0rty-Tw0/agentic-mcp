@@ -178,6 +178,7 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 
 Prefer functions over classes throughout the codebase:
 
+- **Default to `const` function expressions** — write functions as `const name = (...) => {}` (or async equivalent). Use `function` syntax only when a real `this` context is required.
 - **Default to plain functions** — export standalone functions, not class methods. Use closures for encapsulation when needed.
 - **Pure functions first** — functions should be deterministic with no side effects where possible. Side effects (I/O, spawn, fs) belong at the edges, not buried in logic.
 - **Data as plain objects** — pass data using plain objects and TypeScript interfaces/types, not class instances. Avoid `new` for domain data.
