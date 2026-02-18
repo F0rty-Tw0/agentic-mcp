@@ -4,11 +4,20 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { DANGEROUS_FLAGS } from '../common/auto-mode-flags.const.ts';
 import { providersFileSchema } from '../common/provider-config.schema.ts';
 import type { ProvidersFile } from '../common/provider-config.types.ts';
 
-function userLocalConfigPath(): string | null {
+const DANGEROUS_FLAGS = [
+  '--dangerously-skip-permissions',
+  '--allow-all-tools',
+  '--allow-all',
+  '--trust-all-tools',
+  '--full-auto',
+  '--yes-always',
+  '--yolo',
+] as const;
+
+const userLocalConfigPath = (): string | null => {
   if (process.platform === 'win32') {
     const appData = process.env.APPDATA;
 
@@ -16,20 +25,16 @@ function userLocalConfigPath(): string | null {
   }
 
   return path.join(os.homedir(), '.config', 'agentic-mcp', 'providers.json');
-}
+};
 
-async function resolveConfigPath(explicit?: string): Promise<string> {
+const resolveConfigPath = async (explicit?: string): Promise<string> => {
   // 1. Explicit --config flag
-  if (explicit) {
-    return path.resolve(explicit);
-  }
+  if (explicit) return path.resolve(explicit);
 
   // 2. Environment variable
   const envPath = process.env.AGENTIC_MCP_CONFIG;
 
-  if (envPath) {
-    return path.resolve(envPath);
-  }
+  if (envPath) return path.resolve(envPath);
 
   // 3. User-local config (first-found-wins, skip if absent)
   const userLocal = userLocalConfigPath();
@@ -46,9 +51,9 @@ async function resolveConfigPath(explicit?: string): Promise<string> {
 
   // 4. Bundled default alongside this module
   return fileURLToPath(new URL('./providers.json', import.meta.url));
-}
+};
 
-function warnDangerousFlags(config: ProvidersFile): void {
+const warnDangerousFlags = (config: ProvidersFile): void => {
   for (const [name, provider] of Object.entries(config.providers)) {
     const askCommand = provider.commands.ask;
 
@@ -65,9 +70,9 @@ function warnDangerousFlags(config: ProvidersFile): void {
       }
     }
   }
-}
+};
 
-export async function loadConfig(options?: { configPath?: string }): Promise<ProvidersFile> {
+export const loadConfig = async (options?: { configPath?: string }): Promise<ProvidersFile> => {
   const configPath = await resolveConfigPath(options?.configPath);
   const raw = await readFile(configPath, 'utf-8');
   const json: unknown = JSON.parse(raw);
@@ -76,4 +81,4 @@ export async function loadConfig(options?: { configPath?: string }): Promise<Pro
   warnDangerousFlags(config);
 
   return config;
-}
+};
