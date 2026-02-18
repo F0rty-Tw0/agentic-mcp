@@ -1,0 +1,155 @@
+{
+  "$schema": "./providers.schema.json",
+  "configVersion": 1,
+  "providers": {
+    "claude": {
+      "enabled": true,
+      "description": "Claude Code CLI (Anthropic) — autonomous coding agent",
+      "command": "claude",
+      "defaultModel": "claude-opus-4-6",
+      "timeout": 180000,
+      "env": { "CLAUDECODE": "" },
+      "capabilities": {
+        "ask": true,
+        "sessions": true,
+        "autoMode": true,
+        "workingDirectory": true,
+        "fileContext": true,
+        "outputFormat": "json"
+      },
+      "commands": {
+        "ask": {
+          "prePrompt": ["-p"],
+          "postPrompt": ["--output-format", "json"],
+          "modelFlag": "--model",
+          "autoModeFlags": ["--dangerously-skip-permissions"],
+          "workingDirFlag": "--add-dir",
+          "fileFlag": null
+        },
+        "sessions": {
+          "resumeFlag": ["--resume"],
+          "continueFlag": ["--continue"]
+        }
+      },
+      "input": { "method": "flag" }
+    },
+    "codex": {
+      "enabled": true,
+      "description": "OpenAI Codex CLI — AI coding assistant with session management",
+      "command": "codex",
+      "defaultModel": "gpt-5.3-codex",
+      "timeout": 120000,
+      "env": {},
+      "capabilities": {
+        "ask": true,
+        "review": true,
+        "sessions": true,
+        "sandbox": "leveled",
+        "autoMode": true,
+        "workingDirectory": true,
+        "fileContext": true,
+        "outputFormat": "json"
+      },
+      "commands": {
+        "ask": {
+          "prePrompt": ["exec"],
+          "postPrompt": ["--full-auto", "--json"],
+          "modelFlag": "-m",
+          "workingDirFlag": "-C",
+          "fileFlag": "--image"
+        },
+        "review": {
+          "subcommand": "review",
+          "uncommittedFlag": "--uncommitted",
+          "baseFlag": "--base",
+          "commitFlag": "--commit",
+          "modelFlag": "-m"
+        },
+        "sessions": {
+          "resumeFlag": ["exec", "resume"],
+          "continueFlag": ["exec", "resume", "--last"]
+        },
+        "sandbox": {
+          "flag": "--sandbox",
+          "levels": ["read-only", "workspace-write", "danger-full-access"]
+        }
+      },
+      "input": { "method": "positional" }
+    },
+    "copilot": {
+      "enabled": true,
+      "description": "GitHub Copilot CLI — AI pair programmer",
+      "command": "copilot",
+      "defaultModel": "",
+      "timeout": 120000,
+      "env": {},
+      "capabilities": {
+        "ask": true,
+        "sessions": true,
+        "autoMode": true,
+        "outputFormat": "text"
+      },
+      "commands": {
+        "ask": {
+          "prePrompt": ["-p"],
+          "postPrompt": ["--allow-all"],
+          "modelFlag": null,
+          "autoModeFlags": ["--yolo"]
+        },
+        "sessions": {
+          "resumeFlag": ["--resume"],
+          "continueFlag": ["--continue"]
+        }
+      },
+      "input": { "method": "flag" }
+    },
+    "gemini": {
+      "enabled": true,
+      "description": "Google Gemini CLI — large-context AI assistant",
+      "command": "gemini",
+      "defaultModel": "gemini-2.5-pro",
+      "timeout": 120000,
+      "env": {},
+      "capabilities": {
+        "ask": true,
+        "autoMode": true,
+        "outputFormat": "json"
+      },
+      "commands": {
+        "ask": {
+          "prePrompt": ["-p"],
+          "postPrompt": ["--output-format", "json"],
+          "modelFlag": "-m",
+          "autoModeFlags": ["-y"]
+        }
+      },
+      "input": { "method": "flag" }
+    },
+    "opencode": {
+      "enabled": true,
+      "description": "OpenCode — multi-model CLI coding assistant",
+      "command": "opencode",
+      "defaultModel": "anthropic/claude-sonnet-4-5",
+      "timeout": 120000,
+      "env": {},
+      "capabilities": {
+        "ask": true,
+        "sessions": true,
+        "fileContext": true,
+        "outputFormat": "json"
+      },
+      "commands": {
+        "ask": {
+          "prePrompt": ["run"],
+          "postPrompt": ["--format", "json"],
+          "modelFlag": "-m",
+          "fileFlag": "--file"
+        },
+        "sessions": {
+          "continueFlag": ["--continue"]
+        }
+      },
+      "input": { "method": "positional" }
+    }
+  }
+}
