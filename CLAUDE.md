@@ -10,14 +10,16 @@ Status: in early development (pre-source). Build tooling and source files are be
 
 ## Commands
 
+Always use `pnpm run` to execute scripts (not bare `pnpm <script>`).
+
 ```bash
-pnpm install        # install dependencies
-pnpm build          # compile TypeScript (tsc)
-pnpm dev            # run server in dev mode (tsx, no build step)
-pnpm start          # run compiled server (node dist/index.js)
-pnpm typecheck      # type-check without emitting (tsc --noEmit)
-pnpm lint           # lint src/ with eslint
-pnpm lint:fix       # lint + auto-fix
+pnpm install            # install dependencies
+pnpm run build          # compile TypeScript (tsc)
+pnpm run dev            # run server in dev mode (tsx, no build step)
+pnpm run start          # run compiled server (node dist/index.js)
+pnpm run typecheck      # type-check without emitting (tsc --noEmit)
+pnpm run lint           # lint src/ with eslint
+pnpm run lint:fix       # lint + auto-fix
 ```
 
 ## Architecture (planned)
