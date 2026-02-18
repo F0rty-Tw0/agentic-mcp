@@ -2,145 +2,121 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentic-mcp.local/providers.schema.json",
   "title": "Agentic MCP Providers Config",
+  "description": "Configuration file for agentic-mcp — a config-driven MCP server that wraps any agentic CLI tool. Each provider entry describes how to invoke a CLI and how to assemble command-line arguments. Adding a new CLI means adding an entry here; no code changes required.",
   "type": "object",
   "additionalProperties": false,
   "required": ["configVersion", "providers"],
   "properties": {
     "$schema": {
-      "type": "string"
+      "type": "string",
+      "description": "Optional JSON Schema self-reference. Points to this schema file for editor validation and IntelliSense."
     },
     "configVersion": {
-      "const": 1
+      "const": 1,
+      "description": "Schema version. Currently always 1. Bumped when breaking changes are made to the config shape."
     },
     "providers": {
       "type": "object",
+      "description": "Map of provider names to their configurations. The key becomes the provider identifier used in MCP tool names (e.g. \"claude\" → ask_claude, review_claude).",
       "additionalProperties": {
         "$ref": "#/$defs/providerConfig"
       }
     }
   },
   "$defs": {
-    "askCommand": {
+    "leveledFlag": {
+      "title": "Leveled Flag",
+      "description": "A flag that accepts one of a fixed set of values (levels). Example: --sandbox read-only.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["prePrompt", "postPrompt", "modelFlag"],
+      "required": ["flag", "values"],
       "properties": {
-        "prePrompt": {
+        "flag": {
+          "type": "string",
+          "description": "The CLI flag. Example: \"--sandbox\"."
+        },
+        "values": {
           "type": "array",
-          "items": { "type": "string" }
-        },
-        "postPrompt": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "modelFlag": {
-          "type": ["string", "null"]
-        },
-        "outputFlags": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "autoModeFlags": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "workingDirFlag": {
-          "type": "string"
-        },
-        "fileFlag": {
-          "type": ["string", "null"]
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Allowed values for the flag, from most restrictive to least. Example: [\"read-only\", \"workspace-write\", \"danger-full-access\"]."
         }
       }
     },
-    "reviewCommand": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "subcommand": { "type": "string" },
-        "prePrompt": {
-          "type": "array",
-          "items": { "type": "string" }
+    "flagValue": {
+      "title": "Flag Value",
+      "description": "Defines how a named capability maps to CLI arguments. Four forms: string = value flag (takes an argument, e.g. \"-m model\"), array = standalone args (appended as-is, e.g. [\"--full-auto\"]), object = leveled flag (flag + constrained value), null = capability supported but no CLI flag.",
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Value flag — takes an argument. Example: \"-m\" produces \"-m model-name\"."
         },
-        "uncommittedFlag": { "type": "string" },
-        "baseFlag": { "type": "string" },
-        "commitFlag": { "type": "string" },
-        "modelFlag": { "type": "string" }
-      }
-    },
-    "sessionsCommand": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "resumeFlag": {
+        {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Standalone args — appended as-is when the capability is activated. Example: [\"--dangerously-skip-permissions\"]."
         },
-        "continueFlag": {
-          "type": "array",
-          "items": { "type": "string" }
+        {
+          "$ref": "#/$defs/leveledFlag",
+          "description": "Leveled flag — flag with a constrained set of values."
         },
-        "listCommand": {
-          "type": "array",
-          "items": { "type": "string" }
+        {
+          "type": "null",
+          "description": "Capability is supported but has no CLI flag representation."
         }
-      }
+      ]
     },
-    "sandboxCommand": {
+    "commandDef": {
+      "title": "Command Definition",
+      "description": "Generic shape for any CLI command. The final invocation is built as: <binary> [...args] [dynamic inputs] [...trailingArgs]. Named flags in the flags map are injected conditionally based on caller request.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["flag"],
       "properties": {
-        "flag": { "type": "string" },
-        "levels": {
+        "args": {
           "type": "array",
-          "items": { "type": "string" }
-        }
-      }
-    },
-    "capabilities": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["ask"],
-      "properties": {
-        "ask": { "type": "boolean" },
-        "review": { "type": "boolean" },
-        "sessions": { "type": "boolean" },
-        "sandbox": {
-          "oneOf": [
-            { "type": "boolean" },
-            { "const": "leveled" }
-          ]
+          "items": { "type": "string" },
+          "description": "Static leading arguments — subcommands and flags placed before dynamic inputs. Examples: [\"exec\"], [\"-p\"], [\"review\"]."
         },
-        "autoMode": { "type": "boolean" },
-        "workingDirectory": { "type": "boolean" },
-        "fileContext": { "type": "boolean" },
-        "outputFormat": {
-          "enum": ["json", "stream-json", "text"]
+        "trailingArgs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Static trailing arguments — placed after dynamic inputs. Typically output format flags. Examples: [\"--output-format\", \"json\"], [\"--full-auto\", \"--json\"]."
+        },
+        "flags": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/flagValue"
+          },
+          "description": "Named dynamic flags. Keys are semantic capability names (e.g. \"model\", \"autoMode\", \"sandbox\"), values define how to map them to CLI arguments. Open map — any key is allowed."
         }
       }
     },
     "commands": {
+      "title": "Provider Commands",
+      "description": "Map of command names to their definitions. The \"ask\" command is always required. Other commands (e.g. \"review\", \"sessions\") are optional — their presence determines what MCP tools are registered for the provider.",
       "type": "object",
-      "additionalProperties": false,
-      "required": ["ask"],
-      "properties": {
-        "ask": { "$ref": "#/$defs/askCommand" },
-        "review": { "$ref": "#/$defs/reviewCommand" },
-        "sessions": { "$ref": "#/$defs/sessionsCommand" },
-        "sandbox": { "$ref": "#/$defs/sandboxCommand" }
-      }
+      "additionalProperties": {
+        "$ref": "#/$defs/commandDef"
+      },
+      "required": ["ask"]
     },
     "input": {
+      "title": "Input Method",
+      "description": "Defines how the user prompt is passed to the CLI.",
       "type": "object",
       "additionalProperties": false,
       "required": ["method"],
       "properties": {
         "method": {
-          "enum": ["flag", "positional", "stdin"]
+          "enum": ["flag", "positional", "stdin"],
+          "description": "How the prompt text is delivered to the CLI. \"flag\" = passed after a flag like -p (e.g. claude -p \"prompt\"), \"positional\" = passed as a trailing positional argument (e.g. codex exec \"prompt\"), \"stdin\" = piped via standard input."
         }
       }
     },
     "providerConfig": {
+      "title": "Provider Configuration",
+      "description": "Complete configuration for a single CLI provider. Defines the binary to invoke, how to assemble arguments for each command, environment variables, and operational limits. Capabilities are derived from command presence and flag definitions — no separate capability declaration needed.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -150,103 +126,72 @@
         "defaultModel",
         "timeout",
         "env",
-        "capabilities",
         "commands",
         "input"
       ],
       "properties": {
-        "enabled": { "type": "boolean" },
-        "description": { "type": "string" },
-        "command": { "type": "string" },
-        "defaultModel": { "type": "string" },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this provider is active. Disabled providers are skipped during startup — no tools are registered, no binary resolution is attempted."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the provider. Surfaced in MCP tool descriptions so LLMs and users understand what the provider does. Example: \"Claude Code CLI (Anthropic) — autonomous coding agent\"."
+        },
+        "command": {
+          "type": "string",
+          "description": "The CLI binary name (not a path). Resolved to an absolute path at startup via PATH lookup using the 'which' package. Examples: \"claude\", \"codex\", \"gemini\"."
+        },
+        "defaultModel": {
+          "type": "string",
+          "description": "The model identifier to use when the caller does not specify one. Passed via the ask command's model flag. Set to empty string if the provider has no model selection. Examples: \"claude-opus-4-6\", \"gpt-5.3-codex\"."
+        },
         "timeout": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "exclusiveMinimum": 0,
+          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 120000 (2 min) for fast providers, 180000 (3 min) for slower ones."
         },
         "env": {
           "type": "object",
           "additionalProperties": {
             "type": ["string", "null"]
-          }
+          },
+          "description": "Environment variables injected into the spawned process. The child inherits a minimal base environment plus these overrides. Keys with null values remove variables from the inherited environment. Use empty string to set a variable without a value (e.g. {\"CLAUDECODE\": \"\"})."
         },
         "prerequisites": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string" },
+          "description": "Additional binaries that must be present on PATH for this provider to function. Checked at startup alongside the main command. Example: [\"node\", \"npm\"]."
         },
         "versionCheck": {
           "type": "object",
           "additionalProperties": false,
           "required": ["flag"],
+          "description": "How to verify the installed version of the CLI binary. Used at startup for diagnostics.",
           "properties": {
-            "flag": { "type": "string" },
-            "pattern": { "type": "string" }
-          }
-        },
-        "capabilities": { "$ref": "#/$defs/capabilities" },
-        "commands": { "$ref": "#/$defs/commands" },
-        "input": { "$ref": "#/$defs/input" }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "properties": {
-                  "review": { "const": true }
-                },
-                "required": ["review"]
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "commands": {
-                "required": ["review"]
-              }
+            "flag": {
+              "type": "string",
+              "description": "The flag that prints the version. Example: \"--version\"."
+            },
+            "pattern": {
+              "type": "string",
+              "description": "A regex pattern to extract the version string from the command output. If omitted, the full output is used."
             }
           }
         },
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "properties": {
-                  "sessions": { "const": true }
-                },
-                "required": ["sessions"]
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "commands": {
-                "required": ["sessions"]
-              }
-            }
-          }
+        "outputFormat": {
+          "enum": ["json", "stream-json", "text"],
+          "description": "The output format the provider produces. \"json\" = single JSON response, \"stream-json\" = newline-delimited streaming JSON, \"text\" = plain text output. Determines how the server parses the provider's stdout."
         },
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "properties": {
-                  "sandbox": {
-                    "enum": [true, "leveled"]
-                  }
-                },
-                "required": ["sandbox"]
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "commands": {
-                "required": ["sandbox"]
-              }
-            }
-          }
+        "commands": {
+          "$ref": "#/$defs/commands",
+          "description": "Command definitions for the provider. Each key is a command name (e.g. \"ask\", \"review\", \"sessions\") and each value defines how to build CLI arguments. The \"ask\" command is always required."
+        },
+        "input": {
+          "$ref": "#/$defs/input",
+          "description": "How the user prompt is passed to the CLI binary (flag, positional argument, or stdin)."
         }
-      ]
+      }
     }
   }
 }

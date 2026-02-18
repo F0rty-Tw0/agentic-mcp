@@ -1,4 +1,4 @@
-import type { McpErrorResponse } from './mcp-error-response.js';
+import type { McpErrorResponse } from './mcp-error-response.ts';
 
 export type CommandExecutionErrorDetails = {
   exitCode?: number | null;

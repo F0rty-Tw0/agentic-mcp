@@ -6,56 +6,90 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **agentic-mcp** is a config-driven [MCP](https://modelcontextprotocol.io/) server that wraps any agentic CLI tool. Adding a new CLI provider means adding an entry to `providers.json` — no code changes, no rebuilds.
 
-Status: in early development (pre-source). Build tooling and source files are being established.
+Status: in active development. Core MVP is functional — config loading, tool registration, spawn execution, and the ask/ping/help/list_providers tools work end-to-end. Five providers configured: claude, codex, copilot, gemini, opencode.
 
 ## Commands
 
 Always use `pnpm run` to execute scripts (not bare `pnpm <script>`).
 
 ```bash
-pnpm install            # install dependencies
-pnpm run build          # compile TypeScript (tsc)
-pnpm run dev            # run server in dev mode (tsx, no build step)
-pnpm run start          # run compiled server (node dist/index.js)
-pnpm run typecheck      # type-check without emitting (tsc --noEmit)
-pnpm run lint           # lint src/ with eslint
-pnpm run lint:fix       # lint + auto-fix
+pnpm install                # install dependencies
+pnpm run build              # bundle with esbuild (src/index.ts → dist/index.js + providers.json)
+pnpm run dev                # run server in dev mode (node --experimental-strip-types)
+pnpm run start              # run compiled server (node dist/index.js)
+pnpm run test               # run unit tests (vitest)
+pnpm run validate:providers # validate providers.json against Zod schema
+pnpm run typecheck          # type-check without emitting (tsc --noEmit)
+pnpm run lint               # lint src/ with eslint
+pnpm run lint:fix           # lint + auto-fix
 ```
 
-## Architecture (planned)
+## Architecture
 
 ```
-providers.json          # provider definitions — the only file to touch when adding a CLI
+build.mjs              # esbuild bundler script (shebang injection, providers.json copy)
 src/
-  index.ts              # entry point — shebang, start server
-  server.ts             # MCP server setup, ListTools/CallTool handlers
-  common/               # shared foundation modules
-    execution-limits.const.ts # shared byte/timeout/concurrency limits
-    validation-patterns.ts # shared regex patterns for input validation
-    provider-primitives.type.ts # shared primitive provider union types
-    provider-config.schema.ts # shared provider config zod schemas
-    provider-config.types.ts # shared provider/schema re-exported types
-    auto-mode-flags.const.ts  # known dangerous automation flags
-    errors/             # shared MCP error modules
-      command-execution-error.ts # command runtime failure error class
-      provider-not-found-error.ts # missing CLI/provider error class
-      validation-error.ts # user/input validation error class
-      to-mcp-error.ts   # converts unknown errors to MCP response shape
-      mcp-error-response.ts # shared MCP error response type
-      index.ts          # error exports
-  config/               # config loading and validation
-  tools/                # MCP tool builders (ask_{provider}, ping_{provider}, etc.)
-  session/              # session store (resume, continue)
-  utils/                # shared helpers
+  index.ts              # entry point — shebang, start server, parse --config flag
+  server.ts             # MCP server setup, provider resolution, tool registration
+  common/               # types, constants, schemas, errors — shared foundation
+    errors/             # custom error classes and MCP error mapping
+  config/               # config loading, validation, provider definitions
+    loader.ts           # multi-source config resolution (CLI flag, env, user-local, bundled)
+  domain-logic/         # core business logic — tool building, spawn execution
+    handlers/           # request handlers (ask, ping, help, meta)
+  utils/                # pure utility/helper functions
+    platform.ts         # binary resolution (which), process management, env isolation
+    validation.ts       # input validation helpers
+  types/                # ambient module declarations (.d.ts for untyped packages)
 ```
 
-Core design principles:
+### Folder Roles
+
+| Folder          | Purpose                                                                                                  | Contains                                                                           |
+| --------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `common/`       | Shared foundation. Anything referenced across multiple modules.                                          | Types, constants, Zod schemas, error classes. No business logic.                   |
+| `common/errors/`| Error definitions and MCP error mapping.                                                                 | Custom error classes (the one case where classes are acceptable — see Code Style).  |
+| `config/`       | Everything related to loading, parsing, and validating configuration.                                    | `providers.json`, JSON schemas, Zod validation, config spec tests.                 |
+| `domain-logic/` | Core business logic of the MCP server. Where the actual work happens.                                    | Tool builders, spawn/execution logic, session management, provider orchestration.   |
+| `utils/`        | Pure, stateless utility functions. No domain knowledge, no side effects.                                 | String helpers, formatting, data transformations. Each function independently testable. |
+| `types/`        | Ambient declarations for third-party packages that lack their own types.                                 | `.d.ts` files only.                                                                |
+
+### Core Design Principles
 
 - **Config over code** — provider behaviour lives in `providers.json`, not in source files.
 - **Zod validation** on all inputs.
 - **`spawn()` with array args** — never pass user input through a shell. Child environments are isolated (minimal base env, not full `process.env`).
 - **Output size-limited** to prevent memory exhaustion.
 - CLI binary paths are resolved and pinned at startup.
+- **Generic command shape** — all CLI commands use a single `commandDef` schema (`args`, `trailingArgs`, `flags`). No bespoke per-command schemas. Capabilities are derived from command/flag presence, not declared separately.
+
+### Provider Config Schema
+
+Provider commands use a single generic `commandDef` shape instead of bespoke schemas per command type. This keeps the schema stable — new providers and capabilities are added by editing `providers.json` only (no schema changes).
+
+**`commandDef` structure:**
+
+```jsonc
+{
+  "args": ["exec"],              // static leading args (subcommands, flags)
+  "trailingArgs": ["--json"],    // static trailing args (output format, etc.)
+  "flags": {                     // named dynamic flags — open map, any key
+    "model": "-m",               // string → value flag (takes an argument)
+    "autoMode": ["--full-auto"], // string[] → standalone args (appended as-is)
+    "sandbox": {                 // object → leveled flag (constrained values)
+      "flag": "--sandbox",
+      "values": ["read-only", "workspace-write"]
+    },
+    "file": null                 // null → supported conceptually, no CLI flag
+  }
+}
+```
+
+**Key rules:**
+- Every provider must have an `ask` command
+- `outputFormat` (`json` | `stream-json` | `text`) is a top-level provider property
+- No `capabilities` object — capability is implied by command/flag presence (e.g. `commands.review` exists → provider supports review)
+- MCP tools follow the pattern `{command}_{provider}` (e.g. `ask_claude`, `review_codex`)
 
 ## Dependencies & Decisions
 
@@ -74,35 +108,48 @@ Every dependency and tooling choice is documented here with rationale.
 
 | Package              | Why                                                                                                                                                                                    |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `typescript`         | Compiler. Strict mode, targeting ES2024 + NodeNext modules. tsgo-forward-compatible config (no enums, no namespaces, explicit types).                                                  |
-| `tsx`                | TypeScript execution engine (esbuild-based). Runs `.ts` files directly without a build step. Used for `pnpm dev` during development. Faster and ESM-native unlike the older `ts-node`. |
+| `typescript`         | Type-checker only (`noEmit: true`). Strict mode, targeting ES2024 + NodeNext modules. tsgo-forward-compatible config (no enums, no namespaces, explicit types).                        |
+| `esbuild`            | Production bundler. Bundles `src/index.ts` → `dist/index.js` with shebang injection and copies `providers.json` to `dist/`. Used via `build.mjs`.                                     |
+| `vitest`             | Test runner. Fast, ESM-native, compatible with the project's TypeScript setup. Used for unit tests (`pnpm run test`).                                                                  |
 | `@types/node`        | Node.js type definitions. Explicitly listed in `tsconfig.json` `types: ["node"]` to anticipate TS 6.0 default of empty `types`.                                                        |
 | `@types/cross-spawn` | Type definitions for `cross-spawn` (no bundled types).                                                                                                                                 |
 
 ### Dev — Lint
 
-| Package      | Why                               |
-| ------------ | --------------------------------- |
-| `eslint`     | Linter. ESLint 9 flat config.     |
-| `lint-suite` | Shared lint configuration preset. |
+| Package                | Why                                                              |
+| ---------------------- | ---------------------------------------------------------------- |
+| `eslint`               | Linter. ESLint 9 flat config.                                    |
+| `lint-suite`           | Shared lint configuration preset.                                |
+| `eslint-config-prettier` | Disables ESLint rules that conflict with Prettier formatting.  |
 
 ### tsconfig Decisions
 
-| Option                         | Value      | Why                                                                                                                                                                                     |
-| ------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `target`                       | `es2024`   | Matches Node 22+ runtime capabilities (engine floor). Avoids unnecessary downleveling.                                                                                                  |
-| `module` / `moduleResolution`  | `nodenext` | Tracks latest Node.js ESM semantics. Supports import attributes for JSON imports.                                                                                                       |
-| `strict`                       | `true`     | Baseline strict checks (nulls, any, this, bind/call/apply, property init).                                                                                                              |
-| `noUncheckedIndexedAccess`     | `true`     | Adds `\| undefined` to indexed access — forces handling missing keys/elements.                                                                                                          |
-| `erasableSyntaxOnly`           | `true`     | Bans enums and namespaces. Aligns with Node native type-stripping, tsgo, and TC39 "types as comments" direction.                                                                        |
-| `moduleDetection`              | `force`    | Every file is a module. Prevents ambient-globals footgun where files without imports/exports become global scripts.                                                                     |
-| `noUncheckedSideEffectImports` | `true`     | Errors on unresolvable side-effect imports (`import "./missing.css"`). Catches typos. New in TS 5.6.                                                                                    |
-| `verbatimModuleSyntax`         | `true`     | Requires `import type` for type-only imports. Emitted JS exactly mirrors import statements.                                                                                             |
-| `isolatedModules`              | `true`     | Each file transpilable in isolation. Belt-and-suspenders with `verbatimModuleSyntax`.                                                                                                   |
-| `types`                        | `["node"]` | Explicit opt-in. Anticipates TS 6.0 which changes default from "all @types" to empty `[]`.                                                                                              |
-| `incremental`                  | `true`     | Faster rebuilds. Compatible with tsgo.                                                                                                                                                  |
-| `noEmitOnError`                | `true`     | Prevents emitting broken JS when type errors exist. Safety net for `pnpm build`.                                                                                                        |
+| Option                             | Value      | Why                                                                                                              |
+| ---------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| `target`                           | `es2024`   | Matches Node 22+ runtime capabilities (engine floor). Avoids unnecessary downleveling.                           |
+| `module` / `moduleResolution`      | `nodenext` | Tracks latest Node.js ESM semantics. Supports import attributes for JSON imports.                                |
+| `allowImportingTsExtensions`       | `true`     | Permits `.ts` extensions in import specifiers. Safe because `noEmit: true` — no compiled `.js` output needs valid paths. Enables `node --experimental-strip-types` for dev without tsx. |
+| `strict`                           | `true`     | Baseline strict checks (nulls, any, this, bind/call/apply, property init).                                       |
+| `noUncheckedIndexedAccess`         | `true`     | Adds `\| undefined` to indexed access — forces handling missing keys/elements.                                   |
+| `noImplicitOverride`               | `true`     | Requires `override` keyword on overridden methods. Prevents accidental shadowing.                                |
+| `noImplicitReturns`                | `true`     | Errors on code paths that don't explicitly return in functions with return types.                                 |
+| `noUnusedLocals`                   | `true`     | Errors on declared but unused local variables. Keeps code clean.                                                 |
+| `noUnusedParameters`               | `true`     | Errors on unused function parameters. Prefix with `_` to suppress when intentional.                              |
+| `noFallthroughCasesInSwitch`       | `true`     | Errors on switch cases that fall through without `break` or `return`.                                            |
+| `erasableSyntaxOnly`               | `true`     | Bans enums and namespaces. Aligns with Node native type-stripping, tsgo, and TC39 "types as comments" direction. |
+| `moduleDetection`                  | `force`    | Every file is a module. Prevents ambient-globals footgun where files without imports/exports become global scripts. |
+| `noUncheckedSideEffectImports`     | `true`     | Errors on unresolvable side-effect imports (`import "./missing.css"`). Catches typos. New in TS 5.6.             |
+| `verbatimModuleSyntax`             | `true`     | Requires `import type` for type-only imports. Emitted JS exactly mirrors import statements.                      |
+| `isolatedModules`                  | `true`     | Each file transpilable in isolation. Belt-and-suspenders with `verbatimModuleSyntax`.                            |
+| `types`                            | `["node"]` | Explicit opt-in. Anticipates TS 6.0 which changes default from "all @types" to empty `[]`.                       |
+| `noEmit`                           | `true`     | tsc is used only for type-checking (`pnpm run typecheck`). Production builds use esbuild via `build.mjs`.        |
+| `skipLibCheck`                     | `true`     | Skips type-checking `.d.ts` files. Speeds up type-checking.                                                      |
+| `forceConsistentCasingInFileNames` | `true`     | Prevents case-sensitivity bugs across platforms (Windows vs Linux file systems).                                 |
 | `resolveJsonModule`            | _not set_  | Intentional. `providers.json` is loaded via `fs.readFile` + `JSON.parse` + Zod, not ESM `import`. This supports arbitrary config paths (CLI flag, env var) and graceful error handling. |
+
+### Import Extensions
+
+All relative imports use **`.ts` extensions** (e.g., `import { foo } from './bar.ts'`), not `.js`. This is required by Node's native type stripping (`--experimental-strip-types`), which does not resolve `.js` → `.ts`. Package imports retain their original extensions (e.g., `@modelcontextprotocol/sdk/server/mcp.js`). The `allowImportingTsExtensions` tsconfig option permits this; it's safe because `noEmit: true` means tsc never produces output files that would need valid JS paths. esbuild and vitest both resolve `.ts` extensions correctly.
 
 ### pnpm Catalog
 
@@ -117,7 +164,7 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 | `engines.node`   | `>=22`         | Node 22 is current LTS (EOL April 2027). Aligns with `target: es2024`. Node 20 EOL is April 2026.          |
 | `target` / `lib` | `es2024`       | Full ES2024 support guaranteed on Node 22+.                                                                |
 | `@types/node`    | `^25.x`        | Provides latest type definitions. Backward-compatible with Node 22 core APIs.                              |
-| `packageManager` | `pnpm@10.29.3` | Pinned for reproducible installs. Named catalogs require pnpm 9.5+; `catalogMode` settings require 10.12+. |
+| `packageManager` | `pnpm@10.30.0` | Pinned for reproducible installs. Named catalogs require pnpm 9.5+; `catalogMode` settings require 10.12+. |
 
 ## Code Style
 
@@ -126,6 +173,26 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 - 2-space indent, LF line endings, UTF-8 (see `.editorconfig`)
 - Line endings normalised to LF via `.gitattributes`
 - Keep shared constants/types/errors under `src/common/` using specific files (avoid catch-all `types.ts`)
+
+### Functional Programming Preference
+
+Prefer functions over classes throughout the codebase:
+
+- **Default to plain functions** — export standalone functions, not class methods. Use closures for encapsulation when needed.
+- **Pure functions first** — functions should be deterministic with no side effects where possible. Side effects (I/O, spawn, fs) belong at the edges, not buried in logic.
+- **Data as plain objects** — pass data using plain objects and TypeScript interfaces/types, not class instances. Avoid `new` for domain data.
+- **Composition over inheritance** — combine small functions via composition (`pipe`, higher-order functions) instead of class hierarchies.
+- **Exceptions: error classes** — custom error classes (`extends Error`) are the one accepted use of classes. They need `instanceof` checks and proper stack traces, which plain objects can't provide.
+- **No `this` in domain logic** — if you're reaching for `this`, restructure as a function that takes its dependencies as arguments.
+
+### Linter Validation
+
+Run the linter continuously during development. Every change must pass before it is considered complete.
+
+- **After every code change**, run `pnpm run lint` to verify compliance.
+- **Before any commit**, ensure `pnpm run lint` exits cleanly (zero errors, zero warnings).
+- **Use `pnpm run lint:fix`** for auto-fixable issues, but always review the diff — don't blindly accept auto-fixes.
+- **Never suppress lint rules** (`eslint-disable`) without documenting why in a comment. Suppression is a last resort, not a shortcut.
 
 ## Git Workflow
 
@@ -168,7 +235,7 @@ If a section becomes outdated or wrong, fix it immediately rather than leaving s
 
 ## Roadmap Phases
 
-1. **Core MVP** — config, ask tool, spawn execution
+1. **Core MVP** ✅ — config loading (multi-source resolution), Zod validation, tool registration (ask/ping/help/list_providers), spawn execution with concurrency control, output size limiting, cross-platform binary resolution, 5 providers configured (claude, codex, copilot, gemini, opencode)
 2. **Sessions + streaming**
 3. **Extended providers**
 4. **Advanced features** — review, sandbox, npm publish

@@ -5,8 +5,9 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "lib": ["ES2024"],
-    "outDir": "dist",
-    "rootDir": "src",
+    "noEmit": true,
+
+    "allowImportingTsExtensions": true,
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -23,13 +24,6 @@
     "noUncheckedSideEffectImports": true,
 
     "types": ["node"],
-
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "noEmitOnError": true,
 
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
