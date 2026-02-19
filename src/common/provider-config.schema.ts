@@ -7,7 +7,12 @@ export const leveledFlagSchema = z.object({
   values: z.array(z.string()).min(1),
 });
 
-export const flagValueSchema = z.union([z.string(), z.array(z.string()).min(1), leveledFlagSchema, z.null()]);
+export const flagValueSchema = z.union([
+  z.string(),
+  z.array(z.string()).min(1),
+  leveledFlagSchema,
+  z.null(),
+]);
 
 export const commandDefSchema = z.object({
   args: z.array(z.string()).optional(),
@@ -15,9 +20,11 @@ export const commandDefSchema = z.object({
   flags: z.record(z.string(), flagValueSchema).optional(),
 });
 
-export const commandsSchema = z.record(z.string(), commandDefSchema).refine((commands) => 'ask' in commands, {
-  message: 'commands must include an "ask" command definition',
-});
+export const commandsSchema = z
+  .record(z.string(), commandDefSchema)
+  .refine((commands) => 'ask' in commands, {
+    message: 'commands must include an "ask" command definition',
+  });
 
 export const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),

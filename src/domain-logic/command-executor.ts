@@ -71,7 +71,10 @@ const collectStream = (
 };
 
 // eslint-disable-next-line max-lines-per-function -- spawn logic is inherently monolithic
-const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
+const spawnChild = async (
+  options: ExecuteCommandOptions,
+  startTime: number,
+): Promise<ExecutionResult> => {
   const { binaryPath, args, env, timeoutMs, stdin, cwd } = options;
 
   // eslint-disable-next-line max-lines-per-function -- spawn lifecycle is a single unit

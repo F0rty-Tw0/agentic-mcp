@@ -64,7 +64,9 @@ const warnDangerousFlags = (config: ProvidersFile): void => {
 
     for (const flag of autoMode) {
       if ((DANGEROUS_FLAGS as readonly string[]).includes(flag)) {
-        process.stderr.write(`Warning: provider "${name}" uses dangerous auto-mode flag "${flag}"\n`);
+        process.stderr.write(
+          `Warning: provider "${name}" uses dangerous auto-mode flag "${flag}"\n`,
+        );
       }
     }
   }

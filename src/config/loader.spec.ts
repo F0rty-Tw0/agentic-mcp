@@ -49,7 +49,11 @@ const buildConfig = (
   },
 });
 
-const writeConfig = async (dir: string, fileName: string, config: ProvidersFile): Promise<string> => {
+const writeConfig = async (
+  dir: string,
+  fileName: string,
+  config: ProvidersFile,
+): Promise<string> => {
   const filePath = path.join(dir, fileName);
   const content = JSON.stringify(config, null, 2);
 
@@ -149,7 +153,9 @@ describe('loadConfig', () => {
     await loadConfig({ configPath });
 
     expect(stderrSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"'),
+      expect.stringContaining(
+        'Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"',
+      ),
     );
   });
 });

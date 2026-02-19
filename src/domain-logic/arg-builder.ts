@@ -42,7 +42,11 @@ const resolveFlagToArgs = (flagValue: FlagValue, argValue?: string): string[] =>
   return leveledFlag;
 };
 
-const appendModelFlag = (cliArgs: string[], askCmd: CommandDef, model: string | undefined): void => {
+const appendModelFlag = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  model: string | undefined,
+): void => {
   const flag = getFlag(askCmd, FLAG_MODEL);
 
   if (model && flag != null) {

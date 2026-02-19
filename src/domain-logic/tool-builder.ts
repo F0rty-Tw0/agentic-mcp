@@ -41,7 +41,10 @@ const isLeveledFlag = (value: FlagValue): value is { flag: string; values: strin
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record<string, z.ZodType> => {
+const buildAskInputSchema = (
+  config: ProviderConfig,
+  askCmd: CommandDef,
+): Record<string, z.ZodType> => {
   const schema: Record<string, z.ZodType> = {
     prompt: z.string().describe('The prompt to send to the AI agent'),
   };
@@ -63,7 +66,10 @@ const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record
   }
 
   if (getFlag(askCmd, FLAG_AUTO_MODE) != null) {
-    schema.auto_mode = z.boolean().optional().describe('Enable autonomous mode (skips confirmation prompts)');
+    schema.auto_mode = z
+      .boolean()
+      .optional()
+      .describe('Enable autonomous mode (skips confirmation prompts)');
   }
 
   const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);
@@ -80,7 +86,10 @@ const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record
   return schema;
 };
 
-export const buildAskToolDefinition = (providerName: string, config: ProviderConfig): ToolDefinition => {
+export const buildAskToolDefinition = (
+  providerName: string,
+  config: ProviderConfig,
+): ToolDefinition => {
   const askCmd = getAskCommand(config);
 
   return {

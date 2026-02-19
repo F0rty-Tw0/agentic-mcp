@@ -18,7 +18,14 @@
             "model": "--model",
             "autoMode": {
               "flag": "--permission-mode",
-              "values": ["acceptEdits", "bypassPermissions", "default", "delegate", "dontAsk", "plan"]
+              "values": [
+                "acceptEdits",
+                "bypassPermissions",
+                "default",
+                "delegate",
+                "dontAsk",
+                "plan"
+              ]
             },
             "effort": {
               "flag": "--effort",
@@ -55,7 +62,10 @@
             "model": "-m",
             "workingDir": "-C",
             "file": "--image",
-            "sandbox": { "flag": "--sandbox", "values": ["read-only", "workspace-write", "danger-full-access"] }
+            "sandbox": {
+              "flag": "--sandbox",
+              "values": ["read-only", "workspace-write", "danger-full-access"]
+            }
           }
         },
         "review": {
