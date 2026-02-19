@@ -1,25 +1,29 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-export type ResolvedProvider = {
+export type ResolvedProvider = Readonly<{
   name: string;
   description: string;
   enabled: boolean;
   available: boolean;
   binaryPath: string | null;
-};
+}>;
 
-const providerStatus = (p: ResolvedProvider): string => {
-  if (p.available) return 'available';
+const providerStatus = (provider: ResolvedProvider): string => {
+  if (provider.available) return 'available';
 
-  if (p.enabled) return 'not found';
+  if (provider.enabled) return 'not found';
 
   return 'disabled';
 };
 
 export const handleListProviders = (providers: ResolvedProvider[]): CallToolResult => {
-  const lines = providers.map((p) => `- ${p.name}: ${p.description} [${providerStatus(p)}]`);
+  const lines = providers.map((provider) => {
+    const status = providerStatus(provider);
 
-  return {
+    return `- ${provider.name}: ${provider.description} [${status}]`;
+  });
+
+  const callToolResult: CallToolResult = {
     content: [
       {
         type: 'text',
@@ -27,4 +31,6 @@ export const handleListProviders = (providers: ResolvedProvider[]): CallToolResu
       },
     ],
   };
+
+  return callToolResult;
 };

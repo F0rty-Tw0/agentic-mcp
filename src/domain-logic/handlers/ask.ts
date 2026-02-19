@@ -2,7 +2,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { CommandExecutionError } from '../../common/errors/command-execution.error.ts';
 import { toMcpError } from '../../common/errors/to-mcp-error.ts';
-import type { ProviderConfig } from '../../common/provider-config.types.ts';
+import type { ResolvedProviderEntry } from '../../common/provider-config.type.ts';
+import type { AskToolArgs } from '../../common/tool-args.types.ts';
 import { buildMinimalEnv, stripAnsi } from '../../utils/platform.ts';
 import {
   validateFiles,
@@ -14,39 +15,28 @@ import {
 import { buildArgArray } from '../arg-builder.ts';
 import { executeCommand } from '../command-executor.ts';
 
-type AskHandlerContext = {
-  binaryPath: string;
-  config: ProviderConfig;
-  providerName: string;
+const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
+  validatePromptSize(args.prompt);
+
+  if (args.model) validateModel(args.model);
+
+  if (args.session_id) validateSessionId(args.session_id);
+
+  const resolvedWorkingDir = args.working_directory ? validateWorkingDirectory(args.working_directory) : '';
+  const resolvedFiles = args.files && resolvedWorkingDir ? validateFiles(args.files, resolvedWorkingDir) : [];
+
+  const workingDir = { working_directory: resolvedWorkingDir };
+  const files = { files: resolvedFiles };
+  const askToolsArgs: AskToolArgs = {
+    ...args,
+    ...workingDir,
+    ...files,
+  };
+
+  return askToolsArgs;
 };
 
-const validateAndResolveArgs = (args: Record<string, unknown>): Record<string, unknown> => {
-  validatePromptSize(args.prompt as string);
-
-  const model = args.model as string | undefined;
-
-  if (model) validateModel(model);
-
-  const sessionId = args.session_id as string | undefined;
-
-  if (sessionId) validateSessionId(sessionId);
-
-  const workingDir = args.working_directory as string | undefined;
-  const resolvedWorkingDir = workingDir ? validateWorkingDirectory(workingDir) : undefined;
-
-  const files = args.files as string[] | undefined;
-  const resolvedFiles = files && resolvedWorkingDir ? validateFiles(files, resolvedWorkingDir) : undefined;
-
-  const resolved = { ...args };
-
-  if (resolvedWorkingDir) resolved.working_directory = resolvedWorkingDir;
-
-  if (resolvedFiles) resolved.files = resolvedFiles;
-
-  return resolved;
-};
-
-export const handleAsk = async (context: AskHandlerContext, args: Record<string, unknown>): Promise<CallToolResult> => {
+export const handleAsk = async (context: ResolvedProviderEntry, args: AskToolArgs): Promise<CallToolResult> => {
   try {
     const resolved = validateAndResolveArgs(args);
 
@@ -59,11 +49,11 @@ export const handleAsk = async (context: AskHandlerContext, args: Record<string,
       env,
       timeoutMs: context.config.timeout,
       stdin: stdinInput,
-      cwd: resolved.working_directory as string | undefined,
+      cwd: resolved.working_directory,
     });
 
     if (result.exitCode !== 0) {
-      const error = new CommandExecutionError(`${context.providerName} command failed`, {
+      const error = new CommandExecutionError(`${context.name} command failed`, {
         exitCode: result.exitCode,
         signal: result.signal,
         timedOut: result.timedOut,

@@ -1,19 +1,13 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { toMcpError } from '../../common/errors/to-mcp-error.ts';
-import type { ProviderConfig } from '../../common/provider-config.types.ts';
+import type { ResolvedProviderEntry } from '../../common/provider-config.type.ts';
 import { buildMinimalEnv, stripAnsi } from '../../utils/platform.ts';
 import { executeCommand } from '../command-executor.ts';
 
 const HELP_TIMEOUT_MS = 10_000;
 
-type HelpHandlerContext = {
-  binaryPath: string;
-  config: ProviderConfig;
-  providerName: string;
-};
-
-export const handleHelp = async (context: HelpHandlerContext): Promise<CallToolResult> => {
+export const handleHelp = async (context: ResolvedProviderEntry): Promise<CallToolResult> => {
   try {
     const env = buildMinimalEnv(context.config.env);
     const result = await executeCommand({
@@ -26,7 +20,9 @@ export const handleHelp = async (context: HelpHandlerContext): Promise<CallToolR
     // Some CLIs write help to stderr instead of stdout
     const output = stripAnsi(result.stdout || result.stderr).trim();
 
-    return { content: [{ type: 'text', text: output }] };
+    const helpResponse: CallToolResult = { content: [{ type: 'text', text: output }] };
+
+    return helpResponse;
   } catch (error) {
     return toMcpError(error);
   }
