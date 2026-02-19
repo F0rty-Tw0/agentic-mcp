@@ -27,10 +27,6 @@ export const validatePromptSize = (prompt?: string): void => {
 };
 
 export const validateWorkingDirectory = (dir: string): string => {
-  if (dir.includes('..')) {
-    throw new ValidationError(`Working directory must not contain path traversal: "${dir}"`);
-  }
-
   return path.resolve(dir);
 };
 
@@ -42,7 +38,9 @@ export const validateFiles = (files: readonly string[], workingDir: string): str
   return files.map((file) => {
     const resolved = path.resolve(workingDir, file);
 
-    if (!resolved.startsWith(workingDir)) {
+    const safeRoot = workingDir.endsWith(path.sep) ? workingDir : workingDir + path.sep;
+
+    if (!resolved.startsWith(safeRoot) && resolved !== workingDir) {
       throw new ValidationError(`File path escapes working directory: "${file}"`);
     }
 

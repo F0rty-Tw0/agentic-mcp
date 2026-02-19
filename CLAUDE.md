@@ -176,6 +176,10 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 - 2-space indent, LF line endings, UTF-8 (see `.editorconfig`)
 - Line endings normalised to LF via `.gitattributes`
 - Keep shared constants/types/errors under `src/common/` using specific files (avoid catch-all `types.ts`)
+- Guard-first control flow: prefer early returns/continues over nested blocks.
+- Avoid lone `if` wrappers and `if/else` pairs when a guard clause can flatten the flow without changing behavior.
+- Require explicit types on exported APIs and non-trivial helpers (parameters and return types).
+- Keep changes minimal, behavior-preserving, and clean (small functions, clear names, no dead branches).
 
 ### Testing Style
 
@@ -184,6 +188,13 @@ Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
 - **GIVEN** the initial context/setup
 - **WHEN** the behaviour under test is executed
 - **THEN** the expected outcome is asserted
+
+### TDD Enforcement (Mandatory)
+
+- **No production code before a failing test** for feature work, bug fixes, and behavior refactors.
+- Follow strict **Red -> Green -> Refactor**: write failing test, verify failure reason, implement minimal fix, then refactor.
+- If implementation code is written before the test, delete it and restart from a failing test.
+- Run the focused test during red/green, then run the full relevant suite before completion.
 
 Example naming pattern: `GIVEN X WHEN Y THEN Z`.
 

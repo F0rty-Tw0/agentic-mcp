@@ -17,6 +17,8 @@ const DANGEROUS_FLAGS = [
   '--yolo',
 ] as const;
 
+type DangerousFlag = (typeof DANGEROUS_FLAGS)[number];
+
 const userLocalConfigPath = (): string | null => {
   if (process.platform !== 'win32') return path.join(os.homedir(), '.config', 'agentic-mcp', 'providers.json');
 
@@ -61,7 +63,7 @@ const warnDangerousFlags = (config: ProvidersFile): void => {
     if (!Array.isArray(autoMode)) continue;
 
     for (const flag of autoMode) {
-      if ((DANGEROUS_FLAGS as readonly string[]).includes(flag)) {
+      if (DANGEROUS_FLAGS.includes(flag as DangerousFlag)) {
         process.stderr.write(`Warning: provider "${name}" uses dangerous auto-mode flag "${flag}"\n`);
       }
     }

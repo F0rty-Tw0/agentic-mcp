@@ -21,10 +21,10 @@ export const toMcpError = (error: unknown): McpErrorResponse => {
     message = 'An unexpected error occurred.';
   }
 
-  const mpcErrorResponse: McpErrorResponse = {
+  const mcpErrorResponse: McpErrorResponse = {
     isError: true,
     content: [{ type: 'text', text: `Error: ${message}` }],
   };
 
-  return mpcErrorResponse;
+  return mcpErrorResponse;
 };

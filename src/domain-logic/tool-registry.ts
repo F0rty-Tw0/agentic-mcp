@@ -16,7 +16,7 @@ import {
 } from './tool-builder.ts';
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
-  const { name, binaryPath, config } = provider;
+  const { name, config } = provider;
 
   // ask_<provider>
   const askDef = buildAskToolDefinition(name, config);
@@ -28,11 +28,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       inputSchema: askDef.inputSchema,
       annotations: askDef.annotations,
     },
-    async (args: AskToolArgs): Promise<CallToolResult> => {
-      const context: ResolvedProviderEntry = { binaryPath, config, name };
-
-      return handleAsk(context, args);
-    },
+    async (args: AskToolArgs): Promise<CallToolResult> => handleAsk(provider, args),
   );
 
   // ping_<provider>
@@ -44,7 +40,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       description: pingDef.description,
       annotations: pingDef.annotations,
     },
-    async (): Promise<CallToolResult> => handlePing({ binaryPath, config, name }),
+    async (): Promise<CallToolResult> => handlePing(provider),
   );
 
   // help_<provider>
@@ -56,7 +52,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       description: helpDef.description,
       annotations: helpDef.annotations,
     },
-    async (): Promise<CallToolResult> => handleHelp({ binaryPath, config, name }),
+    async (): Promise<CallToolResult> => handleHelp(provider),
   );
 };
 

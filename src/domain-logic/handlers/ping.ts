@@ -7,19 +7,33 @@ import { executeCommand } from '../command-executor.ts';
 
 const PING_TIMEOUT_MS = 10_000;
 
+const createPingResponse = (text: string): CallToolResult => {
+  const pingResponse: CallToolResult = {
+    content: [
+      {
+        type: 'text',
+        text,
+      },
+    ],
+  };
+
+  return pingResponse;
+};
+
+const resolveVersion = (output: string, pattern?: string): string => {
+  if (!pattern) return output;
+
+  const match = new RegExp(pattern).exec(output);
+
+  if (!match?.[1]) return output;
+
+  return match[1];
+};
+
 export const handlePing = async (context: ResolvedProviderEntry): Promise<CallToolResult> => {
   try {
     if (!context.config.versionCheck) {
-      const versionCheckResponse: CallToolResult = {
-        content: [
-          {
-            type: 'text',
-            text: `${context.name}: available (binary: ${context.binaryPath})`,
-          },
-        ],
-      };
-
-      return versionCheckResponse;
+      return createPingResponse(`${context.name}: available (binary: ${context.binaryPath})`);
     }
 
     const env = buildMinimalEnv(context.config.env);
@@ -31,26 +45,9 @@ export const handlePing = async (context: ResolvedProviderEntry): Promise<CallTo
     });
 
     const output = stripAnsi(result.stdout).trim();
-    let version = output;
+    const version = resolveVersion(output, context.config.versionCheck.pattern);
 
-    if (context.config.versionCheck.pattern) {
-      const match = new RegExp(context.config.versionCheck.pattern).exec(output);
-
-      if (match?.[1]) {
-        version = match[1];
-      }
-    }
-
-    const versionCheckResponse: CallToolResult = {
-      content: [
-        {
-          type: 'text',
-          text: `${context.name}: available (version: ${version})`,
-        },
-      ],
-    };
-
-    return versionCheckResponse;
+    return createPingResponse(`${context.name}: available (version: ${version})`);
   } catch (error) {
     return toMcpError(error);
   }

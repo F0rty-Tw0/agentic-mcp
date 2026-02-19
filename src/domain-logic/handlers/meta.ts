@@ -16,7 +16,7 @@ const providerStatus = (provider: ResolvedProvider): string => {
   return 'disabled';
 };
 
-export const handleListProviders = (providers: ResolvedProvider[]): CallToolResult => {
+export const handleListProviders = (providers: readonly ResolvedProvider[]): CallToolResult => {
   const lines = providers.map((provider) => {
     const status = providerStatus(provider);
 

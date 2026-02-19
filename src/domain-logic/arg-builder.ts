@@ -1,23 +1,6 @@
+import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR, getAskCommand, getFlag } from './command-def-utils.ts';
 import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
 import type { AskToolArgs } from '../common/tool-args.types.ts';
-
-const FLAG_MODEL = 'model';
-const FLAG_WORKING_DIR = 'workingDir';
-const FLAG_FILE = 'file';
-const FLAG_AUTO_MODE = 'autoMode';
-const FLAG_SANDBOX = 'sandbox';
-
-const getAskCommand = ({ commands }: ProviderConfig): CommandDef => {
-  const { ask } = commands;
-
-  if (!ask) throw new Error('Provider config missing required "ask" command');
-
-  return ask;
-};
-
-const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
-  return cmd.flags?.[key];
-};
 
 /**
  * Resolves a FlagValue into CLI arguments.

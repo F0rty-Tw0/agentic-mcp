@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+import {
+  FLAG_AUTO_MODE,
+  FLAG_FILE,
+  FLAG_MODEL,
+  FLAG_SANDBOX,
+  FLAG_WORKING_DIR,
+  getAskCommand,
+  getFlag,
+} from './command-def-utils.ts';
 import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
 
 type ToolAnnotations = Readonly<{
@@ -15,27 +24,6 @@ type ToolDefinition = Readonly<{
   inputSchema: Record<string, z.ZodType>;
   annotations: ToolAnnotations;
 }>;
-
-// Well-known flag keys in commands.ask.flags
-const FLAG_MODEL = 'model';
-const FLAG_WORKING_DIR = 'workingDir';
-const FLAG_FILE = 'file';
-const FLAG_AUTO_MODE = 'autoMode';
-const FLAG_SANDBOX = 'sandbox';
-
-const getAskCommand = (config: ProviderConfig): CommandDef => {
-  const cmd = config.commands.ask;
-
-  if (!cmd) {
-    throw new Error('Provider config missing required "ask" command');
-  }
-
-  return cmd;
-};
-
-const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
-  return cmd.flags?.[key];
-};
 
 const isLeveledFlag = (value: FlagValue): value is { flag: string; values: string[] } => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
