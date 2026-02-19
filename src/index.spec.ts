@@ -87,9 +87,7 @@ describe('index entrypoint', () => {
     mocks.createServer.mockRejectedValueOnce(new Error('boom'));
 
     const stderrWriteSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    const exitSpy = vi
-      .spyOn(process, 'exit')
-      .mockImplementation((() => undefined) as typeof process.exit);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
 
     await importEntrypoint();
 

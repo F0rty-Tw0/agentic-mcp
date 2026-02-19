@@ -1,43 +1,43 @@
 # Project
 - name: provider
-  color: "7B61FF"
+  color: '7B61FF'
   description: New or updated CLI provider
 - name: config
-  color: "D4C5F9"
+  color: 'D4C5F9'
   description: Changes to providers.json or config schema
 - name: core
-  color: "0075CA"
+  color: '0075CA'
   description: Core server logic (execution, registry, sessions)
 
 # Phase tracking
 - name: phase-1
-  color: "C2E0C6"
-  description: "Core MVP: config, ask tool, spawn execution"
+  color: 'C2E0C6'
+  description: 'Core MVP: config, ask tool, spawn execution'
 - name: phase-2
-  color: "C2E0C6"
-  description: "Sessions + streaming"
+  color: 'C2E0C6'
+  description: 'Sessions + streaming'
 - name: phase-3
-  color: "C2E0C6"
-  description: "Extended providers"
+  color: 'C2E0C6'
+  description: 'Extended providers'
 - name: phase-4
-  color: "C2E0C6"
-  description: "Advanced features (review, sandbox, npm publish)"
+  color: 'C2E0C6'
+  description: 'Advanced features (review, sandbox, npm publish)'
 
 # Type
 - name: bug
-  color: "D73A4A"
+  color: 'D73A4A'
   description: Something isn't working
 - name: enhancement
-  color: "A2EEEF"
+  color: 'A2EEEF'
   description: New feature or improvement
 - name: breaking-change
-  color: "E11D48"
+  color: 'E11D48'
   description: Introduces a breaking change
 - name: documentation
-  color: "0075CA"
+  color: '0075CA'
   description: Documentation only
 
 # Effort
 - name: good-first-issue
-  color: "7057FF"
+  color: '7057FF'
   description: Good for newcomers

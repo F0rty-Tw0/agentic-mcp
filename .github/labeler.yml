@@ -3,25 +3,25 @@
 
 provider:
   - changed-files:
-      - any-glob-to-any-file: "providers.json"
+      - any-glob-to-any-file: 'providers.json'
 
 config:
   - changed-files:
       - any-glob-to-any-file:
-          - "src/config/**"
-          - "src/types.ts"
-          - "providers.json"
+          - 'src/config/**'
+          - 'src/types.ts'
+          - 'providers.json'
 
 core:
   - changed-files:
       - any-glob-to-any-file:
-          - "src/server.ts"
-          - "src/tools/**"
-          - "src/session/**"
-          - "src/utils/**"
+          - 'src/server.ts'
+          - 'src/tools/**'
+          - 'src/session/**'
+          - 'src/utils/**'
 
 documentation:
   - changed-files:
       - any-glob-to-any-file:
-          - "**/*.md"
-          - "docs/**"
+          - '**/*.md'
+          - 'docs/**'

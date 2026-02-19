@@ -150,7 +150,7 @@
         "timeout": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 120000 (2 min) for fast providers, 180000 (3 min) for slower ones."
+          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 300000 (5 min) for fast providers and 600000 (10 min) for reasoning-heavy providers."
         },
         "env": {
           "type": "object",

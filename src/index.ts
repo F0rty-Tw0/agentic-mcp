@@ -7,7 +7,8 @@ import { createServer } from './server.ts';
 
 const main = async (): Promise<void> => {
   const configIndex = process.argv.indexOf('--config');
-  const configPath = configIndex !== -1 && configIndex + 1 < process.argv.length ? process.argv[configIndex + 1] : undefined;
+  const configPath =
+    configIndex !== -1 && configIndex + 1 < process.argv.length ? process.argv[configIndex + 1] : undefined;
 
   const options = configPath ? { configPath } : undefined;
   const server = await createServer(options);

@@ -92,7 +92,7 @@ Edit `src/config/providers.json` (or your user-local copy):
     "description": "My custom agent",
     "command": "myagent",
     "defaultModel": "default-v1",
-    "timeout": 120000,
+    "timeout": 600000,
     "env": {},
     "outputFormat": "json",
     "commands": {

@@ -11,11 +11,13 @@ labels: bug
 **What did you expect?**
 
 **Steps to reproduce:**
+
 1.
 2.
 3.
 
 **Environment:**
+
 - OS:
 - Node.js:
 - agentic-mcp version:
