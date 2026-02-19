@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { providersFileSchema } from '../common/provider-config.schema.ts';
+import type { ProvidersFile } from '../common/provider-config.types.ts';
 
 const providersJsonUrl = new URL('./providers.json', import.meta.url);
 const providersSchemaUrl = new URL('./providers.schema.json', import.meta.url);
@@ -13,14 +14,50 @@ const readJson = async (url: URL): Promise<unknown> => {
   return JSON.parse(content) as unknown;
 };
 
+const validProviderConfig: ProvidersFile['providers'][string] = {
+  enabled: true,
+  description: 'Example provider config for schema tests',
+  command: 'example-cli',
+  defaultModel: 'example-model',
+  timeout: 120000,
+  env: {},
+  outputFormat: 'json',
+  commands: {
+    ask: {
+      args: ['run'],
+    },
+  },
+  input: {
+    method: 'positional',
+  },
+};
+
+const buildProvidersConfig = (provider: unknown): unknown => ({
+  configVersion: 1,
+  providers: {
+    example: provider,
+  },
+});
+
+const removeOutputFormat = (
+  provider: ProvidersFile['providers'][string],
+): Omit<ProvidersFile['providers'][string], 'outputFormat'> => {
+  const providerEntries = Object.entries(provider).filter(([key]) => key !== 'outputFormat');
+
+  return Object.fromEntries(providerEntries) as Omit<
+    ProvidersFile['providers'][string],
+    'outputFormat'
+  >;
+};
+
 describe('providers config', () => {
-  it('declares a local $schema pointer', async () => {
+  it('GIVEN providers.json WHEN reading metadata THEN it declares a local $schema pointer', async () => {
     const config = (await readJson(providersJsonUrl)) as { $schema?: unknown };
 
     expect(config.$schema).toBe('./providers.schema.json');
   });
 
-  it('conforms to Zod runtime schema', async () => {
+  it('GIVEN bundled providers config WHEN validating with Zod THEN it passes', async () => {
     const config = await readJson(providersJsonUrl);
     const parsed = providersFileSchema.safeParse(config);
 
@@ -35,7 +72,48 @@ describe('providers config', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('has a valid local JSON Schema descriptor', async () => {
+  it('GIVEN provider config without outputFormat WHEN validating THEN it fails', () => {
+    const providerWithoutOutputFormat = removeOutputFormat(validProviderConfig);
+    const parsed = providersFileSchema.safeParse(buildProvidersConfig(providerWithoutOutputFormat));
+
+    expect(parsed.success).toBe(false);
+
+    if (parsed.success) {
+      throw new Error('Expected provider config without outputFormat to fail validation');
+    }
+
+    const outputFormatIssue = parsed.error.issues.find(
+      (issue) => issue.path.join('.') === 'providers.example.outputFormat',
+    );
+
+    expect(outputFormatIssue).toBeDefined();
+  });
+
+  it('GIVEN provider config without ask command WHEN validating THEN it fails', () => {
+    const providerWithoutAsk: ProvidersFile['providers'][string] = {
+      ...validProviderConfig,
+      commands: {
+        sessions: {
+          args: ['sessions'],
+        },
+      },
+    };
+    const parsed = providersFileSchema.safeParse(buildProvidersConfig(providerWithoutAsk));
+
+    expect(parsed.success).toBe(false);
+
+    if (parsed.success) {
+      throw new Error('Expected provider config without ask command to fail validation');
+    }
+
+    const askIssue = parsed.error.issues.find(
+      (issue) => issue.path.join('.') === 'providers.example.commands',
+    );
+
+    expect(askIssue?.message).toContain('ask');
+  });
+
+  it('GIVEN providers.schema.json WHEN reading descriptors THEN required keys are present', async () => {
     const schema = (await readJson(providersSchemaUrl)) as Record<string, unknown>;
 
     expect(schema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
@@ -48,9 +126,13 @@ describe('providers config', () => {
     expect(defs.commandDef).toBeDefined();
     expect(defs.flagValue).toBeDefined();
     expect(defs.leveledFlag).toBeDefined();
+
+    const providerConfig = defs.providerConfig as { required?: unknown };
+
+    expect(providerConfig.required).toContain('outputFormat');
   });
 
-  it('every provider has an "ask" command', async () => {
+  it('GIVEN provider entries WHEN checking commands THEN each provider defines ask', async () => {
     const config = (await readJson(providersJsonUrl)) as {
       providers: Record<string, { commands: Record<string, unknown> }>;
     };
@@ -60,7 +142,7 @@ describe('providers config', () => {
     }
   });
 
-  it('every provider has outputFormat at top level', async () => {
+  it('GIVEN provider entries WHEN checking top-level metadata THEN each has outputFormat', async () => {
     const config = (await readJson(providersJsonUrl)) as {
       providers: Record<string, { outputFormat?: unknown }>;
     };
@@ -70,7 +152,7 @@ describe('providers config', () => {
     }
   });
 
-  it('no provider has a capabilities object', async () => {
+  it('GIVEN provider entries WHEN checking legacy fields THEN capabilities is absent', async () => {
     const config = (await readJson(providersJsonUrl)) as {
       providers: Record<string, Record<string, unknown>>;
     };
