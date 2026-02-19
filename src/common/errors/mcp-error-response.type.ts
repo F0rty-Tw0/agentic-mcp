@@ -1,4 +1,4 @@
 export type McpErrorResponse = Readonly<{
   isError: true;
-  content: Array<{ type: 'text'; text: string }>;
+  content: Array<Readonly<{ type: 'text'; text: string }>>;
 }>;

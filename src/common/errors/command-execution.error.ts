@@ -15,7 +15,7 @@ export class CommandExecutionError extends Error {
 
   public constructor(message: string, details: CommandExecutionErrorDetails, options?: { cause?: unknown }) {
     super(message, options);
-    this.name = 'CommandExecutionError';
+    this.name = CommandExecutionError.name;
     this.exitCode = details.exitCode;
     this.signal = details.signal;
     this.timedOut = details.timedOut;
@@ -33,7 +33,7 @@ export class CommandExecutionError extends Error {
       parts.push(`Exit code: ${this.exitCode}.`);
     }
 
-    if (this.stderr != null && this.stderr.length > 0) {
+    if (this.stderr?.length) {
       parts.push(`Stderr: ${this.stderr}`);
     }
 

@@ -1,5 +1,5 @@
 export type AskToolArgs = Readonly<{
-  prompt: string;
+  prompt?: string;
   model?: string;
   session_id?: string;
   working_directory?: string;

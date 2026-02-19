@@ -6,6 +6,7 @@ export class ProviderNotFoundError extends Error {
 
   public constructor(provider: string, command: string, options?: { cause?: unknown }) {
     super(`Provider "${provider}" not available: CLI "${command}" not found on PATH.`, options);
+
     this.name = 'ProviderNotFoundError';
     this.provider = provider;
     this.command = command;
