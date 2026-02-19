@@ -1,10 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { CommandExecutionError } from '../../common/errors/command-execution.error.ts';
-import { toMcpError } from '../../common/errors/to-mcp-error.ts';
 import type { ResolvedProviderEntry } from '../../common/provider-config.type.ts';
 import type { AskToolArgs } from '../../common/tool-args.types.ts';
 import { buildMinimalEnv, stripAnsi } from '../../utils/platform.ts';
+import { toMcpError } from '../../utils/to-mcp-error.ts';
 import {
   validateFiles,
   validateModel,
@@ -27,6 +27,7 @@ const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
 
   const workingDir = { working_directory: resolvedWorkingDir };
   const files = { files: resolvedFiles };
+
   const askToolsArgs: AskToolArgs = {
     ...args,
     ...workingDir,

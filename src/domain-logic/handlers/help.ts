@@ -1,8 +1,8 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { toMcpError } from '../../common/errors/to-mcp-error.ts';
 import type { ResolvedProviderEntry } from '../../common/provider-config.type.ts';
 import { buildMinimalEnv, stripAnsi } from '../../utils/platform.ts';
+import { toMcpError } from '../../utils/to-mcp-error.ts';
 import { executeCommand } from '../command-executor.ts';
 
 const HELP_TIMEOUT_MS = 10_000;
