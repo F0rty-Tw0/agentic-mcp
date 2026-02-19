@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
-import type { ResolvedProviderEntry } from './common/provider-config.types.ts';
+import type { ResolvedProviderEntry } from './common/provider-config.type.ts';
 import { loadConfig } from './config/loader.ts';
 import type { ResolvedProvider } from './domain-logic/handlers/meta.ts';
 import { registerAllTools } from './domain-logic/tool-registry.ts';
@@ -13,9 +13,7 @@ export const createServer = async (options?: { configPath?: string }): Promise<M
   const allProviders: ResolvedProvider[] = [];
 
   for (const [name, providerConfig] of Object.entries(config.providers)) {
-    const binaryPath = providerConfig.enabled
-      ? await resolveCliBinary(providerConfig.command)
-      : null;
+    const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : null;
 
     allProviders.push({
       name,

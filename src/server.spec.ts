@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProvidersFile, ResolvedProviderEntry } from './common/provider-config.types.ts';
+import type { ProvidersFile, ResolvedProviderEntry } from './common/provider-config.type.ts';
 import type { ResolvedProvider } from './domain-logic/handlers/meta.ts';
 import { createServer } from './server.ts';
 import type { AsyncViFn, SyncViFn } from './test-utils/vi-fn.types.ts';
@@ -10,11 +10,7 @@ type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFi
 
 type ResolveCliBinaryMock = AsyncViFn<[command: string], string | null>;
 
-type McpServerEntry = [
-  server: McpServer,
-  resolvedProviders: ResolvedProviderEntry[],
-  allProviders: ResolvedProvider[],
-];
+type McpServerEntry = [server: McpServer, resolvedProviders: ResolvedProviderEntry[], allProviders: ResolvedProvider[]];
 
 type RegisterAllToolsMock = SyncViFn<McpServerEntry, void>;
 

@@ -2,9 +2,9 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-type MockServer = {
+type MockServer = Readonly<{
   connect: (transport: unknown) => Promise<void>;
-};
+}>;
 
 const mocks = vi.hoisted(() => {
   const transportInstance = {
