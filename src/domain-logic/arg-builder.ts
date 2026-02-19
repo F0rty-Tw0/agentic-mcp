@@ -35,57 +35,84 @@ const resolveFlagToArgs = (flagValue: FlagValue, argValue?: string): string[] =>
     return argValue !== undefined ? [flagValue, argValue] : [flagValue];
   }
 
-  if (Array.isArray(flagValue)) {
-    return [...flagValue];
-  }
+  if (Array.isArray(flagValue)) return [...flagValue];
 
-  // LeveledFlag
-  return argValue !== undefined ? [flagValue.flag, argValue] : [flagValue.flag];
+  const leveledFlag = argValue !== undefined ? [flagValue.flag, argValue] : [flagValue.flag];
+
+  return leveledFlag;
 };
 
-/* eslint-disable complexity -- flat sequence of independent flag checks */
-const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: Record<string, unknown>): void => {
-  const model = args.model as string | undefined;
-  const workingDir = args.working_directory as string | undefined;
-  const files = args.files as string[] | undefined;
-  const autoMode = args.auto_mode as boolean | undefined;
-  const sandbox = args.sandbox as string | boolean | undefined;
+const appendModelFlag = (cliArgs: string[], askCmd: CommandDef, model: string | undefined): void => {
+  const flag = getFlag(askCmd, FLAG_MODEL);
 
-  const modelFlag = getFlag(askCmd, FLAG_MODEL);
-
-  if (model && modelFlag != null) {
-    cliArgs.push(...resolveFlagToArgs(modelFlag, model));
+  if (model && flag != null) {
+    cliArgs.push(...resolveFlagToArgs(flag, model));
   }
+};
 
-  const workingDirFlag = getFlag(askCmd, FLAG_WORKING_DIR);
+const appendWorkingDirFlag = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  workingDir: string | undefined,
+): void => {
+  const flag = getFlag(askCmd, FLAG_WORKING_DIR);
 
-  if (workingDir && workingDirFlag != null) {
-    cliArgs.push(...resolveFlagToArgs(workingDirFlag, workingDir));
+  if (workingDir && flag != null) {
+    cliArgs.push(...resolveFlagToArgs(flag, workingDir));
   }
+};
 
-  const fileFlag = getFlag(askCmd, FLAG_FILE);
+const appendFileFlags = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  files: string[] | undefined,
+): void => {
+  const flag = getFlag(askCmd, FLAG_FILE);
 
-  if (files && files.length > 0 && fileFlag != null && typeof fileFlag === 'string') {
+  if (files && files.length > 0 && flag != null && typeof flag === 'string') {
     for (const file of files) {
-      cliArgs.push(fileFlag, file);
+      cliArgs.push(flag, file);
     }
   }
+};
 
-  const autoModeFlag = getFlag(askCmd, FLAG_AUTO_MODE);
+const appendAutoModeFlag = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  autoMode: boolean | undefined,
+): void => {
+  const flag = getFlag(askCmd, FLAG_AUTO_MODE);
 
-  if (autoMode === true && autoModeFlag != null) {
-    cliArgs.push(...resolveFlagToArgs(autoModeFlag));
-  }
-
-  const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);
-
-  if (sandbox !== undefined && sandboxFlag != null) {
-    const sandboxValue = typeof sandbox === 'string' ? sandbox : undefined;
-
-    cliArgs.push(...resolveFlagToArgs(sandboxFlag, sandboxValue));
+  if (autoMode === true && flag != null) {
+    cliArgs.push(...resolveFlagToArgs(flag));
   }
 };
-/* eslint-enable complexity */
+
+const appendSandboxFlag = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  sandbox: string | boolean | undefined,
+): void => {
+  const flag = getFlag(askCmd, FLAG_SANDBOX);
+
+  if (sandbox !== undefined && flag != null) {
+    const sandboxValue = typeof sandbox === 'string' ? sandbox : undefined;
+
+    cliArgs.push(...resolveFlagToArgs(flag, sandboxValue));
+  }
+};
+
+const appendOptionalFlags = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  args: Record<string, unknown>,
+): void => {
+  appendModelFlag(cliArgs, askCmd, args.model as string | undefined);
+  appendWorkingDirFlag(cliArgs, askCmd, args.working_directory as string | undefined);
+  appendFileFlags(cliArgs, askCmd, args.files as string[] | undefined);
+  appendAutoModeFlag(cliArgs, askCmd, args.auto_mode as boolean | undefined);
+  appendSandboxFlag(cliArgs, askCmd, args.sandbox as string | boolean | undefined);
+};
 
 export const buildArgArray = (
   config: ProviderConfig,

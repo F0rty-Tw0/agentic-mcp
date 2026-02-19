@@ -11,7 +11,13 @@ type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFi
 
 type ResolveCliBinaryMock = AsyncViFn<[command: string], string | null>;
 
-type RegisterAllToolsMock = SyncViFn<[server: McpServer, resolvedProviders: ResolvedProviderEntry[], allProviders: ResolvedProvider[]], void>;
+type McpServerEntry = [
+  server: McpServer,
+  resolvedProviders: ResolvedProviderEntry[],
+  allProviders: ResolvedProvider[],
+];
+
+type RegisterAllToolsMock = SyncViFn<McpServerEntry, void>;
 
 const mocks = vi.hoisted(() => {
   const loadConfig = vi.fn<LoadConfigMock>();
@@ -37,7 +43,9 @@ vi.mock('./domain-logic/tool-registry.ts', () => ({
   registerAllTools: mocks.registerAllTools,
 }));
 
-const buildProvider = (overrides: Partial<ProvidersFile['providers'][string]> = {}): ProvidersFile['providers'][string] => ({
+const buildProvider = (
+  overrides: Partial<ProvidersFile['providers'][string]> = {},
+): ProvidersFile['providers'][string] => ({
   enabled: true,
   description: 'Server test provider',
   command: 'test-cli',

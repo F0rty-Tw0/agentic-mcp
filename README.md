@@ -17,11 +17,11 @@ MCP Client  <──stdio──>  agentic-mcp  <──spawn──>  claude, codex
 
 For each enabled provider, three tools are registered:
 
-| Tool | Pattern | Purpose |
-|------|---------|---------|
-| **ask** | `ask_{provider}` | Send a prompt to the provider's CLI |
+| Tool     | Pattern           | Purpose                                   |
+| -------- | ----------------- | ----------------------------------------- |
+| **ask**  | `ask_{provider}`  | Send a prompt to the provider's CLI       |
 | **ping** | `ping_{provider}` | Check if the provider binary is reachable |
-| **help** | `help_{provider}` | Show the provider's CLI help text |
+| **help** | `help_{provider}` | Show the provider's CLI help text         |
 
 Plus one meta tool: `list_providers` — returns all configured providers with their availability status.
 
@@ -29,13 +29,13 @@ Plus one meta tool: `list_providers` — returns all configured providers with t
 
 Five providers ship out of the box:
 
-| Provider | CLI | Default Model | Output |
-|----------|-----|---------------|--------|
-| claude | `claude` | claude-opus-4-6 | json |
-| codex | `codex` | gpt-5.3-codex | json |
-| copilot | `copilot` | gpt-5 | text |
-| gemini | `gemini` | gemini-2.5-pro | json |
-| opencode | `opencode` | anthropic/claude-sonnet-4-5 | json |
+| Provider | CLI        | Default Model               | Output |
+| -------- | ---------- | --------------------------- | ------ |
+| claude   | `claude`   | claude-opus-4-6             | json   |
+| codex    | `codex`    | gpt-5.3-codex               | json   |
+| copilot  | `copilot`  | gpt-5                       | text   |
+| gemini   | `gemini`   | gemini-2.5-pro              | json   |
+| opencode | `opencode` | anthropic/claude-sonnet-4-5 | json   |
 
 Providers are auto-detected at startup — if a CLI binary isn't found in PATH, the provider is marked unavailable but doesn't prevent the server from starting.
 
@@ -104,13 +104,13 @@ Edit `src/config/providers.json` (or your user-local copy):
           "autoMode": ["--auto"],
           "sandbox": {
             "flag": "--sandbox",
-            "values": ["safe", "unsafe"]
-          }
-        }
-      }
+            "values": ["safe", "unsafe"],
+          },
+        },
+      },
     },
-    "input": { "method": "positional" }
-  }
+    "input": { "method": "positional" },
+  },
 }
 ```
 
@@ -152,20 +152,6 @@ src/
   utils/                # Pure utility functions (platform, validation)
   types/                # Ambient .d.ts declarations
 ```
-
-## Status
-
-Core MVP is complete:
-
-- [x] Config loading with multi-source resolution (CLI flag, env, user-local, bundled)
-- [x] Zod validation of providers.json at startup
-- [x] Dynamic tool registration (ask/ping/help per provider + list_providers)
-- [x] Spawn execution with concurrency control (max 5 concurrent)
-- [x] Output size limiting (10 MB)
-- [x] Cross-platform binary resolution and process management
-- [x] 5 providers configured (claude, codex, copilot, gemini, opencode)
-
-Up next: sessions + streaming, extended providers, review/sandbox commands, npm publish.
 
 ## License
 

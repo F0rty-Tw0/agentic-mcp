@@ -9,7 +9,10 @@ declare module 'which' {
     nothrow?: boolean;
   };
 
-  function which(cmd: string, options?: WhichOptions & { all?: false; nothrow?: false }): Promise<string>;
+  function which(
+    cmd: string,
+    options?: WhichOptions & { all?: false; nothrow?: false },
+  ): Promise<string>;
   function which(cmd: string, options: WhichOptions & { all: true }): Promise<string[]>;
   function which(cmd: string, options: WhichOptions & { nothrow: true }): Promise<string | null>;
 

@@ -22,6 +22,7 @@ Adding a CLI requires zero code changes — just a JSON config entry in `provide
 ### Report a Bug
 
 Open an issue with:
+
 - What you expected vs what happened
 - Steps to reproduce
 - Environment (OS, Node.js version, CLI provider)
