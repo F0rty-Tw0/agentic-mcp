@@ -1,11 +1,9 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
+import { stripVTControlCharacters } from 'node:util';
 
 import which from 'which';
-
-// eslint-disable-next-line no-control-regex -- ANSI escape detection requires control characters
-const ANSI_REGEX = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
 const KILL_GRACE_MS = 5_000;
 
@@ -21,7 +19,7 @@ const SAFE_ENV_KEYS = [
   'COMSPEC',
 ] as const;
 
-export async function killProcess(pid: number): Promise<boolean> {
+export const killProcess = async (pid: number): Promise<boolean> => {
   if (process.platform === 'win32') {
     return new Promise<boolean>((resolve) => {
       execFile('taskkill', ['/pid', String(pid), '/t', '/f'], (error) => {
@@ -49,11 +47,9 @@ export async function killProcess(pid: number): Promise<boolean> {
 
     timer.unref();
   });
-}
+};
 
-export function buildMinimalEnv(
-  providerEnv: Record<string, string | null>,
-): Record<string, string> {
+export const buildMinimalEnv = (providerEnv: Record<string, string | null>): Record<string, string> => {
   const env: Record<string, string> = {};
 
   for (const key of SAFE_ENV_KEYS) {
@@ -69,16 +65,14 @@ export function buildMinimalEnv(
   }
 
   return env;
-}
+};
 
-export async function resolveCliBinary(command: string): Promise<string | null> {
+export const resolveCliBinary = async (command: string): Promise<string | null> => {
   return which(command, { nothrow: true });
-}
+};
 
-export function stripAnsi(input: string): string {
-  return input.replace(ANSI_REGEX, '');
-}
+export const stripAnsi = (input: string): string => stripVTControlCharacters(input);
 
-export function normalizePath(inputPath: string): string {
+export const normalizePath = (inputPath: string): string => {
   return path.resolve(inputPath).replace(/\\/g, '/');
-}
+};
