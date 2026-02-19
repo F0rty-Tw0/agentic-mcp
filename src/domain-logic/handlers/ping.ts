@@ -13,7 +13,7 @@ export type PingHandlerContext = {
   providerName: string;
 };
 
-export async function handlePing(context: PingHandlerContext): Promise<CallToolResult> {
+export const handlePing = async (context: PingHandlerContext): Promise<CallToolResult> => {
   try {
     if (context.config.versionCheck) {
       const env = buildMinimalEnv(context.config.env);
@@ -56,4 +56,4 @@ export async function handlePing(context: PingHandlerContext): Promise<CallToolR
   } catch (error) {
     return toMcpError(error);
   }
-}
+};

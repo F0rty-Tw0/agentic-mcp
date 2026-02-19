@@ -20,7 +20,7 @@ export type AskHandlerContext = {
   providerName: string;
 };
 
-function validateAndResolveArgs(args: Record<string, unknown>): Record<string, unknown> {
+const validateAndResolveArgs = (args: Record<string, unknown>): Record<string, unknown> => {
   validatePromptSize(args.prompt as string);
 
   const model = args.model as string | undefined;
@@ -35,8 +35,7 @@ function validateAndResolveArgs(args: Record<string, unknown>): Record<string, u
   const resolvedWorkingDir = workingDir ? validateWorkingDirectory(workingDir) : undefined;
 
   const files = args.files as string[] | undefined;
-  const resolvedFiles =
-    files && resolvedWorkingDir ? validateFiles(files, resolvedWorkingDir) : undefined;
+  const resolvedFiles = files && resolvedWorkingDir ? validateFiles(files, resolvedWorkingDir) : undefined;
 
   const resolved = { ...args };
 
@@ -45,12 +44,9 @@ function validateAndResolveArgs(args: Record<string, unknown>): Record<string, u
   if (resolvedFiles) resolved.files = resolvedFiles;
 
   return resolved;
-}
+};
 
-export async function handleAsk(
-  context: AskHandlerContext,
-  args: Record<string, unknown>,
-): Promise<CallToolResult> {
+export const handleAsk = async (context: AskHandlerContext, args: Record<string, unknown>): Promise<CallToolResult> => {
   try {
     const resolved = validateAndResolveArgs(args);
 
@@ -83,4 +79,4 @@ export async function handleAsk(
   } catch (error) {
     return toMcpError(error);
   }
-}
+};

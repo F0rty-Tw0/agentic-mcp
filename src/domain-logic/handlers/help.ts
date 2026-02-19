@@ -13,7 +13,7 @@ export type HelpHandlerContext = {
   providerName: string;
 };
 
-export async function handleHelp(context: HelpHandlerContext): Promise<CallToolResult> {
+export const handleHelp = async (context: HelpHandlerContext): Promise<CallToolResult> => {
   try {
     const env = buildMinimalEnv(context.config.env);
     const result = await executeCommand({
@@ -30,4 +30,4 @@ export async function handleHelp(context: HelpHandlerContext): Promise<CallToolR
   } catch (error) {
     return toMcpError(error);
   }
-}
+};

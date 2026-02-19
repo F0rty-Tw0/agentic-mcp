@@ -8,15 +8,15 @@ export type ResolvedProvider = {
   binaryPath: string | null;
 };
 
-function providerStatus(p: ResolvedProvider): string {
+const providerStatus = (p: ResolvedProvider): string => {
   if (p.available) return 'available';
 
   if (p.enabled) return 'not found';
 
   return 'disabled';
-}
+};
 
-export function handleListProviders(providers: ResolvedProvider[]): CallToolResult {
+export const handleListProviders = (providers: ResolvedProvider[]): CallToolResult => {
   const lines = providers.map((p) => `- ${p.name}: ${p.description} [${providerStatus(p)}]`);
 
   return {
@@ -27,4 +27,4 @@ export function handleListProviders(providers: ResolvedProvider[]): CallToolResu
       },
     ],
   };
-}
+};
