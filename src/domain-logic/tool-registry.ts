@@ -1,7 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProviderEntry } from '../common/provider-config.types.ts';
+import type { ResolvedProviderEntry } from '../common/provider-config.type.ts';
+import type { AskToolArgs } from '../common/tool-args.types.ts';
 import { handleAsk } from './handlers/ask.ts';
 import { handleHelp } from './handlers/help.ts';
 import { handleListProviders } from './handlers/meta.ts';
@@ -28,7 +29,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       annotations: askDef.annotations,
     },
     async (args: Record<string, unknown>): Promise<CallToolResult> =>
-      handleAsk({ binaryPath, config, providerName: name }, args),
+      handleAsk({ binaryPath, config, name }, args as AskToolArgs),
   );
 
   // ping_<provider>
@@ -40,7 +41,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       description: pingDef.description,
       annotations: pingDef.annotations,
     },
-    async (): Promise<CallToolResult> => handlePing({ binaryPath, config, providerName: name }),
+    async (): Promise<CallToolResult> => handlePing({ binaryPath, config, name }),
   );
 
   // help_<provider>
@@ -52,7 +53,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       description: helpDef.description,
       annotations: helpDef.annotations,
     },
-    async (): Promise<CallToolResult> => handleHelp({ binaryPath, config, providerName: name }),
+    async (): Promise<CallToolResult> => handleHelp({ binaryPath, config, name }),
   );
 };
 

@@ -3,16 +3,16 @@ import crossSpawn from 'cross-spawn';
 import { CommandExecutionError } from '../common/errors/command-execution.error.ts';
 import { killProcess } from '../utils/platform.ts';
 
-export type ExecuteCommandOptions = {
+type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
-  args: string[];
+  args: readonly string[];
   env: Record<string, string>;
   timeoutMs: number;
   stdin?: string;
   cwd?: string;
-};
+}>;
 
-export type ExecutionResult = {
+type ExecutionResult = Readonly<{
   stdout: string;
   stderr: string;
   exitCode: number | null;
@@ -22,7 +22,12 @@ export type ExecutionResult = {
   stdoutBytes: number;
   stderrBytes: number;
   executionTimeMs: number;
-};
+}>;
+
+type CollectStreamResult = Readonly<{
+  bytes: number;
+  truncated: boolean;
+}>;
 
 const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
 
@@ -54,11 +59,7 @@ const releaseSlot = (): void => {
   }
 };
 
-const collectStream = (
-  chunks: Buffer[],
-  chunk: Buffer,
-  currentBytes: number,
-): { bytes: number; truncated: boolean } => {
+const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): CollectStreamResult => {
   const newBytes = currentBytes + chunk.length;
 
   if (newBytes <= MAX_OUTPUT_BYTES) {
@@ -71,10 +72,7 @@ const collectStream = (
 };
 
 // eslint-disable-next-line max-lines-per-function -- spawn logic is inherently monolithic
-const spawnChild = async (
-  options: ExecuteCommandOptions,
-  startTime: number,
-): Promise<ExecutionResult> => {
+const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
   const { binaryPath, args, env, timeoutMs, stdin, cwd } = options;
 
   // eslint-disable-next-line max-lines-per-function -- spawn lifecycle is a single unit
@@ -129,6 +127,7 @@ const spawnChild = async (
 
     child.on('close', (exitCode, signal) => {
       clearTimeout(timer);
+
       resolve({
         stdout: Buffer.concat(stdoutChunks).toString('utf-8'),
         stderr: Buffer.concat(stderrChunks).toString('utf-8'),

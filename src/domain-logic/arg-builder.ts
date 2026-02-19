@@ -1,4 +1,4 @@
-import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.types.ts';
+import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
 
 const FLAG_MODEL = 'model';
 const FLAG_WORKING_DIR = 'workingDir';
@@ -42,11 +42,7 @@ const resolveFlagToArgs = (flagValue: FlagValue, argValue?: string): string[] =>
   return leveledFlag;
 };
 
-const appendModelFlag = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  model: string | undefined,
-): void => {
+const appendModelFlag = (cliArgs: string[], askCmd: CommandDef, model: string | undefined): void => {
   const flag = getFlag(askCmd, FLAG_MODEL);
 
   if (model && flag != null) {
@@ -54,11 +50,7 @@ const appendModelFlag = (
   }
 };
 
-const appendWorkingDirFlag = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  workingDir: string | undefined,
-): void => {
+const appendWorkingDirFlag = (cliArgs: string[], askCmd: CommandDef, workingDir: string | undefined): void => {
   const flag = getFlag(askCmd, FLAG_WORKING_DIR);
 
   if (workingDir && flag != null) {
@@ -66,11 +58,7 @@ const appendWorkingDirFlag = (
   }
 };
 
-const appendFileFlags = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  files: string[] | undefined,
-): void => {
+const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: string[] | undefined): void => {
   const flag = getFlag(askCmd, FLAG_FILE);
 
   if (files && files.length > 0 && flag != null && typeof flag === 'string') {
@@ -80,11 +68,7 @@ const appendFileFlags = (
   }
 };
 
-const appendAutoModeFlag = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  autoMode: boolean | undefined,
-): void => {
+const appendAutoModeFlag = (cliArgs: string[], askCmd: CommandDef, autoMode: boolean | undefined): void => {
   const flag = getFlag(askCmd, FLAG_AUTO_MODE);
 
   if (autoMode === true && flag != null) {
@@ -92,11 +76,7 @@ const appendAutoModeFlag = (
   }
 };
 
-const appendSandboxFlag = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  sandbox: string | boolean | undefined,
-): void => {
+const appendSandboxFlag = (cliArgs: string[], askCmd: CommandDef, sandbox: string | boolean | undefined): void => {
   const flag = getFlag(askCmd, FLAG_SANDBOX);
 
   if (sandbox !== undefined && flag != null) {
@@ -106,11 +86,7 @@ const appendSandboxFlag = (
   }
 };
 
-const appendOptionalFlags = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  args: Record<string, unknown>,
-): void => {
+const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: Record<string, unknown>): void => {
   appendModelFlag(cliArgs, askCmd, args.model as string | undefined);
   appendWorkingDirFlag(cliArgs, askCmd, args.working_directory as string | undefined);
   appendFileFlags(cliArgs, askCmd, args.files as string[] | undefined);

@@ -1,20 +1,20 @@
 import { z } from 'zod';
 
-import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.types.ts';
+import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
 
-type ToolAnnotations = {
+type ToolAnnotations = Readonly<{
   readOnlyHint?: boolean;
   destructiveHint?: boolean;
   idempotentHint?: boolean;
   openWorldHint?: boolean;
-};
+}>;
 
-type ToolDefinition = {
+type ToolDefinition = Readonly<{
   name: string;
   description: string;
   inputSchema: Record<string, z.ZodType>;
   annotations: ToolAnnotations;
-};
+}>;
 
 // Well-known flag keys in commands.ask.flags
 const FLAG_MODEL = 'model';
@@ -41,10 +41,7 @@ const isLeveledFlag = (value: FlagValue): value is { flag: string; values: strin
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const buildAskInputSchema = (
-  config: ProviderConfig,
-  askCmd: CommandDef,
-): Record<string, z.ZodType> => {
+const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record<string, z.ZodType> => {
   const schema: Record<string, z.ZodType> = {
     prompt: z.string().describe('The prompt to send to the AI agent'),
   };
@@ -66,10 +63,7 @@ const buildAskInputSchema = (
   }
 
   if (getFlag(askCmd, FLAG_AUTO_MODE) != null) {
-    schema.auto_mode = z
-      .boolean()
-      .optional()
-      .describe('Enable autonomous mode (skips confirmation prompts)');
+    schema.auto_mode = z.boolean().optional().describe('Enable autonomous mode (skips confirmation prompts)');
   }
 
   const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);
@@ -86,10 +80,7 @@ const buildAskInputSchema = (
   return schema;
 };
 
-export const buildAskToolDefinition = (
-  providerName: string,
-  config: ProviderConfig,
-): ToolDefinition => {
+export const buildAskToolDefinition = (providerName: string, config: ProviderConfig): ToolDefinition => {
   const askCmd = getAskCommand(config);
 
   return {
