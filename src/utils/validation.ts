@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { ValidationError } from '../common/errors/validation-error.ts';
-import { MAX_CONTEXT_BYTES, MAX_FILES, MAX_PROMPT_BYTES } from '../common/execution-limits.const.ts';
+import { MAX_FILES, MAX_PROMPT_BYTES } from '../common/execution-limits.const.ts';
 import { MODEL_REGEX, SESSION_ID_REGEX } from '../common/validation-patterns.const.ts';
 
 export const validateModel = (model: string): void => {
@@ -21,14 +21,6 @@ export const validatePromptSize = (prompt: string): void => {
 
   if (bytes > MAX_PROMPT_BYTES) {
     throw new ValidationError(`Prompt exceeds maximum size: ${bytes} bytes (limit: ${MAX_PROMPT_BYTES})`);
-  }
-};
-
-export const validateContextSize = (context: string): void => {
-  const bytes = Buffer.byteLength(context, 'utf-8');
-
-  if (bytes > MAX_CONTEXT_BYTES) {
-    throw new ValidationError(`Context exceeds maximum size: ${bytes} bytes (limit: ${MAX_CONTEXT_BYTES})`);
   }
 };
 

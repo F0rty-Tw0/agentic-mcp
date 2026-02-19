@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ProviderConfig } from '../common/provider-config.types.ts';
+import type { ResolvedProviderEntry } from '../common/provider-config.types.ts';
 import { handleAsk } from './handlers/ask.ts';
 import { handleHelp } from './handlers/help.ts';
 import { handleListProviders } from './handlers/meta.ts';
@@ -13,12 +13,6 @@ import {
   buildListProvidersDefinition,
   buildPingToolDefinition,
 } from './tool-builder.ts';
-
-export type ResolvedProviderEntry = {
-  name: string;
-  binaryPath: string;
-  config: ProviderConfig;
-};
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, binaryPath, config } = provider;

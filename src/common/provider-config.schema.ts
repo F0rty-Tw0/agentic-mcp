@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
-export type OutputFormat = 'json' | 'stream-json' | 'text';
-
-export const leveledFlagSchema = z.object({
+const leveledFlagSchema = z.object({
   flag: z.string(),
   values: z.array(z.string()).min(1),
 });
@@ -20,13 +18,13 @@ export const commandDefSchema = z.object({
   flags: z.record(z.string(), flagValueSchema).optional(),
 });
 
-export const commandsSchema = z
+const commandsSchema = z
   .record(z.string(), commandDefSchema)
   .refine((commands) => 'ask' in commands, {
     message: 'commands must include an "ask" command definition',
   });
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),
 });
 

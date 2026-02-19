@@ -14,7 +14,7 @@ import {
 import { buildArgArray } from '../arg-builder.ts';
 import { executeCommand } from '../command-executor.ts';
 
-export type AskHandlerContext = {
+type AskHandlerContext = {
   binaryPath: string;
   config: ProviderConfig;
   providerName: string;

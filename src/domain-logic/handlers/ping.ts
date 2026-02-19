@@ -7,7 +7,7 @@ import { executeCommand } from '../command-executor.ts';
 
 const PING_TIMEOUT_MS = 10_000;
 
-export type PingHandlerContext = {
+type PingHandlerContext = {
   binaryPath: string;
   config: ProviderConfig;
   providerName: string;

@@ -1,9 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProvidersFile } from './common/provider-config.types.ts';
+import type { ProvidersFile, ResolvedProviderEntry } from './common/provider-config.types.ts';
 import type { ResolvedProvider } from './domain-logic/handlers/meta.ts';
-import type { ResolvedProviderEntry } from './domain-logic/tool-registry.ts';
 import { createServer } from './server.ts';
 import type { AsyncViFn, SyncViFn } from './test-utils/vi-fn.types.ts';
 

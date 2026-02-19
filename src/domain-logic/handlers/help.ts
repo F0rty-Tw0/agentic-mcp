@@ -7,7 +7,7 @@ import { executeCommand } from '../command-executor.ts';
 
 const HELP_TIMEOUT_MS = 10_000;
 
-export type HelpHandlerContext = {
+type HelpHandlerContext = {
   binaryPath: string;
   config: ProviderConfig;
   providerName: string;

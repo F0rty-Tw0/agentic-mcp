@@ -14,3 +14,9 @@ export type CommandDef = z.infer<typeof commandDefSchema>;
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
 
 export type ProvidersFile = z.infer<typeof providersFileSchema>;
+
+export type ResolvedProviderEntry = {
+  name: string;
+  binaryPath: string;
+  config: ProviderConfig;
+};

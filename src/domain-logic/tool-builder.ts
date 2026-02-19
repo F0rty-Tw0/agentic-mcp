@@ -2,14 +2,14 @@ import { z } from 'zod';
 
 import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.types.ts';
 
-export type ToolAnnotations = {
+type ToolAnnotations = {
   readOnlyHint?: boolean;
   destructiveHint?: boolean;
   idempotentHint?: boolean;
   openWorldHint?: boolean;
 };
 
-export type ToolDefinition = {
+type ToolDefinition = {
   name: string;
   description: string;
   inputSchema: Record<string, z.ZodType>;

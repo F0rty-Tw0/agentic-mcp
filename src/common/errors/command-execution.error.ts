@@ -1,6 +1,6 @@
 import type { McpErrorResponse } from './mcp-error-response.ts';
 
-export type CommandExecutionErrorDetails = {
+type CommandExecutionErrorDetails = {
   exitCode?: number | null;
   signal?: string | null;
   timedOut?: boolean;
