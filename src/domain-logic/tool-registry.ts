@@ -28,8 +28,11 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       inputSchema: askDef.inputSchema,
       annotations: askDef.annotations,
     },
-    async (args: Record<string, unknown>): Promise<CallToolResult> =>
-      handleAsk({ binaryPath, config, name }, args as AskToolArgs),
+    async (args: AskToolArgs): Promise<CallToolResult> => {
+      const context: ResolvedProviderEntry = { binaryPath, config, name };
+
+      return handleAsk(context, args);
+    },
   );
 
   // ping_<provider>

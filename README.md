@@ -138,21 +138,6 @@ pnpm run lint:fix           # ESLint + auto-fix
 - All inputs validated with Zod at call time
 - Dangerous auto-mode flags trigger startup warnings
 
-## Architecture
-
-```
-src/
-  index.ts              # Entry point (shebang + stdio transport)
-  server.ts             # MCP server setup, provider resolution, tool registration
-  common/               # Shared types, constants, schemas, errors
-    errors/             # Custom error classes + MCP error mapping
-  config/               # Config loading, validation, provider definitions
-  domain-logic/         # Core business logic (tool building, spawn execution)
-    handlers/           # Request handlers (ask, ping, help, meta)
-  utils/                # Pure utility functions (platform, validation)
-  types/                # Ambient .d.ts declarations
-```
-
 ## License
 
 [MIT](LICENSE)
