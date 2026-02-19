@@ -34,6 +34,7 @@
     "vitest": "catalog:dev",
     "eslint": "catalog:dev",
     "eslint-config-prettier": "catalog:dev",
+    "prettier": "catalog:dev",
     "esbuild": "catalog:dev",
     "lint-suite": "catalog:dev"
   },
