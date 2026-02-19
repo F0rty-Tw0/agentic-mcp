@@ -6,16 +6,14 @@ import { registerAllTools } from './domain-logic/tool-registry.ts';
 import type { ResolvedProviderEntry } from './domain-logic/tool-registry.ts';
 import { resolveCliBinary } from './utils/platform.ts';
 
-export async function createServer(options?: { configPath?: string }): Promise<McpServer> {
+export const createServer = async (options?: { configPath?: string }): Promise<McpServer> => {
   const config = await loadConfig(options);
 
   const resolvedProviders: ResolvedProviderEntry[] = [];
   const allProviders: ResolvedProvider[] = [];
 
   for (const [name, providerConfig] of Object.entries(config.providers)) {
-    const binaryPath = providerConfig.enabled
-      ? await resolveCliBinary(providerConfig.command)
-      : null;
+    const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : null;
 
     allProviders.push({
       name,
@@ -42,4 +40,4 @@ export async function createServer(options?: { configPath?: string }): Promise<M
   registerAllTools(server, resolvedProviders, allProviders);
 
   return server;
-}
+};
