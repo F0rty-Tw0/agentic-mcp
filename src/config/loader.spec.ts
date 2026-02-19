@@ -6,7 +6,7 @@ import process from 'node:process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadConfig } from './loader.ts';
-import type { ProvidersFile } from '../common/provider-config.types.ts';
+import type { ProvidersFile } from '../common/provider-config.schema.ts';
 
 const tempDirs: string[] = [];
 
@@ -49,11 +49,7 @@ const buildConfig = (
   },
 });
 
-const writeConfig = async (
-  dir: string,
-  fileName: string,
-  config: ProvidersFile,
-): Promise<string> => {
+const writeConfig = async (dir: string, fileName: string, config: ProvidersFile): Promise<string> => {
   const filePath = path.join(dir, fileName);
   const content = JSON.stringify(config, null, 2);
 
@@ -153,9 +149,7 @@ describe('loadConfig', () => {
     await loadConfig({ configPath });
 
     expect(stderrSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"',
-      ),
+      expect.stringContaining('Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"'),
     );
   });
 });

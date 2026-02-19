@@ -5,7 +5,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { providersFileSchema } from '../common/provider-config.schema.ts';
-import type { ProvidersFile } from '../common/provider-config.types.ts';
+import type { ProvidersFile } from '../common/provider-config.schema.ts';
 
 const DANGEROUS_FLAGS = [
   '--dangerously-skip-permissions',
@@ -18,13 +18,11 @@ const DANGEROUS_FLAGS = [
 ] as const;
 
 const userLocalConfigPath = (): string | null => {
-  if (process.platform === 'win32') {
-    const appData = process.env.APPDATA;
+  if (process.platform !== 'win32') return path.join(os.homedir(), '.config', 'agentic-mcp', 'providers.json');
 
-    return appData ? path.join(appData, 'agentic-mcp', 'providers.json') : null;
-  }
+  const appData = process.env.APPDATA;
 
-  return path.join(os.homedir(), '.config', 'agentic-mcp', 'providers.json');
+  return appData ? path.join(appData, 'agentic-mcp', 'providers.json') : null;
 };
 
 const resolveConfigPath = async (explicit?: string): Promise<string> => {
@@ -64,9 +62,7 @@ const warnDangerousFlags = (config: ProvidersFile): void => {
 
     for (const flag of autoMode) {
       if ((DANGEROUS_FLAGS as readonly string[]).includes(flag)) {
-        process.stderr.write(
-          `Warning: provider "${name}" uses dangerous auto-mode flag "${flag}"\n`,
-        );
+        process.stderr.write(`Warning: provider "${name}" uses dangerous auto-mode flag "${flag}"\n`);
       }
     }
   }
