@@ -199,6 +199,15 @@ Prefer functions over classes throughout the codebase:
 - **Exceptions: error classes** — custom error classes (`extends Error`) are the one accepted use of classes. They need `instanceof` checks and proper stack traces, which plain objects can't provide.
 - **No `this` in domain logic** — if you're reaching for `this`, restructure as a function that takes its dependencies as arguments.
 
+### Readonly by Default
+
+Mark types as immutable unless mutation is required:
+
+- **Wrap type aliases with `Readonly<>`** — all `type` definitions for objects that are not mutated after creation should use `Readonly<{...}>`. This prevents accidental property reassignment.
+- **Use `readonly` for array fields** — array properties that are not mutated should use `readonly string[]` (or `readonly T[]`) instead of `string[]`. This prevents accidental `.push()`, `.splice()`, etc.
+- **Zod-inferred types are exempt** — types derived from `z.infer<>` are left as-is since making them deeply readonly requires `DeepReadonly` utility types. These types are treated as read-only by convention after parsing.
+- **Mutable locals are fine** — local variables that are built incrementally (e.g. `const arr: string[] = []; arr.push(...)`) don't need `readonly`. The constraint applies to type definitions and function signatures, not to local construction patterns.
+
 ### Linter Validation
 
 Run the linter continuously during development. Every change must pass before it is considered complete.
