@@ -6,7 +6,7 @@ const FLAG_FILE = 'file';
 const FLAG_AUTO_MODE = 'autoMode';
 const FLAG_SANDBOX = 'sandbox';
 
-function getAskCommand(config: ProviderConfig): CommandDef {
+const getAskCommand = (config: ProviderConfig): CommandDef => {
   const cmd = config.commands.ask;
 
   if (!cmd) {
@@ -14,11 +14,11 @@ function getAskCommand(config: ProviderConfig): CommandDef {
   }
 
   return cmd;
-}
+};
 
-function getFlag(cmd: CommandDef, key: string): FlagValue | undefined {
+const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
   return cmd.flags?.[key];
-}
+};
 
 /**
  * Resolves a FlagValue into CLI arguments.
@@ -28,7 +28,7 @@ function getFlag(cmd: CommandDef, key: string): FlagValue | undefined {
  * - LeveledFlag (e.g. { flag: "--sandbox", values: [...] }): [flag, value]
  * - null: []
  */
-function resolveFlagToArgs(flagValue: FlagValue, argValue?: string): string[] {
+const resolveFlagToArgs = (flagValue: FlagValue, argValue?: string): string[] => {
   if (flagValue === null) return [];
 
   if (typeof flagValue === 'string') {
@@ -41,14 +41,10 @@ function resolveFlagToArgs(flagValue: FlagValue, argValue?: string): string[] {
 
   // LeveledFlag
   return argValue !== undefined ? [flagValue.flag, argValue] : [flagValue.flag];
-}
+};
 
-// eslint-disable-next-line complexity -- flat sequence of independent flag checks
-function appendOptionalFlags(
-  cliArgs: string[],
-  askCmd: CommandDef,
-  args: Record<string, unknown>,
-): void {
+/* eslint-disable complexity -- flat sequence of independent flag checks */
+const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: Record<string, unknown>): void => {
   const model = args.model as string | undefined;
   const workingDir = args.working_directory as string | undefined;
   const files = args.files as string[] | undefined;
@@ -88,12 +84,13 @@ function appendOptionalFlags(
 
     cliArgs.push(...resolveFlagToArgs(sandboxFlag, sandboxValue));
   }
-}
+};
+/* eslint-enable complexity */
 
-export function buildArgArray(
+export const buildArgArray = (
   config: ProviderConfig,
   args: Record<string, unknown>,
-): { args: string[]; stdinInput?: string } {
+): { args: string[]; stdinInput?: string } => {
   const cliArgs: string[] = [];
   let stdinInput: string | undefined;
 
@@ -121,4 +118,4 @@ export function buildArgArray(
   }
 
   return { args: cliArgs, stdinInput };
-}
+};

@@ -20,7 +20,7 @@ export type ResolvedProviderEntry = {
   config: ProviderConfig;
 };
 
-function registerProviderTools(server: McpServer, provider: ResolvedProviderEntry): void {
+const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, binaryPath, config } = provider;
 
   // ask_<provider>
@@ -60,13 +60,13 @@ function registerProviderTools(server: McpServer, provider: ResolvedProviderEntr
     },
     async (): Promise<CallToolResult> => handleHelp({ binaryPath, config, providerName: name }),
   );
-}
+};
 
-export function registerAllTools(
+export const registerAllTools = (
   server: McpServer,
   resolvedProviders: ResolvedProviderEntry[],
   allProviders: ResolvedProvider[],
-): void {
+): void => {
   for (const provider of resolvedProviders) {
     registerProviderTools(server, provider);
   }
@@ -82,4 +82,4 @@ export function registerAllTools(
     },
     (): CallToolResult => handleListProviders(allProviders),
   );
-}
+};

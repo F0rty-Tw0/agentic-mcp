@@ -23,7 +23,7 @@ const FLAG_FILE = 'file';
 const FLAG_AUTO_MODE = 'autoMode';
 const FLAG_SANDBOX = 'sandbox';
 
-function getAskCommand(config: ProviderConfig): CommandDef {
+const getAskCommand = (config: ProviderConfig): CommandDef => {
   const cmd = config.commands.ask;
 
   if (!cmd) {
@@ -31,20 +31,17 @@ function getAskCommand(config: ProviderConfig): CommandDef {
   }
 
   return cmd;
-}
+};
 
-function getFlag(cmd: CommandDef, key: string): FlagValue | undefined {
+const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
   return cmd.flags?.[key];
-}
+};
 
-function isLeveledFlag(value: FlagValue): value is { flag: string; values: string[] } {
+const isLeveledFlag = (value: FlagValue): value is { flag: string; values: string[] } => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+};
 
-function buildAskInputSchema(
-  config: ProviderConfig,
-  askCmd: CommandDef,
-): Record<string, z.ZodType> {
+const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record<string, z.ZodType> => {
   const schema: Record<string, z.ZodType> = {
     prompt: z.string().describe('The prompt to send to the AI agent'),
   };
@@ -66,10 +63,7 @@ function buildAskInputSchema(
   }
 
   if (getFlag(askCmd, FLAG_AUTO_MODE) != null) {
-    schema.auto_mode = z
-      .boolean()
-      .optional()
-      .describe('Enable autonomous mode (skips confirmation prompts)');
+    schema.auto_mode = z.boolean().optional().describe('Enable autonomous mode (skips confirmation prompts)');
   }
 
   const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);
@@ -84,12 +78,9 @@ function buildAskInputSchema(
   }
 
   return schema;
-}
+};
 
-export function buildAskToolDefinition(
-  providerName: string,
-  config: ProviderConfig,
-): ToolDefinition {
+export const buildAskToolDefinition = (providerName: string, config: ProviderConfig): ToolDefinition => {
   const askCmd = getAskCommand(config);
 
   return {
@@ -98,31 +89,31 @@ export function buildAskToolDefinition(
     inputSchema: buildAskInputSchema(config, askCmd),
     annotations: { destructiveHint: true, openWorldHint: true },
   };
-}
+};
 
-export function buildPingToolDefinition(providerName: string): ToolDefinition {
+export const buildPingToolDefinition = (providerName: string): ToolDefinition => {
   return {
     name: `ping_${providerName}`,
     description: `Check if the ${providerName} CLI is available and responsive`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
-}
+};
 
-export function buildHelpToolDefinition(providerName: string): ToolDefinition {
+export const buildHelpToolDefinition = (providerName: string): ToolDefinition => {
   return {
     name: `help_${providerName}`,
     description: `Show help information for the ${providerName} CLI`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
-}
+};
 
-export function buildListProvidersDefinition(): ToolDefinition {
+export const buildListProvidersDefinition = (): ToolDefinition => {
   return {
     name: 'list_providers',
     description: 'List all configured providers and their availability status',
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
-}
+};
