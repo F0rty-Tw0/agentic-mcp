@@ -16,7 +16,9 @@ export const validateSessionId = (sessionId: string): void => {
   }
 };
 
-export const validatePromptSize = (prompt: string): void => {
+export const validatePromptSize = (prompt?: string): void => {
+  if (!prompt) throw new ValidationError('Prompt is required');
+
   const bytes = Buffer.byteLength(prompt, 'utf-8');
 
   if (bytes > MAX_PROMPT_BYTES) {

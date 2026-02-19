@@ -1,4 +1,5 @@
 import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
+import type { AskToolArgs } from '../common/tool-args.types.ts';
 
 const FLAG_MODEL = 'model';
 const FLAG_WORKING_DIR = 'workingDir';
@@ -6,14 +7,12 @@ const FLAG_FILE = 'file';
 const FLAG_AUTO_MODE = 'autoMode';
 const FLAG_SANDBOX = 'sandbox';
 
-const getAskCommand = (config: ProviderConfig): CommandDef => {
-  const cmd = config.commands.ask;
+const getAskCommand = ({ commands }: ProviderConfig): CommandDef => {
+  const { ask } = commands;
 
-  if (!cmd) {
-    throw new Error('Provider config missing required "ask" command');
-  }
+  if (!ask) throw new Error('Provider config missing required "ask" command');
 
-  return cmd;
+  return ask;
 };
 
 const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
@@ -28,16 +27,16 @@ const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
  * - LeveledFlag (e.g. { flag: "--sandbox", values: [...] }): [flag, value]
  * - null: []
  */
-const resolveFlagToArgs = (flagValue: FlagValue, argValue?: string): string[] => {
-  if (flagValue === null) return [];
+const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
+  if (!flagValue) return [];
 
   if (typeof flagValue === 'string') {
-    return argValue !== undefined ? [flagValue, argValue] : [flagValue];
+    return argValue ? [flagValue, argValue] : [flagValue];
   }
 
   if (Array.isArray(flagValue)) return [...flagValue];
 
-  const leveledFlag = argValue !== undefined ? [flagValue.flag, argValue] : [flagValue.flag];
+  const leveledFlag = argValue ? [flagValue.flag, argValue] : [flagValue.flag];
 
   return leveledFlag;
 };
@@ -58,7 +57,7 @@ const appendWorkingDirFlag = (cliArgs: string[], askCmd: CommandDef, workingDir:
   }
 };
 
-const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: string[] | undefined): void => {
+const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: readonly string[] | undefined): void => {
   const flag = getFlag(askCmd, FLAG_FILE);
 
   if (files && files.length > 0 && flag != null && typeof flag === 'string') {
@@ -79,29 +78,28 @@ const appendAutoModeFlag = (cliArgs: string[], askCmd: CommandDef, autoMode: boo
 const appendSandboxFlag = (cliArgs: string[], askCmd: CommandDef, sandbox: string | boolean | undefined): void => {
   const flag = getFlag(askCmd, FLAG_SANDBOX);
 
-  if (sandbox !== undefined && flag != null) {
-    const sandboxValue = typeof sandbox === 'string' ? sandbox : undefined;
+  if (sandbox === undefined || flag == null) return;
 
-    cliArgs.push(...resolveFlagToArgs(flag, sandboxValue));
-  }
+  const sandboxValue = typeof sandbox === 'string' ? sandbox : undefined;
+
+  cliArgs.push(...resolveFlagToArgs(flag, sandboxValue));
 };
 
-const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: Record<string, unknown>): void => {
-  appendModelFlag(cliArgs, askCmd, args.model as string | undefined);
-  appendWorkingDirFlag(cliArgs, askCmd, args.working_directory as string | undefined);
-  appendFileFlags(cliArgs, askCmd, args.files as string[] | undefined);
-  appendAutoModeFlag(cliArgs, askCmd, args.auto_mode as boolean | undefined);
-  appendSandboxFlag(cliArgs, askCmd, args.sandbox as string | boolean | undefined);
+const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: AskToolArgs): void => {
+  appendModelFlag(cliArgs, askCmd, args.model);
+  appendWorkingDirFlag(cliArgs, askCmd, args.working_directory);
+  appendFileFlags(cliArgs, askCmd, args.files);
+  appendAutoModeFlag(cliArgs, askCmd, args.auto_mode);
+  appendSandboxFlag(cliArgs, askCmd, args.sandbox);
 };
 
-export const buildArgArray = (
-  config: ProviderConfig,
-  args: Record<string, unknown>,
-): { args: string[]; stdinInput?: string } => {
+export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): { args: string[]; stdinInput?: string } => {
   const cliArgs: string[] = [];
   let stdinInput: string | undefined;
 
-  const prompt = args.prompt as string;
+  if (!args.prompt) throw new Error('Missing required "prompt" argument');
+
+  const prompt = args.prompt;
   const askCmd = getAskCommand(config);
 
   // Pre-prompt positional args (subcommand or flag before the prompt value)
