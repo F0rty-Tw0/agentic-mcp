@@ -7,7 +7,7 @@ type ExecFileCallback = (error: NodeJS.ErrnoException | null) => void;
 
 type ExecFileMock = SyncViFn<[file: string, args: string[], callback: ExecFileCallback], void>;
 
-type WhichMock = AsyncViFn<[command: string, options: { nothrow: boolean }], string | null>;
+type WhichMock = AsyncViFn<[command: string, options: { readonly nothrow: boolean }], string | null>;
 
 const mocks = vi.hoisted(() => {
   const execFile = vi.fn<ExecFileMock>();
