@@ -119,17 +119,7 @@
       "description": "Complete configuration for a single CLI provider. Defines the binary to invoke, how to assemble arguments for each command, environment variables, and operational limits. Capabilities are derived from command presence and flag definitions — no separate capability declaration needed.",
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "enabled",
-        "description",
-        "command",
-        "defaultModel",
-        "timeout",
-        "env",
-        "outputFormat",
-        "commands",
-        "input"
-      ],
+      "required": ["enabled", "description", "command", "timeout", "env", "outputFormat", "commands", "input"],
       "properties": {
         "enabled": {
           "type": "boolean",
@@ -142,10 +132,6 @@
         "command": {
           "type": "string",
           "description": "The CLI binary name (not a path). Resolved to an absolute path at startup via PATH lookup using the 'which' package. Examples: \"claude\", \"codex\", \"gemini\"."
-        },
-        "defaultModel": {
-          "type": "string",
-          "description": "The model identifier to use when the caller does not specify one. Passed via the ask command's model flag. Set to empty string if the provider has no model selection. Examples: \"claude-opus-4-6\", \"gpt-5.3-codex\"."
         },
         "timeout": {
           "type": "number",

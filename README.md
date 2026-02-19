@@ -29,13 +29,15 @@ Plus one meta tool: `list_providers` — returns all configured providers with t
 
 Five providers ship out of the box:
 
-| Provider | CLI        | Default Model               | Output |
-| -------- | ---------- | --------------------------- | ------ |
-| claude   | `claude`   | claude-opus-4-6             | json   |
-| codex    | `codex`    | gpt-5.3-codex               | json   |
-| copilot  | `copilot`  | gpt-5                       | text   |
-| gemini   | `gemini`   | gemini-2.5-pro              | json   |
-| opencode | `opencode` | anthropic/claude-sonnet-4-5 | json   |
+| Provider | CLI        | Output |
+| -------- | ---------- | ------ |
+| claude   | `claude`   | json   |
+| codex    | `codex`    | json   |
+| copilot  | `copilot`  | text   |
+| gemini   | `gemini`   | json   |
+| opencode | `opencode` | json   |
+
+When `model` is omitted from an `ask_{provider}` call, agentic-mcp passes no model flag and the provider CLI uses its own default model selection.
 
 Providers are auto-detected at startup — if a CLI binary isn't found in PATH, the provider is marked unavailable but doesn't prevent the server from starting.
 
@@ -91,7 +93,6 @@ Edit `src/config/providers.json` (or your user-local copy):
     "enabled": true,
     "description": "My custom agent",
     "command": "myagent",
-    "defaultModel": "default-v1",
     "timeout": 600000,
     "env": {},
     "outputFormat": "json",

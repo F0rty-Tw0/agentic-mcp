@@ -18,7 +18,6 @@ const validProviderConfig: ProvidersFile['providers'][string] = {
   enabled: true,
   description: 'Example provider config for schema tests',
   command: 'example-cli',
-  defaultModel: 'example-model',
   timeout: 120000,
   env: {},
   outputFormat: 'json',

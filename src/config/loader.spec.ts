@@ -24,7 +24,6 @@ const buildProvider = (
   enabled: true,
   description: 'Loader test provider',
   command: 'test-cli',
-  defaultModel: 'test-model',
   timeout: 120000,
   env: {},
   outputFormat: 'json',

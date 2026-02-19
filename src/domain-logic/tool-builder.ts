@@ -46,8 +46,8 @@ const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record
     prompt: z.string().describe('The prompt to send to the AI agent'),
   };
 
-  if (config.defaultModel && getFlag(askCmd, FLAG_MODEL) != null) {
-    schema.model = z.string().optional().describe(`Model to use (default: ${config.defaultModel})`);
+  if (getFlag(askCmd, FLAG_MODEL) != null) {
+    schema.model = z.string().optional().describe('Model to use (if omitted, provider CLI default is used)');
   }
 
   if (getFlag(askCmd, FLAG_WORKING_DIR) != null) {

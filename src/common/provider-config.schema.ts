@@ -25,7 +25,6 @@ const providerConfigSchema = z.object({
   enabled: z.boolean(),
   description: z.string(),
   command: z.string(),
-  defaultModel: z.string(),
   timeout: z.number().positive(),
   env: z.record(z.string(), z.string().nullable()),
   prerequisites: z.array(z.string()).optional(),

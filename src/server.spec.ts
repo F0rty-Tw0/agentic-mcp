@@ -1,7 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProvidersFile, ResolvedProviderEntry } from './common/provider-config.type.ts';
+import type { ProvidersFile } from './common/provider-config.schema.ts';
+import type { ResolvedProviderEntry } from './common/provider-config.type.ts';
 import type { ResolvedProvider } from './domain-logic/handlers/meta.ts';
 import { createServer } from './server.ts';
 import type { AsyncViFn, SyncViFn } from './test-utils/vi-fn.types.ts';
@@ -44,7 +45,6 @@ const buildProvider = (
   enabled: true,
   description: 'Server test provider',
   command: 'test-cli',
-  defaultModel: 'test-model',
   timeout: 120000,
   env: {},
   outputFormat: 'json',
