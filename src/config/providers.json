@@ -87,7 +87,14 @@
       "commands": {
         "ask": {
           "args": ["-p"],
-          "trailingArgs": ["--allow-all", "--disable-builtin-mcps", "--no-auto-update", "--no-ask-user", "-s", "--no-color"],
+          "trailingArgs": [
+            "--allow-all",
+            "--disable-builtin-mcps",
+            "--no-auto-update",
+            "--no-ask-user",
+            "-s",
+            "--no-color"
+          ],
           "flags": {
             "model": "--model",
             "autoMode": ["--yolo"],

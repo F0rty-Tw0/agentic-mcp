@@ -44,10 +44,7 @@ const removeOutputFormat = (
 ): Omit<ProvidersFile['providers'][string], 'outputFormat'> => {
   const providerEntries = Object.entries(provider).filter(([key]) => key !== 'outputFormat');
 
-  return Object.fromEntries(providerEntries) as Omit<
-    ProvidersFile['providers'][string],
-    'outputFormat'
-  >;
+  return Object.fromEntries(providerEntries) as Omit<ProvidersFile['providers'][string], 'outputFormat'>;
 };
 
 describe('providers config', () => {
@@ -63,9 +60,7 @@ describe('providers config', () => {
 
     if (!parsed.success) {
       throw new Error(
-        parsed.error.issues
-          .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-          .join('\n'),
+        parsed.error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('\n'),
       );
     }
 
@@ -106,9 +101,7 @@ describe('providers config', () => {
       throw new Error('Expected provider config without ask command to fail validation');
     }
 
-    const askIssue = parsed.error.issues.find(
-      (issue) => issue.path.join('.') === 'providers.example.commands',
-    );
+    const askIssue = parsed.error.issues.find((issue) => issue.path.join('.') === 'providers.example.commands');
 
     expect(askIssue?.message).toContain('ask');
   });
@@ -158,10 +151,7 @@ describe('providers config', () => {
     };
 
     for (const [name, provider] of Object.entries(config.providers)) {
-      expect(
-        provider.capabilities,
-        `${name} must not have a "capabilities" object`,
-      ).toBeUndefined();
+      expect(provider.capabilities, `${name} must not have a "capabilities" object`).toBeUndefined();
     }
   });
 });

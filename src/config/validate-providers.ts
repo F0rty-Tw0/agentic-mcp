@@ -63,8 +63,7 @@ const main = async (): Promise<void> => {
 };
 
 main().catch((error: unknown) => {
-  const message =
-    error instanceof Error ? error.message : 'Unknown error while validating providers config.';
+  const message = error instanceof Error ? error.message : 'Unknown error while validating providers config.';
 
   process.stderr.write(`${message}\n`);
   process.exitCode = 1;
