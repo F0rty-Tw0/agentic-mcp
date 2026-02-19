@@ -44,9 +44,7 @@ export const providerConfigSchema = z.object({
       pattern: z.string().optional(),
     })
     .optional(),
-  outputFormat: z.enum(['json', 'stream-json', 'text']).optional() as z.ZodType<
-    OutputFormat | undefined
-  >,
+  outputFormat: z.enum(['json', 'stream-json', 'text']),
   commands: commandsSchema,
   input: inputSchema,
 });

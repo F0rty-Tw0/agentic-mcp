@@ -45,14 +45,14 @@ src/
 
 ### Folder Roles
 
-| Folder          | Purpose                                                                                                  | Contains                                                                           |
-| --------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `common/`       | Shared foundation. Anything referenced across multiple modules.                                          | Types, constants, Zod schemas, error classes. No business logic.                   |
-| `common/errors/`| Error definitions and MCP error mapping.                                                                 | Custom error classes (the one case where classes are acceptable — see Code Style).  |
-| `config/`       | Everything related to loading, parsing, and validating configuration.                                    | `providers.json`, JSON schemas, Zod validation, config spec tests.                 |
-| `domain-logic/` | Core business logic of the MCP server. Where the actual work happens.                                    | Tool builders, spawn/execution logic, session management, provider orchestration.   |
-| `utils/`        | Pure, stateless utility functions. No domain knowledge, no side effects.                                 | String helpers, formatting, data transformations. Each function independently testable. |
-| `types/`        | Ambient declarations for third-party packages that lack their own types.                                 | `.d.ts` files only.                                                                |
+| Folder           | Purpose                                                                  | Contains                                                                                |
+| ---------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `common/`        | Shared foundation. Anything referenced across multiple modules.          | Types, constants, Zod schemas, error classes. No business logic.                        |
+| `common/errors/` | Error definitions and MCP error mapping.                                 | Custom error classes (the one case where classes are acceptable — see Code Style).      |
+| `config/`        | Everything related to loading, parsing, and validating configuration.    | `providers.json`, JSON schemas, Zod validation, config spec tests.                      |
+| `domain-logic/`  | Core business logic of the MCP server. Where the actual work happens.    | Tool builders, spawn/execution logic, session management, provider orchestration.       |
+| `utils/`         | Pure, stateless utility functions. No domain knowledge, no side effects. | String helpers, formatting, data transformations. Each function independently testable. |
+| `types/`         | Ambient declarations for third-party packages that lack their own types. | `.d.ts` files only.                                                                     |
 
 ### Core Design Principles
 
@@ -71,21 +71,24 @@ Provider commands use a single generic `commandDef` shape instead of bespoke sch
 
 ```jsonc
 {
-  "args": ["exec"],              // static leading args (subcommands, flags)
-  "trailingArgs": ["--json"],    // static trailing args (output format, etc.)
-  "flags": {                     // named dynamic flags — open map, any key
-    "model": "-m",               // string → value flag (takes an argument)
+  "args": ["exec"], // static leading args (subcommands, flags)
+  "trailingArgs": ["--json"], // static trailing args (output format, etc.)
+  "flags": {
+    // named dynamic flags — open map, any key
+    "model": "-m", // string → value flag (takes an argument)
     "autoMode": ["--full-auto"], // string[] → standalone args (appended as-is)
-    "sandbox": {                 // object → leveled flag (constrained values)
+    "sandbox": {
+      // object → leveled flag (constrained values)
       "flag": "--sandbox",
-      "values": ["read-only", "workspace-write"]
+      "values": ["read-only", "workspace-write"],
     },
-    "file": null                 // null → supported conceptually, no CLI flag
-  }
+    "file": null, // null → supported conceptually, no CLI flag
+  },
 }
 ```
 
 **Key rules:**
+
 - Every provider must have an `ask` command
 - `outputFormat` (`json` | `stream-json` | `text`) is a top-level provider property
 - No `capabilities` object — capability is implied by command/flag presence (e.g. `commands.review` exists → provider supports review)
@@ -106,46 +109,46 @@ Every dependency and tooling choice is documented here with rationale.
 
 ### Dev — Build
 
-| Package              | Why                                                                                                                                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `typescript`         | Type-checker only (`noEmit: true`). Strict mode, targeting ES2024 + NodeNext modules. tsgo-forward-compatible config (no enums, no namespaces, explicit types).                        |
-| `esbuild`            | Production bundler. Bundles `src/index.ts` → `dist/index.js` with shebang injection and copies `providers.json` to `dist/`. Used via `build.mjs`.                                     |
-| `vitest`             | Test runner. Fast, ESM-native, compatible with the project's TypeScript setup. Used for unit tests (`pnpm run test`).                                                                  |
-| `@types/node`        | Node.js type definitions. Explicitly listed in `tsconfig.json` `types: ["node"]` to anticipate TS 6.0 default of empty `types`.                                                        |
-| `@types/cross-spawn` | Type definitions for `cross-spawn` (no bundled types).                                                                                                                                 |
+| Package              | Why                                                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `typescript`         | Type-checker only (`noEmit: true`). Strict mode, targeting ES2024 + NodeNext modules. tsgo-forward-compatible config (no enums, no namespaces, explicit types). |
+| `esbuild`            | Production bundler. Bundles `src/index.ts` → `dist/index.js` with shebang injection and copies `providers.json` to `dist/`. Used via `build.mjs`.               |
+| `vitest`             | Test runner. Fast, ESM-native, compatible with the project's TypeScript setup. Used for unit tests (`pnpm run test`).                                           |
+| `@types/node`        | Node.js type definitions. Explicitly listed in `tsconfig.json` `types: ["node"]` to anticipate TS 6.0 default of empty `types`.                                 |
+| `@types/cross-spawn` | Type definitions for `cross-spawn` (no bundled types).                                                                                                          |
 
 ### Dev — Lint
 
-| Package                | Why                                                              |
-| ---------------------- | ---------------------------------------------------------------- |
-| `eslint`               | Linter. ESLint 9 flat config.                                    |
-| `lint-suite`           | Shared lint configuration preset.                                |
-| `eslint-config-prettier` | Disables ESLint rules that conflict with Prettier formatting.  |
+| Package                  | Why                                                           |
+| ------------------------ | ------------------------------------------------------------- |
+| `eslint`                 | Linter. ESLint 9 flat config.                                 |
+| `lint-suite`             | Shared lint configuration preset.                             |
+| `eslint-config-prettier` | Disables ESLint rules that conflict with Prettier formatting. |
 
 ### tsconfig Decisions
 
-| Option                             | Value      | Why                                                                                                              |
-| ---------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
-| `target`                           | `es2024`   | Matches Node 22+ runtime capabilities (engine floor). Avoids unnecessary downleveling.                           |
-| `module` / `moduleResolution`      | `nodenext` | Tracks latest Node.js ESM semantics. Supports import attributes for JSON imports.                                |
+| Option                             | Value      | Why                                                                                                                                                                                     |
+| ---------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target`                           | `es2024`   | Matches Node 22+ runtime capabilities (engine floor). Avoids unnecessary downleveling.                                                                                                  |
+| `module` / `moduleResolution`      | `nodenext` | Tracks latest Node.js ESM semantics. Supports import attributes for JSON imports.                                                                                                       |
 | `allowImportingTsExtensions`       | `true`     | Permits `.ts` extensions in import specifiers. Safe because `noEmit: true` — no compiled `.js` output needs valid paths. Enables `node --experimental-strip-types` for dev without tsx. |
-| `strict`                           | `true`     | Baseline strict checks (nulls, any, this, bind/call/apply, property init).                                       |
-| `noUncheckedIndexedAccess`         | `true`     | Adds `\| undefined` to indexed access — forces handling missing keys/elements.                                   |
-| `noImplicitOverride`               | `true`     | Requires `override` keyword on overridden methods. Prevents accidental shadowing.                                |
-| `noImplicitReturns`                | `true`     | Errors on code paths that don't explicitly return in functions with return types.                                 |
-| `noUnusedLocals`                   | `true`     | Errors on declared but unused local variables. Keeps code clean.                                                 |
-| `noUnusedParameters`               | `true`     | Errors on unused function parameters. Prefix with `_` to suppress when intentional.                              |
-| `noFallthroughCasesInSwitch`       | `true`     | Errors on switch cases that fall through without `break` or `return`.                                            |
-| `erasableSyntaxOnly`               | `true`     | Bans enums and namespaces. Aligns with Node native type-stripping, tsgo, and TC39 "types as comments" direction. |
-| `moduleDetection`                  | `force`    | Every file is a module. Prevents ambient-globals footgun where files without imports/exports become global scripts. |
-| `noUncheckedSideEffectImports`     | `true`     | Errors on unresolvable side-effect imports (`import "./missing.css"`). Catches typos. New in TS 5.6.             |
-| `verbatimModuleSyntax`             | `true`     | Requires `import type` for type-only imports. Emitted JS exactly mirrors import statements.                      |
-| `isolatedModules`                  | `true`     | Each file transpilable in isolation. Belt-and-suspenders with `verbatimModuleSyntax`.                            |
-| `types`                            | `["node"]` | Explicit opt-in. Anticipates TS 6.0 which changes default from "all @types" to empty `[]`.                       |
-| `noEmit`                           | `true`     | tsc is used only for type-checking (`pnpm run typecheck`). Production builds use esbuild via `build.mjs`.        |
-| `skipLibCheck`                     | `true`     | Skips type-checking `.d.ts` files. Speeds up type-checking.                                                      |
-| `forceConsistentCasingInFileNames` | `true`     | Prevents case-sensitivity bugs across platforms (Windows vs Linux file systems).                                 |
-| `resolveJsonModule`            | _not set_  | Intentional. `providers.json` is loaded via `fs.readFile` + `JSON.parse` + Zod, not ESM `import`. This supports arbitrary config paths (CLI flag, env var) and graceful error handling. |
+| `strict`                           | `true`     | Baseline strict checks (nulls, any, this, bind/call/apply, property init).                                                                                                              |
+| `noUncheckedIndexedAccess`         | `true`     | Adds `\| undefined` to indexed access — forces handling missing keys/elements.                                                                                                          |
+| `noImplicitOverride`               | `true`     | Requires `override` keyword on overridden methods. Prevents accidental shadowing.                                                                                                       |
+| `noImplicitReturns`                | `true`     | Errors on code paths that don't explicitly return in functions with return types.                                                                                                       |
+| `noUnusedLocals`                   | `true`     | Errors on declared but unused local variables. Keeps code clean.                                                                                                                        |
+| `noUnusedParameters`               | `true`     | Errors on unused function parameters. Prefix with `_` to suppress when intentional.                                                                                                     |
+| `noFallthroughCasesInSwitch`       | `true`     | Errors on switch cases that fall through without `break` or `return`.                                                                                                                   |
+| `erasableSyntaxOnly`               | `true`     | Bans enums and namespaces. Aligns with Node native type-stripping, tsgo, and TC39 "types as comments" direction.                                                                        |
+| `moduleDetection`                  | `force`    | Every file is a module. Prevents ambient-globals footgun where files without imports/exports become global scripts.                                                                     |
+| `noUncheckedSideEffectImports`     | `true`     | Errors on unresolvable side-effect imports (`import "./missing.css"`). Catches typos. New in TS 5.6.                                                                                    |
+| `verbatimModuleSyntax`             | `true`     | Requires `import type` for type-only imports. Emitted JS exactly mirrors import statements.                                                                                             |
+| `isolatedModules`                  | `true`     | Each file transpilable in isolation. Belt-and-suspenders with `verbatimModuleSyntax`.                                                                                                   |
+| `types`                            | `["node"]` | Explicit opt-in. Anticipates TS 6.0 which changes default from "all @types" to empty `[]`.                                                                                              |
+| `noEmit`                           | `true`     | tsc is used only for type-checking (`pnpm run typecheck`). Production builds use esbuild via `build.mjs`.                                                                               |
+| `skipLibCheck`                     | `true`     | Skips type-checking `.d.ts` files. Speeds up type-checking.                                                                                                                             |
+| `forceConsistentCasingInFileNames` | `true`     | Prevents case-sensitivity bugs across platforms (Windows vs Linux file systems).                                                                                                        |
+| `resolveJsonModule`                | _not set_  | Intentional. `providers.json` is loaded via `fs.readFile` + `JSON.parse` + Zod, not ESM `import`. This supports arbitrary config paths (CLI flag, env var) and graceful error handling. |
 
 ### Import Extensions
 
@@ -173,6 +176,16 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 - 2-space indent, LF line endings, UTF-8 (see `.editorconfig`)
 - Line endings normalised to LF via `.gitattributes`
 - Keep shared constants/types/errors under `src/common/` using specific files (avoid catch-all `types.ts`)
+
+### Testing Style
+
+Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
+
+- **GIVEN** the initial context/setup
+- **WHEN** the behaviour under test is executed
+- **THEN** the expected outcome is asserted
+
+Example naming pattern: `GIVEN X WHEN Y THEN Z`.
 
 ### Functional Programming Preference
 
