@@ -1,4 +1,4 @@
-import type { McpErrorResponse } from './mcp-error-response.ts';
+import type { McpErrorResponse } from './mcp-error-response.type.ts';
 
 export class ProviderNotFoundError extends Error {
   public readonly provider: string;
@@ -12,7 +12,7 @@ export class ProviderNotFoundError extends Error {
   }
 
   public toMcpResponse(): McpErrorResponse {
-    return {
+    const mcpErrorResponse: McpErrorResponse = {
       isError: true,
       content: [
         {
@@ -21,5 +21,7 @@ export class ProviderNotFoundError extends Error {
         },
       ],
     };
+
+    return mcpErrorResponse;
   }
 }

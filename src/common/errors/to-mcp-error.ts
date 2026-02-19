@@ -1,5 +1,5 @@
 import { CommandExecutionError } from './command-execution.error.ts';
-import type { McpErrorResponse } from './mcp-error-response.ts';
+import type { McpErrorResponse } from './mcp-error-response.type.ts';
 import { ProviderNotFoundError } from './provider-not-found.error.ts';
 import { ValidationError } from './validation-error.ts';
 
@@ -22,8 +22,10 @@ export const toMcpError = (error: unknown): McpErrorResponse => {
     message = 'An unexpected error occurred.';
   }
 
-  return {
+  const mpcErrorResponse: McpErrorResponse = {
     isError: true,
     content: [{ type: 'text', text: `Error: ${message}` }],
   };
+
+  return mpcErrorResponse;
 };

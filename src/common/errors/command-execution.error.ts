@@ -1,11 +1,11 @@
-import type { McpErrorResponse } from './mcp-error-response.ts';
+import type { McpErrorResponse } from './mcp-error-response.type.ts';
 
-type CommandExecutionErrorDetails = {
+type CommandExecutionErrorDetails = Readonly<{
   exitCode?: number | null;
   signal?: string | null;
   timedOut?: boolean;
   stderr?: string;
-};
+}>;
 
 export class CommandExecutionError extends Error {
   public readonly exitCode: number | null | undefined;
@@ -13,11 +13,7 @@ export class CommandExecutionError extends Error {
   public readonly timedOut: boolean | undefined;
   public readonly stderr: string | undefined;
 
-  public constructor(
-    message: string,
-    details: CommandExecutionErrorDetails,
-    options?: { cause?: unknown },
-  ) {
+  public constructor(message: string, details: CommandExecutionErrorDetails, options?: { cause?: unknown }) {
     super(message, options);
     this.name = 'CommandExecutionError';
     this.exitCode = details.exitCode;
@@ -41,9 +37,11 @@ export class CommandExecutionError extends Error {
       parts.push(`Stderr: ${this.stderr}`);
     }
 
-    return {
+    const mcpErrorResponse: McpErrorResponse = {
       isError: true,
       content: [{ type: 'text', text: parts.join(' ') }],
     };
+
+    return mcpErrorResponse;
   }
 }
