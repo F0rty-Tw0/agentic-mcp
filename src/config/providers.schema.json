@@ -126,6 +126,7 @@
         "defaultModel",
         "timeout",
         "env",
+        "outputFormat",
         "commands",
         "input"
       ],
