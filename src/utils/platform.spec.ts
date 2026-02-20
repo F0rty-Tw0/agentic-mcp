@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildMinimalEnv, killProcess, normalizePath, resolveCliBinary, stripAnsi } from './platform.ts';
+import { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from './platform.ts';
 import type { AsyncViFn, SyncViFn } from '../test-utils/vi-fn.types.ts';
 
 type ExecFileCallback = (error: NodeJS.ErrnoException | null) => void;
@@ -89,12 +89,5 @@ describe('platform utilities', () => {
     const result = stripAnsi('\u001B[31merror\u001B[39m');
 
     expect(result).toBe('error');
-  });
-
-  it('GIVEN a relative Windows-style path WHEN normalizing THEN it returns an absolute path with forward slashes', () => {
-    const result = normalizePath('.\\src\\utils\\..\\index.ts');
-
-    expect(result).toMatch(/\/src\/index\.ts$/);
-    expect(result.includes('\\')).toBe(false);
   });
 });

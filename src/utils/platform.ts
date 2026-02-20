@@ -1,5 +1,4 @@
 import { execFile } from 'node:child_process';
-import path from 'node:path';
 import process from 'node:process';
 import { stripVTControlCharacters } from 'node:util';
 
@@ -36,20 +35,42 @@ export const killProcess = async (pid: number): Promise<boolean> => {
   }
 
   return new Promise<boolean>((resolve) => {
-    const timer = setTimeout(() => {
+    const POLL_INTERVAL_MS = 100;
+    let settled = false;
+
+    const killTimer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+
       try {
         process.kill(pid, 'SIGKILL');
       } catch {
         // Process already exited
       }
+
       resolve(true);
     }, KILL_GRACE_MS);
 
-    timer.unref();
+    killTimer.unref();
+
+    const checkExit = (): void => {
+      if (settled) return;
+
+      try {
+        process.kill(pid, 0); // Existence check — throws if process is gone
+        setTimeout(checkExit, POLL_INTERVAL_MS).unref();
+      } catch {
+        settled = true;
+        clearTimeout(killTimer);
+        resolve(true);
+      }
+    };
+
+    setTimeout(checkExit, POLL_INTERVAL_MS).unref();
   });
 };
 
-export const buildMinimalEnv = (providerEnv: Record<string, string | null>): Record<string, string> => {
+export const buildMinimalEnv = (providerEnv: Record<string, string | null>): Readonly<Record<string, string>> => {
   const env: Record<string, string> = {};
 
   for (const key of SAFE_ENV_KEYS) {
@@ -72,7 +93,3 @@ export const resolveCliBinary = async (command: string): Promise<string | null> 
 };
 
 export const stripAnsi = (input: string): string => stripVTControlCharacters(input);
-
-export const normalizePath = (inputPath: string): string => {
-  return path.resolve(inputPath).replace(/\\/g, '/');
-};
