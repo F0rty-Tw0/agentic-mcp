@@ -7,6 +7,12 @@
 
 **agentic-mcp** is a universal [MCP](https://modelcontextprotocol.io/) server that wraps any agentic CLI tool through a single JSON config. Adding a new CLI means adding a config entry — no code changes, no rebuilds.
 
+> **Requires Node.js >= 22**
+
+## Status
+
+Core MVP is functional — config loading, tool registration, spawn execution, and the ask/ping/help/list_providers tools work end-to-end. Five providers configured: claude, codex, copilot, gemini, opencode.
+
 ## How It Works
 
 agentic-mcp sits between your MCP client (Claude Code, Cursor, etc.) and any number of CLI coding agents. It reads a single `providers.json` config file and dynamically registers MCP tools for each provider:
@@ -43,14 +49,25 @@ Providers are auto-detected at startup — if a CLI binary isn't found in PATH, 
 
 ## Quick Start
 
+### npm (global install)
+
 ```bash
-# Prerequisites: Node.js >= 22, pnpm
+npm install -g agentic-mcp
+agentic-mcp
+```
+
+### npx (no install)
+
+```bash
+npx agentic-mcp
+```
+
+### From source
+
+```bash
+git clone https://github.com/ArtiomTofworthy/agentic-mcp.git
+cd agentic-mcp
 pnpm install
-
-# Run in dev mode
-pnpm run dev
-
-# Or build and run
 pnpm run build
 pnpm run start
 ```
