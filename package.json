@@ -6,11 +6,11 @@
   "author": "Artiom Tofan",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ArtiomTofworthy/agentic-mcp.git"
+    "url": "git+https://github.com/F0rty-Tw0/agentic-mcp.git"
   },
-  "homepage": "https://github.com/ArtiomTofworthy/agentic-mcp#readme",
+  "homepage": "https://github.com/F0rty-Tw0/agentic-mcp#readme",
   "bugs": {
-    "url": "https://github.com/ArtiomTofworthy/agentic-mcp/issues"
+    "url": "https://github.com/F0rty-Tw0/agentic-mcp/issues"
   },
   "type": "module",
   "packageManager": "pnpm@10.30.0",
