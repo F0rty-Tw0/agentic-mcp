@@ -67,6 +67,40 @@ describe('index entrypoint', () => {
     vi.restoreAllMocks();
   });
 
+  it('GIVEN --version flag WHEN the entrypoint starts THEN it prints the version and exits with code 0', async () => {
+    process.argv = ['node', 'index.ts', '--version'];
+
+    const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
+
+    await importEntrypoint();
+
+    await vi.waitFor(() => {
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('0.0.0-dev'));
+    expect(mocks.createServer).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN --help flag WHEN the entrypoint starts THEN it prints usage info and exits with code 0', async () => {
+    process.argv = ['node', 'index.ts', '--help'];
+
+    const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
+
+    await importEntrypoint();
+
+    await vi.waitFor(() => {
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--config'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--version'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--help'));
+    expect(mocks.createServer).not.toHaveBeenCalled();
+  });
+
   it('GIVEN a --config argument WHEN the entrypoint starts THEN it passes configPath to createServer and connects via stdio transport', async () => {
     process.argv = ['node', 'index.ts', '--config', '/tmp/providers.json'];
 
