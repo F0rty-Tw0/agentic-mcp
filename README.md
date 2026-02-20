@@ -2,6 +2,7 @@
 
 > Config-driven MCP server that wraps any agentic CLI tool.
 
+[![CI](https://github.com/ArtiomTofworthy/agentic-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/ArtiomTofworthy/agentic-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](#status)
 
