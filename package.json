@@ -16,10 +16,12 @@
     "dev": "node --experimental-strip-types src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.config.integration.ts",
     "validate:providers": "node --experimental-strip-types src/config/validate-providers.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --max-warnings 0 .",
-    "lint:fix": "eslint --max-warnings 0 . --fix"
+    "lint:fix": "eslint --max-warnings 0 . --fix",
+    "prepublishOnly": "pnpm run test && pnpm run typecheck && pnpm run lint && pnpm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "catalog:runtime",
@@ -45,5 +47,16 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "agent",
+    "ai",
+    "claude",
+    "codex",
+    "copilot",
+    "gemini"
+  ]
 }
