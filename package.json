@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Config-driven MCP server that wraps any agentic CLI tool",
   "license": "MIT",
+  "author": "Artiom Tofan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArtiomTofworthy/agentic-mcp.git"
+  },
+  "homepage": "https://github.com/ArtiomTofworthy/agentic-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/ArtiomTofworthy/agentic-mcp/issues"
+  },
   "type": "module",
   "packageManager": "pnpm@10.30.0",
   "bin": {
