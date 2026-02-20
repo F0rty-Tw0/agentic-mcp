@@ -25,11 +25,54 @@ This file contains the coding conventions, style rules, and development practice
 - **Type-safe `.includes()`** — avoid `value as NarrowType` casts to satisfy `.includes()`. Instead, widen the array: `(ARRAY as readonly string[]).includes(value)`.
 - **Reduce mechanical duplication** — when 3+ functions share the same structure with only a parameter differing, extract a generic helper. Keep specialized variants only when their logic genuinely differs.
 
+## Imports & Exports
+
+- **Import group order** — Node stdlib → external packages → internal modules, with a blank line between each group. Within a group, multi-symbol imports are destructured in a single statement.
+- **`node:` protocol prefix mandatory** — always `import from 'node:fs/promises'`, never bare `'fs/promises'`. Applies to all Node stdlib modules (`node:path`, `node:process`, `node:url`, `node:child_process`, `node:os`, `node:stream`, `node:util`).
+- **`import type` for type-only imports** — enforced by `verbatimModuleSyntax`. Never mix value and type imports in one statement when only the type is used.
+- **No default exports** — all exports are named, inline on the declaration (`export const`, `export type`, `export class`). No `export default` anywhere.
+- **No barrel files** — no `index.ts` re-exporters. Every consumer imports directly from the source file that defines the symbol.
+- **`.ts` extensions on relative imports** — all internal imports use `.ts` (e.g., `'./foo.ts'`). Package imports keep their original extension (e.g., `'@modelcontextprotocol/sdk/server/mcp.js'`).
+
+## Naming Conventions
+
+- **Files** — `kebab-case.ts`. Suffix encodes role: `.const.ts` (constants), `.types.ts` (type-only files), `.schema.ts` (Zod schemas), `.type.ts` (single-type files), `-handler.ts` (MCP tool handlers), `-builder.ts` (tool/arg builders), `-utils.ts` (utility helpers).
+- **Module-level constants** — `SCREAMING_SNAKE_CASE` (`MAX_PROMPT_BYTES`, `SAFE_ENV_KEYS`, `FLAG_MODEL`).
+- **Functions** — `camelCase`. Naming reflects role: `handleX` (MCP handlers), `buildX` (factories/constructors), `validateX` (validation), `resolveX` (resolution/lookup), `createX` (factories).
+- **Types** — `PascalCase` (`ResolvedProviderEntry`, `ExecuteCommandOptions`). No `I` prefix on interfaces, no `T` prefix on type parameters (except in test utility generic types).
+- **`as const` arrays** — fixed value sets use `const ARRAY = [...] as const` with a derived type `type X = (typeof ARRAY)[number]` when needed. `as const` is not used on object literals.
+
+## Module Internal Structure
+
+Every file follows this top-to-bottom order:
+
+1. Imports (stdlib → external → internal, blank lines between groups)
+2. Module-private constants (`const SCREAMING = ...`)
+3. Module-private type aliases (`type Foo = ...`)
+4. Module-private helper functions (unexported)
+5. Exported functions/types/constants (always last in the file)
+
+The primary export is always the last declaration. In files with one public export, all private helpers build up to it.
+
+## Error Handling
+
+- **`unknown` for caught errors** — always `catch (error: unknown)`, never `any` or bare `Error`.
+- **`main()` pattern for scripts** — entry-point scripts define `const main = async (): Promise<void>` and call it with `.catch((error: unknown) => { ... process.exit(1) })`.
+- **Single top-level `try/catch` in handlers** — handlers wrap their entire body in one `try/catch`, delegating to `toMcpError(error)` for conversion.
+- **`{ cause: error }` for error chaining** — pass the original error as `cause` when wrapping in a new error.
+
+## Comments
+
+- **Minimal comments** — explain *why*, not *what*. No JSDoc except for non-obvious dispatch logic (e.g., documenting a multi-branch flag resolution function).
+- **No block comments** (`/* */`) in production code — use `//` with a space and sentence-case text.
+- **No commented-out code** — delete dead code rather than commenting it out.
+
 ## Testing Style
 
-- **Test file extension**: use `.spec.ts` (not `.test.ts`). Place test files co-located next to the module they test (e.g. `foo.ts` → `foo.spec.ts`).
+- **Unit test extension**: use `.spec.ts` (not `.test.ts`). Place test files co-located next to the module they test (e.g. `foo.ts` → `foo.spec.ts`).
+- **Integration test extension**: use `.test.ts`. These run under a separate vitest config (`vitest.config.integration.ts`).
 
-Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
+Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit. All three keywords are **UPPERCASE** — no variations.
 
 - **GIVEN** the initial context/setup
 - **WHEN** the behaviour under test is executed
@@ -38,6 +81,14 @@ Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
 Example naming pattern: `GIVEN X WHEN Y THEN Z`.
 
 - **No section separator comments** in test files — no `// -----------` banners between `describe` blocks. The `describe` blocks provide sufficient structure on their own.
+- **`toStrictEqual` over `toEqual`** — always prefer `toStrictEqual` for structural object/array comparisons. It catches `undefined` properties and prototype differences that `toEqual` misses. Use `toBe` for primitives and booleans.
+- **Factory functions for test data** — name them `create*`, `build*`, or `make*` with an `overrides: Partial<T> = {}` parameter that spreads over defaults. Test data is always local to the spec file — no shared fixture directories.
+- **`vi.hoisted()` for cross-module mock dependencies** — when multiple `vi.mock()` calls share mock references, collect them in a single `const mocks = vi.hoisted(() => ({ ... }))` object at file top.
+- **`vi.mock()` always with factory function** — use `vi.mock(path, () => ({ ... }))`, never bare `vi.mock(path)`. Paths use `.ts` extensions.
+- **`vi.mocked()` for typed mock access** — access mock instances through `vi.mocked(fn)`, never via direct cast.
+- **Mock reset strategy** — `vi.clearAllMocks()` in `beforeEach` for inline mocks; `.mockReset()` per mock for hoisted mocks. `vi.restoreAllMocks()` in `afterEach` whenever `vi.spyOn()` is used.
+- **No `it.each` / `describe.each`** — write explicit individual `it()` calls instead of parameterized tests.
+- **Two-level `describe` nesting** — one top-level `describe` per export, inner `describe` blocks grouping by scenario category (noun phrases like `'successful execution'`, `'validation errors'`).
 
 ## TDD Enforcement (Mandatory)
 

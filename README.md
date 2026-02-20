@@ -141,6 +141,7 @@ pnpm run build              # Bundle with esbuild (dist/index.js + providers.jso
 pnpm run dev                # Dev mode (node --experimental-strip-types)
 pnpm run start              # Run compiled server
 pnpm run test               # Unit tests (vitest)
+pnpm run test:integration   # Integration tests (vitest, separate config)
 pnpm run validate:providers # Validate providers.json against Zod schema
 pnpm run typecheck          # Type-check (tsc --noEmit)
 pnpm run lint               # ESLint

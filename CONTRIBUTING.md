@@ -6,8 +6,8 @@ Thanks for your interest in contributing! This project is in early development.
 
 1. Fork and clone the repo
 2. Install dependencies: `pnpm install`
-3. Build: `pnpm build`
-4. Run tests: `pnpm test`
+3. Build: `pnpm run build`
+4. Run tests: `pnpm run test`
 
 ## Ways to Contribute
 
@@ -30,7 +30,7 @@ Open an issue with:
 ### Fix a Bug or Add a Feature
 
 1. Check existing issues first
-2. Create a branch from `master`
+2. Create a branch from `dev`
 3. Make your changes with tests
 4. Submit a PR
 
