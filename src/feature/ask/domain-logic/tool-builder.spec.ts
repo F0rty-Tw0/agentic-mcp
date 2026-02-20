@@ -182,8 +182,36 @@ describe('buildAskToolDefinition', () => {
     });
   });
 
+  describe('auto_mode flag', () => {
+    it('GIVEN provider with leveled autoMode flag WHEN building tool definition THEN auto_mode is a z.enum', () => {
+      const config = createConfig({
+        autoMode: { flag: '--permission-mode', values: ['acceptEdits', 'dontAsk'] },
+      });
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).toHaveProperty('auto_mode');
+      expect(result.inputSchema.auto_mode?.parse('acceptEdits')).toBe('acceptEdits');
+      expect(() => result.inputSchema.auto_mode?.parse('invalid')).toThrow();
+    });
+
+    it('GIVEN provider with array autoMode flag WHEN building tool definition THEN auto_mode is a z.boolean', () => {
+      const config = createConfig({ autoMode: ['--yolo'] });
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).toHaveProperty('auto_mode');
+      expect(result.inputSchema.auto_mode?.parse(true)).toBe(true);
+    });
+
+    it('GIVEN provider without autoMode flag WHEN building tool definition THEN auto_mode is absent', () => {
+      const config = createConfig({});
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).not.toHaveProperty('auto_mode');
+    });
+  });
+
   describe('claude provider config', () => {
-    it('GIVEN claude provider config WHEN building tool definition THEN effort, max_budget, system_prompt are all present', () => {
+    it('GIVEN claude provider config WHEN building tool definition THEN effort, max_budget, system_prompt, auto_mode are all present', () => {
       const config = createConfig({
         model: '--model',
         effort: { flag: '--effort', values: ['low', 'medium', 'high'] },
@@ -200,6 +228,7 @@ describe('buildAskToolDefinition', () => {
       expect(result.inputSchema).toHaveProperty('max_budget');
       expect(result.inputSchema).toHaveProperty('system_prompt');
       expect(result.inputSchema).toHaveProperty('working_directory');
+      expect(result.inputSchema).toHaveProperty('auto_mode');
     });
   });
 });

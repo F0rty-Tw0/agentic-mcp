@@ -6,7 +6,7 @@ export type AskToolArgs = Readonly<{
   session_id?: string;
   working_directory?: string;
   files?: readonly string[];
-  auto_mode?: boolean;
+  auto_mode?: string | boolean;
   sandbox?: string | boolean;
   effort?: string;
   max_budget?: string;
