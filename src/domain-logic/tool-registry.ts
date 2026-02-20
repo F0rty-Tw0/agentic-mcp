@@ -58,8 +58,8 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
 
 export const registerAllTools = (
   server: McpServer,
-  resolvedProviders: ResolvedProviderEntry[],
-  allProviders: ResolvedProvider[],
+  resolvedProviders: readonly ResolvedProviderEntry[],
+  allProviders: readonly ResolvedProvider[],
 ): void => {
   for (const provider of resolvedProviders) {
     registerProviderTools(server, provider);

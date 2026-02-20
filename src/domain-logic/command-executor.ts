@@ -1,12 +1,13 @@
 import crossSpawn from 'cross-spawn';
 
 import { CommandExecutionError } from '../common/errors/command-execution.error.ts';
+import { MAX_CONCURRENT_SPAWNS, MAX_OUTPUT_BYTES } from '../common/execution-limits.const.ts';
 import { killProcess } from '../utils/platform.ts';
 
 type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
   args: readonly string[];
-  env: Record<string, string>;
+  env: Readonly<Record<string, string>>;
   timeoutMs: number;
   stdin?: string;
   cwd?: string;
@@ -29,35 +30,41 @@ type CollectStreamResult = Readonly<{
   truncated: boolean;
 }>;
 
-const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
+type Semaphore = Readonly<{
+  acquireSlot: () => Promise<void>;
+  releaseSlot: () => void;
+}>;
 
-const MAX_CONCURRENT_SPAWNS = 5;
+export const createSemaphore = (maxConcurrent: number): Semaphore => {
+  let activeCount = 0;
+  const waitQueue: Array<() => void> = [];
 
-// Concurrency semaphore
-let activeSpawns = 0;
-const waitQueue: Array<() => void> = [];
+  const acquireSlot = async (): Promise<void> => {
+    if (activeCount < maxConcurrent) {
+      activeCount++;
 
-const acquireSlot = async (): Promise<void> => {
-  if (activeSpawns < MAX_CONCURRENT_SPAWNS) {
-    activeSpawns++;
+      return Promise.resolve();
+    }
 
-    return Promise.resolve();
-  }
+    return new Promise<void>((resolve) => {
+      waitQueue.push(resolve);
+    });
+  };
 
-  return new Promise<void>((resolve) => {
-    waitQueue.push(resolve);
-  });
+  const releaseSlot = (): void => {
+    activeCount--;
+    const next = waitQueue.shift();
+
+    if (next) {
+      activeCount++;
+      next();
+    }
+  };
+
+  return { acquireSlot, releaseSlot };
 };
 
-const releaseSlot = (): void => {
-  activeSpawns--;
-  const next = waitQueue.shift();
-
-  if (next) {
-    activeSpawns++;
-    next();
-  }
-};
+const defaultSemaphore = createSemaphore(MAX_CONCURRENT_SPAWNS);
 
 const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): CollectStreamResult => {
   const newBytes = currentBytes + chunk.length;
@@ -66,6 +73,12 @@ const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): C
     chunks.push(chunk);
 
     return { bytes: newBytes, truncated: false };
+  }
+
+  const remaining = MAX_OUTPUT_BYTES - currentBytes;
+
+  if (remaining > 0) {
+    chunks.push(chunk.subarray(0, remaining));
   }
 
   return { bytes: newBytes, truncated: true };
@@ -152,12 +165,12 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 };
 
 export const executeCommand = async (options: ExecuteCommandOptions): Promise<ExecutionResult> => {
-  await acquireSlot();
+  await defaultSemaphore.acquireSlot();
   const startTime = Date.now();
 
   try {
     return await spawnChild(options, startTime);
   } finally {
-    releaseSlot();
+    defaultSemaphore.releaseSlot();
   }
 };

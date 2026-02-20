@@ -21,7 +21,7 @@ type ToolAnnotations = Readonly<{
 type ToolDefinition = Readonly<{
   name: string;
   description: string;
-  inputSchema: Record<string, z.ZodType>;
+  inputSchema: Readonly<Record<string, z.ZodType>>;
   annotations: ToolAnnotations;
 }>;
 
@@ -29,7 +29,7 @@ const isLeveledFlag = (value: FlagValue): value is { flag: string; values: strin
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record<string, z.ZodType> => {
+const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Readonly<Record<string, z.ZodType>> => {
   const schema: Record<string, z.ZodType> = {
     prompt: z.string().describe('The prompt to send to the AI agent'),
   };
@@ -71,37 +71,45 @@ const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Record
 export const buildAskToolDefinition = (providerName: string, config: ProviderConfig): ToolDefinition => {
   const askCmd = getAskCommand(config);
 
-  return {
+  const definition: ToolDefinition = {
     name: `ask_${providerName}`,
     description: `Send a prompt to ${providerName}: ${config.description}`,
     inputSchema: buildAskInputSchema(config, askCmd),
     annotations: { destructiveHint: true, openWorldHint: true },
   };
+
+  return definition;
 };
 
 export const buildPingToolDefinition = (providerName: string): ToolDefinition => {
-  return {
+  const definition: ToolDefinition = {
     name: `ping_${providerName}`,
     description: `Check if the ${providerName} CLI is available and responsive`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
+
+  return definition;
 };
 
 export const buildHelpToolDefinition = (providerName: string): ToolDefinition => {
-  return {
+  const definition: ToolDefinition = {
     name: `help_${providerName}`,
     description: `Show help information for the ${providerName} CLI`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
+
+  return definition;
 };
 
 export const buildListProvidersDefinition = (): ToolDefinition => {
-  return {
+  const definition: ToolDefinition = {
     name: 'list_providers',
     description: 'List all configured providers and their availability status',
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
+
+  return definition;
 };

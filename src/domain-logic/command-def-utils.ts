@@ -1,3 +1,4 @@
+import { ValidationError } from '../common/errors/validation-error.ts';
 import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
 
 export const FLAG_MODEL = 'model';
@@ -13,7 +14,7 @@ export const FLAG_SANDBOX = 'sandbox';
 export const getAskCommand = (config: ProviderConfig): CommandDef => {
   const { ask } = config.commands;
 
-  if (!ask) throw new Error('Provider config missing required "ask" command');
+  if (!ask) throw new ValidationError('Provider config missing required "ask" command');
 
   return ask;
 };
