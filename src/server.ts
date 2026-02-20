@@ -1,10 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
-import type { ResolvedProviderEntry } from './common/provider-config.type.ts';
 import { loadConfig } from './config/loader.ts';
-import type { ResolvedProvider } from './domain-logic/handlers/meta.ts';
-import { registerAllTools } from './domain-logic/tool-registry.ts';
-import { resolveCliBinary } from './utils/platform.ts';
+import { registerAllTools } from './feature/tool-registry/tool-registry.ts';
+import type { ResolvedProvider, ResolvedProviderEntry } from './shared/common/provider-config.type.ts';
+import { resolveCliBinary } from './shared/utils/platform.ts';
 
 export const createServer = async (options?: { configPath?: string }): Promise<McpServer> => {
   const config = await loadConfig(options);
@@ -30,6 +29,12 @@ export const createServer = async (options?: { configPath?: string }): Promise<M
         config: providerConfig,
       });
     }
+  }
+
+  if (resolvedProviders.length === 0) {
+    process.stderr.write(
+      'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n',
+    );
   }
 
   // __APP_VERSION__ is injected by esbuild `define` at build time; falls back in dev/test.

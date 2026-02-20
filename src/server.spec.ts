@@ -1,11 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProvidersFile } from './common/provider-config.schema.ts';
-import type { ResolvedProviderEntry } from './common/provider-config.type.ts';
-import type { ResolvedProvider } from './domain-logic/handlers/meta.ts';
 import { createServer } from './server.ts';
-import type { AsyncViFn, SyncViFn } from './test-utils/vi-fn.types.ts';
+import type { ProvidersFile } from './shared/common/provider-config.schema.ts';
+import type { ResolvedProvider, ResolvedProviderEntry } from './shared/common/provider-config.type.ts';
+import type { AsyncViFn, SyncViFn } from './shared/common/test-utils/vi-fn.types.ts';
 
 type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
 
@@ -31,11 +30,11 @@ vi.mock('./config/loader.ts', () => ({
   loadConfig: mocks.loadConfig,
 }));
 
-vi.mock('./utils/platform.ts', () => ({
+vi.mock('./shared/utils/platform.ts', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 
-vi.mock('./domain-logic/tool-registry.ts', () => ({
+vi.mock('./feature/tool-registry/tool-registry.ts', () => ({
   registerAllTools: mocks.registerAllTools,
 }));
 
@@ -64,6 +63,7 @@ describe('createServer', () => {
     mocks.loadConfig.mockReset();
     mocks.resolveCliBinary.mockReset();
     mocks.registerAllTools.mockReset();
+    vi.restoreAllMocks();
   });
 
   it('GIVEN a mixed provider set WHEN creating a server THEN it resolves only enabled binaries and registers only enabled+available providers', async () => {
@@ -171,5 +171,64 @@ describe('createServer', () => {
         },
       ],
     );
+  });
+
+  describe('zero providers warning', () => {
+    it('GIVEN no providers are available WHEN creating a server THEN writes warning to stderr', async () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      const config: ProvidersFile = {
+        configVersion: 1,
+        providers: {
+          missing: buildProvider({ command: 'missing-cli' }),
+        },
+      };
+
+      mocks.loadConfig.mockResolvedValue(config);
+      mocks.resolveCliBinary.mockResolvedValue(null);
+
+      await createServer();
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n',
+      );
+    });
+
+    it('GIVEN at least one provider is available WHEN creating a server THEN does not write warning to stderr', async () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      const config: ProvidersFile = {
+        configVersion: 1,
+        providers: {
+          available: buildProvider({ command: 'available-cli' }),
+        },
+      };
+
+      mocks.loadConfig.mockResolvedValue(config);
+      mocks.resolveCliBinary.mockResolvedValue('/usr/bin/available-cli');
+
+      await createServer();
+
+      expect(stderrSpy).not.toHaveBeenCalled();
+    });
+
+    it('GIVEN all providers are disabled WHEN creating a server THEN writes warning to stderr', async () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      const config: ProvidersFile = {
+        configVersion: 1,
+        providers: {
+          disabled: buildProvider({ enabled: false, command: 'disabled-cli' }),
+        },
+      };
+
+      mocks.loadConfig.mockResolvedValue(config);
+
+      await createServer();
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n',
+      );
+    });
   });
 });
