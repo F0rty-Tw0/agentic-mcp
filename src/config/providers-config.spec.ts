@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 
 import { describe, expect, it } from 'vitest';
 
-import { providersFileSchema } from '../common/provider-config.schema.ts';
-import type { ProvidersFile } from '../common/provider-config.schema.ts';
+import { providersFileSchema } from '../shared/common/provider-config.schema.ts';
+import type { ProvidersFile } from '../shared/common/provider-config.schema.ts';
 
 const providersJsonUrl = new URL('./providers.json', import.meta.url);
 const providersSchemaUrl = new URL('./providers.schema.json', import.meta.url);
@@ -11,10 +11,12 @@ const providersSchemaUrl = new URL('./providers.schema.json', import.meta.url);
 const readJson = async (url: URL): Promise<unknown> => {
   const content = await fs.readFile(url, 'utf8');
 
-  return JSON.parse(content) as unknown;
+  return JSON.parse(content);
 };
 
-const validProviderConfig: ProvidersFile['providers'][string] = {
+type Providers = ProvidersFile['providers'];
+
+const validProviderConfig: Providers[string] = {
   enabled: true,
   description: 'Example provider config for schema tests',
   command: 'example-cli',
@@ -31,6 +33,8 @@ const validProviderConfig: ProvidersFile['providers'][string] = {
   },
 };
 
+type ProviderConfigWithoutOutputFormat = Omit<ProvidersFile['providers'][string], 'outputFormat'>;
+
 const buildProvidersConfig = (provider: unknown): unknown => ({
   configVersion: 1,
   providers: {
@@ -38,17 +42,15 @@ const buildProvidersConfig = (provider: unknown): unknown => ({
   },
 });
 
-const removeOutputFormat = (
-  provider: ProvidersFile['providers'][string],
-): Omit<ProvidersFile['providers'][string], 'outputFormat'> => {
+const removeOutputFormat = (provider: ProvidersFile['providers'][string]): ProviderConfigWithoutOutputFormat => {
   const providerEntries = Object.entries(provider).filter(([key]) => key !== 'outputFormat');
 
-  return Object.fromEntries(providerEntries) as Omit<ProvidersFile['providers'][string], 'outputFormat'>;
+  return Object.fromEntries(providerEntries) as ProviderConfigWithoutOutputFormat;
 };
 
 describe('providers config', () => {
   it('GIVEN providers.json WHEN reading metadata THEN it declares a local $schema pointer', async () => {
-    const config = (await readJson(providersJsonUrl)) as { $schema?: unknown };
+    const config = (await readJson(providersJsonUrl)) as ProvidersFile;
 
     expect(config.$schema).toBe('./providers.schema.json');
   });
@@ -125,9 +127,7 @@ describe('providers config', () => {
   });
 
   it('GIVEN provider entries WHEN checking commands THEN each provider defines ask', async () => {
-    const config = (await readJson(providersJsonUrl)) as {
-      providers: Record<string, { commands: Record<string, unknown> }>;
-    };
+    const config = (await readJson(providersJsonUrl)) as ProvidersFile;
 
     for (const [name, provider] of Object.entries(config.providers)) {
       expect(provider.commands.ask, `${name} must have an "ask" command`).toBeDefined();
@@ -135,13 +135,74 @@ describe('providers config', () => {
   });
 
   it('GIVEN provider entries WHEN checking top-level metadata THEN each has outputFormat', async () => {
-    const config = (await readJson(providersJsonUrl)) as {
-      providers: Record<string, { outputFormat?: unknown }>;
-    };
+    const config = (await readJson(providersJsonUrl)) as ProvidersFile;
 
     for (const [name, provider] of Object.entries(config.providers)) {
       expect(provider.outputFormat, `${name} must have "outputFormat" at top level`).toBeDefined();
     }
+  });
+
+  it('GIVEN provider name with uppercase WHEN validating THEN it fails', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { Claude: validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it('GIVEN provider name starting with a digit WHEN validating THEN it fails', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { '3claude': validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it('GIVEN provider name with spaces WHEN validating THEN it fails', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { 'my agent': validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it('GIVEN provider name with underscores WHEN validating THEN it fails', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { my_agent: validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it('GIVEN reserved provider name "providers" WHEN validating THEN it fails', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { providers: validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it('GIVEN provider name exceeding 32 chars WHEN validating THEN it fails', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { ['a'.repeat(33)]: validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it('GIVEN valid provider name with hyphens WHEN validating THEN it passes', () => {
+    const parsed = providersFileSchema.safeParse({
+      configVersion: 1,
+      providers: { 'my-custom-agent': validProviderConfig },
+    });
+
+    expect(parsed.success).toBe(true);
   });
 
   it('GIVEN provider entries WHEN checking legacy fields THEN capabilities is absent', async () => {

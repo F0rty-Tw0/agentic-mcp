@@ -18,6 +18,11 @@
     "providers": {
       "type": "object",
       "description": "Map of provider names to their configurations. The key becomes the provider identifier used in MCP tool names (e.g. \"claude\" → ask_claude, review_claude).",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]{0,31}$",
+        "not": { "enum": ["providers"] },
+        "description": "Provider name must be lowercase alphanumeric with hyphens, start with a letter, max 32 chars. Must not be a reserved name (providers)."
+      },
       "additionalProperties": {
         "$ref": "#/$defs/providerConfig"
       }
