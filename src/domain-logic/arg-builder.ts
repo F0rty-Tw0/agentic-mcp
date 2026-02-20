@@ -1,6 +1,15 @@
-import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR, getAskCommand, getFlag } from './command-def-utils.ts';
+import {
+  FLAG_AUTO_MODE,
+  FLAG_FILE,
+  FLAG_MODEL,
+  FLAG_SANDBOX,
+  FLAG_WORKING_DIR,
+  getAskCommand,
+  getFlag,
+} from './command-def-utils.ts';
+import { ValidationError } from '../common/errors/validation-error.ts';
 import type { CommandDef, FlagValue, ProviderConfig } from '../common/provider-config.schema.ts';
-import type { AskToolArgs } from '../common/tool-args.types.ts';
+import type { AskToolArgs, BuiltArgs } from '../common/tool-args.types.ts';
 
 /**
  * Resolves a FlagValue into CLI arguments.
@@ -11,7 +20,7 @@ import type { AskToolArgs } from '../common/tool-args.types.ts';
  * - null: []
  */
 const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
-  if (!flagValue) return [];
+  if (flagValue == null) return [];
 
   if (typeof flagValue === 'string') {
     return argValue ? [flagValue, argValue] : [flagValue];
@@ -19,91 +28,105 @@ const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] =
 
   if (Array.isArray(flagValue)) return [...flagValue];
 
-  const leveledFlag = argValue ? [flagValue.flag, argValue] : [flagValue.flag];
+  // LeveledFlag — validate argValue against allowed values
+  if (argValue && !flagValue.values.includes(argValue)) {
+    throw new ValidationError(
+      `Invalid value "${argValue}" for flag "${flagValue.flag}". Allowed: ${flagValue.values.join(', ')}`,
+    );
+  }
 
-  return leveledFlag;
+  const flagArgs = argValue ? [flagValue.flag, argValue] : [flagValue.flag];
+
+  return flagArgs;
 };
 
-const appendModelFlag = (cliArgs: string[], askCmd: CommandDef, model: string | undefined): void => {
-  const flag = getFlag(askCmd, FLAG_MODEL);
+const appendValueFlag = (
+  cliArgs: string[],
+  askCmd: CommandDef,
+  flagKey: string,
+  value: string | boolean | undefined,
+): void => {
+  // Falsy check is intentional: undefined = not provided, false = don't enable, "" = empty value
+  if (!value) return;
 
-  if (model && flag != null) {
-    cliArgs.push(...resolveFlagToArgs(flag, model));
-  }
-};
+  const flag = getFlag(askCmd, flagKey);
 
-const appendWorkingDirFlag = (cliArgs: string[], askCmd: CommandDef, workingDir: string | undefined): void => {
-  const flag = getFlag(askCmd, FLAG_WORKING_DIR);
+  if (flag == null) return;
 
-  if (workingDir && flag != null) {
-    cliArgs.push(...resolveFlagToArgs(flag, workingDir));
-  }
+  const argValue = typeof value === 'string' ? value : undefined;
+  const flagArgs = resolveFlagToArgs(flag, argValue);
+
+  cliArgs.push(...flagArgs);
 };
 
 const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: readonly string[] | undefined): void => {
+  if (!files?.length) return;
+
   const flag = getFlag(askCmd, FLAG_FILE);
 
-  if (files && files.length > 0 && flag != null && typeof flag === 'string') {
-    for (const file of files) {
-      cliArgs.push(flag, file);
-    }
+  if (flag == null) return;
+
+  if (typeof flag !== 'string') {
+    throw new ValidationError(
+      `File flag must be a simple string flag, got ${Array.isArray(flag) ? 'array' : 'object'}`,
+    );
   }
-};
 
-const appendAutoModeFlag = (cliArgs: string[], askCmd: CommandDef, autoMode: boolean | undefined): void => {
-  const flag = getFlag(askCmd, FLAG_AUTO_MODE);
-
-  if (autoMode === true && flag != null) {
-    cliArgs.push(...resolveFlagToArgs(flag));
+  for (const file of files) {
+    cliArgs.push(flag, file);
   }
 };
 
 const appendSandboxFlag = (cliArgs: string[], askCmd: CommandDef, sandbox: string | boolean | undefined): void => {
+  if (!sandbox) return;
+
   const flag = getFlag(askCmd, FLAG_SANDBOX);
 
-  if (sandbox === undefined || flag == null) return;
+  if (flag == null) return;
 
   const sandboxValue = typeof sandbox === 'string' ? sandbox : undefined;
+  const flagArgs = resolveFlagToArgs(flag, sandboxValue);
 
-  cliArgs.push(...resolveFlagToArgs(flag, sandboxValue));
+  cliArgs.push(...flagArgs);
 };
 
 const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: AskToolArgs): void => {
-  appendModelFlag(cliArgs, askCmd, args.model);
-  appendWorkingDirFlag(cliArgs, askCmd, args.working_directory);
+  appendValueFlag(cliArgs, askCmd, FLAG_MODEL, args.model);
+  appendValueFlag(cliArgs, askCmd, FLAG_WORKING_DIR, args.working_directory);
   appendFileFlags(cliArgs, askCmd, args.files);
-  appendAutoModeFlag(cliArgs, askCmd, args.auto_mode);
+  appendValueFlag(cliArgs, askCmd, FLAG_AUTO_MODE, args.auto_mode);
   appendSandboxFlag(cliArgs, askCmd, args.sandbox);
 };
 
-export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): { args: string[]; stdinInput?: string } => {
+export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): BuiltArgs => {
   const cliArgs: string[] = [];
   let stdinInput: string | undefined;
 
-  if (!args.prompt) throw new Error('Missing required "prompt" argument');
+  if (!args.prompt) throw new ValidationError('Missing required "prompt" argument');
 
-  const prompt = args.prompt;
   const askCmd = getAskCommand(config);
 
-  // Pre-prompt positional args (subcommand or flag before the prompt value)
-  if (askCmd.args) {
+  // Pre-prompt args (subcommand for positional input, flag prefix for flag input)
+  if (askCmd.args?.length) {
     cliArgs.push(...askCmd.args);
   }
 
   // Prompt delivery based on input method
   if (config.input.method === 'stdin') {
-    stdinInput = prompt;
+    stdinInput = args.prompt;
   } else {
-    cliArgs.push(prompt);
+    cliArgs.push(args.prompt);
   }
 
   // Append all optional flag-based args
   appendOptionalFlags(cliArgs, askCmd, args);
 
   // Trailing args (output format flags, etc.)
-  if (askCmd.trailingArgs) {
+  if (askCmd.trailingArgs?.length) {
     cliArgs.push(...askCmd.trailingArgs);
   }
 
-  return { args: cliArgs, stdinInput };
+  const builtArgs: BuiltArgs = { args: cliArgs, stdinInput };
+
+  return builtArgs;
 };
