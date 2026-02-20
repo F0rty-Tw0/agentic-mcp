@@ -32,9 +32,12 @@ export const createServer = async (options?: { configPath?: string }): Promise<M
     }
   }
 
+  // __APP_VERSION__ is injected by esbuild `define` at build time; falls back in dev/test.
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0-dev';
+
   const server = new McpServer({
     name: 'agentic-mcp',
-    version: '0.1.0',
+    version,
   });
 
   registerAllTools(server, resolvedProviders, allProviders);
