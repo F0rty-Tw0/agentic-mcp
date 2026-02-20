@@ -30,16 +30,16 @@ const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] =
 
   if (Array.isArray(flagValue)) return [...flagValue];
 
-  // LeveledFlag — validate argValue against allowed values
-  if (argValue && !flagValue.values.includes(argValue)) {
+  // LeveledFlag — requires a value; emit nothing if no value provided
+  if (!argValue) return [];
+
+  if (!flagValue.values.includes(argValue)) {
     throw new ValidationError(
       `Invalid value "${argValue}" for flag "${flagValue.flag}". Allowed: ${flagValue.values.join(', ')}`,
     );
   }
 
-  const flagArgs = argValue ? [flagValue.flag, argValue] : [flagValue.flag];
-
-  return flagArgs;
+  return [flagValue.flag, argValue];
 };
 
 const appendValueFlag = (

@@ -192,15 +192,14 @@ describe('buildArgArray', () => {
       expect(result.args[idx + 1]).toBe('read-only');
     });
 
-    it('GIVEN sandbox boolean true and leveled flag WHEN building args THEN only flag is appended without value', () => {
+    it('GIVEN sandbox boolean true and leveled flag WHEN building args THEN flag is skipped (leveled flags require a value)', () => {
       const config = createConfig({
         flags: { sandbox: { flag: '--sandbox', values: ['read-only', 'full'] } },
       });
 
       const result = buildArgArray(config, { prompt: 'test', sandbox: true });
 
-      expect(result.args).toContain('--sandbox');
-      expect(result.args).not.toContain('true');
+      expect(result.args).not.toContain('--sandbox');
     });
 
     it('GIVEN sandbox false WHEN building args THEN no sandbox flag is appended', () => {
