@@ -102,13 +102,21 @@ describe('loadConfig', () => {
 
   it('GIVEN user-local config WHEN explicit and env paths are absent THEN user-local config is loaded', async () => {
     const appDataDir = await createTempDir();
-    const userLocalDir = path.join(appDataDir, 'agentic-mcp');
+
+    let userLocalDir: string;
+
+    if (process.platform === 'win32') {
+      userLocalDir = path.join(appDataDir, 'agentic-mcp');
+      vi.stubEnv('APPDATA', appDataDir);
+    } else {
+      userLocalDir = path.join(appDataDir, '.config', 'agentic-mcp');
+      vi.spyOn(os, 'homedir').mockReturnValue(appDataDir);
+    }
 
     await fs.mkdir(userLocalDir, { recursive: true });
     await writeConfig(userLocalDir, 'providers.json', buildConfig('user-local'));
 
     vi.stubEnv('AGENTIC_MCP_CONFIG', '');
-    vi.stubEnv('APPDATA', appDataDir);
 
     const loaded = await loadConfig();
 
