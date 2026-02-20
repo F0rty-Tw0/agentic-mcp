@@ -171,62 +171,7 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 
 ## Code Style
 
-- TypeScript strict mode (see tsconfig decisions above)
-- No enums, no namespaces (`erasableSyntaxOnly`)
-- 2-space indent, LF line endings, UTF-8 (see `.editorconfig`)
-- Line endings normalised to LF via `.gitattributes`
-- Keep shared constants/types/errors under `src/common/` using specific files (avoid catch-all `types.ts`)
-- Guard-first control flow: prefer early returns/continues over nested blocks.
-- Avoid lone `if` wrappers and `if/else` pairs when a guard clause can flatten the flow without changing behavior.
-- Require explicit types on exported APIs and non-trivial helpers (parameters and return types).
-- Keep changes minimal, behavior-preserving, and clean (small functions, clear names, no dead branches).
-
-### Testing Style
-
-Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
-
-- **GIVEN** the initial context/setup
-- **WHEN** the behaviour under test is executed
-- **THEN** the expected outcome is asserted
-
-### TDD Enforcement (Mandatory)
-
-- **No production code before a failing test** for feature work, bug fixes, and behavior refactors.
-- Follow strict **Red -> Green -> Refactor**: write failing test, verify failure reason, implement minimal fix, then refactor.
-- If implementation code is written before the test, delete it and restart from a failing test.
-- Run the focused test during red/green, then run the full relevant suite before completion.
-
-Example naming pattern: `GIVEN X WHEN Y THEN Z`.
-
-### Functional Programming Preference
-
-Prefer functions over classes throughout the codebase:
-
-- **Default to `const` function expressions** — write functions as `const name = (...) => {}` (or async equivalent). Use `function` syntax only when a real `this` context is required.
-- **Default to plain functions** — export standalone functions, not class methods. Use closures for encapsulation when needed.
-- **Pure functions first** — functions should be deterministic with no side effects where possible. Side effects (I/O, spawn, fs) belong at the edges, not buried in logic.
-- **Data as plain objects** — pass data using plain objects and TypeScript interfaces/types, not class instances. Avoid `new` for domain data.
-- **Composition over inheritance** — combine small functions via composition (`pipe`, higher-order functions) instead of class hierarchies.
-- **Exceptions: error classes** — custom error classes (`extends Error`) are the one accepted use of classes. They need `instanceof` checks and proper stack traces, which plain objects can't provide.
-- **No `this` in domain logic** — if you're reaching for `this`, restructure as a function that takes its dependencies as arguments.
-
-### Readonly by Default
-
-Mark types as immutable unless mutation is required:
-
-- **Wrap type aliases with `Readonly<>`** — all `type` definitions for objects that are not mutated after creation should use `Readonly<{...}>`. This prevents accidental property reassignment.
-- **Use `readonly` for array fields** — array properties that are not mutated should use `readonly string[]` (or `readonly T[]`) instead of `string[]`. This prevents accidental `.push()`, `.splice()`, etc.
-- **Zod-inferred types are exempt** — types derived from `z.infer<>` are left as-is since making them deeply readonly requires `DeepReadonly` utility types. These types are treated as read-only by convention after parsing.
-- **Mutable locals are fine** — local variables that are built incrementally (e.g. `const arr: string[] = []; arr.push(...)`) don't need `readonly`. The constraint applies to type definitions and function signatures, not to local construction patterns.
-
-### Linter Validation
-
-Run the linter continuously during development. Every change must pass before it is considered complete.
-
-- **After every code change**, run `pnpm run lint` to verify compliance.
-- **Before any commit**, ensure `pnpm run lint` exits cleanly (zero errors, zero warnings).
-- **Use `pnpm run lint:fix`** for auto-fixable issues, but always review the diff — don't blindly accept auto-fixes.
-- **Never suppress lint rules** (`eslint-disable`) without documenting why in a comment. Suppression is a last resort, not a shortcut.
+See [`AGENTS.md`](./AGENTS.md) for the full coding style guide, including TypeScript conventions, testing style (GIVEN/WHEN/THEN), TDD enforcement, functional programming preference, readonly-by-default rules, and linter validation requirements.
 
 ## Git Workflow
 
@@ -260,7 +205,7 @@ This file is a living document. After every meaningful change to the codebase, u
 - **New command or script** — add it to Commands.
 - **New module, directory, or architectural shift** — update Architecture.
 - **New dependency added or removed** — update Dependencies & Decisions with rationale.
-- **New convention or style rule** — add it to Code Style.
+- **New convention or style rule** — add it to `AGENTS.md`.
 - **New workflow or branch policy change** — update Git Workflow.
 - **Phase milestone reached or new phase defined** — update Roadmap Phases.
 - **New provider added** — note it under Architecture or a dedicated Providers section if the list grows.
