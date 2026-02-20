@@ -3,7 +3,7 @@
  * using in-memory transports. No mocks, no stubs.
  *
  * Uses `.test.ts` extension to distinguish from unit `.spec.ts` files.
- * Excluded from CI — run locally with: pnpm run test:integration
+ * Run with: pnpm run test:integration
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
