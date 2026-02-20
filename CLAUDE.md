@@ -31,28 +31,65 @@ build.mjs              # esbuild bundler script (shebang injection, providers.js
 src/
   index.ts              # entry point — shebang, start server, parse --config flag
   server.ts             # MCP server setup, provider resolution, tool registration
-  common/               # types, constants, schemas, errors — shared foundation
-    errors/             # custom error classes and MCP error mapping
+
+  shared/               # cross-cutting infrastructure used by multiple features
+    common/             # types, constants, Zod schemas, error classes
+      errors/           # custom error classes and MCP error mapping
+      provider-config.schema.ts  # Zod schemas for providers.json
+      provider-config.type.ts    # ResolvedProviderEntry type
+      execution-limits.const.ts  # output size limits
+      validation-patterns.const.ts # regex patterns for input validation
+    utils/              # pure utility functions
+      platform.ts       # binary resolution (which), process management, env isolation
+      to-mcp-error.ts   # converts errors to MCP error responses
+    domain-logic/       # orchestration and composition
+      command-executor.ts # spawn execution with concurrency control and output limiting
+      tool-registry.ts  # registers all tools on the MCP server (composition root)
+
+  features/
+    ask/                # core prompting feature — the main "ask" tool
+      common/           # types and constants
+        command-def.const.ts # FLAG_* constants for ask command flags
+        tool-args.types.ts   # AskToolArgs and BuiltArgs types
+      utils/            # validation and helper functions
+        validation.ts   # input validation helpers (prompt, model, sandbox, etc.)
+        command-def-utils.ts # helpers for accessing command definitions and flags
+      domain-logic/     # core business logic
+        handler.ts      # handleAsk — orchestrates arg building, spawn, response
+        arg-builder.ts  # builds CLI argument arrays from tool args + provider config
+        tool-builder.ts # builds ask MCP tool definition (name, Zod schema, annotations)
+    simple-tools/       # lightweight tools: ping, help, list_providers
+      domain-logic/     # handlers and tool builders
+        ping-handler.ts # handlePing — version check via CLI spawn
+        help-handler.ts # handleHelp — runs --help on provider CLI
+        meta-handler.ts # handleListProviders — lists all configured providers
+        tool-builder.ts # builds ping/help/list_providers tool definitions
+
   config/               # config loading, validation, provider definitions
     loader.ts           # multi-source config resolution (CLI flag, env, user-local, bundled)
-  domain-logic/         # core business logic — tool building, spawn execution
-    handlers/           # request handlers (ask, ping, help, meta)
-  utils/                # pure utility/helper functions
-    platform.ts         # binary resolution (which), process management, env isolation
-    validation.ts       # input validation helpers
+    validate-providers.ts # standalone script — validates providers.json against Zod schema
+  test-utils/           # shared test helpers (Vitest utility types)
   types/                # ambient module declarations (.d.ts for untyped packages)
 ```
 
 ### Folder Roles
 
-| Folder           | Purpose                                                                  | Contains                                                                                |
-| ---------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `common/`        | Shared foundation. Anything referenced across multiple modules.          | Types, constants, Zod schemas, error classes. No business logic.                        |
-| `common/errors/` | Error definitions and MCP error mapping.                                 | Custom error classes (the one case where classes are acceptable — see Code Style).      |
-| `config/`        | Everything related to loading, parsing, and validating configuration.    | `providers.json`, JSON schemas, Zod validation, config spec tests.                      |
-| `domain-logic/`  | Core business logic of the MCP server. Where the actual work happens.    | Tool builders, spawn/execution logic, session management, provider orchestration.       |
-| `utils/`         | Pure, stateless utility functions. No domain knowledge, no side effects. | String helpers, formatting, data transformations. Each function independently testable. |
-| `types/`         | Ambient declarations for third-party packages that lack their own types. | `.d.ts` files only.                                                                     |
+| Folder                          | Purpose                                                                  | Contains                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `shared/`                       | Cross-cutting infrastructure used by multiple features.                  | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                      |
+| `shared/common/`                | Types, constants, schemas shared across features.                        | Zod schemas, type definitions, constants, regex patterns.                                |
+| `shared/common/errors/`         | Error definitions and MCP error mapping.                                 | Custom error classes (the one case where classes are acceptable — see Code Style).      |
+| `shared/utils/`                 | Pure utility functions.                                                  | Platform helpers (binary resolution, env isolation), error conversion.                   |
+| `shared/domain-logic/`          | Orchestration and composition.                                           | Command executor (spawn + concurrency), tool registry (MCP registration).               |
+| `features/ask/`                 | Self-contained ask feature — the core prompting tool.                    | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                      |
+| `features/ask/common/`          | Ask-specific types and constants.                                        | FLAG_* constants, AskToolArgs/BuiltArgs types.                                          |
+| `features/ask/utils/`           | Ask-specific validation and helpers.                                     | Input validation (prompt, model, files), command-def access helpers.                    |
+| `features/ask/domain-logic/`    | Ask core business logic.                                                 | Handler, arg builder, tool builder.                                                     |
+| `features/simple-tools/`        | Lightweight tools grouped together (ping, help, list_providers).         | All files in `domain-logic/` sublayer.                                                  |
+| `features/simple-tools/domain-logic/` | Handlers and tool builders for simple tools.                       | ping, help, meta handlers and tool definition builders.                                 |
+| `config/`                       | Everything related to loading, parsing, and validating configuration.    | `providers.json`, JSON schemas, Zod validation, config spec tests.                      |
+| `test-utils/`                   | Shared test utilities.                                                   | Vitest helper types.                                                                    |
+| `types/`                        | Ambient declarations for third-party packages that lack their own types. | `.d.ts` files only.                                                                     |
 
 ### Core Design Principles
 
@@ -122,6 +159,7 @@ Every dependency and tooling choice is documented here with rationale.
 | Package                  | Why                                                           |
 | ------------------------ | ------------------------------------------------------------- |
 | `eslint`                 | Linter. ESLint 9 flat config.                                 |
+| `prettier`               | Code formatter. Consistent formatting across the codebase.    |
 | `lint-suite`             | Shared lint configuration preset.                             |
 | `eslint-config-prettier` | Disables ESLint rules that conflict with Prettier formatting. |
 

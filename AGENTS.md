@@ -8,7 +8,7 @@ This file contains the coding conventions, style rules, and development practice
 - No enums, no namespaces (`erasableSyntaxOnly`)
 - 2-space indent, LF line endings, UTF-8 (see `.editorconfig`)
 - Line endings normalised to LF via `.gitattributes`
-- Keep shared constants/types/errors under `src/common/` using specific files (avoid catch-all `types.ts`)
+- Keep shared constants/types/errors under `src/shared/` using specific files (avoid catch-all `types.ts`)
 - Guard-first control flow: prefer early returns/continues over nested blocks.
 - Avoid lone `if` wrappers and `if/else` pairs when a guard clause can flatten the flow without changing behavior.
 - Require explicit types on exported APIs and non-trivial helpers (parameters and return types).
@@ -16,7 +16,7 @@ This file contains the coding conventions, style rules, and development practice
 - **Optional chaining for nullable length checks** — prefer `x?.length > 0` (or just `x?.length` when truthy is sufficient) over `x && x.length > 0`. More concise, same semantics.
 - **Truthy/falsy over explicit boolean comparison** — prefer `if (flag)` over `if (flag === true)` and `if (!flag)` over `if (flag === false)`. Explicit comparison is redundant when the type is already `boolean | undefined`.
 - **Named return variables** — assign complex return values to a typed variable before returning (`const result: Type = { ... }; return result;`), rather than returning an object literal directly. Aids debuggability and makes the return type explicit at the construction site.
-- **No magic numbers** — numeric thresholds, limits, and capacities belong in `src/common/` constants files (e.g. `execution-limits.const.ts`), not inline in business logic. Name them descriptively.
+- **No magic numbers** — numeric thresholds, limits, and capacities belong in `src/shared/` constants files (e.g. `execution-limits.const.ts`), not inline in business logic. Name them descriptively.
 - **Deep `Readonly`** — when wrapping a type in `Readonly<>`, also wrap nested `Record<>` and object fields (e.g. `env: Readonly<Record<string, string>>`). Shallow `Readonly` on the outer type does not protect inner structures from mutation.
 - **Consistent error-path checking** — every handler that calls `executeCommand` must check `result.exitCode`, `result.signal`, and `result.timedOut` before treating the result as a success. Never silently ignore non-zero exit codes.
 - **Promises must resolve on all paths** — every `new Promise` constructor must resolve or reject on every code path. Avoid patterns where a Promise only resolves inside a timer or conditional branch while other paths leave it dangling.
@@ -27,6 +27,8 @@ This file contains the coding conventions, style rules, and development practice
 
 ## Testing Style
 
+- **Test file extension**: use `.spec.ts` (not `.test.ts`). Place test files co-located next to the module they test (e.g. `foo.ts` → `foo.spec.ts`).
+
 Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
 
 - **GIVEN** the initial context/setup
@@ -34,6 +36,8 @@ Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit.
 - **THEN** the expected outcome is asserted
 
 Example naming pattern: `GIVEN X WHEN Y THEN Z`.
+
+- **No section separator comments** in test files — no `// -----------` banners between `describe` blocks. The `describe` blocks provide sufficient structure on their own.
 
 ## TDD Enforcement (Mandatory)
 
