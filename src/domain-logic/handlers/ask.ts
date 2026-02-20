@@ -58,7 +58,7 @@ export const handleAsk = async (context: ResolvedProviderEntry, args: AskToolArg
       env,
       timeoutMs: context.config.timeout,
       stdin: stdinInput,
-      cwd: resolved.working_directory ?? undefined,
+      cwd: resolved.working_directory,
     });
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
@@ -74,7 +74,9 @@ export const handleAsk = async (context: ResolvedProviderEntry, args: AskToolArg
 
     const output = stripAnsi(result.stdout);
 
-    return { content: [{ type: 'text', text: output }] };
+    const response: CallToolResult = { content: [{ type: 'text', text: output }] };
+
+    return response;
   } catch (error) {
     return toMcpError(error);
   }
