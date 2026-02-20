@@ -6,7 +6,7 @@ import process from 'node:process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadConfig } from './loader.ts';
-import type { ProvidersFile } from '../common/provider-config.schema.ts';
+import type { ProvidersFile } from '../shared/common/provider-config.schema.ts';
 
 const tempDirs: string[] = [];
 
@@ -89,7 +89,7 @@ describe('loadConfig', () => {
     const userLocalDir = path.join(appDataDir, 'agentic-mcp');
 
     await fs.mkdir(userLocalDir, { recursive: true });
-    await writeConfig(userLocalDir, 'providers.json', buildConfig('userLocal'));
+    await writeConfig(userLocalDir, 'providers.json', buildConfig('user-local'));
 
     vi.stubEnv('AGENTIC_MCP_CONFIG', envPath);
     vi.stubEnv('APPDATA', appDataDir);
@@ -97,7 +97,7 @@ describe('loadConfig', () => {
     const loaded = await loadConfig();
 
     expect(loaded.providers.env).toBeDefined();
-    expect(loaded.providers.userLocal).toBeUndefined();
+    expect(loaded.providers['user-local']).toBeUndefined();
   });
 
   it('GIVEN user-local config WHEN explicit and env paths are absent THEN user-local config is loaded', async () => {
@@ -105,14 +105,14 @@ describe('loadConfig', () => {
     const userLocalDir = path.join(appDataDir, 'agentic-mcp');
 
     await fs.mkdir(userLocalDir, { recursive: true });
-    await writeConfig(userLocalDir, 'providers.json', buildConfig('userLocal'));
+    await writeConfig(userLocalDir, 'providers.json', buildConfig('user-local'));
 
     vi.stubEnv('AGENTIC_MCP_CONFIG', '');
     vi.stubEnv('APPDATA', appDataDir);
 
     const loaded = await loadConfig();
 
-    expect(loaded.providers.userLocal).toBeDefined();
+    expect(loaded.providers['user-local']).toBeDefined();
   });
 
   it('GIVEN no explicit env or user-local config WHEN loading THEN bundled config is used', async () => {
