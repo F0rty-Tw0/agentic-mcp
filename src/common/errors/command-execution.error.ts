@@ -25,7 +25,7 @@ export class CommandExecutionError extends Error {
   public toMcpResponse(): McpErrorResponse {
     const parts: string[] = [this.message];
 
-    if (this.timedOut === true) {
+    if (this.timedOut) {
       parts.push('Process timed out.');
     } else if (this.signal != null) {
       parts.push(`Killed by signal: ${this.signal}.`);

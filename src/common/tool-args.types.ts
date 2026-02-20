@@ -7,3 +7,8 @@ export type AskToolArgs = Readonly<{
   auto_mode?: boolean;
   sandbox?: string | boolean;
 }>;
+
+export type BuiltArgs = Readonly<{
+  args: readonly string[];
+  stdinInput?: string;
+}>;
