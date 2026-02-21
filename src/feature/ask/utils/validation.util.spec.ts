@@ -8,7 +8,7 @@ import {
   validatePromptSize,
   validateSessionId,
   validateWorkingDirectory,
-} from './validation.ts';
+} from './validation.util.ts';
 import { ValidationError } from '../../../shared/common/errors/validation-error.ts';
 import { MAX_FILES, MAX_PROMPT_BYTES } from '../../../shared/common/execution-limits.const.ts';
 

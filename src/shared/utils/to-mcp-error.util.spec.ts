@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toMcpError } from './to-mcp-error.ts';
+import { toMcpError } from './to-mcp-error.util.ts';
 import { CommandExecutionError } from '../common/errors/command-execution.error.ts';
 import { ValidationError } from '../common/errors/validation-error.ts';
 

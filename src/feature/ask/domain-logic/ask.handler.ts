@@ -1,7 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { buildArgArray } from './arg.builder.ts';
-import { startHeartbeat } from './heartbeat-utils.ts';
 import type { ExecuteCommandOptions } from '../../../shared/common/command-executor.types.ts';
 import { CommandExecutionError } from '../../../shared/common/errors/command-execution.error.ts';
 import type { CommandExecutionErrorDetails } from '../../../shared/common/errors/command-execution.error.ts';
@@ -9,10 +8,11 @@ import { ValidationError } from '../../../shared/common/errors/validation-error.
 import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
 import { executeCommand } from '../../../shared/domain-logic/command-executor.ts';
 import { resolveProviderEnv } from '../../../shared/domain-logic/provider-env-resolver.ts';
-import { buildMinimalEnv, stripAnsi } from '../../../shared/utils/platform.ts';
-import { toMcpError } from '../../../shared/utils/to-mcp-error.ts';
+import { buildMinimalEnv, stripAnsi } from '../../../shared/utils/platform.util.ts';
+import { toMcpError } from '../../../shared/utils/to-mcp-error.util.ts';
 import type { ProgressContext } from '../common/progress-context.types.ts';
 import type { AskToolArgs } from '../common/tool-args.types.ts';
+import { startHeartbeat } from '../utils/heartbeat.util.ts';
 import { buildModelHint, detectModelError } from '../utils/model-error.util.ts';
 import {
   validateFiles,
@@ -20,7 +20,7 @@ import {
   validatePromptSize,
   validateSessionId,
   validateWorkingDirectory,
-} from '../utils/validation.ts';
+} from '../utils/validation.util.ts';
 
 const MAX_RESPONSE_TEXT_BYTES = 200 * 1024;
 

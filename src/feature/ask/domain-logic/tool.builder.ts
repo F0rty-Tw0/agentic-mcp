@@ -13,7 +13,7 @@ import {
   FLAG_WORKING_DIR,
 } from '../common/command-def.const.ts';
 import { isLeveledFlag } from '../common/tool-args.types.ts';
-import { getAskCommand, getFlag } from '../utils/command-def-utils.ts';
+import { getAskCommand, getFlag } from '../utils/command-def.util.ts';
 
 const addLeveledFlags = (schema: Record<string, z.ZodType>, askCmd: CommandDef): void => {
   const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);

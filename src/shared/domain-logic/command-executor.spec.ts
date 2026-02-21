@@ -2,16 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CommandExecutionError } from '../common/errors/command-execution.error.ts';
 
-vi.mock('cross-spawn', () => ({
-  default: vi.fn(),
-}));
+vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
-vi.mock('../utils/platform.ts', () => ({
+vi.mock('../utils/platform.util.ts', () => ({
   killProcess: vi.fn().mockResolvedValue(true),
 }));
 
 const { default: crossSpawn } = await import('cross-spawn');
-const { killProcess } = await import('../utils/platform.ts');
+const { killProcess } = await import('../utils/platform.util.ts');
 const { executeCommand } = await import('./command-executor.ts');
 
 type EventHandler = (...args: unknown[]) => void;
@@ -397,7 +395,9 @@ describe('executeCommand', () => {
       mockSpawnFromChildren(
         children,
         () => callIndex,
-        () => { callIndex++; },
+        () => {
+          callIndex++;
+        },
       );
 
       const runCommand = async (): Promise<Awaited<ReturnType<typeof executeCommand>>> =>

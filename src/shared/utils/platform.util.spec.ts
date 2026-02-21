@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from './platform.ts';
+import { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from './platform.util.ts';
 import type { AsyncViFn, SyncViFn } from '../common/test-utils/vi-fn.types.ts';
 
 type ExecFileCallback = (error: NodeJS.ErrnoException | null) => void;

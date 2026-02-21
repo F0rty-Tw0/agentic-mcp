@@ -5,7 +5,7 @@ import crossSpawn from 'cross-spawn';
 import { createSemaphore } from './semaphore.ts';
 import type { ExecuteCommandOptions, ExecutionResult } from '../common/command-executor.types.ts';
 import { CommandExecutionError } from '../common/errors/command-execution.error.ts';
-import { killProcess } from '../utils/platform.ts';
+import { killProcess } from '../utils/platform.util.ts';
 
 type CollectStreamResult = Readonly<{ bytes: number; truncated: boolean }>;
 

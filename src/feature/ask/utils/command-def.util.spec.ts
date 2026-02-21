@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAskCommand, getFlag } from './command-def-utils.ts';
+import { getAskCommand, getFlag } from './command-def.util.ts';
 import { ValidationError } from '../../../shared/common/errors/validation-error.ts';
 import type { CommandDef, ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
 import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR } from '../common/command-def.const.ts';

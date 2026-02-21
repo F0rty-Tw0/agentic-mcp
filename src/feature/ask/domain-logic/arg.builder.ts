@@ -11,7 +11,7 @@ import {
   FLAG_WORKING_DIR,
 } from '../common/command-def.const.ts';
 import type { AskToolArgs, BuiltArgs } from '../common/tool-args.types.ts';
-import { getAskCommand, getFlag } from '../utils/command-def-utils.ts';
+import { getAskCommand, getFlag } from '../utils/command-def.util.ts';
 
 /**
  * Resolves a FlagValue into CLI arguments.

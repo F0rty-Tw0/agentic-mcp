@@ -25,14 +25,14 @@ vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
   ),
 }));
 
-vi.mock('../../../shared/utils/platform.ts', () => ({
+vi.mock('../../../shared/utils/platform.util.ts', () => ({
   buildMinimalEnv: vi.fn(() => ({ PATH: '/usr/bin' })),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
 const { buildArgArray } = await import('./arg.builder.ts');
 const { executeCommand } = await import('../../../shared/domain-logic/command-executor.ts');
-const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platform.ts');
+const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platform.util.ts');
 
 const successResult = {
   stdout: 'done',

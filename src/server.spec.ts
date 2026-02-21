@@ -30,7 +30,7 @@ vi.mock('./config/loader.ts', () => ({
   loadConfig: mocks.loadConfig,
 }));
 
-vi.mock('./shared/utils/platform.ts', () => ({
+vi.mock('./shared/utils/platform.util.ts', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 
