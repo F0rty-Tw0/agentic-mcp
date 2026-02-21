@@ -1,7 +1,7 @@
 import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const.ts';
 import type { McpErrorResponse } from './mcp-error-response.type.ts';
 
-type CommandExecutionErrorDetails = Readonly<{
+export type CommandExecutionErrorDetails = Readonly<{
   exitCode?: number | null;
   signal?: string | null;
   timedOut?: boolean;
