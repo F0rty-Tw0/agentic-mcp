@@ -132,4 +132,4 @@ Run the linter continuously during development. Every change must pass before it
 - **After every code change**, run `pnpm run lint` to verify compliance.
 - **Before any commit**, ensure `pnpm run lint` exits cleanly (zero errors, zero warnings).
 - **Use `pnpm run lint:fix`** for auto-fixable issues, but always review the diff — don't blindly accept auto-fixes.
-- **Never suppress lint rules** (`eslint-disable`) without documenting why in a comment. Suppression is a last resort, not a shortcut.
+- **Never add `eslint-disable` comments** — fix the underlying code instead. Use bracket notation for problematic property names (`['_meta']` instead of `_meta`), restructure assertions to avoid `any`-typed matchers in object literals, and reduce cyclomatic complexity by extracting helpers or using `.map()`. If a lint rule cannot be satisfied without a disable comment, raise it for discussion rather than suppressing.

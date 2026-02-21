@@ -78,23 +78,23 @@ src/
 
 ### Folder Roles
 
-| Folder                                | Purpose                                                                  | Contains                                                                                |
-| ------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `shared/`                             | Cross-cutting infrastructure used by multiple features.                  | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                      |
-| `shared/common/`                      | Types, constants, schemas shared across features.                        | Zod schemas, type definitions, constants, error classes.                                 |
-| `shared/common/errors/`              | Error definitions and MCP error mapping.                                 | Custom error classes (the one case where classes are acceptable — see Code Style).      |
-| `shared/common/test-utils/`          | Shared test utilities.                                                   | Vitest helper types (`vi-fn.types.ts`).                                                 |
-| `shared/utils/`                       | Pure utility functions.                                                  | Platform helpers (binary resolution, env isolation), error conversion.                   |
-| `shared/domain-logic/`               | Orchestration and composition.                                           | Command executor (spawn + concurrency), semaphore (concurrency control).                |
-| `feature/ask/`                        | Self-contained ask feature — the core prompting tool.                    | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                      |
-| `feature/ask/common/`                | Ask-specific types and constants.                                        | FLAG_* constants, AskToolArgs/BuiltArgs types.                                          |
-| `feature/ask/utils/`                 | Ask-specific validation and helpers.                                     | Input validation (prompt, model, files), command-def access helpers.                    |
-| `feature/ask/domain-logic/`          | Ask core business logic.                                                 | Handler, arg builder, tool builder.                                                     |
-| `feature/simple-tools/`              | Lightweight tools grouped together (ping, help, list_providers).         | All files in `domain-logic/` sublayer.                                                  |
-| `feature/simple-tools/domain-logic/` | Handlers and tool builders for simple tools.                             | ping, help, meta handlers and tool definition builders.                                 |
-| `feature/tool-registry/`             | Tool registration composition root.                                      | Registers all tools (ask, ping, help, list_providers) on the MCP server.                |
-| `config/`                             | Everything related to loading, parsing, and validating configuration.    | `providers.json`, JSON schemas, Zod validation, config spec tests.                      |
-| `types/`                              | Ambient declarations and build-time type definitions.                    | `.d.ts` files (untyped package declarations + `build-env.d.ts` for `__APP_VERSION__`).  |
+| Folder                               | Purpose                                                               | Contains                                                                               |
+| ------------------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `shared/`                            | Cross-cutting infrastructure used by multiple features.               | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                     |
+| `shared/common/`                     | Types, constants, schemas shared across features.                     | Zod schemas, type definitions, constants, error classes.                               |
+| `shared/common/errors/`              | Error definitions and MCP error mapping.                              | Custom error classes (the one case where classes are acceptable — see Code Style).     |
+| `shared/common/test-utils/`          | Shared test utilities.                                                | Vitest helper types (`vi-fn.types.ts`).                                                |
+| `shared/utils/`                      | Pure utility functions.                                               | Platform helpers (binary resolution, env isolation), error conversion.                 |
+| `shared/domain-logic/`               | Orchestration and composition.                                        | Command executor (spawn + concurrency), semaphore (concurrency control).               |
+| `feature/ask/`                       | Self-contained ask feature — the core prompting tool.                 | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                     |
+| `feature/ask/common/`                | Ask-specific types and constants.                                     | FLAG\_\* constants, AskToolArgs/BuiltArgs types.                                       |
+| `feature/ask/utils/`                 | Ask-specific validation and helpers.                                  | Input validation (prompt, model, files), command-def access helpers.                   |
+| `feature/ask/domain-logic/`          | Ask core business logic.                                              | Handler, arg builder, tool builder.                                                    |
+| `feature/simple-tools/`              | Lightweight tools grouped together (ping, help, list_providers).      | All files in `domain-logic/` sublayer.                                                 |
+| `feature/simple-tools/domain-logic/` | Handlers and tool builders for simple tools.                          | ping, help, meta handlers and tool definition builders.                                |
+| `feature/tool-registry/`             | Tool registration composition root.                                   | Registers all tools (ask, ping, help, list_providers) on the MCP server.               |
+| `config/`                            | Everything related to loading, parsing, and validating configuration. | `providers.json`, JSON schemas, Zod validation, config spec tests.                     |
+| `types/`                             | Ambient declarations and build-time type definitions.                 | `.d.ts` files (untyped package declarations + `build-env.d.ts` for `__APP_VERSION__`). |
 
 ### Core Design Principles
 
@@ -259,5 +259,6 @@ If a section becomes outdated or wrong, fix it immediately rather than leaving s
 
 1. **Core MVP** ✅ — config loading (multi-source resolution), Zod validation, tool registration (ask/ping/help/list_providers), spawn execution with concurrency control, output size limiting, cross-platform binary resolution, 5 providers configured (claude, codex, copilot, gemini, opencode)
 2. **Sessions + streaming**
+   - Next release update plan: `docs/plans/2026-02-21-ask-live-streaming.md`
 3. **Extended providers**
 4. **Advanced features** — review, sandbox, npm publish
