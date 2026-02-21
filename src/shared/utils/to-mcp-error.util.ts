@@ -3,9 +3,7 @@ import type { McpErrorResponse } from '../common/errors/mcp-error-response.type.
 import { ValidationError } from '../common/errors/validation-error.ts';
 
 export const toMcpError = (error: unknown): McpErrorResponse => {
-  const isKnownError =
-    error instanceof ValidationError ||
-    error instanceof CommandExecutionError;
+  const isKnownError = error instanceof ValidationError || error instanceof CommandExecutionError;
 
   if (isKnownError) return error.toMcpResponse();
 

@@ -39,7 +39,7 @@ vi.mock('./feature/tool-registry/tool-registry.ts', () => ({
 }));
 
 const buildProvider = (
-  overrides: Partial<ProvidersFile['providers'][string]> = {},
+  overrides: Partial<ProvidersFile['providers'][string]> = {}
 ): ProvidersFile['providers'][string] => ({
   enabled: true,
   description: 'Server test provider',
@@ -135,7 +135,7 @@ describe('createServer', () => {
           available: false,
           binaryPath: null,
         },
-      ],
+      ]
     );
   });
 
@@ -169,7 +169,7 @@ describe('createServer', () => {
           available: false,
           binaryPath: null,
         },
-      ],
+      ]
     );
   });
 
@@ -190,7 +190,7 @@ describe('createServer', () => {
       await createServer();
 
       expect(stderrSpy).toHaveBeenCalledWith(
-        'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n',
+        'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n'
       );
     });
 
@@ -227,7 +227,7 @@ describe('createServer', () => {
       await createServer();
 
       expect(stderrSpy).toHaveBeenCalledWith(
-        'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n',
+        'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n'
       );
     });
   });

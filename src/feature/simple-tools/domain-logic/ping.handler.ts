@@ -49,7 +49,7 @@ export const handlePing = async (context: ResolvedProviderEntry): Promise<CallTo
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
       return createPingResponse(
-        `${context.name}: not responding (exit ${result.exitCode}, signal: ${result.signal}, timedOut: ${String(result.timedOut)})`,
+        `${context.name}: not responding (exit ${result.exitCode}, signal: ${result.signal}, timedOut: ${String(result.timedOut)})`
       );
     }
 

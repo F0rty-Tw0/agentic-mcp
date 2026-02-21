@@ -20,7 +20,7 @@ vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
       stdoutBytes: 14,
       stderrBytes: 0,
       executionTimeMs: 100,
-    }),
+    })
   ),
 }));
 

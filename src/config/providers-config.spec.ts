@@ -61,7 +61,7 @@ describe('providers config', () => {
 
     if (!parsed.success) {
       throw new Error(
-        parsed.error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('\n'),
+        parsed.error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('\n')
       );
     }
 
@@ -79,7 +79,7 @@ describe('providers config', () => {
     }
 
     const outputFormatIssue = parsed.error.issues.find(
-      (issue) => issue.path.join('.') === 'providers.example.outputFormat',
+      (issue) => issue.path.join('.') === 'providers.example.outputFormat'
     );
 
     expect(outputFormatIssue).toBeDefined();

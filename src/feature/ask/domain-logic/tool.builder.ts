@@ -34,7 +34,7 @@ const addLeveledFlags = (schema: Record<string, z.ZodType>, askCmd: CommandDef):
       .enum(effortFlag.values)
       .optional()
       .describe(
-        `Thinking effort level — higher means more thorough but slower responses. Allowed: ${effortFlag.values.join(', ')}`,
+        `Thinking effort level — higher means more thorough but slower responses. Allowed: ${effortFlag.values.join(', ')}`
       );
   }
 };
@@ -49,7 +49,7 @@ const addAutoModeField = (schema: Record<string, z.ZodType>, askCmd: CommandDef)
       .enum(flag.values)
       .optional()
       .describe(
-        `Permission mode — controls what the agent can do without confirmation. Allowed: ${flag.values.join(', ')}`,
+        `Permission mode — controls what the agent can do without confirmation. Allowed: ${flag.values.join(', ')}`
       );
   } else {
     schema.auto_mode = z

@@ -21,7 +21,7 @@ vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
       stdoutBytes: 14,
       stderrBytes: 0,
       executionTimeMs: 100,
-    }),
+    })
   ),
 }));
 
@@ -91,7 +91,7 @@ describe('handleAsk — progress heartbeat', () => {
     vi.mocked(executeCommand).mockReturnValue(
       new Promise((resolve) => {
         resolveCommand = resolve;
-      }),
+      })
     );
 
     const resultPromise = handleAsk(context, { prompt: 'test prompt' }, extra);
@@ -119,7 +119,7 @@ describe('handleAsk — progress heartbeat', () => {
     vi.mocked(executeCommand).mockReturnValue(
       new Promise((resolve) => {
         resolveCommand = resolve;
-      }),
+      })
     );
 
     const resultPromise = handleAsk(context, { prompt: 'test prompt' }, extra);
@@ -149,7 +149,7 @@ describe('handleAsk — progress heartbeat', () => {
     vi.mocked(executeCommand).mockReturnValue(
       new Promise((resolve) => {
         resolveCommand = resolve;
-      }),
+      })
     );
 
     const resultPromise = handleAsk(context, { prompt: 'test prompt' }, extra);
@@ -190,7 +190,7 @@ describe('handleAsk — progress heartbeat', () => {
     vi.mocked(executeCommand).mockReturnValue(
       new Promise((resolve) => {
         resolveCommand = resolve;
-      }),
+      })
     );
 
     const resultPromise = handleAsk(context, { prompt: 'test prompt' }, extra);
@@ -242,7 +242,7 @@ describe('handleAsk — progress heartbeat', () => {
     vi.mocked(executeCommand).mockReturnValue(
       new Promise((resolve) => {
         resolveCommand = resolve;
-      }),
+      })
     );
 
     const resultPromise = handleAsk(context, { prompt: 'test prompt' }, extra);

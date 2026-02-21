@@ -2,8 +2,10 @@
 export default {
   semi: true,
   singleQuote: true,
-  trailingComma: 'all',
   printWidth: 120,
   tabWidth: 2,
   endOfLine: 'lf',
+  trailingComma: 'es5',
+  bracketSpacing: true,
+  arrowParens: 'always',
 };

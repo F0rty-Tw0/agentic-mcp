@@ -27,11 +27,11 @@ This file contains the coding conventions, style rules, and development practice
 
 ## Architecture & Structure Patterns
 
- Organize by feature + role layers (`feature`, `domain-logic`, `data-access`, `utils`, `common`, `config`).
- Keep shared cross-cutting concerns in dedicated shared modules (`src/shared/`).
- Use composition roots for registration/wiring (e.g. `tool-registry.ts`).
- Do not mix transport/API concerns and domain logic in one large file.
- Do not create broad catch-all utility dumping grounds when a feature-local utility is more appropriate.
+Organize by feature + role layers (`feature`, `domain-logic`, `data-access`, `utils`, `common`, `config`).
+Keep shared cross-cutting concerns in dedicated shared modules (`src/shared/`).
+Use composition roots for registration/wiring (e.g. `tool-registry.ts`).
+Do not mix transport/API concerns and domain logic in one large file.
+Do not create broad catch-all utility dumping grounds when a feature-local utility is more appropriate.
 
 ## Imports & Exports
 
@@ -68,20 +68,20 @@ The primary export is always the last declaration. In files with one public expo
 - **`main()` pattern for scripts** — entry-point scripts define `const main = async (): Promise<void>` and call it with `.catch((error: unknown) => { ... process.exit(1) })`.
 - **Single top-level `try/catch` in handlers** — handlers wrap their entire body in one `try/catch`, delegating to `toMcpError(error)` for conversion.
 - **`{ cause: error }` for error chaining** — pass the original error as `cause` when wrapping in a new error.
- **Validate boundary data early, fail fast** — validate all input at the system boundary (API entry, config parse, tool invocation) before passing it into domain logic. Never pass unvalidated user/config input directly into execution surfaces.
+  **Validate boundary data early, fail fast** — validate all input at the system boundary (API entry, config parse, tool invocation) before passing it into domain logic. Never pass unvalidated user/config input directly into execution surfaces.
 
 ## Async & Runtime Execution
 
- Use explicit async control flow with clear timeout and exit handling.
- Capture and cap output for long-running command execution (size limits, truncation logic).
- Do not assume process success on exit code alone when signal/timeout flags exist.
- Do not leave promise branches unresolved in process/stream orchestration.
+Use explicit async control flow with clear timeout and exit handling.
+Capture and cap output for long-running command execution (size limits, truncation logic).
+Do not assume process success on exit code alone when signal/timeout flags exist.
+Do not leave promise branches unresolved in process/stream orchestration.
 
 ## API & Boundary Patterns
 
- Register tools through dedicated registry modules — do not scatter registration across unrelated files.
- Keep boundary middleware (rate-limiting, validation) explicit and local to registration.
- Do not hide route/tool behavior in implicit side effects.
+Register tools through dedicated registry modules — do not scatter registration across unrelated files.
+Keep boundary middleware (rate-limiting, validation) explicit and local to registration.
+Do not hide route/tool behavior in implicit side effects.
 
 ## Comments
 
@@ -158,7 +158,7 @@ Run the linter continuously during development. Every change must pass before it
 
 ## Commit Craftsmanship
 
- Use conventional commit types with scope and emoji (`feat(scope): ✨ ...`, `fix(scope): 🐛 ...`, `refactor(scope): 🔄 ...`).
- Keep commits narrowly scoped to one intent.
- Do not mix multiple unrelated behavioral changes in one commit.
- Do not use vague messages that omit impacted domain/scope.
+Use conventional commit types with scope and emoji (`feat(scope): ✨ ...`, `fix(scope): 🐛 ...`, `refactor(scope): 🔄 ...`).
+Keep commits narrowly scoped to one intent.
+Do not mix multiple unrelated behavioral changes in one commit.
+Do not use vague messages that omit impacted domain/scope.

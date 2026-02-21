@@ -27,7 +27,7 @@ const main = async (): Promise<void> => {
         '  --version        Print version and exit',
         '  --help           Print this help message and exit',
         '',
-      ].join('\n'),
+      ].join('\n')
     );
     process.exit(0);
 

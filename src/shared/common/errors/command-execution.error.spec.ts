@@ -63,7 +63,7 @@ describe('CommandExecutionError.toMcpResponse', () => {
     const result = error.toMcpResponse();
 
     expect(result.content[0]?.text).not.toContain('[stderr truncated]');
-    expect(result.content[0]?.text).toContain(`Stderr: ${  exactStderr}`);
+    expect(result.content[0]?.text).toContain(`Stderr: ${exactStderr}`);
   });
 
   it('GIVEN error with no stderr WHEN toMcpResponse called THEN does not include Stderr section', () => {

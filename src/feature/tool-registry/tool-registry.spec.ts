@@ -70,7 +70,7 @@ describe('registerAllTools', () => {
   let server: MockServer;
   let register: (
     resolvedProviders?: readonly ResolvedProviderEntry[],
-    allProviders?: readonly ResolvedProvider[],
+    allProviders?: readonly ResolvedProvider[]
   ) => void;
 
   beforeEach(() => {
@@ -97,7 +97,7 @@ describe('registerAllTools', () => {
     it('GIVEN two providers WHEN called THEN registers 7 tools', () => {
       register(
         [makeProvider('claude'), makeProvider('codex')],
-        [makeResolvedProvider('claude'), makeResolvedProvider('codex')],
+        [makeResolvedProvider('claude'), makeResolvedProvider('codex')]
       );
 
       expect(server.registerTool).toHaveBeenCalledTimes(7);

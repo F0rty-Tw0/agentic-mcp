@@ -57,7 +57,7 @@ const buildCommandOptions = (
   context: ResolvedProviderEntry,
   resolved: AskToolArgs,
   cliArgs: readonly string[],
-  stdinInput?: string,
+  stdinInput?: string
 ): ExecuteCommandOptions => {
   const env = buildMinimalEnv(resolveProviderEnv(context));
   const commandOptions: ExecuteCommandOptions = {
@@ -75,7 +75,7 @@ const buildCommandOptions = (
 export const handleAsk = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
-  extra?: ProgressContext,
+  extra?: ProgressContext
 ): Promise<CallToolResult> => {
   const stopHeartbeat = startHeartbeat(extra);
 

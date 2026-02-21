@@ -21,7 +21,7 @@ const sendHeartbeat = (
   extra: ProgressContext,
   progressToken: ProgressToken,
   progress: number,
-  elapsedSeconds: number,
+  elapsedSeconds: number
 ): void => {
   const message = `Processing… (${elapsedSeconds}s elapsed)`;
   const params = {

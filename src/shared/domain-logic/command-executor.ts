@@ -86,7 +86,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       const commandError = new CommandExecutionError(
         `Failed to spawn "${binaryPath}": ${error.message}`,
         { stderr: error.message },
-        { cause: error },
+        { cause: error }
       );
 
       reject(commandError);

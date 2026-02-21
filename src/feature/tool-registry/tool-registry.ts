@@ -29,7 +29,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
   server.registerTool(
     askDef.name,
     askCOnfig,
-    async (args: AskToolArgs, extra: ProgressContext): Promise<CallToolResult> => handleAsk(provider, args, extra),
+    async (args: AskToolArgs, extra: ProgressContext): Promise<CallToolResult> => handleAsk(provider, args, extra)
   );
 
   // ping_<provider>
@@ -54,7 +54,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
 export const registerAllTools = (
   server: McpServer,
   resolvedProviders: readonly ResolvedProviderEntry[],
-  allProviders: readonly ResolvedProvider[],
+  allProviders: readonly ResolvedProvider[]
 ): void => {
   for (const provider of resolvedProviders) {
     registerProviderTools(server, provider);

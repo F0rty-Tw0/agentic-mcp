@@ -375,7 +375,7 @@ describe('executeCommand', () => {
     const mockSpawnFromChildren = (
       children: ControllableChild[],
       getIndex: () => number,
-      incrementIndex: () => void,
+      incrementIndex: () => void
     ): void => {
       vi.mocked(crossSpawn).mockImplementation(() => {
         const c = children[getIndex()];
@@ -397,7 +397,7 @@ describe('executeCommand', () => {
         () => callIndex,
         () => {
           callIndex++;
-        },
+        }
       );
 
       const runCommand = async (): Promise<Awaited<ReturnType<typeof executeCommand>>> =>

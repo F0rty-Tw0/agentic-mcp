@@ -35,7 +35,7 @@ const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] =
 
   if (!flagValue.values.includes(argValue)) {
     throw new ValidationError(
-      `Invalid value "${argValue}" for flag "${flagValue.flag}". Allowed: ${flagValue.values.join(', ')}`,
+      `Invalid value "${argValue}" for flag "${flagValue.flag}". Allowed: ${flagValue.values.join(', ')}`
     );
   }
 
@@ -46,7 +46,7 @@ const appendValueFlag = (
   cliArgs: string[],
   askCmd: CommandDef,
   flagKey: string,
-  value: string | boolean | undefined,
+  value: string | boolean | undefined
 ): void => {
   // Falsy check is intentional: undefined = not provided, false = don't enable, "" = empty value
   if (!value) return;
@@ -70,7 +70,7 @@ const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: readonly 
 
   if (typeof flag !== 'string') {
     throw new ValidationError(
-      `File flag must be a simple string flag, got ${Array.isArray(flag) ? 'array' : 'object'}`,
+      `File flag must be a simple string flag, got ${Array.isArray(flag) ? 'array' : 'object'}`
     );
   }
 

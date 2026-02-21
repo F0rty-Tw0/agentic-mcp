@@ -70,7 +70,7 @@ describe('handleListProviders', () => {
         'Configured providers:\n' +
           '- claude: Anthropic Claude [available]\n' +
           '- codex: OpenAI Codex [not found]\n' +
-          '- gemini: Google Gemini [disabled]',
+          '- gemini: Google Gemini [disabled]'
       );
     });
 

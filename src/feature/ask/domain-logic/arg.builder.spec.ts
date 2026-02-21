@@ -90,7 +90,7 @@ describe('buildArgArray', () => {
 
       expect(() => buildArgArray(config, { prompt: 'test', sandbox: 'delete-everything' })).toThrow(ValidationError);
       expect(() => buildArgArray(config, { prompt: 'test', sandbox: 'delete-everything' })).toThrow(
-        /Invalid value "delete-everything"/,
+        /Invalid value "delete-everything"/
       );
     });
 

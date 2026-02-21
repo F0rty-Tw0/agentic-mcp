@@ -7,7 +7,7 @@ const providerNameSchema = z
   .string()
   .regex(
     PROVIDER_NAME_REGEX,
-    'provider name must be lowercase alphanumeric with hyphens (a-z, 0-9, -), start with a letter, max 32 chars',
+    'provider name must be lowercase alphanumeric with hyphens (a-z, 0-9, -), start with a letter, max 32 chars'
   )
   .refine((name) => !RESERVED_PROVIDER_NAMES.includes(name as (typeof RESERVED_PROVIDER_NAMES)[number]), {
     message: `provider name must not be a reserved name: ${RESERVED_PROVIDER_NAMES.join(', ')}`,

@@ -22,7 +22,7 @@ vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
       stdoutBytes: 14,
       stderrBytes: 0,
       executionTimeMs: 100,
-    }),
+    })
   ),
 }));
 
@@ -203,7 +203,7 @@ describe('handleAsk', () => {
 
       expect(buildArgArray).toHaveBeenCalledWith(
         context.config,
-        expect.objectContaining({ files: [expect.stringContaining('index.ts')] }),
+        expect.objectContaining({ files: [expect.stringContaining('index.ts')] })
       );
     });
   });

@@ -19,7 +19,7 @@ const createTempDir = async (): Promise<string> => {
 };
 
 const buildProvider = (
-  overrides: Partial<ProvidersFile['providers'][string]> = {},
+  overrides: Partial<ProvidersFile['providers'][string]> = {}
 ): ProvidersFile['providers'][string] => ({
   enabled: true,
   description: 'Loader test provider',
@@ -40,7 +40,7 @@ const buildProvider = (
 
 const buildConfig = (
   providerName: string,
-  providerOverrides: Partial<ProvidersFile['providers'][string]> = {},
+  providerOverrides: Partial<ProvidersFile['providers'][string]> = {}
 ): ProvidersFile => ({
   configVersion: 1,
   providers: {
@@ -148,7 +148,7 @@ describe('loadConfig', () => {
             },
           },
         },
-      }),
+      })
     );
 
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
@@ -156,7 +156,7 @@ describe('loadConfig', () => {
     await loadConfig({ configPath });
 
     expect(stderrSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"'),
+      expect.stringContaining('Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"')
     );
   });
 });

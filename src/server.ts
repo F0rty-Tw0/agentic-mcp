@@ -33,7 +33,7 @@ export const createServer = async (options?: { configPath?: string }): Promise<M
 
   if (resolvedProviders.length === 0) {
     process.stderr.write(
-      'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n',
+      'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n'
     );
   }
 
