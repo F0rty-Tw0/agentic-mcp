@@ -173,6 +173,21 @@ describe('handleAsk', () => {
 
       expect(call?.cwd).toContain('project');
     });
+
+    it('GIVEN files with working_directory WHEN handling ask THEN resolves files and passes them to buildArgArray', async () => {
+      const context = createContext();
+
+      await handleAsk(context, {
+        prompt: 'test prompt',
+        files: ['src/index.ts'],
+        working_directory: '/home/user/project',
+      });
+
+      expect(buildArgArray).toHaveBeenCalledWith(
+        context.config,
+        expect.objectContaining({ files: [expect.stringContaining('index.ts')] }),
+      );
+    });
   });
 
   describe('command failure', () => {
