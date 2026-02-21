@@ -4,16 +4,16 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/provider-config.type.ts';
 import type { ProgressContext } from '../ask/common/progress-context.types.ts';
 import type { AskToolArgs } from '../ask/common/tool-args.types.ts';
-import { handleAsk } from '../ask/domain-logic/handler.ts';
-import { buildAskToolDefinition } from '../ask/domain-logic/tool-builder.ts';
-import { handleHelp } from '../simple-tools/domain-logic/help-handler.ts';
-import { handleListProviders } from '../simple-tools/domain-logic/meta-handler.ts';
-import { handlePing } from '../simple-tools/domain-logic/ping-handler.ts';
+import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
+import { buildAskToolDefinition } from '../ask/domain-logic/tool.builder.ts';
+import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
+import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
+import { handlePing } from '../simple-tools/domain-logic/ping.handler.ts';
 import {
   buildHelpToolDefinition,
   buildListProvidersDefinition,
   buildPingToolDefinition,
-} from '../simple-tools/domain-logic/tool-builder.ts';
+} from '../simple-tools/domain-logic/tool.builder.ts';
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, config } = provider;

@@ -6,15 +6,15 @@ import type { MockInstance } from 'vitest';
 import { registerAllTools } from './tool-registry.ts';
 import type { ProviderConfig } from '../../shared/common/provider-config.schema.ts';
 import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/provider-config.type.ts';
-import { handleAsk } from '../ask/domain-logic/handler.ts';
-import { handleHelp } from '../simple-tools/domain-logic/help-handler.ts';
-import { handleListProviders } from '../simple-tools/domain-logic/meta-handler.ts';
-import { handlePing } from '../simple-tools/domain-logic/ping-handler.ts';
+import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
+import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
+import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
+import { handlePing } from '../simple-tools/domain-logic/ping.handler.ts';
 
-vi.mock('../ask/domain-logic/handler.ts', () => ({ handleAsk: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/help-handler.ts', () => ({ handleHelp: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/meta-handler.ts', () => ({ handleListProviders: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/ping-handler.ts', () => ({ handlePing: vi.fn() }));
+vi.mock('../ask/domain-logic/ask.handler.ts', () => ({ handleAsk: vi.fn() }));
+vi.mock('../simple-tools/domain-logic/help.handler.ts', () => ({ handleHelp: vi.fn() }));
+vi.mock('../simple-tools/domain-logic/meta.handler.ts', () => ({ handleListProviders: vi.fn() }));
+vi.mock('../simple-tools/domain-logic/ping.handler.ts', () => ({ handlePing: vi.fn() }));
 
 const makeConfig = (): ProviderConfig => ({
   enabled: true,
