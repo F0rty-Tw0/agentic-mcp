@@ -30,7 +30,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "eslint --max-warnings 0 . --fix",
-    "prepublishOnly": "pnpm run test && pnpm run typecheck && pnpm run lint && pnpm run build"
+    "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration && pnpm run build",
+    "publish:pnpm": "pnpm run prepublishOnly && pnpm publish --provenance"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "catalog:runtime",
