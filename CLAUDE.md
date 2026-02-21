@@ -58,15 +58,15 @@ src/
         validation.ts   # input validation helpers (prompt, model, sandbox, etc.)
         command-def-utils.ts # helpers for accessing command definitions and flags
       domain-logic/     # core business logic
-        handler.ts      # handleAsk — orchestrates arg building, spawn, response
-        arg-builder.ts  # builds CLI argument arrays from tool args + provider config
-        tool-builder.ts # builds ask MCP tool definition (name, Zod schema, annotations)
+        ask.handler.ts  # handleAsk — orchestrates arg building, spawn, response
+        arg.builder.ts  # builds CLI argument arrays from tool args + provider config
+        tool.builder.ts # builds ask MCP tool definition (name, Zod schema, annotations)
     simple-tools/       # lightweight tools: ping, help, list_providers
       domain-logic/     # handlers and tool builders
-        ping-handler.ts # handlePing — version check via CLI spawn
-        help-handler.ts # handleHelp — runs --help on provider CLI
-        meta-handler.ts # handleListProviders — lists all configured providers
-        tool-builder.ts # builds ping/help/list_providers tool definitions
+        ping.handler.ts # handlePing — version check via CLI spawn
+        help.handler.ts # handleHelp — runs --help on provider CLI
+        meta.handler.ts # handleListProviders — lists all configured providers
+        tool.builder.ts # builds ping/help/list_providers tool definitions
     tool-registry/      # tool registration composition root
       tool-registry.ts  # registers all tools on the MCP server
 

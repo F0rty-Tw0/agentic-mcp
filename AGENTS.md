@@ -36,7 +36,7 @@ This file contains the coding conventions, style rules, and development practice
 
 ## Naming Conventions
 
-- **Files** — `kebab-case.ts`. Suffix encodes role: `.const.ts` (constants), `.types.ts` (type-only files), `.schema.ts` (Zod schemas), `.type.ts` (single-type files), `-handler.ts` (MCP tool handlers), `-builder.ts` (tool/arg builders), `-utils.ts` (utility helpers).
+- **Files** — `kebab-case.ts`. Suffix encodes role: `.const.ts` (constants), `.type.ts` (type-only files), `.schema.ts` (Zod schemas), `.handler.ts` (MCP tool handlers), `.builder.ts` (tool/arg builders), `.util.ts` (utility helpers).
 - **Module-level constants** — `SCREAMING_SNAKE_CASE` (`MAX_PROMPT_BYTES`, `SAFE_ENV_KEYS`, `FLAG_MODEL`).
 - **Functions** — `camelCase`. Naming reflects role: `handleX` (MCP handlers), `buildX` (factories/constructors), `validateX` (validation), `resolveX` (resolution/lookup), `createX` (factories).
 - **Types** — `PascalCase` (`ResolvedProviderEntry`, `ExecuteCommandOptions`). No `I` prefix on interfaces, no `T` prefix on type parameters (except in test utility generic types).
@@ -63,7 +63,7 @@ The primary export is always the last declaration. In files with one public expo
 
 ## Comments
 
-- **Minimal comments** — explain *why*, not *what*. No JSDoc except for non-obvious dispatch logic (e.g., documenting a multi-branch flag resolution function).
+- **Minimal comments** — explain _why_, not _what_. No JSDoc except for non-obvious dispatch logic (e.g., documenting a multi-branch flag resolution function).
 - **No block comments** (`/* */`) in production code — use `//` with a space and sentence-case text.
 - **No commented-out code** — delete dead code rather than commenting it out.
 
