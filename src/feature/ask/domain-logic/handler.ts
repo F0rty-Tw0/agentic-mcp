@@ -1,12 +1,15 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { buildArgArray } from './arg-builder.ts';
+import type { ExecuteCommandOptions } from '../../../shared/common/command-executor.types.ts';
 import { CommandExecutionError } from '../../../shared/common/errors/command-execution.error.ts';
+import type { CommandExecutionErrorDetails } from '../../../shared/common/errors/command-execution.error.ts';
 import { ValidationError } from '../../../shared/common/errors/validation-error.ts';
 import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
 import { executeCommand } from '../../../shared/domain-logic/command-executor.ts';
 import { buildMinimalEnv, stripAnsi } from '../../../shared/utils/platform.ts';
 import { toMcpError } from '../../../shared/utils/to-mcp-error.ts';
+import type { ProgressContext } from '../common/progress-context.types.ts';
 import type { AskToolArgs } from '../common/tool-args.types.ts';
 import {
   validateFiles,
@@ -17,6 +20,7 @@ import {
 } from '../utils/validation.ts';
 
 const MAX_RESPONSE_TEXT_BYTES = 200 * 1024;
+const HEARTBEAT_INTERVAL_MS = 30_000;
 
 const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
   if (!files?.length) return [];
@@ -47,29 +51,73 @@ const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
   return resolvedArgs;
 };
 
-export const handleAsk = async (context: ResolvedProviderEntry, args: AskToolArgs): Promise<CallToolResult> => {
+const startHeartbeat = (extra?: ProgressContext): (() => void) => {
+  // eslint-disable-next-line no-underscore-dangle
+  const progressToken = extra?._meta?.progressToken;
+
+  if (progressToken == null || !extra?.sendNotification) {
+    return () => {
+      /* empty */
+    };
+  }
+
+  let progress = 0;
+
+  const timer = setInterval(() => {
+    progress++;
+
+    const message = `Processing… (${progress * (HEARTBEAT_INTERVAL_MS / 1000)}s elapsed)`;
+    const params = {
+      progressToken,
+      progress,
+      message,
+    };
+
+    extra
+      .sendNotification({
+        method: 'notifications/progress',
+        params,
+      })
+      .catch(() => {
+        /* notification failures are non-fatal */
+      });
+  }, HEARTBEAT_INTERVAL_MS);
+
+  return () => clearInterval(timer);
+};
+
+export const handleAsk = async (
+  context: ResolvedProviderEntry,
+  args: AskToolArgs,
+  extra?: ProgressContext,
+): Promise<CallToolResult> => {
+  const stopHeartbeat = startHeartbeat(extra);
+
   try {
     const resolved = validateAndResolveArgs(args);
 
     const { args: cliArgs, stdinInput } = buildArgArray(context.config, resolved);
 
     const env = buildMinimalEnv(context.config.env);
-    const result = await executeCommand({
+    const commandOptions: ExecuteCommandOptions = {
       binaryPath: context.binaryPath,
       args: cliArgs,
       env,
       timeoutMs: context.config.timeout,
       stdin: stdinInput,
       cwd: resolved.working_directory,
-    });
+    };
+
+    const result = await executeCommand(commandOptions);
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
-      const error = new CommandExecutionError(`${context.name} command failed`, {
+      const details: CommandExecutionErrorDetails = {
         exitCode: result.exitCode,
         signal: result.signal,
         timedOut: result.timedOut,
         stderr: result.stderr,
-      });
+      };
+      const error = new CommandExecutionError(`${context.name} command failed`, details);
 
       return error.toMcpResponse();
     }
@@ -87,5 +135,7 @@ export const handleAsk = async (context: ResolvedProviderEntry, args: AskToolArg
     return response;
   } catch (error) {
     return toMcpError(error);
+  } finally {
+    stopHeartbeat();
   }
 };
