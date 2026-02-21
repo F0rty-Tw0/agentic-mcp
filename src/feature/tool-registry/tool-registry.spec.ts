@@ -217,7 +217,7 @@ describe('registerAllTools', () => {
       const args = { prompt: 'hello' };
       const result = await handler(args);
 
-      expect(handleAsk).toHaveBeenCalledWith(provider, args);
+      expect(handleAsk).toHaveBeenCalledWith(provider, args, undefined);
       expect(result).toBe(SUCCESS_RESULT);
     });
 
@@ -273,11 +273,11 @@ describe('registerAllTools', () => {
 
       await getHandler(server, 'ask_claude')({ prompt: 'hi' });
 
-      expect(handleAsk).toHaveBeenCalledWith(claude, { prompt: 'hi' });
+      expect(handleAsk).toHaveBeenCalledWith(claude, { prompt: 'hi' }, undefined);
 
       await getHandler(server, 'ask_codex')({ prompt: 'hey' });
 
-      expect(handleAsk).toHaveBeenCalledWith(codex, { prompt: 'hey' });
+      expect(handleAsk).toHaveBeenCalledWith(codex, { prompt: 'hey' }, undefined);
     });
   });
 });
