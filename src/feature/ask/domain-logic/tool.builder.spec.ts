@@ -210,6 +210,29 @@ describe('buildAskToolDefinition', () => {
     });
   });
 
+  describe('working_directory field', () => {
+    it('GIVEN provider with workingDir flag WHEN building tool definition THEN working_directory field is in schema', () => {
+      const config = createConfig({ workingDir: '--add-dir' });
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).toHaveProperty('working_directory');
+    });
+
+    it('GIVEN provider with file flag but no workingDir flag WHEN building tool definition THEN working_directory field is still in schema', () => {
+      const config = createConfig({ file: '--file' });
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).toHaveProperty('working_directory');
+    });
+
+    it('GIVEN provider without file or workingDir flags WHEN building tool definition THEN working_directory field is absent', () => {
+      const config = createConfig({});
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).not.toHaveProperty('working_directory');
+    });
+  });
+
   describe('claude provider config', () => {
     it('GIVEN claude provider config WHEN building tool definition THEN effort, max_budget, system_prompt, auto_mode are all present', () => {
       const config = createConfig({

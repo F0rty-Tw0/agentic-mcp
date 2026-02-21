@@ -71,14 +71,17 @@ const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Readon
       .describe('Model to use for this request. If omitted, the provider CLI default is used');
   }
 
-  if (getFlag(askCmd, FLAG_WORKING_DIR) != null) {
+  const hasWorkingDir = getFlag(askCmd, FLAG_WORKING_DIR) != null;
+  const hasFile = getFlag(askCmd, FLAG_FILE) != null;
+
+  if (hasWorkingDir || hasFile) {
     schema.working_directory = z
       .string()
       .optional()
       .describe('Working directory path — the agent will have access to files in this directory');
   }
 
-  if (getFlag(askCmd, FLAG_FILE) != null) {
+  if (hasFile) {
     schema.files = z.array(z.string()).optional().describe('File paths to include as context for the agent');
   }
 
