@@ -145,6 +145,9 @@
             "file": "--file"
           }
         },
+        "models": {
+          "args": ["models"]
+        },
         "sessions": {
           "flags": {
             "continue": ["--continue"]
