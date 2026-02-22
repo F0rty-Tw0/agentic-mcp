@@ -1,4 +1,4 @@
-import type { ToolDefinition } from '../../../shared/common/tool-definition.types.ts';
+import type { ToolDefinition } from '../../../shared/common/index.ts';
 
 export const buildPingToolDefinition = (providerName: string): ToolDefinition => {
   const definition: ToolDefinition = {
