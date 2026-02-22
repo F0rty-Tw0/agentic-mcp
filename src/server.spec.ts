@@ -2,9 +2,13 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './server.ts';
-import type { ProvidersFile } from './shared/common/provider-config.schema.ts';
-import type { ResolvedProvider, ResolvedProviderEntry } from './shared/common/provider-config.type.ts';
-import type { AsyncViFn, SyncViFn } from './shared/common/test-utils/vi-fn.types.ts';
+import type {
+  AsyncViFn,
+  ProvidersFile,
+  ResolvedProvider,
+  ResolvedProviderEntry,
+  SyncViFn,
+} from './shared/common/index.ts';
 
 type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
 

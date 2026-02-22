@@ -2,10 +2,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { loadConfig } from './config/loader.ts';
 import { registerAllTools } from './feature/tool-registry/tool-registry.ts';
-import type { ResolvedProvider, ResolvedProviderEntry } from './shared/common/provider-config.type.ts';
-import { resolveCliBinary } from './shared/utils/platform.util.ts';
+import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from './shared/common/index.ts';
+import { resolveCliBinary } from './shared/utils/index.ts';
 
-export const createServer = async (options?: { configPath?: string }): Promise<McpServer> => {
+export const createServer = async (options?: ConfigPathOptions): Promise<McpServer> => {
   const config = await loadConfig(options);
 
   const resolvedProviders: ResolvedProviderEntry[] = [];
