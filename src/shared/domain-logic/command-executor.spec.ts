@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CommandExecutionError } from '../common/errors/command-execution.error.ts';
+import { CommandExecutionError } from '../common/index.ts';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
