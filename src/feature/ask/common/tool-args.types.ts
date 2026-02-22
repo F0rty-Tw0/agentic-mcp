@@ -1,4 +1,4 @@
-import type { FlagValue } from '../../../shared/common/provider-config.schema.ts';
+import type { FlagValue } from '../../../shared/common/index.ts';
 
 export type AskToolArgs = Readonly<{
   prompt?: string;
