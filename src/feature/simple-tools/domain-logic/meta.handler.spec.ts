@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleListProviders } from './meta.handler.ts';
-import type { ResolvedProvider } from '../../../shared/common/provider-config.type.ts';
+import type { ResolvedProvider } from '../../../shared/common/index.ts';
 
 const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProvider => ({
   name: 'test-provider',

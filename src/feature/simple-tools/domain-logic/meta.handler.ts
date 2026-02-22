@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProvider } from '../../../shared/common/provider-config.type.ts';
+import type { ResolvedProvider } from '../../../shared/common/index.ts';
 
 const providerStatus = (provider: ResolvedProvider): string => {
   if (provider.available) return 'available';
