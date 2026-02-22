@@ -216,6 +216,8 @@ Single-package workspace with `packages: ['.']` for catalog compatibility on all
 
 See [`AGENTS.md`](./AGENTS.md) for the full coding style guide, including TypeScript conventions, testing style (GIVEN/WHEN/THEN), TDD enforcement, functional programming preference, readonly-by-default rules, and linter validation requirements.
 
+Import/export policy: barrel re-exporters (`index.ts`) are allowed only inside `common/`, `stubs/`, and `utils/` directories, and they should use named re-exports instead of wildcard re-exports.
+
 ## Git Workflow
 
 | Branch                       | Purpose                                              |

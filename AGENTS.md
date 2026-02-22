@@ -12,6 +12,7 @@ This file contains the coding conventions, style rules, and development practice
 - Guard-first control flow: prefer early returns/continues over nested blocks.
 - Avoid lone `if` wrappers and `if/else` pairs when a guard clause can flatten the flow without changing behavior.
 - Require explicit types on exported APIs and non-trivial helpers (parameters and return types).
+- **Named object types over inline object literals** — prefer named aliases/interfaces for object-shaped parameters/properties (for example, `context: InputContext`) instead of inline literals (for example, `context: { name: string; date: Date }`). This avoids stale duplicated shapes during refactors.
 - Keep changes minimal, behavior-preserving, and clean (small functions, clear names, no dead branches).
 - **Optional chaining for nullable length checks** — prefer `x?.length > 0` (or just `x?.length` when truthy is sufficient) over `x && x.length > 0`. More concise, same semantics.
 - **Truthy/falsy over explicit boolean comparison** — prefer `if (flag)` over `if (flag === true)` and `if (!flag)` over `if (flag === false)`. Explicit comparison is redundant when the type is already `boolean | undefined`.
@@ -39,7 +40,7 @@ Do not create broad catch-all utility dumping grounds when a feature-local utili
 - **`node:` protocol prefix mandatory** — always `import from 'node:fs/promises'`, never bare `'fs/promises'`. Applies to all Node stdlib modules (`node:path`, `node:process`, `node:url`, `node:child_process`, `node:os`, `node:stream`, `node:util`).
 - **`import type` for type-only imports** — enforced by `verbatimModuleSyntax`. Never mix value and type imports in one statement when only the type is used.
 - **No default exports** — all exports are named, inline on the declaration (`export const`, `export type`, `export class`). No `export default` anywhere.
-- **No barrel files** — no `index.ts` re-exporters. Every consumer imports directly from the source file that defines the symbol.
+- **Scoped barrel files only** — `index.ts` re-exporters are allowed only inside `common/`, `stubs/`, and `utils/` directories. Keep barrels local to that directory boundary and use named re-exports (`export { X } from './x.ts'`) instead of broad wildcard re-exports.
 - **`.ts` extensions on relative imports** — all internal imports use `.ts` (e.g., `'./foo.ts'`). Package imports keep their original extension (e.g., `'@modelcontextprotocol/sdk/server/mcp.js'`).
 
 ## Naming Conventions
@@ -93,6 +94,7 @@ Do not hide route/tool behavior in implicit side effects.
 
 - **Unit test extension**: use `.spec.ts` (not `.test.ts`). Place test files co-located next to the module they test (e.g. `foo.ts` → `foo.spec.ts`).
 - **Integration test extension**: use `.test.ts`. These run under a separate vitest config (`vitest.config.integration.ts`).
+- **Single test command**: run one test file with `pnpm run test -- path/to/file.spec.ts` (for example `pnpm run test -- src/feature/ask/domain-logic/ask.handler.spec.ts`).
 
 Use GIVEN/WHEN/THEN phrasing for test cases to make intent explicit. All three keywords are **UPPERCASE** — no variations.
 
@@ -104,7 +106,9 @@ Example naming pattern: `GIVEN X WHEN Y THEN Z`.
 
 - **No section separator comments** in test files — no `// -----------` banners between `describe` blocks. The `describe` blocks provide sufficient structure on their own.
 - **`toStrictEqual` over `toEqual`** — always prefer `toStrictEqual` for structural object/array comparisons. It catches `undefined` properties and prototype differences that `toEqual` misses. Use `toBe` for primitives and booleans.
-- **Factory functions for test data** — name them `create*`, `build*`, or `make*` with an `overrides: Partial<T> = {}` parameter that spreads over defaults. Test data is always local to the spec file — no shared fixture directories.
+- **Factory functions for test data** — name them `create*`, `build*`, or `make*` with an `overrides: Partial<T> = {}` parameter that spreads over defaults.
+- **Shared test stubs** — when multiple tests reuse the same typed object literal (for example `const USER_STUB: User = { ... }`), extract it into a `/stubs` directory under the feature's `/common` folder first, or `src/shared/stubs/` when reused across features.
+- **Stub shape and naming** — stubs are exported `const` typed values (not classes), named `*_STUB`, and grouped by domain in `*.stub.ts` files.
 - **`vi.hoisted()` for cross-module mock dependencies** — when multiple `vi.mock()` calls share mock references, collect them in a single `const mocks = vi.hoisted(() => ({ ... }))` object at file top.
 - **`vi.mock()` always with factory function** — use `vi.mock(path, () => ({ ... }))`, never bare `vi.mock(path)`. Paths use `.ts` extensions.
 - **`vi.mocked()` for typed mock access** — access mock instances through `vi.mocked(fn)`, never via direct cast.
