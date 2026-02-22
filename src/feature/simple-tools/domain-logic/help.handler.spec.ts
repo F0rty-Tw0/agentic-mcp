@@ -2,28 +2,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleHelp } from './help.handler.ts';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/execution-limits.const.ts';
-import type { ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/index.ts';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../../shared/common/index.ts';
+import { SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB, SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
+SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB, SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB , SIMPLE_TOOLS_TEST_ENV_STUB } from '../common/stubs/index.ts';
 
 vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
-  executeCommand: vi.fn(async () =>
-    Promise.resolve({
-      stdout: 'Usage: test-cli [options]',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 25,
-      stderrBytes: 0,
-      executionTimeMs: 50,
-    })
-  ),
+  executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB)),
 }));
 
 vi.mock('../../../shared/utils/platform.util.ts', () => ({
-  buildMinimalEnv: vi.fn(() => ({ PATH: '/usr/bin' })),
+  buildMinimalEnv: vi.fn(() => SIMPLE_TOOLS_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
@@ -34,37 +23,25 @@ const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platf
 
 const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
   const config: ProviderConfig = {
-    enabled: true,
-    description: 'Test provider',
-    command: 'test-cli',
-    timeout: 120_000,
-    env: {},
-    outputFormat: 'json',
-    commands: { ask: { args: ['exec'], flags: {} } },
-    input: { method: 'positional' },
+    ...SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
     ...overrides,
   };
 
-  return { name: 'test', binaryPath: '/usr/bin/test-cli', config };
+  const context: ResolvedProviderEntry = {
+    ...SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
+    config,
+  };
+
+  return context;
 };
 
 describe('handleHelp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(executeCommand).mockResolvedValue({
-      stdout: 'Usage: test-cli [options]',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 25,
-      stderrBytes: 0,
-      executionTimeMs: 50,
-    });
+    vi.mocked(executeCommand).mockResolvedValue(SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB);
 
-    vi.mocked(buildMinimalEnv).mockReturnValue({ PATH: '/usr/bin' });
+    vi.mocked(buildMinimalEnv).mockReturnValue(SIMPLE_TOOLS_TEST_ENV_STUB);
     vi.mocked(stripAnsi).mockImplementation((input: string) => input);
   });
 
@@ -149,15 +126,10 @@ describe('handleHelp', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
         stderr: 'Usage from stderr',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
         stderrBytes: 17,
-        executionTimeMs: 50,
       });
 
       await handleHelp(context);
@@ -169,15 +141,11 @@ describe('handleHelp', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: 'stdout help',
         stderr: 'stderr help',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: 11,
         stderrBytes: 11,
-        executionTimeMs: 50,
       });
 
       await handleHelp(context);
@@ -191,15 +159,10 @@ describe('handleHelp', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: 'Usage: stubborn-cli [options]',
-        stderr: '',
         exitCode: 1,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: 28,
-        stderrBytes: 0,
-        executionTimeMs: 50,
       });
 
       const result = await handleHelp(context);
