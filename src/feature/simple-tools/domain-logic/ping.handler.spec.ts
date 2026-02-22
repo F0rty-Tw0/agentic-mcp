@@ -2,28 +2,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePing } from './ping.handler.ts';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/execution-limits.const.ts';
-import type { ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/index.ts';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../../shared/common/index.ts';
+import {
+  SIMPLE_TOOLS_PING_VERSION_RESULT_STUB,
+  SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
+  SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
+  SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
+  SIMPLE_TOOLS_TEST_ENV_STUB,
+} from '../common/stubs/index.ts';
 
 vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
-  executeCommand: vi.fn(async () =>
-    Promise.resolve({
-      stdout: 'v1.0.0',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 6,
-      stderrBytes: 0,
-      executionTimeMs: 50,
-    })
-  ),
+  executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB)),
 }));
 
 vi.mock('../../../shared/utils/platform.util.ts', () => ({
-  buildMinimalEnv: vi.fn(() => ({ PATH: '/usr/bin' })),
+  buildMinimalEnv: vi.fn(() => SIMPLE_TOOLS_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
@@ -34,37 +28,25 @@ const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platf
 
 const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
   const config: ProviderConfig = {
-    enabled: true,
-    description: 'Test provider',
-    command: 'test-cli',
-    timeout: 120_000,
-    env: {},
-    outputFormat: 'json',
-    commands: { ask: { args: ['exec'], flags: {} } },
-    input: { method: 'positional' },
+    ...SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
     ...overrides,
   };
 
-  return { name: 'test', binaryPath: '/usr/bin/test-cli', config };
+  const context: ResolvedProviderEntry = {
+    ...SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
+    config,
+  };
+
+  return context;
 };
 
 describe('handlePing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(executeCommand).mockResolvedValue({
-      stdout: 'v1.0.0',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 6,
-      stderrBytes: 0,
-      executionTimeMs: 50,
-    });
+    vi.mocked(executeCommand).mockResolvedValue(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB);
 
-    vi.mocked(buildMinimalEnv).mockReturnValue({ PATH: '/usr/bin' });
+    vi.mocked(buildMinimalEnv).mockReturnValue(SIMPLE_TOOLS_TEST_ENV_STUB);
     vi.mocked(stripAnsi).mockImplementation((input: string) => input);
   });
 
@@ -161,15 +143,9 @@ describe('handlePing', () => {
       const context = createContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '  v1.0.0  ',
-        stderr: '',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: 10,
-        stderrBytes: 0,
-        executionTimeMs: 50,
       });
 
       const result = await handlePing(context);
@@ -187,15 +163,9 @@ describe('handlePing', () => {
       });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: 'test-cli v3.2.1 (build 42)',
-        stderr: '',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: 26,
-        stderrBytes: 0,
-        executionTimeMs: 50,
       });
 
       const result = await handlePing(context);
@@ -211,15 +181,9 @@ describe('handlePing', () => {
       });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: 'no match here',
-        stderr: '',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: 13,
-        stderrBytes: 0,
-        executionTimeMs: 50,
       });
 
       const result = await handlePing(context);
@@ -233,15 +197,9 @@ describe('handlePing', () => {
       const context = createContext({ versionCheck: { flag: '-V' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: 'test-cli 4.5.6',
-        stderr: '',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: 14,
-        stderrBytes: 0,
-        executionTimeMs: 50,
       });
 
       const result = await handlePing(context);
@@ -257,14 +215,11 @@ describe('handlePing', () => {
       const context = createContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
-        stderr: '',
         exitCode: null,
         signal: 'SIGTERM',
         timedOut: true,
-        truncated: false,
-        stdoutBytes: 0,
-        stderrBytes: 0,
         executionTimeMs: 10_000,
       });
 
@@ -284,15 +239,11 @@ describe('handlePing', () => {
       const context = createContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
         stderr: 'error',
         exitCode: 1,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
         stderrBytes: 5,
-        executionTimeMs: 50,
       });
 
       const result = await handlePing(context);
@@ -311,15 +262,10 @@ describe('handlePing', () => {
       const context = createContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
-        stderr: '',
         exitCode: null,
         signal: 'SIGKILL',
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
-        stderrBytes: 0,
-        executionTimeMs: 50,
       });
 
       const result = await handlePing(context);

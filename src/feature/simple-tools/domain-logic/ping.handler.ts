@@ -1,10 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
+import type { ResolvedProviderEntry } from '../../../shared/common/index.ts';
 import { executeCommand } from '../../../shared/domain-logic/command-executor.ts';
 import { resolveProviderEnv } from '../../../shared/domain-logic/provider-env-resolver.ts';
-import { buildMinimalEnv, stripAnsi } from '../../../shared/utils/platform.util.ts';
-import { toMcpError } from '../../../shared/utils/to-mcp-error.util.ts';
+import { buildMinimalEnv, stripAnsi, toMcpError } from '../../../shared/utils/index.ts';
 
 const PING_TIMEOUT_MS = 10_000;
 
