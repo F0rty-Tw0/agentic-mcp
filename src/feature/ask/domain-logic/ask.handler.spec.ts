@@ -2,32 +2,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/execution-limits.const.ts';
-import type { ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/index.ts';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../../shared/common/index.ts';
+import { ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB, ASK_DEFAULT_ARG_ARRAY_STUB, ASK_PROVIDER_CONFIG_STUB,
+ASK_RESOLVED_PROVIDER_ENTRY_STUB, ASK_STDIN_ARG_ARRAY_STUB , ASK_SUCCESS_EXECUTION_RESULT_STUB , ASK_TEST_ENV_STUB } from '../common/stubs/index.ts';
 
 vi.mock('./arg.builder.ts', () => ({
-  buildArgArray: vi.fn(() => ({ args: ['exec', 'test prompt'], stdinInput: undefined })),
+  buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
 vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
-  executeCommand: vi.fn(async () =>
-    Promise.resolve({
-      stdout: 'command output',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 14,
-      stderrBytes: 0,
-      executionTimeMs: 100,
-    })
-  ),
+  executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
 }));
 
 vi.mock('../../../shared/utils/platform.util.ts', () => ({
-  buildMinimalEnv: vi.fn(() => ({ PATH: '/usr/bin' })),
+  buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
@@ -40,39 +29,27 @@ const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platf
 
 const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
   const config: ProviderConfig = {
-    enabled: true,
-    description: 'Test provider',
-    command: 'test-cli',
-    timeout: 120_000,
-    env: {},
-    outputFormat: 'json',
-    commands: { ask: { args: ['exec'], flags: {} } },
-    input: { method: 'positional' },
+    ...ASK_PROVIDER_CONFIG_STUB,
     ...overrides,
   };
 
-  return { name: 'test', binaryPath: '/usr/bin/test-cli', config };
+  const context: ResolvedProviderEntry = {
+    ...ASK_RESOLVED_PROVIDER_ENTRY_STUB,
+    config,
+  };
+
+  return context;
 };
 
 describe('handleAsk', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(buildArgArray).mockReturnValue({ args: ['exec', 'test prompt'], stdinInput: undefined });
+    vi.mocked(buildArgArray).mockReturnValue(ASK_DEFAULT_ARG_ARRAY_STUB);
 
-    vi.mocked(executeCommand).mockResolvedValue({
-      stdout: 'command output',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 14,
-      stderrBytes: 0,
-      executionTimeMs: 100,
-    });
+    vi.mocked(executeCommand).mockResolvedValue(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB);
 
-    vi.mocked(buildMinimalEnv).mockReturnValue({ PATH: '/usr/bin' });
+    vi.mocked(buildMinimalEnv).mockReturnValue(ASK_TEST_ENV_STUB);
     vi.mocked(stripAnsi).mockImplementation((input: string) => input);
   });
 
@@ -138,7 +115,7 @@ describe('handleAsk', () => {
     it('GIVEN stdin input method WHEN handling ask THEN passes stdinInput to executeCommand', async () => {
       const context = createContext({ input: { method: 'stdin' } });
 
-      vi.mocked(buildArgArray).mockReturnValue({ args: ['exec'], stdinInput: 'test prompt' });
+      vi.mocked(buildArgArray).mockReturnValue(ASK_STDIN_ARG_ARRAY_STUB);
 
       await handleAsk(context, { prompt: 'test prompt' });
 
@@ -149,15 +126,7 @@ describe('handleAsk', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
-        stderrBytes: 0,
-        executionTimeMs: 100,
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
       });
 
       vi.mocked(stripAnsi).mockReturnValue('');

@@ -1,33 +1,45 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { buildArgArray } from './arg.builder.ts';
-import type { ExecuteCommandOptions } from '../../../shared/common/command-executor.types.ts';
-import { CommandExecutionError } from '../../../shared/common/errors/command-execution.error.ts';
-import type { CommandExecutionErrorDetails } from '../../../shared/common/errors/command-execution.error.ts';
-import { ValidationError } from '../../../shared/common/errors/validation-error.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
+import { CommandExecutionError, ValidationError } from '../../../shared/common/index.ts';
+import type {
+  CommandExecutionErrorDetails,
+  ExecuteCommandOptions,
+  ResolvedProviderEntry,
+} from '../../../shared/common/index.ts';
 import { executeCommand } from '../../../shared/domain-logic/command-executor.ts';
 import { resolveProviderEnv } from '../../../shared/domain-logic/provider-env-resolver.ts';
-import { buildMinimalEnv, stripAnsi } from '../../../shared/utils/platform.util.ts';
-import { toMcpError } from '../../../shared/utils/to-mcp-error.util.ts';
-import type { ProgressContext } from '../common/progress-context.types.ts';
-import type { AskToolArgs } from '../common/tool-args.types.ts';
-import { startHeartbeat } from '../utils/heartbeat.util.ts';
 import {
+  buildMinimalEnv,
   buildModelHint,
   detectModelError,
   extractAttemptedModel,
   fetchAvailableModels,
-} from '../utils/model-error.util.ts';
-import {
+  startHeartbeat,
+  stripAnsi,
+  toMcpError,
   validateFiles,
   validateModel,
   validatePromptSize,
   validateSessionId,
   validateWorkingDirectory,
-} from '../utils/validation.util.ts';
+} from '../../../shared/utils/index.ts';
+import type { AskToolArgs, ProgressContext } from '../common/index.ts';
 
 const MAX_RESPONSE_TEXT_BYTES = 200 * 1024;
+
+type CommandOptionExtras = Readonly<{
+  stdinInput?: string;
+  env?: Readonly<Record<string, string>>;
+}>;
+
+type ModelHintContext = Readonly<{
+  context: ResolvedProviderEntry;
+  args: AskToolArgs;
+  stdout: string;
+  stderr: string;
+  env: Readonly<Record<string, string>>;
+}>;
 
 const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
   if (!files?.length) return [];
@@ -46,30 +58,19 @@ const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
 
   if (args.session_id) validateSessionId(args.session_id);
 
-  const resolvedWorkingDir = args.working_directory ? validateWorkingDirectory(args.working_directory) : undefined;
+  const resolvedWorkingDir = args.working_directory && validateWorkingDirectory(args.working_directory);
   const resolvedFiles = resolveFilesArg(args.files, resolvedWorkingDir);
+  const workingDirectoryInfo = resolvedWorkingDir ? { working_directory: resolvedWorkingDir } : {};
+  const filesPayload = resolvedFiles.length ? { files: resolvedFiles } : {};
 
   const resolvedArgs: AskToolArgs = {
     ...args,
-    ...(resolvedWorkingDir ? { working_directory: resolvedWorkingDir } : {}),
-    ...(resolvedFiles.length > 0 ? { files: resolvedFiles } : {}),
+    ...workingDirectoryInfo,
+    ...filesPayload,
   };
 
   return resolvedArgs;
 };
-
-type CommandOptionExtras = Readonly<{
-  stdinInput?: string;
-  env?: Readonly<Record<string, string>>;
-}>;
-
-type ModelHintContext = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  stdout: string;
-  stderr: string;
-  env: Readonly<Record<string, string>>;
-}>;
 
 const buildCommandOptions = (
   context: ResolvedProviderEntry,

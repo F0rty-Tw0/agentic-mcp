@@ -1,35 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
-import type { ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/provider-config.type.ts';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../../shared/common/index.ts';
+import { ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB, ASK_DEFAULT_ARG_ARRAY_STUB,
+ASK_PROVIDER_CONFIG_STUB, ASK_RESOLVED_PROVIDER_ENTRY_STUB , ASK_SUCCESS_EXECUTION_RESULT_STUB , ASK_TEST_ENV_STUB } from '../common/stubs/index.ts';
 
 vi.mock('./arg.builder.ts', () => ({
-  buildArgArray: vi.fn(() => ({ args: ['exec', 'test prompt'], stdinInput: undefined })),
+  buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
 vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
-  executeCommand: vi.fn(async () =>
-    Promise.resolve({
-      stdout: 'command output',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 14,
-      stderrBytes: 0,
-      executionTimeMs: 100,
-    })
-  ),
+  executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
 }));
 
 vi.mock('../../../shared/utils/platform.util.ts', () => ({
-  buildMinimalEnv: vi.fn(() => ({ PATH: '/usr/bin' })),
+  buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-vi.mock('../utils/model-error.util.ts', () => ({
+vi.mock('../../../shared/utils/model-error.util.ts', () => ({
   detectModelError: vi.fn(() => false),
   extractAttemptedModel: vi.fn(() => undefined),
   fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
@@ -39,43 +28,31 @@ vi.mock('../utils/model-error.util.ts', () => ({
 const { buildArgArray } = await import('./arg.builder.ts');
 const { executeCommand } = await import('../../../shared/domain-logic/command-executor.ts');
 const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platform.util.ts');
-const { detectModelError, buildModelHint } = await import('../utils/model-error.util.ts');
+const { detectModelError, buildModelHint } = await import('../../../shared/utils/model-error.util.ts');
 
 const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
   const config: ProviderConfig = {
-    enabled: true,
-    description: 'Test provider',
-    command: 'test-cli',
-    timeout: 120_000,
-    env: {},
-    outputFormat: 'json',
-    commands: { ask: { args: ['exec'], flags: {} } },
-    input: { method: 'positional' },
+    ...ASK_PROVIDER_CONFIG_STUB,
     ...overrides,
   };
 
-  return { name: 'test', binaryPath: '/usr/bin/test-cli', config };
+  const context: ResolvedProviderEntry = {
+    ...ASK_RESOLVED_PROVIDER_ENTRY_STUB,
+    config,
+  };
+
+  return context;
 };
 
 describe('handleAsk', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(buildArgArray).mockReturnValue({ args: ['exec', 'test prompt'], stdinInput: undefined });
+    vi.mocked(buildArgArray).mockReturnValue(ASK_DEFAULT_ARG_ARRAY_STUB);
 
-    vi.mocked(executeCommand).mockResolvedValue({
-      stdout: 'command output',
-      stderr: '',
-      exitCode: 0,
-      signal: null,
-      timedOut: false,
-      truncated: false,
-      stdoutBytes: 14,
-      stderrBytes: 0,
-      executionTimeMs: 100,
-    });
+    vi.mocked(executeCommand).mockResolvedValue(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB);
 
-    vi.mocked(buildMinimalEnv).mockReturnValue({ PATH: '/usr/bin' });
+    vi.mocked(buildMinimalEnv).mockReturnValue(ASK_TEST_ENV_STUB);
     vi.mocked(stripAnsi).mockImplementation((input: string) => input);
   });
 
@@ -84,14 +61,11 @@ describe('handleAsk', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
-        stderr: '',
         exitCode: null,
         signal: null,
         timedOut: true,
-        truncated: false,
-        stdoutBytes: 0,
-        stderrBytes: 0,
         executionTimeMs: 120_000,
       });
 
@@ -106,14 +80,11 @@ describe('handleAsk', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
-        stderr: '',
         exitCode: null,
         signal: 'SIGKILL',
         timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
-        stderrBytes: 0,
         executionTimeMs: 500,
       });
 
@@ -127,13 +98,10 @@ describe('handleAsk', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
         stderr: 'something went wrong',
         exitCode: 1,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
         stderrBytes: 20,
         executionTimeMs: 200,
       });
@@ -148,13 +116,10 @@ describe('handleAsk', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
         stderr: 'fatal: unknown flag',
         exitCode: 2,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
         stderrBytes: 19,
         executionTimeMs: 50,
       });
@@ -200,13 +165,10 @@ describe('handleAsk', () => {
       const context = createContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: '',
         stderr: 'unknown model "bad-model"',
         exitCode: 1,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
         stderrBytes: 25,
         executionTimeMs: 100,
       });
@@ -225,14 +187,9 @@ describe('handleAsk', () => {
       const modelError = 'Model not found: bad-model';
 
       vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
         stdout: modelError,
-        stderr: '',
-        exitCode: 0,
-        signal: null,
-        timedOut: false,
-        truncated: false,
         stdoutBytes: modelError.length,
-        stderrBytes: 0,
         executionTimeMs: 200,
       });
 
