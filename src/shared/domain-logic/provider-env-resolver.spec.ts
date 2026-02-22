@@ -2,9 +2,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveProviderEnv } from './provider-env-resolver.ts';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common/execution-limits.const.ts';
-import type { ProviderConfig } from '../common/provider-config.schema.ts';
-import type { ResolvedProviderEntry } from '../common/provider-config.type.ts';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS   } from '../common/index.ts';
+import type {ProviderConfig, ResolvedProviderEntry} from '../common/index.ts';
 
 const createContext = (overrides: Partial<ProviderConfig> = {}, providerName = 'test'): ResolvedProviderEntry => {
   const config: ProviderConfig = {

@@ -1,5 +1,5 @@
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common/execution-limits.const.ts';
-import type { ResolvedProviderEntry } from '../common/provider-config.type.ts';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common/index.ts';
+import type { ResolvedProviderEntry } from '../common/index.ts';
 
 const MCP_TOOL_TIMEOUT_ENV_KEY = 'MCP_TOOL_TIMEOUT';
 
