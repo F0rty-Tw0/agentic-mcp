@@ -2,6 +2,8 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ConfigPathOptions } from './shared/common/index.ts';
+
 type MockServer = Readonly<{
   connect: (transport: unknown) => Promise<void>;
 }>;
@@ -11,7 +13,7 @@ const mocks = vi.hoisted(() => {
     transport: 'stdio',
   };
   const connect = vi.fn<(transport: unknown) => Promise<void>>();
-  const createServer = vi.fn<(options?: { configPath?: string }) => Promise<MockServer>>();
+  const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
   const stdioServerTransport = vi.fn();
 
   return {
