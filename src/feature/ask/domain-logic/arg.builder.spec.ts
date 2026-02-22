@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder.ts';
-import { ValidationError } from '../../../shared/common/errors/validation-error.ts';
-import type { FlagValue, ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
+import { ValidationError } from '../../../shared/common/index.ts';
+import type { FlagValue, ProviderConfig } from '../../../shared/common/index.ts';
+import { ASK_PROVIDER_CONFIG_STUB } from '../common/stubs/index.ts';
 
 type AskCommandConfig = Readonly<{
   method: ProviderConfig['input']['method'];
@@ -22,12 +23,7 @@ const createConfig = (overrides: Partial<AskCommandConfig> = {}): ProviderConfig
   const { method, args, trailingArgs, flags } = { ...DEFAULT_CONFIG_OPTIONS, ...overrides };
 
   const providerConfig: ProviderConfig = {
-    enabled: true,
-    description: 'Test provider',
-    command: 'test-cli',
-    timeout: 120000,
-    env: {},
-    outputFormat: 'json',
+    ...ASK_PROVIDER_CONFIG_STUB,
     commands: {
       ask: { args, trailingArgs, flags },
     },

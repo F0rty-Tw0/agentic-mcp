@@ -1,17 +1,15 @@
-import { ValidationError } from '../../../shared/common/errors/validation-error.ts';
-import type { CommandDef, FlagValue, ProviderConfig } from '../../../shared/common/provider-config.schema.ts';
-import {
-  FLAG_AUTO_MODE,
-  FLAG_EFFORT,
-  FLAG_FILE,
-  FLAG_MAX_BUDGET,
-  FLAG_MODEL,
-  FLAG_SANDBOX,
-  FLAG_SYSTEM_PROMPT,
-  FLAG_WORKING_DIR,
-} from '../common/command-def.const.ts';
-import type { AskToolArgs, BuiltArgs } from '../common/tool-args.types.ts';
-import { getAskCommand, getFlag } from '../utils/command-def.util.ts';
+import { ValidationError } from '../../../shared/common/index.ts';
+import type { CommandDef, FlagValue, ProviderConfig } from '../../../shared/common/index.ts';
+import { FLAG_AUTO_MODE,
+FLAG_EFFORT,
+FLAG_FILE,
+FLAG_MAX_BUDGET,
+FLAG_MODEL,
+FLAG_SANDBOX,
+FLAG_SYSTEM_PROMPT,
+FLAG_WORKING_DIR, } from '../common/index.ts';
+import type { AskToolArgs, BuiltArgs } from '../common/index.ts';
+import { getAskCommand, getFlag } from '../utils/index.ts';
 
 /**
  * Resolves a FlagValue into CLI arguments.
