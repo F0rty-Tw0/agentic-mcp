@@ -6,7 +6,7 @@ import process from 'node:process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadConfig } from './loader.ts';
-import type { ProvidersFile } from '../shared/common/provider-config.schema.ts';
+import type { ProvidersFile } from '../shared/common/index.ts';
 
 const tempDirs: string[] = [];
 
