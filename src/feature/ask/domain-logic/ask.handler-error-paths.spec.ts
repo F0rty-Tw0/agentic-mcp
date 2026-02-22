@@ -29,9 +29,17 @@ vi.mock('../../../shared/utils/platform.util.ts', () => ({
   stripAnsi: vi.fn((input: string) => input),
 }));
 
+vi.mock('../utils/model-error.util.ts', () => ({
+  detectModelError: vi.fn(() => false),
+  extractAttemptedModel: vi.fn(() => undefined),
+  fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
+  buildModelHint: vi.fn(() => ''),
+}));
+
 const { buildArgArray } = await import('./arg.builder.ts');
 const { executeCommand } = await import('../../../shared/domain-logic/command-executor.ts');
 const { buildMinimalEnv, stripAnsi } = await import('../../../shared/utils/platform.util.ts');
+const { detectModelError, buildModelHint } = await import('../utils/model-error.util.ts');
 
 const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
   const config: ProviderConfig = {
@@ -187,10 +195,34 @@ describe('handleAsk', () => {
     });
   });
 
-  describe('model error detection', () => {
-    it('GIVEN exit 0 with model-not-found in stdout WHEN handling ask THEN returns isError with model hint', async () => {
+  describe('model error branching', () => {
+    it('GIVEN non-zero exit with model error detected WHEN handling ask THEN appends model hint suffix to error', async () => {
       const context = createContext();
-      const modelError = '{"type":"error","error":{"message":"Model not found: opencode/bad-model."}}';
+
+      vi.mocked(executeCommand).mockResolvedValue({
+        stdout: '',
+        stderr: 'unknown model "bad-model"',
+        exitCode: 1,
+        signal: null,
+        timedOut: false,
+        truncated: false,
+        stdoutBytes: 0,
+        stderrBytes: 25,
+        executionTimeMs: 100,
+      });
+
+      vi.mocked(detectModelError).mockReturnValue(true);
+      vi.mocked(buildModelHint).mockReturnValue('\n\nModel error: "bad-model" is not available');
+
+      const result = await handleAsk(context, { prompt: 'test prompt', model: 'bad-model' });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as { text: string }).text).toContain('Model error: "bad-model" is not available');
+    });
+
+    it('GIVEN exit 0 with model error in stdout WHEN handling ask THEN returns isError with model hint', async () => {
+      const context = createContext();
+      const modelError = 'Model not found: bad-model';
 
       vi.mocked(executeCommand).mockResolvedValue({
         stdout: modelError,
@@ -205,50 +237,14 @@ describe('handleAsk', () => {
       });
 
       vi.mocked(stripAnsi).mockReturnValue(modelError);
+      vi.mocked(detectModelError).mockReturnValue(true);
+      vi.mocked(buildModelHint).mockReturnValue('\n\nModel error: "bad-model" is not available');
 
-      const result = await handleAsk(context, { prompt: 'test prompt' });
-
-      expect(result.isError).toBe(true);
-
-      const text = (result.content[0] as { text: string }).text;
-
-      expect(text).toContain('Model not found');
-      expect(text).toContain('Hint:');
-      expect(text).toContain('test models');
-    });
-
-    it('GIVEN non-zero exit with model error in stderr WHEN handling ask THEN returns isError with model hint', async () => {
-      const context = createContext();
-
-      vi.mocked(executeCommand).mockResolvedValue({
-        stdout: '',
-        stderr: 'Error: unknown model "bad-model"',
-        exitCode: 1,
-        signal: null,
-        timedOut: false,
-        truncated: false,
-        stdoutBytes: 0,
-        stderrBytes: 31,
-        executionTimeMs: 100,
-      });
-
-      const result = await handleAsk(context, { prompt: 'test prompt' });
+      const result = await handleAsk(context, { prompt: 'test prompt', model: 'bad-model' });
 
       expect(result.isError).toBe(true);
-
-      const text = (result.content[0] as { text: string }).text;
-
-      expect(text).toContain('Hint:');
-      expect(text).toContain('test models');
-    });
-
-    it('GIVEN normal output without model errors WHEN handling ask THEN returns success without hint', async () => {
-      const context = createContext();
-
-      const result = await handleAsk(context, { prompt: 'test prompt' });
-
-      expect(result.isError).toBeUndefined();
-      expect((result.content[0] as { text: string }).text).not.toContain('Hint:');
+      expect((result.content[0] as { text: string }).text).toContain(modelError);
+      expect((result.content[0] as { text: string }).text).toContain('Model error: "bad-model" is not available');
     });
   });
 

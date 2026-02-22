@@ -13,7 +13,12 @@ import { toMcpError } from '../../../shared/utils/to-mcp-error.util.ts';
 import type { ProgressContext } from '../common/progress-context.types.ts';
 import type { AskToolArgs } from '../common/tool-args.types.ts';
 import { startHeartbeat } from '../utils/heartbeat.util.ts';
-import { buildModelHint, detectModelError } from '../utils/model-error.util.ts';
+import {
+  buildModelHint,
+  detectModelError,
+  extractAttemptedModel,
+  fetchAvailableModels,
+} from '../utils/model-error.util.ts';
 import {
   validateFiles,
   validateModel,
@@ -53,23 +58,56 @@ const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
   return resolvedArgs;
 };
 
+type CommandOptionExtras = Readonly<{
+  stdinInput?: string;
+  env?: Readonly<Record<string, string>>;
+}>;
+
+type ModelHintContext = Readonly<{
+  context: ResolvedProviderEntry;
+  args: AskToolArgs;
+  stdout: string;
+  stderr: string;
+  env: Readonly<Record<string, string>>;
+}>;
+
 const buildCommandOptions = (
   context: ResolvedProviderEntry,
   resolved: AskToolArgs,
   cliArgs: readonly string[],
-  stdinInput?: string
+  extras?: CommandOptionExtras
 ): ExecuteCommandOptions => {
-  const env = buildMinimalEnv(resolveProviderEnv(context));
+  const resolvedEnv = extras?.env ?? buildMinimalEnv(resolveProviderEnv(context));
   const commandOptions: ExecuteCommandOptions = {
     binaryPath: context.binaryPath,
     args: [...cliArgs],
-    env,
+    env: resolvedEnv,
     timeoutMs: context.config.timeout,
-    stdin: stdinInput,
+    stdin: extras?.stdinInput,
     cwd: resolved.working_directory,
   };
 
   return commandOptions;
+};
+
+const resolveModelHint = async ({ context, args, stdout, stderr, env }: ModelHintContext): Promise<string> => {
+  if (!detectModelError(stdout, stderr)) return '';
+
+  const availableModels = await fetchAvailableModels(context, env, executeCommand);
+  const attemptedModel = args.model ?? extractAttemptedModel(stdout, stderr);
+  const modelHint = buildModelHint(context.name, attemptedModel, availableModels, Boolean(args.model));
+
+  return modelHint;
+};
+
+const buildCappedOutput = (output: string): string => {
+  const outputBytes = Buffer.byteLength(output, 'utf8');
+
+  if (outputBytes <= MAX_RESPONSE_TEXT_BYTES) return output;
+
+  const formattedOutput = `${Buffer.from(output, 'utf8').subarray(0, MAX_RESPONSE_TEXT_BYTES).toString('utf8')}\n\n[output truncated — ${outputBytes} bytes total]`;
+
+  return formattedOutput;
 };
 
 export const handleAsk = async (
@@ -84,7 +122,8 @@ export const handleAsk = async (
 
     const { args: cliArgs, stdinInput } = buildArgArray(context.config, resolved);
 
-    const commandOptions = buildCommandOptions(context, resolved, cliArgs, stdinInput);
+    const env = buildMinimalEnv(resolveProviderEnv(context));
+    const commandOptions = buildCommandOptions(context, resolved, cliArgs, { stdinInput, env });
 
     const result = await executeCommand(commandOptions);
 
@@ -95,7 +134,9 @@ export const handleAsk = async (
         timedOut: result.timedOut,
         stderr: result.stderr,
       };
-      const suffix = detectModelError(result.stdout, result.stderr) ? buildModelHint(context.name) : '';
+
+      const suffix = await resolveModelHint({ context, args, stdout: result.stdout, stderr: result.stderr, env });
+
       const error = new CommandExecutionError(`${context.name} command failed${suffix}`, details);
 
       return error.toMcpResponse();
@@ -103,10 +144,9 @@ export const handleAsk = async (
 
     const output = stripAnsi(result.stdout);
 
-    // Some CLIs exit 0 but return an error payload (e.g. model-not-found in JSON output).
-    // Detect model errors and surface an actionable hint.
-    if (detectModelError(output, result.stderr)) {
-      const modelHint = buildModelHint(context.name);
+    const modelHint = await resolveModelHint({ context, args, stdout: output, stderr: result.stderr, env });
+
+    if (modelHint) {
       const response: CallToolResult = {
         isError: true,
         content: [{ type: 'text', text: output + modelHint }],
@@ -115,9 +155,7 @@ export const handleAsk = async (
       return response;
     }
 
-    const outputBytes = Buffer.byteLength(output, 'utf8');
-    const formattedOutput = `${Buffer.from(output, 'utf8').subarray(0, MAX_RESPONSE_TEXT_BYTES).toString('utf8')}\n\n[output truncated — ${outputBytes} bytes total]`;
-    const cappedOutput = outputBytes > MAX_RESPONSE_TEXT_BYTES ? formattedOutput : output;
+    const cappedOutput = buildCappedOutput(output);
 
     const response: CallToolResult = {
       content: [{ type: 'text', text: cappedOutput.length > 0 ? cappedOutput : '(no output)' }],
