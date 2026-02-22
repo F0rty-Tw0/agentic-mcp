@@ -3,9 +3,14 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
+import {
+  TOOL_REGISTRY_PROVIDER_CONFIG_STUB,
+  TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
+  TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
+  TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
+} from './common/stubs/index.ts';
 import { registerAllTools } from './tool-registry.ts';
-import type { ProviderConfig } from '../../shared/common/provider-config.schema.ts';
-import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/provider-config.type.ts';
+import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
 import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
 import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
@@ -16,34 +21,23 @@ vi.mock('../simple-tools/domain-logic/help.handler.ts', () => ({ handleHelp: vi.
 vi.mock('../simple-tools/domain-logic/meta.handler.ts', () => ({ handleListProviders: vi.fn() }));
 vi.mock('../simple-tools/domain-logic/ping.handler.ts', () => ({ handlePing: vi.fn() }));
 
-const makeConfig = (): ProviderConfig => ({
-  enabled: true,
-  description: 'test provider',
-  command: 'test-cli',
-  timeout: 30_000,
-  env: {},
-  outputFormat: 'text',
-  commands: { ask: { args: ['exec'], flags: { model: '-m' } } },
-  input: { method: 'positional' },
-});
+const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
 
 const makeProvider = (name = 'claude'): ResolvedProviderEntry => ({
+  ...TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
   name,
   binaryPath: `/usr/bin/${name}`,
   config: makeConfig(),
 });
 
 const makeResolvedProvider = (name = 'claude'): ResolvedProvider => ({
+  ...TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
   name,
   description: `${name} provider`,
-  enabled: true,
-  available: true,
   binaryPath: `/usr/bin/${name}`,
 });
 
-const SUCCESS_RESULT: CallToolResult = {
-  content: [{ type: 'text', text: 'ok' }],
-};
+const SUCCESS_RESULT: CallToolResult = TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB;
 
 type MockServer = Readonly<{ registerTool: MockInstance }>;
 

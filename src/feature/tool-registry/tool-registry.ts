@@ -1,9 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/provider-config.type.ts';
-import type { ProgressContext } from '../ask/common/progress-context.types.ts';
-import type { AskToolArgs } from '../ask/common/tool-args.types.ts';
+import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/index.ts';
+import type { AskToolArgs, ProgressContext } from '../ask/common/index.ts';
 import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
 import { buildAskToolDefinition } from '../ask/domain-logic/tool.builder.ts';
 import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
