@@ -14,7 +14,7 @@ export class CommandExecutionError extends Error {
   public readonly timedOut: boolean | undefined;
   public readonly stderr: string | undefined;
 
-  public constructor(message: string, details: CommandExecutionErrorDetails, options?: { cause?: unknown }) {
+  public constructor(message: string, details: CommandExecutionErrorDetails, options?: ErrorOptions) {
     super(message, options);
     this.name = CommandExecutionError.name;
     this.exitCode = details.exitCode;

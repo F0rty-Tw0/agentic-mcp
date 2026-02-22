@@ -1,7 +1,7 @@
 import type { McpErrorResponse } from './mcp-error-response.type.ts';
 
 export class ValidationError extends Error {
-  public constructor(message: string, options?: { cause?: unknown }) {
+  public constructor(message: string, options?: ErrorOptions) {
     super(message, options);
 
     this.name = 'ValidationError';
