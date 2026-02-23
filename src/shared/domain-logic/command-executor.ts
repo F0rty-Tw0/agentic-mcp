@@ -1,65 +1,92 @@
-import type { Readable } from 'node:stream';
-
 import crossSpawn from 'cross-spawn';
 
+import { attachStreamCollector } from './command-stream-collector.util.ts';
+import type { StreamCollector } from './command-stream-collector.util.ts';
 import { createSemaphore } from './semaphore.ts';
 import type { ExecuteCommandOptions, ExecutionResult } from '../common/index.ts';
 import { CommandExecutionError } from '../common/index.ts';
 import { killProcess } from '../utils/index.ts';
 
-type CollectStreamResult = Readonly<{ bytes: number; truncated: boolean }>;
-
-type StreamCollector = Readonly<{ output: () => string; bytes: () => number; truncated: () => boolean }>;
+type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
 
 const MAX_CONCURRENT_SPAWNS = 5;
-const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
-
 const defaultSemaphore = createSemaphore(MAX_CONCURRENT_SPAWNS);
 
-const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): CollectStreamResult => {
-  const newBytes = currentBytes + chunk.length;
-
-  if (newBytes <= MAX_OUTPUT_BYTES) {
-    chunks.push(chunk);
-
-    const streamResult: CollectStreamResult = { bytes: newBytes, truncated: false };
-
-    return streamResult;
-  }
-
-  const remaining = MAX_OUTPUT_BYTES - currentBytes;
-
-  if (remaining > 0) chunks.push(chunk.subarray(0, remaining));
-
-  const streamResult: CollectStreamResult = { bytes: currentBytes + remaining, truncated: true };
-
-  return streamResult;
-};
-
-const attachStreamCollector = (stream: Readable | null): StreamCollector => {
-  const chunks: Buffer[] = [];
-  let currentBytes = 0;
-  let isTruncated = false;
-
-  stream?.on('data', (chunk: Buffer) => {
-    const result = collectStream(chunks, chunk, currentBytes);
-
-    currentBytes = result.bytes;
-
-    if (result.truncated) isTruncated = true;
-  });
-
-  const streamCollector: StreamCollector = {
-    output: () => Buffer.concat(chunks).toString('utf-8'),
-    bytes: () => currentBytes,
-    truncated: () => isTruncated,
+const createAbortSubscription = (signal: AbortSignal | undefined, childPid: number | undefined): AbortSubscription => {
+  const abortHandler = (): void => {
+    if (childPid != null) {
+      void killProcess(childPid);
+    }
   };
 
-  return streamCollector;
+  if (!signal) {
+    return { abortHandler, detach: () => undefined };
+  }
+
+  if (signal.aborted) abortHandler();
+
+  signal.addEventListener('abort', abortHandler, { once: true });
+
+  return {
+    abortHandler,
+    detach: (): void => {
+      signal.removeEventListener('abort', abortHandler);
+    },
+  };
+};
+
+const setupTimeout = (
+  pid: number | undefined,
+  timeoutMs: number
+): Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }> => {
+  let timedOut = false;
+
+  const timer = setTimeout(() => {
+    timedOut = true;
+
+    if (pid != null) {
+      void killProcess(pid);
+    }
+  }, timeoutMs);
+
+  return {
+    timer,
+    markTimedOut: () => timedOut,
+  };
+};
+
+type ResolveExecutionResultInput = Readonly<{
+  stdout: StreamCollector;
+  stderr: StreamCollector;
+  exitCode: number | null;
+  closeSignal: string | null;
+  timedOut: boolean;
+  startTime: number;
+}>;
+
+const resolveExecutionResult = ({
+  stdout,
+  stderr,
+  exitCode,
+  closeSignal,
+  timedOut,
+  startTime,
+}: ResolveExecutionResultInput): ExecutionResult => {
+  return {
+    stdout: stdout.output(),
+    stderr: stderr.output(),
+    exitCode,
+    signal: closeSignal,
+    timedOut,
+    truncated: stdout.truncated() || stderr.truncated(),
+    stdoutBytes: stdout.bytes(),
+    stderrBytes: stderr.bytes(),
+    executionTimeMs: Date.now() - startTime,
+  };
 };
 
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
-  const { binaryPath, args, env, timeoutMs, stdin, cwd } = options;
+  const { binaryPath, args, env, timeoutMs, stdin, cwd, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
 
   return new Promise<ExecutionResult>((resolve, reject) => {
     const child = crossSpawn(binaryPath, args, {
@@ -68,21 +95,18 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       cwd,
     });
 
-    let timedOut = false;
+    if (child.pid != null && onSpawned) {
+      onSpawned(child.pid);
+    }
 
-    const timer = setTimeout(() => {
-      timedOut = true;
-
-      if (child.pid != null) {
-        void killProcess(child.pid);
-      }
-    }, timeoutMs);
-
-    const stdout = attachStreamCollector(child.stdout);
-    const stderr = attachStreamCollector(child.stderr);
+    const timeout = setupTimeout(child.pid, timeoutMs);
+    const stdout = attachStreamCollector(child.stdout, onStdoutChunk);
+    const stderr = attachStreamCollector(child.stderr, onStderrChunk);
+    const abort = createAbortSubscription(signal, child.pid ?? undefined);
 
     child.on('error', (error: Error) => {
-      clearTimeout(timer);
+      clearTimeout(timeout.timer);
+      abort.detach();
       const commandError = new CommandExecutionError(
         `Failed to spawn "${binaryPath}": ${error.message}`,
         { stderr: error.message },
@@ -92,20 +116,20 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       reject(commandError);
     });
 
-    child.on('close', (exitCode, signal) => {
-      clearTimeout(timer);
+    child.on('close', (exitCode, closeSignal) => {
+      clearTimeout(timeout.timer);
+      abort.detach();
 
-      resolve({
-        stdout: stdout.output(),
-        stderr: stderr.output(),
-        exitCode,
-        signal,
-        timedOut,
-        truncated: stdout.truncated() || stderr.truncated(),
-        stdoutBytes: stdout.bytes(),
-        stderrBytes: stderr.bytes(),
-        executionTimeMs: Date.now() - startTime,
-      });
+      resolve(
+        resolveExecutionResult({
+          stdout,
+          stderr,
+          exitCode,
+          closeSignal,
+          timedOut: timeout.markTimedOut(),
+          startTime,
+        })
+      );
     });
 
     // Write stdin if provided, then close the stream

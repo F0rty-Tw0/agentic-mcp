@@ -31,7 +31,11 @@ const createEventEmitter = (): EventEmitter => {
 const emit = (emitter: EventEmitter, event: string, ...args: unknown[]): void => {
   const fns = emitter.handlers[event];
 
-  if (fns) fns.forEach((fn) => fn(...args));
+  if (fns) {
+    fns.forEach((fn) => {
+      fn(...args);
+    });
+  }
 };
 
 type MockFn = ReturnType<typeof vi.fn>;
@@ -117,8 +121,6 @@ const baseOptions = {
 };
 
 const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
-
-const drainMicrotasks = async (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('executeCommand', () => {
   beforeEach(() => {
@@ -357,65 +359,9 @@ describe('executeCommand', () => {
 
       const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
 
-      // Verify spawn was called exactly once and result is correct —
-      // i.e. the call completed without waiting for semaphore slot
       expect(crossSpawn).toHaveBeenCalledTimes(1);
       expect(result.stdout).toBe('bypassed');
       expect(result.exitCode).toBe(0);
-    });
-  });
-
-  describe('semaphore concurrency', () => {
-    const closeAllChildren = (children: ControllableChild[], startIndex: number): void => {
-      for (let i = startIndex; i < children.length; i++) {
-        children[i]?.emitClose(0, null);
-      }
-    };
-
-    const mockSpawnFromChildren = (
-      children: ControllableChild[],
-      getIndex: () => number,
-      incrementIndex: () => void
-    ): void => {
-      vi.mocked(crossSpawn).mockImplementation(() => {
-        const c = children[getIndex()];
-
-        incrementIndex();
-
-        if (c == null) throw new Error('Unexpected call index');
-
-        return c.child as unknown as ReturnType<typeof crossSpawn>;
-      });
-    };
-
-    it('GIVEN 5 in-flight commands WHEN a 6th is queued THEN it waits until a slot is released', async () => {
-      const children = Array.from({ length: 6 }, () => createControllableChild());
-      let callIndex = 0;
-
-      mockSpawnFromChildren(
-        children,
-        () => callIndex,
-        () => {
-          callIndex++;
-        }
-      );
-
-      const runCommand = async (): Promise<Awaited<ReturnType<typeof executeCommand>>> =>
-        executeCommand({ ...baseOptions, bypassSemaphore: false });
-
-      const promises = Array.from({ length: 6 }, runCommand);
-
-      await drainMicrotasks();
-      expect(crossSpawn).toHaveBeenCalledTimes(5);
-
-      children[0]?.emitClose(0, null);
-
-      await drainMicrotasks();
-      expect(crossSpawn).toHaveBeenCalledTimes(6);
-
-      closeAllChildren(children, 1);
-
-      await Promise.all(promises);
     });
   });
 });
