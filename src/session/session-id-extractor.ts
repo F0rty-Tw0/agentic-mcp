@@ -12,14 +12,19 @@ const safeValidateSessionId = (value: string | undefined): string | undefined =>
   }
 };
 
+type ParsedSessionResponse = Readonly<{
+  session_id?: unknown;
+  conversation_id?: unknown;
+  session?: Readonly<{ id?: unknown }>;
+}>;
+
 const parseJsonSessionId = (stdout: string): string | undefined => {
   try {
-    const parsed = JSON.parse(stdout) as Record<string, unknown>;
-    const nestedSession = parsed.session as Record<string, unknown> | undefined;
+    const parsed = JSON.parse(stdout) as ParsedSessionResponse;
     const candidate =
       (typeof parsed.session_id === 'string' ? parsed.session_id : undefined) ??
       (typeof parsed.conversation_id === 'string' ? parsed.conversation_id : undefined) ??
-      (typeof nestedSession?.id === 'string' ? nestedSession.id : undefined);
+      (typeof parsed.session?.id === 'string' ? parsed.session.id : undefined);
 
     return safeValidateSessionId(candidate);
   } catch {
