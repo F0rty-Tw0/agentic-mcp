@@ -3,7 +3,7 @@ import type { ToolDefinition } from '../../../shared/common/index.ts';
 export const buildPingToolDefinition = (providerName: string): ToolDefinition => {
   const definition: ToolDefinition = {
     name: `ping_${providerName}`,
-    description: `Check if the ${providerName} CLI is available and responsive`,
+    description: `Check if ${providerName} is ready to answer`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
@@ -14,7 +14,7 @@ export const buildPingToolDefinition = (providerName: string): ToolDefinition =>
 export const buildHelpToolDefinition = (providerName: string): ToolDefinition => {
   const definition: ToolDefinition = {
     name: `help_${providerName}`,
-    description: `Show help information for the ${providerName} CLI`,
+    description: `See what ${providerName} can do`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
@@ -25,7 +25,7 @@ export const buildHelpToolDefinition = (providerName: string): ToolDefinition =>
 export const buildListProvidersDefinition = (): ToolDefinition => {
   const definition: ToolDefinition = {
     name: 'list_providers',
-    description: 'List all configured providers and their availability status',
+    description: 'See which AI models are available and their status',
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };

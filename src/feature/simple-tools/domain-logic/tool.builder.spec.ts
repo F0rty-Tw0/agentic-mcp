@@ -61,10 +61,10 @@ describe('buildListProvidersDefinition', () => {
     expect(result.name).toBe('list_providers');
   });
 
-  it('GIVEN no arguments WHEN building list_providers tool THEN description mentions providers', () => {
+  it('GIVEN no arguments WHEN building list_providers tool THEN description mentions AI models', () => {
     const result = buildListProvidersDefinition();
 
-    expect(result.description).toContain('provider');
+    expect(result.description).toContain('AI models');
   });
 
   it('GIVEN no arguments WHEN building list_providers tool THEN inputSchema is empty', () => {
