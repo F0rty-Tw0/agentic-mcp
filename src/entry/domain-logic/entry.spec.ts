@@ -32,11 +32,11 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
   StdioServerTransport: mocks.stdioServerTransport,
 }));
 
-const importMain = async (): Promise<void> => {
-  const mainPath = './main.ts';
-  const mod = (await import(mainPath)) as { main: () => Promise<void> };
+const importEntry = async (): Promise<void> => {
+  const entryPath = './entry.ts';
+  const mod = (await import(entryPath)) as { entry: () => Promise<void> };
 
-  await mod.main();
+  await mod.entry();
 };
 
 const resetArgv = (): void => {
@@ -76,7 +76,7 @@ describe('main', () => {
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
 
-    await importMain();
+    await importEntry();
 
     await vi.waitFor(() => {
       expect(exitSpy).toHaveBeenCalledWith(0);
@@ -92,7 +92,7 @@ describe('main', () => {
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
 
-    await importMain();
+    await importEntry();
 
     await vi.waitFor(() => {
       expect(exitSpy).toHaveBeenCalledWith(0);
@@ -107,7 +107,7 @@ describe('main', () => {
   it('GIVEN a --config argument WHEN main() is called THEN it passes configPath to createServer and connects via stdio transport', async () => {
     process.argv = ['node', 'index.ts', '--config', '/tmp/providers.json'];
 
-    await importMain();
+    await importEntry();
 
     await vi.waitFor(() => {
       expect(mocks.connect).toHaveBeenCalledTimes(1);
@@ -123,6 +123,6 @@ describe('main', () => {
   it('GIVEN createServer throws WHEN main() is called THEN it rejects with the error', async () => {
     mocks.createServer.mockRejectedValueOnce(new Error('boom'));
 
-    await expect(importMain()).rejects.toThrow('boom');
+    await expect(importEntry()).rejects.toThrow('boom');
   });
 });

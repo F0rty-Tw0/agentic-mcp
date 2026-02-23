@@ -46,7 +46,8 @@ describe('integration: tool listing', () => {
     const { tools } = await client.listTools();
 
     const toolNames = tools.map((t) => t.name);
-    const askTools = toolNames.filter((n) => n.startsWith('ask_'));
+    // Exclude global tools (ask_all) — they don't have per-provider ping/help counterparts
+    const askTools = toolNames.filter((n) => n.startsWith('ask_') && n !== 'ask_all');
     const pingTools = toolNames.filter((n) => n.startsWith('ping_'));
     const helpTools = toolNames.filter((n) => n.startsWith('help_'));
 
