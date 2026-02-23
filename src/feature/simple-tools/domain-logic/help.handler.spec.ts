@@ -1,11 +1,15 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleHelp } from './help.handler.ts';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/common/index.ts';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../../shared/common/index.ts';
-import { SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB, SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
-SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB, SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB , SIMPLE_TOOLS_TEST_ENV_STUB } from '../common/stubs/index.ts';
+import {
+  SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB,
+  SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
+  SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
+  SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
+  SIMPLE_TOOLS_TEST_ENV_STUB,
+} from '../common/stubs/index.ts';
 
 vi.mock('../../../shared/domain-logic/command-executor.ts', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB)),
@@ -57,26 +61,28 @@ describe('handleHelp', () => {
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling help THEN injects default timeout env', async () => {
-      const context = createContext({ env: { API_KEY: 'secret' } });
+      const context = createContext({ env: { apiKey: 'secret' } });
 
       await handleHelp(context);
 
       expect(buildMinimalEnv).toHaveBeenCalledWith({
-        API_KEY: 'secret',
+        apiKey: 'secret',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
     });
 
     it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN handling help THEN injects default timeout env', async () => {
       const context: ResolvedProviderEntry = {
-        ...createContext({ env: { API_KEY: 'secret' } }),
+        ...createContext({ env: { apiKey: 'secret' } }),
         name: 'opencode',
       };
 
       await handleHelp(context);
 
       expect(buildMinimalEnv).toHaveBeenCalledWith({
-        API_KEY: 'secret',
+        apiKey: 'secret',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
     });
