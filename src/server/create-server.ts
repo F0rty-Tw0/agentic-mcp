@@ -4,11 +4,11 @@ import { CancelledNotificationSchema } from '@modelcontextprotocol/sdk/types.js'
 import { loadConfig } from '../config/loader.ts';
 import { NO_PROVIDERS_WARNING, SERVER_NAME } from './common/index.ts';
 import { toRequestIdString } from './utils/index.ts';
-import { registerAllTools } from '../feature/tool-registry/tool-registry.ts';
 import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from '../shared/common/index.ts';
 import { APP_VERSION } from '../shared/common/index.ts';
 import { getActiveRequest, unregisterActiveRequest } from '../shared/domain-logic/request-registry.ts';
 import { killProcess, resolveCliBinary } from '../shared/utils/index.ts';
+import { registerAllTools } from '../tool-registry/tool-registry.ts';
 
 export const createServer = async (options?: ConfigPathOptions): Promise<McpServer> => {
   const config = await loadConfig(options);

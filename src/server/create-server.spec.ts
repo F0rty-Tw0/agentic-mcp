@@ -38,7 +38,7 @@ vi.mock('../shared/utils/platform.util.ts', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 
-vi.mock('../feature/tool-registry/tool-registry.ts', () => ({
+vi.mock('../tool-registry/tool-registry.ts', () => ({
   registerAllTools: mocks.registerAllTools,
 }));
 
