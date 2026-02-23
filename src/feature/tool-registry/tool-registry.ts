@@ -4,7 +4,11 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import type { AskToolArgs, ProgressContext } from '../ask/common/index.ts';
 import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
-import { buildAskToolDefinition } from '../ask/domain-logic/tool.builder.ts';
+import { handleSessions } from '../ask/domain-logic/sessions.handler.ts';
+import { buildAskToolDefinition, buildSessionsToolDefinition } from '../ask/domain-logic/tool.builder.ts';
+import type { AskAllToolArgs } from '../ask-all/common/index.ts';
+import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler.ts';
+import { buildAskAllToolDefinition } from '../ask-all/domain-logic/tool.builder.ts';
 import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
 import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
 import { handlePing } from '../simple-tools/domain-logic/ping.handler.ts';
@@ -13,6 +17,8 @@ import {
   buildListProvidersDefinition,
   buildPingToolDefinition,
 } from '../simple-tools/domain-logic/tool.builder.ts';
+import { buildUsageSummaryToolDefinition } from '../usage-stats/domain-logic/tool.builder.ts';
+import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler.ts';
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, config } = provider;
@@ -30,6 +36,17 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
     askCOnfig,
     async (args: AskToolArgs, extra: ProgressContext): Promise<CallToolResult> => handleAsk(provider, args, extra)
   );
+
+  if (config.commands.sessions) {
+    const sessionsDef = buildSessionsToolDefinition(name);
+    const sessionsConfig = {
+      description: sessionsDef.description,
+      annotations: sessionsDef.annotations,
+      inputSchema: sessionsDef.inputSchema,
+    };
+
+    server.registerTool(sessionsDef.name, sessionsConfig, (): CallToolResult => handleSessions(name));
+  }
 
   // ping_<provider>
   const pingDef = buildPingToolDefinition(name);
@@ -58,6 +75,26 @@ export const registerAllTools = (
   for (const provider of resolvedProviders) {
     registerProviderTools(server, provider);
   }
+
+  // Register global ask_all tool
+  const askAllDef = buildAskAllToolDefinition(resolvedProviders.map((p) => p.name));
+  const askAllConfig = {
+    description: askAllDef.description,
+    inputSchema: askAllDef.inputSchema,
+    annotations: askAllDef.annotations,
+  };
+
+  server.registerTool(
+    askAllDef.name,
+    askAllConfig,
+    async (args): Promise<CallToolResult> => handleAskAll(resolvedProviders, args as AskAllToolArgs)
+  );
+
+  // Always register the usage_summary tool
+  const usageDef = buildUsageSummaryToolDefinition();
+  const usageConfig = { description: usageDef.description, annotations: usageDef.annotations };
+
+  server.registerTool(usageDef.name, usageConfig, (): CallToolResult => handleUsageSummary());
 
   // Always register the meta tool
   const listDef = buildListProvidersDefinition();

@@ -12,14 +12,20 @@ import {
 import { registerAllTools } from './tool-registry.ts';
 import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
+import { handleSessions } from '../ask/domain-logic/sessions.handler.ts';
+import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler.ts';
 import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
 import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
 import { handlePing } from '../simple-tools/domain-logic/ping.handler.ts';
+import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler.ts';
 
 vi.mock('../ask/domain-logic/ask.handler.ts', () => ({ handleAsk: vi.fn() }));
+vi.mock('../ask/domain-logic/sessions.handler.ts', () => ({ handleSessions: vi.fn() }));
+vi.mock('../ask-all/domain-logic/ask-all.handler.ts', () => ({ handleAskAll: vi.fn() }));
 vi.mock('../simple-tools/domain-logic/help.handler.ts', () => ({ handleHelp: vi.fn() }));
 vi.mock('../simple-tools/domain-logic/meta.handler.ts', () => ({ handleListProviders: vi.fn() }));
 vi.mock('../simple-tools/domain-logic/ping.handler.ts', () => ({ handlePing: vi.fn() }));
+vi.mock('../usage-stats/domain-logic/usage-stats.handler.ts', () => ({ handleUsageSummary: vi.fn() }));
 
 const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
 
@@ -76,25 +82,42 @@ describe('registerAllTools', () => {
   });
 
   describe('registration counts', () => {
-    it('GIVEN no providers WHEN called THEN registers only list_providers', () => {
+    it('GIVEN no providers WHEN called THEN registers ask_all, usage_summary and list_providers', () => {
       register();
 
-      expect(server.registerTool).toHaveBeenCalledTimes(1);
+      expect(server.registerTool).toHaveBeenCalledTimes(3);
     });
 
-    it('GIVEN one provider WHEN called THEN registers 4 tools', () => {
+    it('GIVEN one provider WHEN called THEN registers 6 tools', () => {
       register([makeProvider()], [makeResolvedProvider()]);
 
-      expect(server.registerTool).toHaveBeenCalledTimes(4);
+      expect(server.registerTool).toHaveBeenCalledTimes(6);
     });
 
-    it('GIVEN two providers WHEN called THEN registers 7 tools', () => {
+    it('GIVEN provider with sessions command WHEN called THEN registers 7 tools', () => {
+      const providerWithSessions: ResolvedProviderEntry = {
+        ...makeProvider(),
+        config: {
+          ...makeConfig(),
+          commands: {
+            ...makeConfig().commands,
+            sessions: { flags: { resume: '--resume' } },
+          },
+        },
+      };
+
+      register([providerWithSessions], [makeResolvedProvider()]);
+
+      expect(server.registerTool).toHaveBeenCalledTimes(7);
+    });
+
+    it('GIVEN two providers WHEN called THEN registers 9 tools', () => {
       register(
         [makeProvider('claude'), makeProvider('codex')],
         [makeResolvedProvider('claude'), makeResolvedProvider('codex')]
       );
 
-      expect(server.registerTool).toHaveBeenCalledTimes(7);
+      expect(server.registerTool).toHaveBeenCalledTimes(9);
     });
   });
 
@@ -190,12 +213,12 @@ describe('registerAllTools', () => {
       expect(metadata.description).toContain('claude');
     });
 
-    it('GIVEN list_providers WHEN registered THEN description mentions providers', () => {
+    it('GIVEN list_providers WHEN registered THEN description mentions AI models', () => {
       register();
 
       const metadata = getMetadata(server, 'list_providers');
 
-      expect(metadata.description).toContain('provider');
+      expect(metadata.description).toContain('AI models');
     });
   });
 
@@ -226,6 +249,29 @@ describe('registerAllTools', () => {
       const result = await handler();
 
       expect(handlePing).toHaveBeenCalledWith(provider);
+      expect(result).toBe(SUCCESS_RESULT);
+    });
+
+    it('GIVEN sessions handler WHEN invoked THEN delegates to handleSessions with provider name', async () => {
+      const providerWithSessions: ResolvedProviderEntry = {
+        ...makeProvider('claude'),
+        config: {
+          ...makeConfig(),
+          commands: {
+            ...makeConfig().commands,
+            sessions: { flags: { continue: '--continue' } },
+          },
+        },
+      };
+
+      vi.mocked(handleSessions).mockReturnValue(SUCCESS_RESULT);
+
+      register([providerWithSessions]);
+
+      const handler = getHandler(server, 'sessions_claude');
+      const result = await handler();
+
+      expect(handleSessions).toHaveBeenCalledWith('claude');
       expect(result).toBe(SUCCESS_RESULT);
     });
 
@@ -272,6 +318,79 @@ describe('registerAllTools', () => {
       await getHandler(server, 'ask_codex')({ prompt: 'hey' });
 
       expect(handleAsk).toHaveBeenCalledWith(codex, { prompt: 'hey' }, undefined);
+    });
+
+    it('GIVEN ask_all handler WHEN invoked THEN delegates to handleAskAll with resolvedProviders and args', async () => {
+      const claude = makeProvider('claude');
+      const codex = makeProvider('codex');
+
+      vi.mocked(handleAskAll).mockResolvedValue(SUCCESS_RESULT);
+
+      register([claude, codex]);
+
+      const handler = getHandler(server, 'ask_all');
+      const args = { prompt: 'hello' };
+      const result = await handler(args);
+
+      expect(handleAskAll).toHaveBeenCalledWith([claude, codex], args);
+      expect(result).toBe(SUCCESS_RESULT);
+    });
+  });
+
+  describe('ask_all tool', () => {
+    it('GIVEN no providers WHEN called THEN registers ask_all', () => {
+      register();
+
+      const names = getRegisteredNames(server);
+
+      expect(names).toContain('ask_all');
+    });
+
+    it('GIVEN ask_all tool WHEN registered THEN has destructive and openWorld hints', () => {
+      register([makeProvider('claude')]);
+
+      const metadata = getMetadata(server, 'ask_all');
+
+      expect(metadata.annotations).toStrictEqual({ destructiveHint: true, openWorldHint: true });
+    });
+
+    it('GIVEN ask_all tool WHEN registered THEN description mentions all providers', () => {
+      register([makeProvider('claude'), makeProvider('codex')]);
+
+      const metadata = getMetadata(server, 'ask_all');
+
+      expect(metadata.description).toContain('claude');
+      expect(metadata.description).toContain('codex');
+    });
+  });
+
+  describe('usage_summary tool', () => {
+    it('GIVEN no providers WHEN called THEN registers usage_summary', () => {
+      register();
+
+      const names = getRegisteredNames(server);
+
+      expect(names).toContain('usage_summary');
+    });
+
+    it('GIVEN usage_summary tool WHEN registered THEN has readOnly and idempotent hints', () => {
+      register();
+
+      const metadata = getMetadata(server, 'usage_summary');
+
+      expect(metadata.annotations).toStrictEqual({ readOnlyHint: true, idempotentHint: true });
+    });
+
+    it('GIVEN usage_summary handler WHEN invoked THEN delegates to handleUsageSummary', () => {
+      vi.mocked(handleUsageSummary).mockReturnValue(SUCCESS_RESULT);
+
+      register();
+
+      const handler = getHandler(server, 'usage_summary');
+      const result = handler();
+
+      expect(handleUsageSummary).toHaveBeenCalledOnce();
+      expect(result).toBe(SUCCESS_RESULT);
     });
   });
 });
