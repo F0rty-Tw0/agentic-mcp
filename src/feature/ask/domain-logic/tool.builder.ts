@@ -58,10 +58,33 @@ const addAutoModeField = (schema: Record<string, z.ZodType>, askCmd: CommandDef)
   }
 };
 
+const addStreamingAndAsyncFields = (schema: Record<string, z.ZodType>): void => {
+  schema.action = z
+    .enum(['run', 'status'])
+    .optional()
+    .describe('Request action: run a prompt or poll status for a prior async job (default: run)');
+
+  schema.mode = z
+    .enum(['sync', 'async'])
+    .optional()
+    .describe('Execution mode: sync waits for completion; async returns a job_id for polling (default: sync)');
+
+  schema.stream_live = z.boolean().optional().describe('Emit live output chunks through progress notifications');
+  schema.job_id = z.string().optional().describe('Job identifier used with action=status to poll async ask progress');
+};
+
 const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Readonly<Record<string, z.ZodType>> => {
   const schema: Record<string, z.ZodType> = {
-    prompt: z.string().describe('The prompt or question to send to the AI agent'),
+    context: z.string().optional().describe('Optional user-supplied context to prepend before the current prompt'),
+    prompt: z
+      .string()
+      .optional()
+      .describe(
+        'The prompt or question to send to the AI agent (required for action=run). For independent long asks, prefer subagent-dispatched parallel execution.'
+      ),
   };
+
+  addStreamingAndAsyncFields(schema);
 
   if (getFlag(askCmd, FLAG_MODEL) != null) {
     schema.model = z
@@ -116,9 +139,20 @@ export const buildAskToolDefinition = (providerName: string, config: ProviderCon
 
   const definition: ToolDefinition = {
     name: `ask_${providerName}`,
-    description: `Send a prompt to ${providerName}: ${config.description}`,
+    description: `Get an answer from ${providerName}. Returns the response with provider attribution (model, timing, format).`,
     inputSchema: buildAskInputSchema(config, askCmd),
     annotations: { destructiveHint: true, openWorldHint: true },
+  };
+
+  return definition;
+};
+
+export const buildSessionsToolDefinition = (providerName: string): ToolDefinition => {
+  const definition: ToolDefinition = {
+    name: `sessions_${providerName}`,
+    description: `List known ask sessions for ${providerName}`,
+    inputSchema: {},
+    annotations: { readOnlyHint: true, idempotentHint: true },
   };
 
   return definition;

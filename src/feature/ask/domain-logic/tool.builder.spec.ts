@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildAskToolDefinition } from './tool.builder.ts';
+import { buildAskToolDefinition, buildSessionsToolDefinition } from './tool.builder.ts';
 import type { ProviderConfig } from '../../../shared/common/index.ts';
 
 const createConfig = (flags: Record<string, unknown>): ProviderConfig => ({
@@ -44,6 +44,22 @@ describe('buildAskToolDefinition', () => {
       const result = buildAskToolDefinition('test', config);
 
       expect(result.inputSchema).toHaveProperty('prompt');
+    });
+
+    it('GIVEN any provider config WHEN building tool definition THEN stream_live boolean field is present', () => {
+      const config = createConfig({});
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).toHaveProperty('stream_live');
+      expect(result.inputSchema.stream_live?.parse(true)).toBe(true);
+    });
+
+    it('GIVEN ask tool definition WHEN inspecting description THEN it describes outcome and attribution', () => {
+      const config = createConfig({});
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.description).toContain('answer');
+      expect(result.description).toContain('attribution');
     });
   });
 
@@ -253,5 +269,14 @@ describe('buildAskToolDefinition', () => {
       expect(result.inputSchema).toHaveProperty('working_directory');
       expect(result.inputSchema).toHaveProperty('auto_mode');
     });
+  });
+});
+
+describe('buildSessionsToolDefinition', () => {
+  it('GIVEN provider name WHEN building sessions tool THEN tool name uses sessions_{provider}', () => {
+    const definition = buildSessionsToolDefinition('claude');
+
+    expect(definition.name).toBe('sessions_claude');
+    expect(definition.annotations.readOnlyHint).toBe(true);
   });
 });
