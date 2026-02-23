@@ -34,6 +34,14 @@ const main = async (): Promise<void> => {
     return;
   }
 
+  if (args[0] === 'setup') {
+    const { runSetup } = await import('./setup/setup-cli.ts');
+
+    await runSetup(args.slice(1));
+
+    return;
+  }
+
   const configIndex = process.argv.indexOf('--config');
   const configPath =
     configIndex !== -1 && configIndex + 1 < process.argv.length ? process.argv[configIndex + 1] : undefined;
