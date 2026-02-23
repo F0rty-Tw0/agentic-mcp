@@ -1,114 +1,54 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { buildArgArray } from './arg.builder.ts';
-import { CommandExecutionError, ValidationError } from '../../../shared/common/index.ts';
-import type {
-  CommandExecutionErrorDetails,
-  ExecuteCommandOptions,
-  ResolvedProviderEntry,
-} from '../../../shared/common/index.ts';
-import { executeCommand } from '../../../shared/domain-logic/command-executor.ts';
-import { resolveProviderEnv } from '../../../shared/domain-logic/provider-env-resolver.ts';
-import {
-  buildMinimalEnv,
-  buildModelHint,
-  detectModelError,
-  extractAttemptedModel,
-  fetchAvailableModels,
-  startHeartbeat,
-  stripAnsi,
-  toMcpError,
-  validateFiles,
-  validateModel,
-  validatePromptSize,
-  validateSessionId,
-  validateWorkingDirectory,
-} from '../../../shared/utils/index.ts';
+import { buildAsyncStatusResponse, startAsyncAskInvocation } from './ask-async.util.ts';
+import { runAskInvocation } from './ask-runner.util.ts';
+import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util.ts';
+import { SESSION_STORE } from '../../../session/session-store.ts';
+import type { ResolvedProviderEntry } from '../../../shared/common/index.ts';
 import type { AskToolArgs, ProgressContext } from '../common/index.ts';
+import { createAskJob } from '../data-access/ask-job-store.ts';
 
-const MAX_RESPONSE_TEXT_BYTES = 200 * 1024;
+const runAskInvocationResponse = async (
+  context: ResolvedProviderEntry,
+  args: AskToolArgs,
+  extra?: ProgressContext
+): Promise<CallToolResult> => {
+  const execution = await runAskInvocation({ context, args, extra });
 
-type CommandOptionExtras = Readonly<{
-  stdinInput?: string;
-  env?: Readonly<Record<string, string>>;
-}>;
+  return execution.response;
+};
 
-type ModelHintContext = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  stdout: string;
-  stderr: string;
-  env: Readonly<Record<string, string>>;
-}>;
+const handleSessionAsk = async (
+  context: ResolvedProviderEntry,
+  args: AskToolArgs,
+  extra?: ProgressContext
+): Promise<CallToolResult> => {
+  const sessionId = args.session_id as string;
 
-const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
-  if (!files?.length) return [];
-
-  if (!workingDir) {
-    throw new ValidationError('working_directory is required when files are specified');
+  if (!SESSION_STORE.tryAcquireLock(context.name, sessionId)) {
+    return {
+      isError: true,
+      content: [{ type: 'text', text: `session in use: ${sessionId}` }],
+    };
   }
 
-  return validateFiles(files, workingDir);
-};
+  try {
+    const sessionState = buildSessionFlowState(context, args);
+    const result = await executeSessionFlow({ context, args, extra, state: sessionState });
 
-const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
-  validatePromptSize(args.prompt);
+    if (!result.response.isError && !result.wasCancelled) {
+      SESSION_STORE.addTurn(context.name, sessionId, { role: 'user', text: args.prompt ?? '' });
+      SESSION_STORE.addTurn(context.name, sessionId, { role: 'assistant', text: result.responseText });
 
-  if (args.model) validateModel(args.model);
+      if (result.nativeSessionId) {
+        SESSION_STORE.setNativeSessionId(context.name, sessionId, result.nativeSessionId);
+      }
+    }
 
-  if (args.session_id) validateSessionId(args.session_id);
-
-  const resolvedWorkingDir = args.working_directory && validateWorkingDirectory(args.working_directory);
-  const resolvedFiles = resolveFilesArg(args.files, resolvedWorkingDir);
-  const workingDirectoryInfo = resolvedWorkingDir ? { working_directory: resolvedWorkingDir } : {};
-  const filesPayload = resolvedFiles.length ? { files: resolvedFiles } : {};
-
-  const resolvedArgs: AskToolArgs = {
-    ...args,
-    ...workingDirectoryInfo,
-    ...filesPayload,
-  };
-
-  return resolvedArgs;
-};
-
-const buildCommandOptions = (
-  context: ResolvedProviderEntry,
-  resolved: AskToolArgs,
-  cliArgs: readonly string[],
-  extras?: CommandOptionExtras
-): ExecuteCommandOptions => {
-  const resolvedEnv = extras?.env ?? buildMinimalEnv(resolveProviderEnv(context));
-  const commandOptions: ExecuteCommandOptions = {
-    binaryPath: context.binaryPath,
-    args: [...cliArgs],
-    env: resolvedEnv,
-    timeoutMs: context.config.timeout,
-    stdin: extras?.stdinInput,
-    cwd: resolved.working_directory,
-  };
-
-  return commandOptions;
-};
-
-const resolveModelHint = async ({ context, args, stdout, stderr, env }: ModelHintContext): Promise<string> => {
-  if (!detectModelError(stdout, stderr)) return '';
-
-  const availableModels = await fetchAvailableModels(context, env, executeCommand);
-  const attemptedModel = args.model ?? extractAttemptedModel(stdout, stderr);
-  const modelHint = buildModelHint(context.name, attemptedModel, availableModels, Boolean(args.model));
-
-  return modelHint;
-};
-
-const buildCappedOutput = (output: string): string => {
-  const outputBytes = Buffer.byteLength(output, 'utf8');
-
-  if (outputBytes <= MAX_RESPONSE_TEXT_BYTES) return output;
-
-  const formattedOutput = `${Buffer.from(output, 'utf8').subarray(0, MAX_RESPONSE_TEXT_BYTES).toString('utf8')}\n\n[output truncated — ${outputBytes} bytes total]`;
-
-  return formattedOutput;
+    return appendSessionMetadata(result.response, result.sessionMode);
+  } finally {
+    SESSION_STORE.releaseLock(context.name, sessionId);
+  }
 };
 
 export const handleAsk = async (
@@ -116,56 +56,30 @@ export const handleAsk = async (
   args: AskToolArgs,
   extra?: ProgressContext
 ): Promise<CallToolResult> => {
-  const stopHeartbeat = startHeartbeat(extra);
-
-  try {
-    const resolved = validateAndResolveArgs(args);
-
-    const { args: cliArgs, stdinInput } = buildArgArray(context.config, resolved);
-
-    const env = buildMinimalEnv(resolveProviderEnv(context));
-    const commandOptions = buildCommandOptions(context, resolved, cliArgs, { stdinInput, env });
-
-    const result = await executeCommand(commandOptions);
-
-    if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
-      const details: CommandExecutionErrorDetails = {
-        exitCode: result.exitCode,
-        signal: result.signal,
-        timedOut: result.timedOut,
-        stderr: result.stderr,
-      };
-
-      const suffix = await resolveModelHint({ context, args, stdout: result.stdout, stderr: result.stderr, env });
-
-      const error = new CommandExecutionError(`${context.name} command failed${suffix}`, details);
-
-      return error.toMcpResponse();
-    }
-
-    const output = stripAnsi(result.stdout);
-
-    const modelHint = await resolveModelHint({ context, args, stdout: output, stderr: result.stderr, env });
-
-    if (modelHint) {
-      const response: CallToolResult = {
+  if ((args.action ?? 'run') === 'status') {
+    if (!args.job_id) {
+      return {
         isError: true,
-        content: [{ type: 'text', text: output + modelHint }],
+        content: [{ type: 'text', text: 'job_id is required when action=status' }],
       };
-
-      return response;
     }
 
-    const cappedOutput = buildCappedOutput(output);
-
-    const response: CallToolResult = {
-      content: [{ type: 'text', text: cappedOutput.length > 0 ? cappedOutput : '(no output)' }],
-    };
-
-    return response;
-  } catch (error) {
-    return toMcpError(error);
-  } finally {
-    stopHeartbeat();
+    return buildAsyncStatusResponse(args.job_id);
   }
+
+  if ((args.mode ?? 'sync') === 'async') {
+    const asyncJob = createAskJob(context.name);
+
+    startAsyncAskInvocation({ context, args, jobId: asyncJob.id, runAskInvocation: runAskInvocationResponse, extra });
+
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state }) }],
+    };
+  }
+
+  if (!args.session_id) {
+    return runAskInvocationResponse(context, args, extra);
+  }
+
+  return handleSessionAsk(context, args, extra);
 };
