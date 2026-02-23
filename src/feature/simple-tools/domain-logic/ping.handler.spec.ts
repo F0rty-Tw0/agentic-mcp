@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePing } from './ping.handler.ts';
@@ -98,13 +97,14 @@ describe('handlePing', () => {
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ping THEN injects default timeout env', async () => {
       const context = createContext({
         versionCheck: { flag: '--version' },
-        env: { API_KEY: 'secret' },
+        env: { apiKey: 'secret' },
       });
 
       await handlePing(context);
 
       expect(buildMinimalEnv).toHaveBeenCalledWith({
-        API_KEY: 'secret',
+        apiKey: 'secret',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
     });
@@ -113,7 +113,7 @@ describe('handlePing', () => {
       const context: ResolvedProviderEntry = {
         ...createContext({
           versionCheck: { flag: '--version' },
-          env: { API_KEY: 'secret' },
+          env: { apiKey: 'secret' },
         }),
         name: 'gemini',
       };
@@ -121,7 +121,8 @@ describe('handlePing', () => {
       await handlePing(context);
 
       expect(buildMinimalEnv).toHaveBeenCalledWith({
-        API_KEY: 'secret',
+        apiKey: 'secret',
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
     });
