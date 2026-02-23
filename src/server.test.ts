@@ -12,7 +12,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createServer } from './server.ts';
+import { createServer } from './server/create-server.ts';
 
 let server: McpServer;
 let client: Client;
