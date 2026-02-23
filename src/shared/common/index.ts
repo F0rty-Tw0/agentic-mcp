@@ -1,3 +1,5 @@
+export { APP_VERSION } from './app-version.const.ts';
+
 export type { ConfigPathOptions } from './config-path-options.type.ts';
 
 export type { ExecuteCommandOptions, ExecutionResult, StreamChunkCallback } from './command-executor.types.ts';
