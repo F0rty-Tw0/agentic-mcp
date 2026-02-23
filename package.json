@@ -1,7 +1,7 @@
 {
   "name": "agentic-mcp",
   "version": "0.1.0",
-  "description": "Config-driven MCP server that wraps any agentic CLI tool",
+  "description": "Multi-model AI gateway — query any CLI AI tool through MCP",
   "license": "MIT",
   "author": "Artiom Tofan",
   "repository": {
