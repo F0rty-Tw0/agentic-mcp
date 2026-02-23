@@ -30,12 +30,27 @@ pnpm run lint:fix           # lint + auto-fix
 ```
 build.mjs              # esbuild bundler script (shebang injection, providers.json copy)
 src/
-  index.ts              # entry point — shebang, start server, parse --config flag, setup subcommand
-  server.ts             # MCP server setup, provider resolution, tool registration
+  index.ts              # thin shim — imports main(), calls main().catch(...)
+
+  entry/                # CLI entrypoint logic (arg parsing, help, version)
+    common/
+      help-text.const.ts  # HELP_TEXT
+    utils/
+      args.util.ts        # parseConfigPath()
+    domain-logic/
+      main.ts             # main() — arg parsing, setup routing, server start
+
+  server/               # MCP server creation and wiring
+    common/
+      server.const.ts     # SERVER_NAME, NO_PROVIDERS_WARNING
+    utils/
+      request-id.util.ts  # toRequestIdString()
+    create-server.ts      # createServer() — composition root (provider resolution, tool registration, cancellation)
 
   shared/               # cross-cutting infrastructure used by multiple features
     common/             # types, constants, Zod schemas, error classes
       errors/           # custom error classes and MCP error mapping
+      app-version.const.ts       # APP_VERSION (build-time injected, dev fallback)
       command-executor.types.ts  # ExecuteCommandOptions, ExecutionResult types
       tool-definition.types.ts   # ToolDefinition, ToolAnnotations types
       provider-config.schema.ts  # Zod schemas for providers.json
@@ -125,8 +140,10 @@ src/
 
 | Folder                               | Purpose                                                               | Contains                                                                               |
 | ------------------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `entry/`                             | CLI entrypoint logic (arg parsing, version, help, setup routing).     | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                     |
+| `server/`                            | MCP server creation and wiring.                                       | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                     |
 | `shared/`                            | Cross-cutting infrastructure used by multiple features.               | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                     |
-| `shared/common/`                     | Types, constants, schemas shared across features.                     | Zod schemas, type definitions, constants, error classes.                               |
+| `shared/common/`                     | Types, constants, schemas shared across features.                     | Zod schemas, type definitions, constants, error classes, APP_VERSION.                  |
 | `shared/common/errors/`              | Error definitions and MCP error mapping.                              | Custom error classes (the one case where classes are acceptable — see Code Style).     |
 | `shared/common/test-utils/`          | Shared test utilities.                                                | Vitest helper types (`vi-fn.types.ts`).                                                |
 | `shared/utils/`                      | Pure utility functions.                                               | Platform helpers (binary resolution, env isolation), error conversion, heartbeat.      |
