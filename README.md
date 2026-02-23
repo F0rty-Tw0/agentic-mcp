@@ -1,163 +1,133 @@
 # agentic-mcp
 
-> Config-driven MCP server that wraps any agentic CLI tool.
+> Query Claude, Codex, Gemini, Copilot, and OpenCode from one interface.
 
 [![CI](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](#status)
 
-**agentic-mcp** is a universal [MCP](https://modelcontextprotocol.io/) server that wraps any agentic CLI tool through a single JSON config. Adding a new CLI means adding a config entry — no code changes, no rebuilds.
+Multi-model AI gateway that wraps any agentic CLI tool as an [MCP](https://modelcontextprotocol.io/) server. Add a new AI provider by editing a JSON file — no code changes, no rebuilds.
 
 > **Requires Node.js >= 22**
 
-## Status
+## 30-Second Setup
 
-Core MVP is functional — config loading, tool registration, spawn execution, and the ask/ping/help/list_providers tools work end-to-end. Five providers configured: claude, codex, copilot, gemini, opencode.
-
-## How It Works
-
-agentic-mcp sits between your MCP client (Claude Code, Cursor, etc.) and any number of CLI coding agents. It reads a single `providers.json` config file and dynamically registers MCP tools for each provider:
-
-```
-MCP Client  <──stdio──>  agentic-mcp  <──spawn──>  claude, codex, copilot, gemini, opencode
+```bash
+npx agentic-mcp setup --client claude-code
 ```
 
-For each enabled provider, three tools are registered:
-
-| Tool     | Pattern           | Purpose                                   |
-| -------- | ----------------- | ----------------------------------------- |
-| **ask**  | `ask_{provider}`  | Send a prompt to the provider's CLI       |
-| **ping** | `ping_{provider}` | Check if the provider binary is reachable |
-| **help** | `help_{provider}` | Show the provider's CLI help text         |
-
-Plus one meta tool: `list_providers` — returns all configured providers with their availability status.
-
-## Providers
-
-Five providers ship out of the box:
-
-| Provider | CLI        | Output |
-| -------- | ---------- | ------ |
-| claude   | `claude`   | json   |
-| codex    | `codex`    | json   |
-| copilot  | `copilot`  | text   |
-| gemini   | `gemini`   | json   |
-| opencode | `opencode` | json   |
-
-When `model` is omitted from an `ask_{provider}` call, agentic-mcp passes no model flag and the provider CLI uses its own default model selection.
-
-Providers are auto-detected at startup — if a CLI binary isn't found in PATH, the provider is marked unavailable but doesn't prevent the server from starting.
-
-## Quick Start
-
-### npm (global install)
+Or install globally:
 
 ```bash
 npm install -g agentic-mcp
-agentic-mcp
+agentic-mcp setup --client claude-code
 ```
 
-### npx (no install)
+Supported clients: Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
+
+## What Can You Do?
+
+### Get an answer
+Ask any provider directly:
+- `ask_claude` — Get an answer from Claude
+- `ask_codex` — Get an answer from Codex
+- `ask_gemini` — Get an answer from Gemini
+- `ask_copilot` — Get an answer from Copilot
+- `ask_opencode` — Get an answer from OpenCode
+
+### Compare providers
+Send the same prompt to multiple providers simultaneously:
+- `ask_all` — Query all available providers at once and compare responses side-by-side
+
+### Track your usage
+See per-provider call counts, response times, and success rates:
+- `usage_summary` — View session statistics
+
+### Explore
+- `list_providers` — See which AI models are available
+- `ping_*` — Check if a provider is ready
+- `help_*` — See what a provider can do
+
+## Providers
+
+| Provider | CLI Tool | Status |
+|----------|----------|--------|
+| Claude | `claude` | ✅ Configured |
+| Codex | `codex` | ✅ Configured |
+| Copilot | `copilot` | ✅ Configured |
+| Gemini | `gemini` | ✅ Configured |
+| OpenCode | `opencode` | ✅ Configured |
+
+Adding a new provider? Just edit `providers.json` — no code changes needed.
+
+<details>
+<summary>Configuration</summary>
+
+### Config Sources (highest priority first)
+
+1. `--config` CLI flag
+2. `AGENTIC_MCP_CONFIG` environment variable
+3. `~/.config/agentic-mcp/providers.json` (user-local)
+4. Bundled `providers.json` (default)
+
+### Provider Config Structure
+
+Each provider is defined in `providers.json` with:
+- CLI binary name and resolution
+- Command definitions (ask, ping, help)
+- Flag mappings for model selection, context, files, etc.
+- Output format (`json`, `stream-json`, or `text`)
+
+See `providers.json` for examples.
+
+</details>
+
+<details>
+<summary>Advanced Features</summary>
+
+### Streaming
+Enable live streaming with `stream_live: true` in ask tool calls. Responses stream via MCP progress notifications.
+
+### Async Mode
+For long-running queries, use `mode: "async"` to get a job ID, then poll with `action: "status"`.
+
+### Sessions
+Some providers support persistent sessions via `session_id` for multi-turn conversations.
+
+</details>
+
+<details>
+<summary>Security Model</summary>
+
+- All CLI commands use `spawn()` with array args — no shell injection
+- Child process environments are isolated (minimal base env)
+- Binary paths resolved and pinned at startup
+- Output size-limited to prevent memory exhaustion
+- Zod validation on all inputs
+
+</details>
+
+<details>
+<summary>Adding a Provider</summary>
+
+1. Add an entry to `providers.json`
+2. Restart the server
+
+That's it. No code changes needed. See existing entries for the config shape.
+
+</details>
+
+## Development
 
 ```bash
-npx agentic-mcp
+pnpm install          # install dependencies
+pnpm run dev          # run in dev mode
+pnpm run build        # build for production
+pnpm run test         # run tests
+pnpm run typecheck    # type-check
+pnpm run lint         # lint
 ```
-
-### From source
-
-```bash
-git clone https://github.com/F0rty-Tw0/agentic-mcp.git
-cd agentic-mcp
-pnpm install
-pnpm run build
-pnpm run start
-```
-
-### MCP Client Configuration
-
-Add to your MCP client config (e.g. `~/.claude.json`):
-
-```json
-{
-  "mcpServers": {
-    "agentic-mcp": {
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "/path/to/agentic-mcp"
-    }
-  }
-}
-```
-
-### Custom Config Path
-
-```bash
-# Via CLI flag
-node dist/index.js --config /path/to/providers.json
-
-# Via environment variable
-AGENTIC_MCP_CONFIG=/path/to/providers.json node dist/index.js
-```
-
-Config resolution order: `--config` flag > `AGENTIC_MCP_CONFIG` env > user-local config (`~/.config/agentic-mcp/providers.json` or `%APPDATA%/agentic-mcp/providers.json`) > bundled default.
-
-## Adding a Provider
-
-Edit `src/config/providers.json` (or your user-local copy):
-
-```jsonc
-{
-  "myagent": {
-    "enabled": true,
-    "description": "My custom agent",
-    "command": "myagent",
-    "timeout": 600000,
-    "env": {},
-    "outputFormat": "json",
-    "commands": {
-      "ask": {
-        "args": ["run"],
-        "trailingArgs": ["--json"],
-        "flags": {
-          "model": "-m",
-          "autoMode": ["--auto"],
-          "sandbox": {
-            "flag": "--sandbox",
-            "values": ["safe", "unsafe"],
-          },
-        },
-      },
-    },
-    "input": { "method": "positional" },
-  },
-}
-```
-
-Then validate: `pnpm run validate:providers`
-
-## Scripts
-
-```bash
-pnpm run build              # Bundle with esbuild (dist/index.js + providers.json)
-pnpm run dev                # Dev mode (node --experimental-strip-types)
-pnpm run start              # Run compiled server
-pnpm run test               # Unit tests (vitest)
-pnpm run test:integration   # Integration tests (vitest, separate config)
-pnpm run validate:providers # Validate providers.json against Zod schema
-pnpm run typecheck          # Type-check (tsc --noEmit)
-pnpm run lint               # ESLint
-pnpm run lint:fix           # ESLint + auto-fix
-```
-
-## Security
-
-- CLI binaries are resolved and pinned at startup (absolute paths)
-- Child processes use `spawn()` with array args — never `shell: true`
-- Child environments are isolated (minimal base env, not full `process.env`)
-- Output is size-limited (10 MB) to prevent memory exhaustion
-- All inputs validated with Zod at call time
-- Dangerous auto-mode flags trigger startup warnings
 
 ## License
 
-[MIT](LICENSE)
+MIT
