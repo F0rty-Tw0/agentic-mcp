@@ -1,6 +1,6 @@
 export type { ConfigPathOptions } from './config-path-options.type.ts';
 
-export type { ExecuteCommandOptions, ExecutionResult } from './command-executor.types.ts';
+export type { ExecuteCommandOptions, ExecutionResult, StreamChunkCallback } from './command-executor.types.ts';
 
 export {
   DEFAULT_MCP_TOOL_TIMEOUT_MS,
