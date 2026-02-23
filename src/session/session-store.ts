@@ -92,7 +92,7 @@ export class InMemorySessionStore {
     const key = toSessionKey(provider, id);
     const existing = this.entries.get(key);
 
-    if (!existing) return undefined;
+    if (!existing) return;
 
     existing.lastAccessedAt = new Date().toISOString();
     this.entries.delete(key);

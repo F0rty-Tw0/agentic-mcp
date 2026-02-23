@@ -85,7 +85,7 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
     }
   }
 
-  return undefined;
+  return;
 };
 
 describe('integration: ping', () => {

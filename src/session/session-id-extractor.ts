@@ -1,14 +1,14 @@
 import { validateSessionId } from '../shared/utils/index.ts';
 
 const safeValidateSessionId = (value: string | undefined): string | undefined => {
-  if (!value) return undefined;
+  if (!value) return;
 
   try {
     validateSessionId(value);
 
     return value;
   } catch {
-    return undefined;
+    return;
   }
 };
 
@@ -23,7 +23,7 @@ const parseJsonSessionId = (stdout: string): string | undefined => {
 
     return safeValidateSessionId(candidate);
   } catch {
-    return undefined;
+    return;
   }
 };
 
@@ -34,7 +34,7 @@ const parseNdjsonSessionId = (stdout: string): string | undefined => {
     .filter((line) => line.length > 0);
   const lastLine = lines[lines.length - 1];
 
-  if (!lastLine) return undefined;
+  if (!lastLine) return;
 
   return parseJsonSessionId(lastLine);
 };
@@ -60,5 +60,5 @@ export const extractNativeSessionId = (
 
   if (providerName === 'codex') return parseNdjsonSessionId(stdout);
 
-  return undefined;
+  return;
 };

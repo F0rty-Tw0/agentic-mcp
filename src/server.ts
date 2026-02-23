@@ -7,10 +7,8 @@ import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from 
 import { getActiveRequest, unregisterActiveRequest } from './shared/domain-logic/request-registry.ts';
 import { killProcess, resolveCliBinary } from './shared/utils/index.ts';
 
-type RequestId = string | number;
-
-const toRequestIdString = (requestId: RequestId | undefined): string | undefined => {
-  if (requestId === undefined) return undefined;
+const toRequestIdString = (requestId?: string | number): string | undefined => {
+  if (!requestId) return;
 
   return String(requestId);
 };
@@ -24,24 +22,28 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
   for (const [name, providerConfig] of Object.entries(config.providers)) {
     const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : null;
 
-    allProviders.push({
+    const provider: ResolvedProvider = {
       name,
       description: providerConfig.description,
       enabled: providerConfig.enabled,
       available: binaryPath !== null,
       binaryPath,
-    });
+    };
+
+    allProviders.push(provider);
 
     if (providerConfig.enabled && binaryPath) {
-      resolvedProviders.push({
+      const resolvedProvider: ResolvedProviderEntry = {
         name,
         binaryPath,
         config: providerConfig,
-      });
+      };
+
+      resolvedProviders.push(resolvedProvider);
     }
   }
 
-  if (resolvedProviders.length === 0) {
+  if (!resolvedProviders.length) {
     process.stderr.write(
       'Warning: no providers are available. Install at least one CLI tool (claude, codex, copilot, gemini, opencode) and restart.\n'
     );
