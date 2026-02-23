@@ -1,3 +1,5 @@
+export type StreamChunkCallback = (chunk: string) => void;
+
 export type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
   args: readonly string[];
@@ -6,6 +8,10 @@ export type ExecuteCommandOptions = Readonly<{
   stdin?: string;
   cwd?: string;
   bypassSemaphore?: boolean;
+  onStdoutChunk?: StreamChunkCallback;
+  onStderrChunk?: StreamChunkCallback;
+  signal?: AbortSignal;
+  onSpawned?: (pid: number) => void;
 }>;
 
 export type ExecutionResult = Readonly<{
