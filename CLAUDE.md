@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **agentic-mcp** is a config-driven [MCP](https://modelcontextprotocol.io/) server that wraps any agentic CLI tool. Adding a new CLI provider means adding an entry to `providers.json` — no code changes, no rebuilds.
 
-Status: in active development. Core MVP is functional — config loading, tool registration, spawn execution, and the ask/ping/help/list_providers tools work end-to-end. Five providers configured: claude, codex, copilot, gemini, opencode.
+Status: in active development. Core features are functional — config loading, tool registration, spawn execution, streaming, async jobs, sessions, provider attribution, usage stats, multi-provider querying (`ask_all`), and a setup CLI. Five providers configured: claude, codex, copilot, gemini, opencode.
 
 ## Commands
 
@@ -30,7 +30,7 @@ pnpm run lint:fix           # lint + auto-fix
 ```
 build.mjs              # esbuild bundler script (shebang injection, providers.json copy)
 src/
-  index.ts              # entry point — shebang, start server, parse --config flag
+  index.ts              # entry point — shebang, start server, parse --config flag, setup subcommand
   server.ts             # MCP server setup, provider resolution, tool registration
 
   shared/               # cross-cutting infrastructure used by multiple features
@@ -41,6 +41,7 @@ src/
       provider-config.schema.ts  # Zod schemas for providers.json
       provider-config.type.ts    # ResolvedProviderEntry, ResolvedProvider types
       execution-limits.const.ts  # output size limits (MAX_PROMPT_BYTES, MAX_FILES, etc.)
+      progress-context.types.ts  # ProgressContext (requestId, signal, notifications)
       test-utils/       # shared test helpers (Vitest utility types)
     utils/              # pure utility functions
       platform.ts       # binary resolution (which), process management, env isolation
@@ -48,19 +49,54 @@ src/
     domain-logic/       # orchestration and composition
       command-executor.ts # spawn execution with concurrency control and output limiting
       semaphore.ts      # concurrency control via semaphore (max concurrent spawns)
+      request-registry.ts # tracks active requests for cancellation support
+
+  session/              # session management (native session IDs, context prepend)
+    session-id-extractor.ts  # extracts native session IDs from provider output
 
   feature/
     ask/                # core prompting feature — the main "ask" tool
       common/           # types and constants
-        command-def.const.ts # FLAG_* constants for ask command flags
-        tool-args.types.ts   # AskToolArgs and BuiltArgs types
+        command-def.const.ts   # FLAG_* constants for ask command flags
+        tool-args.types.ts     # AskToolArgs and BuiltArgs types
+        attribution.types.ts   # ProviderAttribution type
+        ask-job.types.ts       # async job types (AskJob, AskJobStatus)
+        stream-event.types.ts  # streaming event types (start, chunk, done, error)
+        session-mode.type.ts   # SessionMode type (none, tier1-prepend, tier2-native)
       utils/            # validation and helper functions
-        validation.ts   # input validation helpers (prompt, model, sandbox, etc.)
+        validation.ts        # input validation helpers (prompt, model, sandbox, etc.)
         command-def-utils.ts # helpers for accessing command definitions and flags
+      data-access/      # in-memory stores
+        ask-job-store.ts     # async job store (bounded Map, FIFO pruning)
       domain-logic/     # core business logic
-        ask.handler.ts  # handleAsk — orchestrates arg building, spawn, response
-        arg.builder.ts  # builds CLI argument arrays from tool args + provider config
-        tool.builder.ts # builds ask MCP tool definition (name, Zod schema, annotations)
+        ask.handler.ts           # handleAsk — orchestrates arg building, spawn, response
+        ask-runner.util.ts       # runAskInvocation — execution with heartbeat, attribution, usage tracking
+        ask-run-command.util.ts  # executeAndBuildResponse — lower-level spawn + response building
+        ask-handler.util.ts      # shared helpers (env, args, failure building, model hints)
+        ask-session-flow.util.ts # session tier orchestration (tier1 → tier2 fallback)
+        ask-stream-notifier.util.ts # streaming notification emitter
+        attribution.builder.ts   # buildAttribution — constructs ProviderAttribution metadata
+        output-parser.util.ts    # parseProviderOutput — extracts text + metadata from raw output
+        sessions.handler.ts      # handleAskWithSession — session-aware ask handler
+        arg.builder.ts           # builds CLI argument arrays from tool args + provider config
+        tool.builder.ts          # builds ask MCP tool definition (name, Zod schema, annotations)
+    ask-all/            # multi-provider comparison tool — ask_all
+      common/           # types and constants
+        ask-all.types.ts   # AskAllToolArgs, AskAllProviderResult, AskAllResult
+        ask-all.const.ts   # ASK_ALL_TOOL_NAME constant
+      domain-logic/     # handler and tool builder
+        ask-all.handler.ts      # handleAskAll — fans out to handleAsk per provider via Promise.all
+        ask-all.handler.spec.ts # tests with mocked handleAsk
+        tool.builder.ts         # builds ask_all tool definition
+    usage-stats/        # per-provider call tracking — usage_summary tool
+      common/           # types and constants
+        usage-stats.types.ts  # ProviderCallRecord, ProviderStats, UsageSummary
+        usage-stats.const.ts  # MAX_USAGE_RECORDS bound
+      data-access/      # in-memory store
+        usage-stats-store.ts  # recordCall(), getUsageSummary(), resetForTests()
+      domain-logic/     # handler and tool builder
+        usage-stats.handler.ts  # handleUsageSummary — returns JSON stats
+        tool.builder.ts         # builds usage_summary tool definition
     simple-tools/       # lightweight tools: ping, help, list_providers
       domain-logic/     # handlers and tool builders
         ping.handler.ts # handlePing — version check via CLI spawn
@@ -68,7 +104,16 @@ src/
         meta.handler.ts # handleListProviders — lists all configured providers
         tool.builder.ts # builds ping/help/list_providers tool definitions
     tool-registry/      # tool registration composition root
-      tool-registry.ts  # registers all tools on the MCP server
+      tool-registry.ts  # registers all tools on the MCP server (ask, ask_all, usage_summary, ping, help, list_providers)
+
+  setup/                # setup CLI — `npx agentic-mcp setup --client <client>`
+    common/             # types and constants
+      setup.types.ts      # SupportedClient, DetectedProvider, SetupResult
+      setup.const.ts      # KNOWN_PROVIDER_COMMANDS, CLIENT_CONFIG_PATHS
+    domain-logic/       # detection and config generation
+      detect-providers.ts    # detectInstalledProviders — resolves each provider binary
+      generate-config.ts     # generateClientConfig — outputs MCP client JSON
+    setup-cli.ts        # runSetup — parses flags, detects, generates, optionally writes config
 
   config/               # config loading, validation, provider definitions
     loader.ts           # multi-source config resolution (CLI flag, env, user-local, bundled)
@@ -84,15 +129,20 @@ src/
 | `shared/common/`                     | Types, constants, schemas shared across features.                     | Zod schemas, type definitions, constants, error classes.                               |
 | `shared/common/errors/`              | Error definitions and MCP error mapping.                              | Custom error classes (the one case where classes are acceptable — see Code Style).     |
 | `shared/common/test-utils/`          | Shared test utilities.                                                | Vitest helper types (`vi-fn.types.ts`).                                                |
-| `shared/utils/`                      | Pure utility functions.                                               | Platform helpers (binary resolution, env isolation), error conversion.                 |
-| `shared/domain-logic/`               | Orchestration and composition.                                        | Command executor (spawn + concurrency), semaphore (concurrency control).               |
-| `feature/ask/`                       | Self-contained ask feature — the core prompting tool.                 | Organized into `common/`, `utils/`, and `domain-logic/` sublayers.                     |
-| `feature/ask/common/`                | Ask-specific types and constants.                                     | FLAG\_\* constants, AskToolArgs/BuiltArgs types.                                       |
+| `shared/utils/`                      | Pure utility functions.                                               | Platform helpers (binary resolution, env isolation), error conversion, heartbeat.      |
+| `shared/domain-logic/`               | Orchestration and composition.                                        | Command executor (spawn + concurrency), semaphore, request registry.                   |
+| `session/`                           | Session management across providers.                                  | Native session ID extraction from provider output.                                     |
+| `feature/ask/`                       | Self-contained ask feature — the core prompting tool.                 | Organized into `common/`, `utils/`, `data-access/`, and `domain-logic/` sublayers.     |
+| `feature/ask/common/`                | Ask-specific types and constants.                                     | FLAG\_\* constants, AskToolArgs, ProviderAttribution, streaming/session/job types.     |
 | `feature/ask/utils/`                 | Ask-specific validation and helpers.                                  | Input validation (prompt, model, files), command-def access helpers.                   |
-| `feature/ask/domain-logic/`          | Ask core business logic.                                              | Handler, arg builder, tool builder.                                                    |
+| `feature/ask/data-access/`           | Ask in-memory stores.                                                 | Async job store (bounded Map, FIFO pruning).                                           |
+| `feature/ask/domain-logic/`          | Ask core business logic.                                              | Handler, runner, attribution builder, stream notifier, output parser, arg/tool builders.|
+| `feature/ask-all/`                   | Multi-provider comparison tool (`ask_all`).                           | Fans out to `handleAsk` per provider, aggregates results.                              |
+| `feature/usage-stats/`               | Per-provider call tracking (`usage_summary` tool).                    | In-memory store, handler, tool builder.                                                |
 | `feature/simple-tools/`              | Lightweight tools grouped together (ping, help, list_providers).      | All files in `domain-logic/` sublayer.                                                 |
 | `feature/simple-tools/domain-logic/` | Handlers and tool builders for simple tools.                          | ping, help, meta handlers and tool definition builders.                                |
-| `feature/tool-registry/`             | Tool registration composition root.                                   | Registers all tools (ask, ping, help, list_providers) on the MCP server.               |
+| `feature/tool-registry/`             | Tool registration composition root.                                   | Registers all tools (ask, ask\_all, usage\_summary, ping, help, list\_providers).      |
+| `setup/`                             | Setup CLI (`npx agentic-mcp setup --client <client>`).                | Provider detection, client config generation, interactive setup flow.                  |
 | `config/`                            | Everything related to loading, parsing, and validating configuration. | `providers.json`, JSON schemas, Zod validation, config spec tests.                     |
 | `types/`                             | Ambient declarations and build-time type definitions.                 | `.d.ts` files (untyped package declarations + `build-env.d.ts` for `__APP_VERSION__`). |
 
@@ -135,6 +185,7 @@ Provider commands use a single generic `commandDef` shape instead of bespoke sch
 - `outputFormat` (`json` | `stream-json` | `text`) is a top-level provider property
 - No `capabilities` object — capability is implied by command/flag presence (e.g. `commands.review` exists → provider supports review)
 - MCP tools follow the pattern `{command}_{provider}` (e.g. `ask_claude`, `review_codex`)
+- Global tools (not per-provider): `ask_all`, `usage_summary`, `list_providers`
 
 ## Dependencies & Decisions
 
@@ -260,7 +311,17 @@ If a section becomes outdated or wrong, fix it immediately rather than leaving s
 ## Roadmap Phases
 
 1. **Core MVP** ✅ — config loading (multi-source resolution), Zod validation, tool registration (ask/ping/help/list_providers), spawn execution with concurrency control, output size limiting, cross-platform binary resolution, 5 providers configured (claude, codex, copilot, gemini, opencode)
-2. **Sessions + streaming**
-   - Next release update plan: `docs/plans/2026-02-21-ask-live-streaming.md`
-3. **Extended providers**
-4. **Advanced features** — review, sandbox, npm publish
+2. **Sessions + streaming** ✅
+   - Live ask stream contract implemented (`start`/`chunk`/`heartbeat`/`done`/`error`) via `notifications/progress`
+   - Executor emits stdout/stderr chunk callbacks while preserving bounded output collection
+   - `stream_live` opt-in added to ask tool schema
+   - Async fallback added (`mode: 'async'`, `action: 'status'`, in-memory job store)
+   - Terminal `CallToolResult` response contract preserved across streaming and async paths
+3. **Value realization** ✅
+   - Provider attribution in every ask response (`content[1]` — provider, model, timing, outputBytes, truncated, outputFormat)
+   - Usage stats collector + `usage_summary` tool (in-memory per-provider call counts, execution times, success/failure rates)
+   - `ask_all` meta-tool (fan out same prompt to multiple providers, aggregate results via `Promise.all`)
+   - Setup CLI (`npx agentic-mcp setup --client <client>` — detects installed providers, generates MCP client config)
+   - Value clarity rewrite (outcome-focused tool descriptions, README, package.json)
+4. **Extended providers**
+5. **Advanced features** — review, sandbox, npm publish
