@@ -9,11 +9,6 @@ export default [
   ...boundaries,
   ...prettier,
   {
-    rules: {
-      'import-x/no-useless-path-segments': 'off',
-    },
-  },
-  {
     ignores: ['dist', 'node_modules', '.omc', '.claude', './*.config.*', '!./src/**/*.config.*'],
   },
 ];

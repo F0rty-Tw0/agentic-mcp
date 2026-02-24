@@ -22,11 +22,11 @@
   ],
   "scripts": {
     "build": "node build.mjs",
-    "dev": "node --experimental-strip-types src/index.ts",
+    "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.config.integration.ts",
-    "validate:providers": "node --experimental-strip-types src/config/validate-providers.ts",
+    "validate:providers": "tsx src/config/validate-providers.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "eslint --max-warnings 0 . --fix",
@@ -42,13 +42,14 @@
   "devDependencies": {
     "@types/cross-spawn": "catalog:dev",
     "@types/node": "catalog:dev",
-    "typescript": "catalog:dev",
-    "vitest": "catalog:dev",
+    "esbuild": "catalog:dev",
     "eslint": "catalog:dev",
     "eslint-config-prettier": "catalog:dev",
+    "lint-suite": "catalog:dev",
     "prettier": "catalog:dev",
-    "esbuild": "catalog:dev",
-    "lint-suite": "catalog:dev"
+    "tsx": "catalog:dev",
+    "typescript": "catalog:dev",
+    "vitest": "catalog:dev"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
