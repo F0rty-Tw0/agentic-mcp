@@ -10,3 +10,5 @@ export {
 export { ASK_PROVIDER_CONFIG_STUB } from './ask-provider-config.stub.ts';
 
 export { ASK_RESOLVED_PROVIDER_ENTRY_STUB } from './ask-resolved-provider-entry.stub.ts';
+
+export { createAskContext } from './ask-create-context.stub.ts';

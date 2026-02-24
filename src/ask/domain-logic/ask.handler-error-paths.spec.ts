@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB, ASK_DEFAULT_ARG_ARRAY_STUB,
-ASK_PROVIDER_CONFIG_STUB, ASK_RESOLVED_PROVIDER_ENTRY_STUB , ASK_SUCCESS_EXECUTION_RESULT_STUB , ASK_TEST_ENV_STUB } from '../common/stubs/index.ts';
+ASK_SUCCESS_EXECUTION_RESULT_STUB , ASK_TEST_ENV_STUB, createAskContext } from '../common/stubs/index.ts';
 
 vi.mock('../args/domain-logic/arg.builder.ts', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
@@ -30,20 +29,6 @@ const { executeCommand } = await import('../../shared/domain-logic/command-execu
 const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
 const { detectModelError, buildModelHint } = await import('../../shared/utils/model-error.util.ts');
 
-const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
-  const config: ProviderConfig = {
-    ...ASK_PROVIDER_CONFIG_STUB,
-    ...overrides,
-  };
-
-  const context: ResolvedProviderEntry = {
-    ...ASK_RESOLVED_PROVIDER_ENTRY_STUB,
-    config,
-  };
-
-  return context;
-};
-
 describe('handleAsk', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,7 +43,7 @@ describe('handleAsk', () => {
 
   describe('command failure', () => {
     it('GIVEN command times out WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -77,7 +62,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN command killed by signal WHEN handling ask THEN returns isError response with signal info', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -95,7 +80,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN non-zero exit code WHEN handling ask THEN returns isError response with exit code', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -113,7 +98,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN non-zero exit code with stderr WHEN handling ask THEN includes stderr in error response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -133,7 +118,7 @@ describe('handleAsk', () => {
 
   describe('response text cap', () => {
     it('GIVEN output within MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN returns full output without truncation marker', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const shortOutput = 'a'.repeat(100);
 
       vi.mocked(stripAnsi).mockReturnValue(shortOutput);
@@ -145,7 +130,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN output exceeding MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN truncates output and appends marker with byte count', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const largeOutput = 'b'.repeat(200 * 1024 + 500);
 
       vi.mocked(stripAnsi).mockReturnValue(largeOutput);
@@ -162,7 +147,7 @@ describe('handleAsk', () => {
 
   describe('model error branching', () => {
     it('GIVEN non-zero exit with model error detected WHEN handling ask THEN appends model hint suffix to error', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -183,7 +168,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN exit 0 with model error in stdout WHEN handling ask THEN returns isError with model hint', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const modelError = 'Model not found: bad-model';
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -207,7 +192,7 @@ describe('handleAsk', () => {
 
   describe('unexpected errors', () => {
     it('GIVEN executeCommand throws WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('spawn ENOENT'));
 
@@ -218,7 +203,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN buildArgArray throws WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(buildArgArray).mockImplementation(() => {
         throw new Error('arg builder failed');

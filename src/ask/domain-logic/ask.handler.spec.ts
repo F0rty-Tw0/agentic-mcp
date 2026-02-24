@@ -3,17 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAsk } from './ask.handler.ts';
 import { SESSION_STORE } from '../../session/session-store.ts';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common/index.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { getActiveRequest } from '../../shared/domain-logic/request-registry.ts';
-import type { ProgressContext } from '../common/index.ts';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
-  ASK_PROVIDER_CONFIG_STUB,
-  ASK_RESOLVED_PROVIDER_ENTRY_STUB,
   ASK_STDIN_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
+  createAskContext,
 } from '../common/stubs/index.ts';
 
 vi.mock('../args/domain-logic/arg.builder.ts', () => ({
@@ -38,20 +36,6 @@ const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform
 
 const API_KEY = 'API_KEY';
 const MCP_TOOL_TIMEOUT = 'MCP_TOOL_TIMEOUT';
-
-const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
-  const config: ProviderConfig = {
-    ...ASK_PROVIDER_CONFIG_STUB,
-    ...overrides,
-  };
-
-  const context: ResolvedProviderEntry = {
-    ...ASK_RESOLVED_PROVIDER_ENTRY_STUB,
-    config,
-  };
-
-  return context;
-};
 
 describe('handleAsk', () => {
   const createProgressContext = (): ProgressContext => {
@@ -80,7 +64,7 @@ describe('handleAsk', () => {
 
   describe('successful execution', () => {
     it('GIVEN valid prompt WHEN handling ask THEN returns text content with command output', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
@@ -89,7 +73,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN valid prompt WHEN handling ask THEN calls buildArgArray with config and resolved args', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       await handleAsk(context, { prompt: 'test prompt' });
 
@@ -97,7 +81,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ask THEN injects default timeout env', async () => {
-      const context = createContext({ env: { [API_KEY]: 'secret' } });
+      const context = createAskContext({ env: { [API_KEY]: 'secret' } });
 
       await handleAsk(context, { prompt: 'test prompt' });
 
@@ -109,7 +93,7 @@ describe('handleAsk', () => {
 
     it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN handling ask THEN injects default timeout env', async () => {
       const context: ResolvedProviderEntry = {
-        ...createContext({ env: { [API_KEY]: 'secret' } }),
+        ...createAskContext({ env: { [API_KEY]: 'secret' } }),
         name: 'codex',
       };
 
@@ -122,7 +106,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN valid prompt WHEN handling ask THEN calls executeCommand with correct options', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       await handleAsk(context, { prompt: 'test prompt' });
 
@@ -139,7 +123,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN stdin input method WHEN handling ask THEN passes stdinInput to executeCommand', async () => {
-      const context = createContext({ input: { method: 'stdin' } });
+      const context = createAskContext({ input: { method: 'stdin' } });
 
       vi.mocked(buildArgArray).mockReturnValue(ASK_STDIN_ARG_ARRAY_STUB);
 
@@ -149,7 +133,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN empty stdout WHEN handling ask THEN returns "(no output)" text', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -164,7 +148,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN output with ANSI codes WHEN handling ask THEN strips ANSI from output', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(stripAnsi).mockReturnValue('clean output');
 
@@ -176,7 +160,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN working_directory arg WHEN handling ask THEN passes cwd to executeCommand', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       await handleAsk(context, { prompt: 'test prompt', working_directory: '/home/user/project' });
 
@@ -186,7 +170,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN files with working_directory WHEN handling ask THEN resolves files and passes them to buildArgArray', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       await handleAsk(context, {
         prompt: 'test prompt',
@@ -201,7 +185,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN stream_live false WHEN handling ask THEN chunk stream notifications are not emitted', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const extra = createProgressContext();
 
       vi.mocked(executeCommand).mockImplementation(async (options) => {
@@ -226,7 +210,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN stream_live true WHEN command completes THEN still returns final CallToolResult text output', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const extra = createProgressContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -243,7 +227,7 @@ describe('handleAsk', () => {
 
   describe('validation errors', () => {
     it('GIVEN missing prompt WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       const result = await handleAsk(context, {});
 
@@ -252,7 +236,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN empty prompt WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: '' });
 
@@ -260,7 +244,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN invalid model WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: 'test', model: '../../etc/passwd' });
 
@@ -269,7 +253,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN invalid session_id WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: 'test', session_id: '<script>alert(1)</script>' });
 
@@ -278,7 +262,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN files without working_directory WHEN handling ask THEN returns isError response', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: 'test', files: ['file.txt'] });
 
@@ -289,7 +273,7 @@ describe('handleAsk', () => {
 
   describe('session flow', () => {
     it('GIVEN session_id WHEN handling ask THEN prepends current request context and returns session metadata block', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const sessionId = 'ask-session-1';
 
       SESSION_STORE.createOrGet(context.name, sessionId);
@@ -307,7 +291,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN session lock already acquired WHEN handling ask THEN returns session in use error', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       SESSION_STORE.createOrGet(context.name, 'ask-session-locked');
       SESSION_STORE.tryAcquireLock(context.name, 'ask-session-locked');
@@ -321,7 +305,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN successful session call WHEN handling ask THEN stores user and assistant turns', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const sessionId = 'ask-session-memory';
 
       await handleAsk(context, { prompt: 'remember this', session_id: sessionId });
@@ -339,7 +323,7 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN cancelled session execution WHEN handling ask THEN it does not store session turns', async () => {
-      const context = createContext();
+      const context = createAskContext();
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
@@ -357,7 +341,7 @@ describe('handleAsk', () => {
 
   describe('request tracking', () => {
     it('GIVEN requestId and spawned process WHEN command completes THEN active request is cleaned up', async () => {
-      const context = createContext();
+      const context = createAskContext();
       const extra = {
         sendNotification: vi.fn(async () => Promise.resolve()),
         requestId: 'req-1',

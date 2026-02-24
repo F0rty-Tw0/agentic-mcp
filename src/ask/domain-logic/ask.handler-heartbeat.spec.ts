@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
-import type { ProgressContext } from '../common/index.ts';
+import type { ProgressContext } from '../../shared/common/index.ts';
 import {
   ASK_DEFAULT_ARG_ARRAY_STUB,
-  ASK_PROVIDER_CONFIG_STUB,
-  ASK_RESOLVED_PROVIDER_ENTRY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
+  createAskContext,
 } from '../common/stubs/index.ts';
 
 vi.mock('../args/domain-logic/arg.builder.ts', () => ({
@@ -35,20 +33,6 @@ type ProgressNotification = Readonly<{
   params: Readonly<{ message: string }>;
 }>;
 
-const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
-  const config: ProviderConfig = {
-    ...ASK_PROVIDER_CONFIG_STUB,
-    ...overrides,
-  };
-
-  const context: ResolvedProviderEntry = {
-    ...ASK_RESOLVED_PROVIDER_ENTRY_STUB,
-    config,
-  };
-
-  return context;
-};
-
 const createProgressContext = (notifications: ProgressNotification[]): ProgressContext => {
   const sendNotification = vi.fn(async (notification: ProgressNotification) => {
     await Promise.resolve();
@@ -71,7 +55,7 @@ describe('handleAsk heartbeat fallback', () => {
   });
 
   it('GIVEN stream_live true WHEN chunk output exists THEN heartbeat event is not emitted', async () => {
-    const context = createContext();
+    const context = createAskContext();
     const notifications: ProgressNotification[] = [];
     const extra = createProgressContext(notifications);
 

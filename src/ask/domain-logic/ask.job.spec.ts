@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { resetAskJobStoreForTests } from '../async-jobs/data-access/index.ts';
 import {
   ASK_DEFAULT_ARG_ARRAY_STUB,
-  ASK_PROVIDER_CONFIG_STUB,
-  ASK_RESOLVED_PROVIDER_ENTRY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
+  createAskContext,
 } from '../common/stubs/index.ts';
 
 vi.mock('../args/domain-logic/arg.builder.ts', () => ({
@@ -30,20 +28,6 @@ vi.mock('../../shared/utils/platform.util.ts', () => ({
 
 const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
 
-const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
-  const config: ProviderConfig = {
-    ...ASK_PROVIDER_CONFIG_STUB,
-    ...overrides,
-  };
-
-  const context: ResolvedProviderEntry = {
-    ...ASK_RESOLVED_PROVIDER_ENTRY_STUB,
-    config,
-  };
-
-  return context;
-};
-
 const readTextContent = (result: Awaited<ReturnType<typeof handleAsk>>): string => {
   const content = result.content[0];
 
@@ -59,7 +43,7 @@ describe('handleAsk async jobs', () => {
   });
 
   it('GIVEN mode async WHEN handling ask THEN returns job_id with pending state', async () => {
-    const context = createContext();
+    const context = createAskContext();
 
     const result = await handleAsk(context, { prompt: 'x', mode: 'async' });
     const payload = JSON.parse(readTextContent(result)) as Readonly<Record<string, string>>;
@@ -69,7 +53,7 @@ describe('handleAsk async jobs', () => {
   });
 
   it('GIVEN completed async job WHEN polling status THEN returns completed with final output', async () => {
-    const context = createContext();
+    const context = createAskContext();
 
     vi.mocked(executeCommand).mockResolvedValue({
       ...ASK_SUCCESS_EXECUTION_RESULT_STUB,

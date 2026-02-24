@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
-import type { ProgressContext } from '../common/index.ts';
+import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
 
 type ProgressNotification = Readonly<{
   method: string;
