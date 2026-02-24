@@ -7,7 +7,7 @@ import {
   setAskJobCompleted,
   setAskJobFailed,
   setAskJobRunning,
-} from './ask-job-store.ts';
+} from './job-store.ts';
 import { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../common/index.ts';
 
 describe('ask-job-store', () => {

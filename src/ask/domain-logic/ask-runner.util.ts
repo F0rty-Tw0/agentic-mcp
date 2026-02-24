@@ -8,14 +8,14 @@ import {
 import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util.ts';
 import type { AskExecution } from './ask-runner-response.util.ts';
 import { CommandExecutionError } from '../../shared/common/errors/index.ts';
-import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { executeCommand } from '../../shared/domain-logic/command-executor.ts';
 import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry.ts';
 import { startHeartbeat, toMcpError } from '../../shared/utils/index.ts';
 import { recordCall } from '../../usage-stats/data-access/usage-stats-store.ts';
 import { buildArgArray } from '../args/index.ts';
 import { noop } from '../common/index.ts';
-import type { AskToolArgs, ProgressContext } from '../common/index.ts';
+import type { AskToolArgs } from '../common/index.ts';
 import { buildExecutionSummary, createStreamNotifier } from '../streaming/domain-logic/index.ts';
 
 export type { AskExecution } from './ask-runner-response.util.ts';

@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  buildCommandOptions,
-  buildExecutionEnv,
-  validateAndResolveArgs,
-} from './ask-handler.util.ts';
-import { ValidationError } from '../../shared/common/index.ts';
+import { buildCommandOptions, buildExecutionEnv, validateAndResolveArgs } from './ask-handler.util.ts';
+import { ValidationError } from '../../shared/common/errors/index.ts';
 import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import type { AskToolArgs } from '../common/index.ts';
 
