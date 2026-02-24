@@ -1,4 +1,4 @@
-export { buildAsyncStatusResponse, startAsyncAskInvocation } from './domain-logic/async.util.ts';
+export { buildAsyncStatusResponse, startAsyncAskInvocation } from './domain-logic/async.ts';
 
 export {
   createAskJob,

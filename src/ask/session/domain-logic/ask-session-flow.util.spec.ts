@@ -13,7 +13,7 @@ const mockCreateOrGet = vi.hoisted(() => vi.fn());
 const mockGetNativeSessionId = vi.hoisted(() => vi.fn<() => string | undefined>());
 const mockGetPrependContext = vi.hoisted(() => vi.fn<() => string>());
 
-vi.mock('../../domain-logic/ask-runner.util.ts', () => ({
+vi.mock('../../domain-logic/ask-runner.ts', () => ({
   runAskInvocation: mockRunAskInvocation,
 }));
 
