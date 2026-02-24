@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { runAskInvocation } from './ask-runner.util.ts';
+import { runAskInvocation } from './ask-runner.ts';
 import { SESSION_STORE } from '../../session/session-store.ts';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { createAskJob } from '../async-jobs/data-access/index.ts';

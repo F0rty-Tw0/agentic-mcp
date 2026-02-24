@@ -4,7 +4,7 @@ import { buildSessionPrompt } from './session-context.util.ts';
 import { SESSION_STORE } from '../../../session/session-store.ts';
 import type { ProgressContext, ResolvedProviderEntry } from '../../../shared/common/index.ts';
 import type { AskToolArgs, SessionMode } from '../../common/index.ts';
-import { runAskInvocation } from '../../domain-logic/ask-runner.util.ts';
+import { runAskInvocation } from '../../domain-logic/ask-runner.ts';
 
 export type SessionFlowState = Readonly<{
   sessionId: string;

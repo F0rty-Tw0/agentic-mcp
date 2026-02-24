@@ -5,7 +5,7 @@ import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from
 import type { SessionFlowState } from './ask-session-flow.util.ts';
 import type { ResolvedProviderEntry } from '../../../shared/common/index.ts';
 import type { AskToolArgs, SessionMode } from '../../common/index.ts';
-import type { AskExecution } from '../../domain-logic/ask-runner.util.ts';
+import type { AskExecution } from '../../domain-logic/ask-runner.ts';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
 const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());

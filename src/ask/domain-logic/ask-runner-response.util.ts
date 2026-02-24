@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { resolveModelHint } from './ask-handler.util.ts';
+import { resolveModelHint } from './ask-handler.ts';
 import { buildAttribution } from './attribution.builder.ts';
 import { extractNativeSessionId } from '../../session/session-id-extractor.ts';
 import type { ResolvedProviderEntry } from '../../shared/common/index.ts';

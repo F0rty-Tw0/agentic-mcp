@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildAsyncStatusResponse, startAsyncAskInvocation } from './async.util.ts';
+import { buildAsyncStatusResponse, startAsyncAskInvocation } from './async.ts';
 import type { ResolvedProviderEntry } from '../../../shared/common/index.ts';
 import type { AskToolArgs } from '../../common/index.ts';
 import type { AskJobRecord } from '../common/index.ts';

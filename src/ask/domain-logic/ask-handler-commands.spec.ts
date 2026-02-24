@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildCommandFailure, buildNativeSessionArgs, resolveModelHint } from './ask-handler.util.ts';
+import { buildCommandFailure, buildNativeSessionArgs, resolveModelHint } from './ask-handler.ts';
 import { CommandExecutionError } from '../../shared/common/errors/index.ts';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import type { AskToolArgs } from '../common/index.ts';

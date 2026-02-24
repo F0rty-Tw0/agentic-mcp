@@ -4,7 +4,7 @@ import {
   buildExecutionEnv,
   buildNativeSessionArgs,
   validateAndResolveArgs,
-} from './ask-handler.util.ts';
+} from './ask-handler.ts';
 import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util.ts';
 import type { AskExecution } from './ask-runner-response.util.ts';
 import { CommandExecutionError } from '../../shared/common/errors/index.ts';
