@@ -2,13 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePing } from './ping.handler.ts';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common/index.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
+import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
 import {
   SIMPLE_TOOLS_PING_VERSION_RESULT_STUB,
-  SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
-  SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
   SIMPLE_TOOLS_TEST_ENV_STUB,
+  createSimpleToolsContext,
 } from '../common/stubs/index.ts';
 
 vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
@@ -25,20 +24,6 @@ vi.mock('../../shared/utils/platform.util.ts', () => ({
 const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
 const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
 
-const createContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
-  const config: ProviderConfig = {
-    ...SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
-    ...overrides,
-  };
-
-  const context: ResolvedProviderEntry = {
-    ...SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
-    config,
-  };
-
-  return context;
-};
-
 describe('handlePing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,7 +36,7 @@ describe('handlePing', () => {
 
   describe('no versionCheck configured', () => {
     it('GIVEN provider without versionCheck WHEN handling ping THEN returns available with binary path', async () => {
-      const context = createContext();
+      const context = createSimpleToolsContext();
 
       const result = await handlePing(context);
 
@@ -61,7 +46,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN provider without versionCheck WHEN handling ping THEN does not call executeCommand', async () => {
-      const context = createContext();
+      const context = createSimpleToolsContext();
 
       await handlePing(context);
 
@@ -71,7 +56,7 @@ describe('handlePing', () => {
 
   describe('successful version check', () => {
     it('GIVEN provider with versionCheck WHEN command succeeds THEN returns version output', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       const result = await handlePing(context);
 
@@ -81,7 +66,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN provider with versionCheck WHEN handling ping THEN calls executeCommand with correct args and 10s timeout', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       await handlePing(context);
 
@@ -95,7 +80,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ping THEN injects default timeout env', async () => {
-      const context = createContext({
+      const context = createSimpleToolsContext({
         versionCheck: { flag: '--version' },
         env: { apiKey: 'secret' },
       });
@@ -111,7 +96,7 @@ describe('handlePing', () => {
 
     it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN handling ping THEN injects default timeout env', async () => {
       const context: ResolvedProviderEntry = {
-        ...createContext({
+        ...createSimpleToolsContext({
           versionCheck: { flag: '--version' },
           env: { apiKey: 'secret' },
         }),
@@ -128,7 +113,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN output with ANSI codes WHEN handling ping THEN strips ANSI from output', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(stripAnsi).mockReturnValue('v2.0.0');
 
@@ -141,7 +126,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN output with whitespace WHEN handling ping THEN trims the output', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -159,7 +144,7 @@ describe('handlePing', () => {
 
   describe('version pattern extraction', () => {
     it('GIVEN versionCheck with pattern WHEN output matches THEN extracts first capture group', async () => {
-      const context = createContext({
+      const context = createSimpleToolsContext({
         versionCheck: { flag: '--version', pattern: 'v(\\d+\\.\\d+\\.\\d+)' },
       });
 
@@ -177,7 +162,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN versionCheck with pattern WHEN output does not match THEN returns raw output', async () => {
-      const context = createContext({
+      const context = createSimpleToolsContext({
         versionCheck: { flag: '--version', pattern: 'version (\\d+)' },
       });
 
@@ -195,7 +180,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN versionCheck without pattern WHEN command succeeds THEN returns full output as version', async () => {
-      const context = createContext({ versionCheck: { flag: '-V' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '-V' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -213,7 +198,7 @@ describe('handlePing', () => {
 
   describe('command failure', () => {
     it('GIVEN command times out WHEN handling ping THEN returns not responding', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -237,7 +222,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN command exits non-zero WHEN handling ping THEN returns not responding', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -260,7 +245,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN command killed by signal WHEN handling ping THEN returns not responding', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -284,7 +269,7 @@ describe('handlePing', () => {
 
   describe('unexpected errors', () => {
     it('GIVEN executeCommand throws WHEN handling ping THEN returns isError response', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('spawn ENOENT'));
 
@@ -295,7 +280,7 @@ describe('handlePing', () => {
     });
 
     it('GIVEN buildMinimalEnv throws WHEN handling ping THEN returns isError response', async () => {
-      const context = createContext({ versionCheck: { flag: '--version' } });
+      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(buildMinimalEnv).mockImplementation(() => {
         throw new Error('env construction failed');

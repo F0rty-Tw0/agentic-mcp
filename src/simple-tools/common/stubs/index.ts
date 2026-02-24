@@ -9,3 +9,5 @@ export {
 export { SIMPLE_TOOLS_PROVIDER_CONFIG_STUB } from './simple-tools-provider-config.stub.ts';
 
 export { SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB } from './simple-tools-resolved-provider-entry.stub.ts';
+
+export { createSimpleToolsContext } from './simple-tools-create-context.stub.ts';
