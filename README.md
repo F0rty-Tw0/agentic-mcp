@@ -25,6 +25,21 @@ agentic-mcp setup --client claude-code
 
 Supported clients: Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
 
+### Safe Setup Defaults
+
+`agentic-mcp setup` is now safe by default:
+- Default mode is merge (`--mode merge`)
+- Existing configs are preserved and only `mcpServers["agentic-mcp"]` is updated
+- Writes use backup + atomic replace + read-back verification
+- Non-interactive writes require `--yes`
+
+Common flags:
+- `--dry-run` — show plan without writing
+- `--output json` — machine-readable result
+- `--mode merge|overwrite` — choose update strategy (`overwrite` is explicit/destructive)
+- `--path <file>` — target a specific config file
+- `--backup if-exists|always|never` — backup policy before writes
+
 ## What Can You Do?
 
 ### Get an answer
