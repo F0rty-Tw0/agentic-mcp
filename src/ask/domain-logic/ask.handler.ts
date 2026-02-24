@@ -2,10 +2,10 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { runAskInvocation } from './ask-runner.util.ts';
 import { SESSION_STORE } from '../../session/session-store.ts';
-import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { createAskJob } from '../async-jobs/data-access/index.ts';
 import { buildAsyncStatusResponse, startAsyncAskInvocation } from '../async-jobs/domain-logic/index.ts';
-import type { AskToolArgs, ProgressContext } from '../common/index.ts';
+import type { AskToolArgs } from '../common/index.ts';
 import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../session/index.ts';
 
 const runAskInvocationResponse = async (

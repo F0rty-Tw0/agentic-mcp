@@ -9,7 +9,7 @@ import {
   resolveProgressToken,
 } from './notifier.helpers.ts';
 import type { StreamNotifier } from './notifier.helpers.ts';
-import type { ProgressContext } from '../../common/index.ts';
+import type { ProgressContext } from '../../../shared/common/index.ts';
 import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common/index.ts';
 import type { AskStreamExecutionSummary } from '../common/index.ts';
 

@@ -11,8 +11,6 @@ export {
   SESSION_RESUME_FLAG_KEY,
 } from './command-def.const.ts';
 
-export type { ProgressContext } from './progress-context.types.ts';
-
 export { ASK_STREAM_EVENT_SCHEMA } from '../streaming/common/stream-event.types.ts';
 
 export type {
