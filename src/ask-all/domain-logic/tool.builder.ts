@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import type { ToolDefinition } from '../../shared/common/index.ts';
-import { ASK_ALL_TOOL_NAME } from '../common/index.ts';
+import type { ToolDefinition } from "../../shared/common";
+import { ASK_ALL_TOOL_NAME } from "../common";
 
 export const buildAskAllToolDefinition = (providerNames: readonly string[]): ToolDefinition => {
   const providerList = providerNames.length > 0 ? providerNames.join(', ') : 'none configured';
@@ -11,9 +11,7 @@ export const buildAskAllToolDefinition = (providerNames: readonly string[]): Too
     providers: z
       .array(z.string())
       .optional()
-      .describe(
-        `Filter to specific providers. Available: ${providerList}. If omitted, all providers are queried.`
-      ),
+      .describe(`Filter to specific providers. Available: ${providerList}. If omitted, all providers are queried.`),
     model: z.string().optional().describe('Model to use for this request on each provider that supports it'),
     context: z.string().optional().describe('Optional user-supplied context to prepend before the current prompt'),
     working_directory: z

@@ -1,4 +1,4 @@
-import { validateSessionId } from '../shared/utils/index.ts';
+import { validateSessionId } from "../shared/utils";
 
 const safeValidateSessionId = (value: string | undefined): string | undefined => {
   if (!value) return;

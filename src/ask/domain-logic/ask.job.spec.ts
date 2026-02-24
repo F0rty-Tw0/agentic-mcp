@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleAsk } from './ask.handler.ts';
-import { resetAskJobStoreForTests } from '../async-jobs/data-access/index.ts';
+import { handleAsk } from './ask.handler';
+import { resetAskJobStoreForTests } from "../async-jobs/data-access";
 import {
   ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
   createAskContext,
-} from '../common/stubs/index.ts';
+} from "../common/stubs";
 
-vi.mock('../args/domain-logic/arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
-vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
+vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => {
     await Promise.resolve();
 
@@ -21,12 +21,12 @@ vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
   }),
 }));
 
-vi.mock('../../shared/utils/platform.util.ts', () => ({
+vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
+const { executeCommand } = await import('../../shared/domain-logic/command-executor');
 
 const readTextContent = (result: Awaited<ReturnType<typeof handleAsk>>): string => {
   const content = result.content[0];

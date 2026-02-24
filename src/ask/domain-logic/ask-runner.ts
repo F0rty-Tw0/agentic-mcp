@@ -4,21 +4,21 @@ import {
   buildExecutionEnv,
   buildNativeSessionArgs,
   validateAndResolveArgs,
-} from './ask-handler.ts';
-import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util.ts';
-import type { AskExecution } from './ask-runner-response.util.ts';
-import { CommandExecutionError } from '../../shared/common/errors/index.ts';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common/index.ts';
-import { executeCommand } from '../../shared/domain-logic/command-executor.ts';
-import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry.ts';
-import { startHeartbeat, toMcpError } from '../../shared/utils/index.ts';
-import { recordCall } from '../../usage-stats/data-access/usage-stats-store.ts';
-import { buildArgArray } from '../args/index.ts';
-import { noop } from '../common/index.ts';
-import type { AskToolArgs } from '../common/index.ts';
-import { buildExecutionSummary, createStreamNotifier } from '../streaming/domain-logic/index.ts';
+} from './ask-handler';
+import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util';
+import type { AskExecution } from './ask-runner-response.util';
+import type { ProgressContext, ResolvedProviderEntry } from "../../shared/common";
+import { CommandExecutionError } from "../../shared/common/errors";
+import { executeCommand } from '../../shared/domain-logic/command-executor';
+import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
+import { startHeartbeat, toMcpError } from "../../shared/utils";
+import { recordCall } from '../../usage-stats/data-access/usage-stats-store';
+import { buildArgArray } from "../args";
+import { noop } from "../common";
+import type { AskToolArgs } from "../common";
+import { buildExecutionSummary, createStreamNotifier } from "../streaming/domain-logic";
 
-export type { AskExecution } from './ask-runner-response.util.ts';
+export type { AskExecution } from './ask-runner-response.util';
 
 type RunInvocationInput = Readonly<{
   context: ResolvedProviderEntry;

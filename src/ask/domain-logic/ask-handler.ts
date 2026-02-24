@@ -1,13 +1,8 @@
-import type { CommandExecutionErrorDetails } from '../../shared/common/errors/command-execution.error.ts';
-import { CommandExecutionError, ValidationError } from '../../shared/common/errors/index.ts';
-import type {
-  ExecuteCommandOptions,
-  FlagValue,
-  ProviderConfig,
-  ResolvedProviderEntry,
-} from '../../shared/common/index.ts';
-import { executeCommand } from '../../shared/domain-logic/command-executor.ts';
-import { resolveProviderEnv } from '../../shared/domain-logic/provider-env-resolver.ts';
+import type { ExecuteCommandOptions, FlagValue, ProviderConfig, ResolvedProviderEntry } from "../../shared/common";
+import { CommandExecutionError, ValidationError } from "../../shared/common/errors";
+import type { CommandExecutionErrorDetails } from '../../shared/common/errors/command-execution.error';
+import { executeCommand } from '../../shared/domain-logic/command-executor';
+import { resolveProviderEnv } from '../../shared/domain-logic/provider-env-resolver';
 import {
   buildMinimalEnv,
   buildModelHint,
@@ -19,9 +14,9 @@ import {
   validatePromptSize,
   validateSessionId,
   validateWorkingDirectory,
-} from '../../shared/utils/index.ts';
-import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common/index.ts';
-import type { AskToolArgs } from '../common/index.ts';
+} from "../../shared/utils";
+import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from "../common";
+import type { AskToolArgs } from "../common";
 
 type BuildCommandOptionsInput = Readonly<{
   context: ResolvedProviderEntry;

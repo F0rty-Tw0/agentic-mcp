@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { parseSetupArgs } from './setup-cli-args.util.ts';
+import { parseSetupArgs } from './setup-cli-args.util';
 
 describe('parseSetupArgs', () => {
   it('GIVEN no flags WHEN parsing setup args THEN returns default values', () => {

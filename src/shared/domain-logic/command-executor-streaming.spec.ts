@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createControllableChild } from '../common/test-utils/controllable-child.ts';
+import { createControllableChild } from '../common/test-utils/controllable-child';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
 const { default: crossSpawn } = await import('cross-spawn');
-const { executeCommand } = await import('./command-executor.ts');
+const { executeCommand } = await import('./command-executor');
 
 const baseOptions = {
   binaryPath: '/usr/bin/test-cli',

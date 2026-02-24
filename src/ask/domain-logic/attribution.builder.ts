@@ -1,6 +1,6 @@
-import type { ExecutionResult } from '../../shared/common/command-executor.types.ts';
-import type { ProviderAttribution } from '../common/attribution.types.ts';
-import type { SessionMode } from '../common/session-mode.type.ts';
+import type { ExecutionResult } from '../../shared/common/command-executor.types';
+import type { ProviderAttribution } from '../common/attribution.types';
+import type { SessionMode } from '../common/session-mode.type';
 
 type AttributionMetadata = Readonly<{
   outputFormatObserved: 'text' | 'json' | 'stream-json';

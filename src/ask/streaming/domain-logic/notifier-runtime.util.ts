@@ -1,8 +1,8 @@
-import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers.ts';
-import type { AskStreamEventPayload, ProgressToken } from './notifier.helpers.ts';
-import type { ProgressContext } from '../../../shared/common/index.ts';
-import { STREAM_COALESCE_WINDOW_MS } from '../common/index.ts';
-import type { AskStreamChannel, AskStreamExecutionSummary } from '../common/index.ts';
+import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers';
+import type { AskStreamEventPayload, ProgressToken } from './notifier.helpers';
+import type { ProgressContext } from "../../../shared/common";
+import { STREAM_COALESCE_WINDOW_MS } from "../common";
+import type { AskStreamChannel, AskStreamExecutionSummary } from "../common";
 
 export type NotifierState = {
   streamId: string;

@@ -1,6 +1,6 @@
-import { resolveCliBinary } from '../../shared/utils/index.ts';
-import { KNOWN_PROVIDER_COMMANDS } from '../common/index.ts';
-import type { DetectedProvider } from '../common/index.ts';
+import { resolveCliBinary } from "../../shared/utils";
+import { KNOWN_PROVIDER_COMMANDS } from "../common";
+import type { DetectedProvider } from "../common";
 
 export const detectInstalledProviders = async (): Promise<readonly DetectedProvider[]> => {
   const results = await Promise.all(

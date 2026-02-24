@@ -2,7 +2,7 @@
  * Integration test — exercises the full MCP server wiring end-to-end
  * using in-memory transports. No mocks, no stubs.
  *
- * Uses `.test.ts` extension to distinguish from unit `.spec.ts` files.
+ * Uses `.test` extension to distinguish from unit `.spec` files.
  * Run with: pnpm run test:integration
  */
 
@@ -12,7 +12,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createServer } from './create-server.ts';
+import { createServer } from './create-server';
 
 let server: McpServer;
 let client: Client;

@@ -1,5 +1,5 @@
-import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const.ts';
-import type { McpErrorResponse } from './mcp-error-response.type.ts';
+import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const';
+import type { McpErrorResponse } from './mcp-error-response.type';
 
 export type CommandExecutionErrorDetails = Readonly<{
   exitCode?: number | null;

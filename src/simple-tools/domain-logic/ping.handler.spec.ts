@@ -1,28 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handlePing } from './ping.handler.ts';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common/index.ts';
-import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
+import { handlePing } from './ping.handler';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from "../../shared/common";
+import type { ResolvedProviderEntry } from "../../shared/common";
 import {
   SIMPLE_TOOLS_PING_VERSION_RESULT_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
   SIMPLE_TOOLS_TEST_ENV_STUB,
   createSimpleToolsContext,
-} from '../common/stubs/index.ts';
+} from "../common/stubs";
 
-vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
+vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB)),
 }));
 
-vi.mock('../../shared/utils/platform.util.ts', () => ({
+vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => SIMPLE_TOOLS_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
 // Real toMcpError — no mock (validates real error mapping)
 
-const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
-const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
+const { executeCommand } = await import('../../shared/domain-logic/command-executor');
+const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
 
 describe('handlePing', () => {
   beforeEach(() => {

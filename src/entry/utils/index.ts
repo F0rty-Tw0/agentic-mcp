@@ -1,1 +1,1 @@
-export { parseConfigPath } from './args.util.ts';
+export { parseConfigPath } from './args.util';

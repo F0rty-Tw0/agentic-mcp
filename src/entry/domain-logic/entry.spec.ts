@@ -2,7 +2,7 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ConfigPathOptions } from '../../shared/common/index.ts';
+import type { ConfigPathOptions } from "../../shared/common";
 
 type MockServer = Readonly<{
   connect: (transport: unknown) => Promise<void>;
@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../../server/create-server.ts', () => ({
+vi.mock('../../server/create-server', () => ({
   createServer: mocks.createServer,
 }));
 
@@ -33,14 +33,14 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
 }));
 
 const importEntry = async (): Promise<void> => {
-  const entryPath = './entry.ts';
+  const entryPath = './entry';
   const mod = (await import(entryPath)) as { entry: () => Promise<void> };
 
   await mod.entry();
 };
 
 const resetArgv = (): void => {
-  process.argv = ['node', 'index.ts'];
+  process.argv = ['node', ''];
 };
 
 function createMockTransport(): {
@@ -71,7 +71,7 @@ describe('main', () => {
   });
 
   it('GIVEN --version flag WHEN main() is called THEN it prints the version and exits with code 0', async () => {
-    process.argv = ['node', 'index.ts', '--version'];
+    process.argv = ['node', '', '--version'];
 
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
@@ -87,7 +87,7 @@ describe('main', () => {
   });
 
   it('GIVEN --help flag WHEN main() is called THEN it prints usage info and exits with code 0', async () => {
-    process.argv = ['node', 'index.ts', '--help'];
+    process.argv = ['node', '', '--help'];
 
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
@@ -105,7 +105,7 @@ describe('main', () => {
   });
 
   it('GIVEN a --config argument WHEN main() is called THEN it passes configPath to createServer and connects via stdio transport', async () => {
-    process.argv = ['node', 'index.ts', '--config', '/tmp/providers.json'];
+    process.argv = ['node', '', '--config', '/tmp/providers.json'];
 
     await importEntry();
 

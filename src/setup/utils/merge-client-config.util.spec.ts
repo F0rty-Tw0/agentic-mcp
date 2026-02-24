@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildMergedClientConfig } from './merge-client-config.util.ts';
+import { buildMergedClientConfig } from './merge-client-config.util';
 
 describe('buildMergedClientConfig', () => {
   it('GIVEN no existing config WHEN merging THEN returns created status with agentic entry only', () => {

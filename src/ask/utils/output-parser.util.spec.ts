@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseProviderOutput } from './output-parser.util.ts';
+import { parseProviderOutput } from './output-parser.util';
 
 describe('parseProviderOutput', () => {
   it('GIVEN valid JSON WHEN parsing THEN returns parsed metadata and text', () => {

@@ -1,5 +1,5 @@
-import type { ParsedSetupArgs } from './setup-cli-args.util.ts';
-import type { DetectedProvider, SetupApplyResult, SetupPlan } from '../common/index.ts';
+import type { ParsedSetupArgs } from './setup-cli-args.util';
+import type { DetectedProvider, SetupApplyResult, SetupPlan } from "../common";
 
 export const formatProviderSummary = (detectedProviders: readonly DetectedProvider[]): string => {
   const lines = detectedProviders.map((provider) => {

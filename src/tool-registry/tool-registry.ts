@@ -1,24 +1,24 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { AskToolArgs } from '../ask/common/index.ts';
-import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
-import { handleSessions } from '../ask/domain-logic/sessions.handler.ts';
-import { buildAskToolDefinition, buildSessionsToolDefinition } from '../ask/domain-logic/tool.builder.ts';
-import type { AskAllToolArgs } from '../ask-all/common/index.ts';
-import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler.ts';
-import { buildAskAllToolDefinition } from '../ask-all/domain-logic/tool.builder.ts';
-import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from '../shared/common/index.ts';
-import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
-import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
-import { handlePing } from '../simple-tools/domain-logic/ping.handler.ts';
+import type { AskToolArgs } from "../ask/common";
+import { handleAsk } from '../ask/domain-logic/ask.handler';
+import { handleSessions } from '../ask/domain-logic/sessions.handler';
+import { buildAskToolDefinition, buildSessionsToolDefinition } from '../ask/domain-logic/tool.builder';
+import type { AskAllToolArgs } from "../ask-all/common";
+import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler';
+import { buildAskAllToolDefinition } from '../ask-all/domain-logic/tool.builder';
+import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from "../shared/common";
+import { handleHelp } from '../simple-tools/domain-logic/help.handler';
+import { handleListProviders } from '../simple-tools/domain-logic/meta.handler';
+import { handlePing } from '../simple-tools/domain-logic/ping.handler';
 import {
   buildHelpToolDefinition,
   buildListProvidersDefinition,
   buildPingToolDefinition,
-} from '../simple-tools/domain-logic/tool.builder.ts';
-import { buildUsageSummaryToolDefinition } from '../usage-stats/domain-logic/tool.builder.ts';
-import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler.ts';
+} from '../simple-tools/domain-logic/tool.builder';
+import { buildUsageSummaryToolDefinition } from '../usage-stats/domain-logic/tool.builder';
+import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler';
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, config } = provider;

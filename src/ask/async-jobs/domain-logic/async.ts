@@ -1,8 +1,8 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ProgressContext, ResolvedProviderEntry } from '../../../shared/common/index.ts';
-import type { AskToolArgs } from '../../common/index.ts';
-import { getAskJob, setAskJobCompleted, setAskJobFailed, setAskJobRunning } from '../data-access/job-store.ts';
+import type { ProgressContext, ResolvedProviderEntry } from "../../../shared/common";
+import type { AskToolArgs } from "../../common";
+import { getAskJob, setAskJobCompleted, setAskJobFailed, setAskJobRunning } from '../data-access/job-store';
 
 type RunAskInvocationFn = (
   context: ResolvedProviderEntry,

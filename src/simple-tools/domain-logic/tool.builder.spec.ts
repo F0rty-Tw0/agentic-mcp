@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildHelpToolDefinition, buildListProvidersDefinition, buildPingToolDefinition } from './tool.builder.ts';
+import { buildHelpToolDefinition, buildListProvidersDefinition, buildPingToolDefinition } from './tool.builder';
 
 describe('buildPingToolDefinition', () => {
   it('GIVEN a provider name WHEN building ping tool THEN name follows ping_{provider} pattern', () => {

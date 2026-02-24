@@ -1,6 +1,6 @@
-export { CLIENT_CONFIG_PATHS, KNOWN_PROVIDER_COMMANDS } from './setup.const.ts';
+export { CLIENT_CONFIG_PATHS, KNOWN_PROVIDER_COMMANDS } from './setup.const';
 
-export { SUPPORTED_CLIENTS } from './setup.types.ts';
+export { SUPPORTED_CLIENTS } from './setup.types';
 
 export type {
   ClientConfigTemplate,
@@ -16,4 +16,4 @@ export type {
   SetupResult,
   SetupWriteIntent,
   SupportedClient,
-} from './setup.types.ts';
+} from './setup.types';

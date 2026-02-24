@@ -1,11 +1,6 @@
-import type { ProgressContext } from '../../../shared/common/index.ts';
-import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common/index.ts';
-import type {
-  AskStreamChannel,
-  AskStreamDiagnostics,
-  AskStreamEvent,
-  AskStreamExecutionSummary,
-} from '../common/index.ts';
+import type { ProgressContext } from "../../../shared/common";
+import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from "../common";
+import type { AskStreamChannel, AskStreamDiagnostics, AskStreamEvent, AskStreamExecutionSummary } from "../common";
 
 export type ProgressToken = string | number;
 

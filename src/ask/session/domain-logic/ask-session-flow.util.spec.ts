@@ -1,11 +1,11 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util.ts';
-import type { SessionFlowState } from './ask-session-flow.util.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/index.ts';
-import type { AskToolArgs, SessionMode } from '../../common/index.ts';
-import type { AskExecution } from '../../domain-logic/ask-runner.ts';
+import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util';
+import type { SessionFlowState } from './ask-session-flow.util';
+import type { ResolvedProviderEntry } from "../../../shared/common";
+import type { AskToolArgs, SessionMode } from "../../common";
+import type { AskExecution } from '../../domain-logic/ask-runner';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
 const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
@@ -13,15 +13,15 @@ const mockCreateOrGet = vi.hoisted(() => vi.fn());
 const mockGetNativeSessionId = vi.hoisted(() => vi.fn<() => string | undefined>());
 const mockGetPrependContext = vi.hoisted(() => vi.fn<() => string>());
 
-vi.mock('../../domain-logic/ask-runner.ts', () => ({
+vi.mock('../../domain-logic/ask-runner', () => ({
   runAskInvocation: mockRunAskInvocation,
 }));
 
-vi.mock('./session-context.util.ts', () => ({
+vi.mock('./session-context.util', () => ({
   buildSessionPrompt: mockBuildSessionPrompt,
 }));
 
-vi.mock('../../../session/session-store.ts', () => ({
+vi.mock('../../../session/session-store', () => ({
   // eslint-disable-next-line @typescript-eslint/naming-convention
   SESSION_STORE: {
     createOrGet: mockCreateOrGet,

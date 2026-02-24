@@ -1,5 +1,5 @@
-export { CommandExecutionError } from './command-execution.error.ts';
+export { CommandExecutionError } from './command-execution.error';
 
-export type { McpErrorResponse } from './mcp-error-response.type.ts';
+export type { McpErrorResponse } from './mcp-error-response.type';
 
-export { ValidationError } from './validation-error.ts';
+export { ValidationError } from './validation-error';

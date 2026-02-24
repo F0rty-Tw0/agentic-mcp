@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { generateClientConfigEntry } from './generate-config.ts';
-import type { DetectedProvider } from '../common/index.ts';
+import { generateClientConfigEntry } from './generate-config';
+import type { DetectedProvider } from "../common";
 
 const makeProvider = (
   name: string,

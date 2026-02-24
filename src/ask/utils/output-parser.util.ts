@@ -1,4 +1,4 @@
-import { stripAnsi } from '../../shared/utils/index.ts';
+import { stripAnsi } from "../../shared/utils";
 
 type ParsedMetadata = Readonly<{
   outputFormatObserved: 'text' | 'json' | 'stream-json';

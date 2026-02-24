@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { CommandExecutionError } from './command-execution.error.ts';
-import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const.ts';
+import { CommandExecutionError } from './command-execution.error';
+import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const';
 
 describe('CommandExecutionError.toMcpResponse', () => {
   it('GIVEN error with message only WHEN toMcpResponse called THEN returns isError response with message', () => {

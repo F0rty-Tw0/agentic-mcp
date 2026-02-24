@@ -1,4 +1,4 @@
-export { ASK_STREAM_EVENT_SCHEMA } from './stream-event.types.ts';
+export { ASK_STREAM_EVENT_SCHEMA } from './stream-event.types';
 
 export type {
   AskStreamChannel,
@@ -6,7 +6,7 @@ export type {
   AskStreamEvent,
   AskStreamEventType,
   AskStreamExecutionSummary,
-} from './stream-event.types.ts';
+} from './stream-event.types';
 
 export {
   HEARTBEAT_IDLE_INTERVAL_MS,
@@ -14,4 +14,4 @@ export {
   STREAM_COALESCE_WINDOW_MS,
   STREAM_PROGRESS_START,
   TERMINAL_EVENT_GRACE_TIMEOUT_MS,
-} from './streaming.const.ts';
+} from './streaming.const';

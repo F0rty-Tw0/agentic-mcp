@@ -1,12 +1,12 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleAskAll } from './ask-all.handler.ts';
-import { handleAsk } from '../../ask/domain-logic/ask.handler.ts';
-import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
-import type { AskAllResult, AskAllToolArgs } from '../common/index.ts';
+import { handleAskAll } from './ask-all.handler';
+import { handleAsk } from '../../ask/domain-logic/ask.handler';
+import type { ResolvedProviderEntry } from "../../shared/common";
+import type { AskAllResult, AskAllToolArgs } from "../common";
 
-vi.mock('../../ask/domain-logic/ask.handler.ts', () => ({ handleAsk: vi.fn() }));
+vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
 
 const makeProvider = (name: string): ResolvedProviderEntry =>
   ({

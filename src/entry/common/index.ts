@@ -1,1 +1,1 @@
-export { HELP_TEXT } from './help-text.const.ts';
+export { HELP_TEXT } from './help-text.const';

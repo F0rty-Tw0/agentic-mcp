@@ -9,9 +9,9 @@ export {
   FLAG_WORKING_DIR,
   SESSION_CONTINUE_FLAG_KEY,
   SESSION_RESUME_FLAG_KEY,
-} from './command-def.const.ts';
+} from './command-def.const';
 
-export { ASK_STREAM_EVENT_SCHEMA } from '../streaming/common/stream-event.types.ts';
+export { ASK_STREAM_EVENT_SCHEMA } from '../streaming/common/stream-event.types';
 
 export type {
   AskStreamChannel,
@@ -19,7 +19,7 @@ export type {
   AskStreamEvent,
   AskStreamEventType,
   AskStreamExecutionSummary,
-} from '../streaming/common/stream-event.types.ts';
+} from '../streaming/common/stream-event.types';
 
 export {
   HEARTBEAT_IDLE_INTERVAL_MS,
@@ -27,18 +27,18 @@ export {
   STREAM_COALESCE_WINDOW_MS,
   STREAM_PROGRESS_START,
   TERMINAL_EVENT_GRACE_TIMEOUT_MS,
-} from '../streaming/common/streaming.const.ts';
+} from '../streaming/common/streaming.const';
 
-export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const.ts';
+export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const';
 
-export type { AskToolArgs, BuiltArgs } from './tool-args.types.ts';
+export type { AskToolArgs, BuiltArgs } from './tool-args.types';
 
-export type { SessionMode } from './session-mode.type.ts';
+export type { SessionMode } from './session-mode.type';
 
-export type { AskJobRecord, AskJobState } from '../async-jobs/common/job.types.ts';
+export type { AskJobRecord, AskJobState } from '../async-jobs/common/job.types';
 
-export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../async-jobs/common/job.const.ts';
+export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../async-jobs/common/job.const';
 
-export { isLeveledFlag } from './tool-args.types.ts';
+export { isLeveledFlag } from './tool-args.types';
 
-export type { ProviderAttribution } from './attribution.types.ts';
+export type { ProviderAttribution } from './attribution.types';

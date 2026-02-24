@@ -1,4 +1,4 @@
-export { buildAsyncStatusResponse, startAsyncAskInvocation } from './domain-logic/async.ts';
+export { buildAsyncStatusResponse, startAsyncAskInvocation } from './domain-logic/async';
 
 export {
   createAskJob,
@@ -7,8 +7,8 @@ export {
   setAskJobCompleted,
   setAskJobFailed,
   resetAskJobStoreForTests,
-} from './data-access/job-store.ts';
+} from './data-access/job-store';
 
-export type { AskJobRecord, AskJobState } from './common/job.types.ts';
+export type { AskJobRecord, AskJobState } from './common/job.types';
 
-export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from './common/job.const.ts';
+export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from './common/job.const';

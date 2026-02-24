@@ -4,7 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
-import { CLIENT_CONFIG_PATHS } from './common/index.ts';
+import { CLIENT_CONFIG_PATHS } from "./common";
 import type {
   DetectedProvider,
   McpServerEntry,
@@ -13,18 +13,18 @@ import type {
   SetupMode,
   SetupPlan,
   SupportedClient,
-} from './common/index.ts';
-import { detectInstalledProviders } from './domain-logic/detect-providers.ts';
-import { generateClientConfigEntry } from './domain-logic/generate-config.ts';
-import { applySetupPlan } from './utils/apply-setup-plan.util.ts';
-import { buildSetupPlan } from './utils/plan-setup.util.ts';
-import { parseSetupArgs } from './utils/setup-cli-args.util.ts';
+} from "./common";
+import { detectInstalledProviders } from './domain-logic/detect-providers';
+import { generateClientConfigEntry } from './domain-logic/generate-config';
+import { applySetupPlan } from './utils/apply-setup-plan.util';
+import { buildSetupPlan } from './utils/plan-setup.util';
+import { parseSetupArgs } from './utils/setup-cli-args.util';
 import {
   formatHumanSetupOutput,
   formatJsonSetupOutput,
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
-} from './utils/setup-cli-output.util.ts';
+} from './utils/setup-cli-output.util';
 
 type SetupCliDependencies = Readonly<{
   detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;

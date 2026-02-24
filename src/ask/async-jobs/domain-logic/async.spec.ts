@@ -1,10 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildAsyncStatusResponse, startAsyncAskInvocation } from './async.ts';
-import type { ResolvedProviderEntry } from '../../../shared/common/index.ts';
-import type { AskToolArgs } from '../../common/index.ts';
-import type { AskJobRecord } from '../common/index.ts';
+import { buildAsyncStatusResponse, startAsyncAskInvocation } from './async';
+import type { ResolvedProviderEntry } from "../../../shared/common";
+import type { AskToolArgs } from "../../common";
+import type { AskJobRecord } from "../common";
 
 const mocks = vi.hoisted(() => ({
   getAskJob: vi.fn(),
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   setAskJobRunning: vi.fn(),
 }));
 
-vi.mock('../data-access/job-store.ts', () => ({
+vi.mock('../data-access/job-store', () => ({
   getAskJob: mocks.getAskJob,
   setAskJobCompleted: mocks.setAskJobCompleted,
   setAskJobFailed: mocks.setAskJobFailed,

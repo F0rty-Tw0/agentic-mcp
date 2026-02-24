@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleUsageSummary } from './usage-stats.handler.ts';
-import { getUsageSummary } from '../data-access/usage-stats-store.ts';
+import { handleUsageSummary } from './usage-stats.handler';
+import { getUsageSummary } from '../data-access/usage-stats-store';
 
-vi.mock('../data-access/usage-stats-store.ts', () => ({
+vi.mock('../data-access/usage-stats-store', () => ({
   getUsageSummary: vi.fn(),
 }));
 

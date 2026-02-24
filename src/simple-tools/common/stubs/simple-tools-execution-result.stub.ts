@@ -1,4 +1,4 @@
-import type { ExecutionResult } from '../../../shared/common/index.ts';
+import type { ExecutionResult } from "../../../shared/common";
 
 export const SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB: ExecutionResult = {
   stdout: '',

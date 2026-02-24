@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { ValidationError } from '../common/errors/index.ts';
-import { MAX_FILES, MAX_PROMPT_BYTES } from '../common/index.ts';
+import { MAX_FILES, MAX_PROMPT_BYTES } from "../common";
+import { ValidationError } from "../common/errors";
 
 export const MODEL_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9._:\-/]{0,127}$/;
 

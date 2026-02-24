@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildAskToolDefinition, buildSessionsToolDefinition } from './tool.builder.ts';
-import type { ProviderConfig } from '../../shared/common/index.ts';
+import { buildAskToolDefinition, buildSessionsToolDefinition } from './tool.builder';
+import type { ProviderConfig } from "../../shared/common";
 
 const createConfig = (flags: Record<string, unknown>): ProviderConfig => ({
   enabled: true,

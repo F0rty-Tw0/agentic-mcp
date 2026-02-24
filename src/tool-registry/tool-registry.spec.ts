@@ -8,24 +8,24 @@ import {
   TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
   TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
   TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
-} from './common/stubs/index.ts';
-import { registerAllTools } from './tool-registry.ts';
-import { handleAsk } from '../ask/domain-logic/ask.handler.ts';
-import { handleSessions } from '../ask/domain-logic/sessions.handler.ts';
-import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler.ts';
-import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../shared/common/index.ts';
-import { handleHelp } from '../simple-tools/domain-logic/help.handler.ts';
-import { handleListProviders } from '../simple-tools/domain-logic/meta.handler.ts';
-import { handlePing } from '../simple-tools/domain-logic/ping.handler.ts';
-import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler.ts';
+} from "./common/stubs";
+import { registerAllTools } from './tool-registry';
+import { handleAsk } from '../ask/domain-logic/ask.handler';
+import { handleSessions } from '../ask/domain-logic/sessions.handler';
+import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler';
+import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from "../shared/common";
+import { handleHelp } from '../simple-tools/domain-logic/help.handler';
+import { handleListProviders } from '../simple-tools/domain-logic/meta.handler';
+import { handlePing } from '../simple-tools/domain-logic/ping.handler';
+import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler';
 
-vi.mock('../ask/domain-logic/ask.handler.ts', () => ({ handleAsk: vi.fn() }));
-vi.mock('../ask/domain-logic/sessions.handler.ts', () => ({ handleSessions: vi.fn() }));
-vi.mock('../ask-all/domain-logic/ask-all.handler.ts', () => ({ handleAskAll: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/help.handler.ts', () => ({ handleHelp: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/meta.handler.ts', () => ({ handleListProviders: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/ping.handler.ts', () => ({ handlePing: vi.fn() }));
-vi.mock('../usage-stats/domain-logic/usage-stats.handler.ts', () => ({ handleUsageSummary: vi.fn() }));
+vi.mock('../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
+vi.mock('../ask/domain-logic/sessions.handler', () => ({ handleSessions: vi.fn() }));
+vi.mock('../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
+vi.mock('../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
+vi.mock('../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
+vi.mock('../simple-tools/domain-logic/ping.handler', () => ({ handlePing: vi.fn() }));
+vi.mock('../usage-stats/domain-logic/usage-stats.handler', () => ({ handleUsageSummary: vi.fn() }));
 
 const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
 

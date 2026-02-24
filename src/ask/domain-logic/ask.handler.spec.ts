@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleAsk } from './ask.handler.ts';
-import { SESSION_STORE } from '../../session/session-store.ts';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common/index.ts';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common/index.ts';
-import { getActiveRequest } from '../../shared/domain-logic/request-registry.ts';
+import { handleAsk } from './ask.handler';
+import { SESSION_STORE } from '../../session/session-store';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from "../../shared/common";
+import type { ProgressContext, ResolvedProviderEntry } from "../../shared/common";
+import { getActiveRequest } from '../../shared/domain-logic/request-registry';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -12,17 +12,17 @@ import {
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
   createAskContext,
-} from '../common/stubs/index.ts';
+} from "../common/stubs";
 
-vi.mock('../args/domain-logic/arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
-vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
+vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
 }));
 
-vi.mock('../../shared/utils/platform.util.ts', () => ({
+vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
@@ -30,9 +30,9 @@ vi.mock('../../shared/utils/platform.util.ts', () => ({
 // Real validation — no mock (validates real behaviour)
 // Real toMcpError — no mock (validates real error mapping)
 
-const { buildArgArray } = await import('../args/domain-logic/arg.builder.ts');
-const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
-const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
+const { buildArgArray } = await import('../args/domain-logic/arg.builder');
+const { executeCommand } = await import('../../shared/domain-logic/command-executor');
+const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
 
 const API_KEY = 'API_KEY';
 const MCP_TOOL_TIMEOUT = 'MCP_TOOL_TIMEOUT';
@@ -174,13 +174,13 @@ describe('handleAsk', () => {
 
       await handleAsk(context, {
         prompt: 'test prompt',
-        files: ['src/index.ts'],
+        files: ['src/'],
         working_directory: '/home/user/project',
       });
 
       expect(buildArgArray).toHaveBeenCalledWith(
         context.config,
-        expect.objectContaining({ files: [expect.stringContaining('index.ts')] })
+        expect.objectContaining({ files: [expect.stringContaining('')] })
       );
     });
 

@@ -1,13 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createServer } from './create-server.ts';
-import type {
-  ProvidersFile,
-  ResolvedProvider,
-  ResolvedProviderEntry,
-} from '../shared/common/index.ts';
-import type { AsyncViFn, SyncViFn } from '../shared/common/test-utils/vi-fn.types.ts';
+import { createServer } from './create-server';
+import type { ProvidersFile, ResolvedProvider, ResolvedProviderEntry } from "../shared/common";
+import type { AsyncViFn, SyncViFn } from '../shared/common/test-utils/vi-fn.types';
 
 type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
 
@@ -29,15 +25,15 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../config/loader.ts', () => ({
+vi.mock('../config/loader', () => ({
   loadConfig: mocks.loadConfig,
 }));
 
-vi.mock('../shared/utils/platform.util.ts', () => ({
+vi.mock('../shared/utils/platform.util', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 
-vi.mock('../tool-registry/tool-registry.ts', () => ({
+vi.mock('../tool-registry/tool-registry', () => ({
   registerAllTools: mocks.registerAllTools,
 }));
 

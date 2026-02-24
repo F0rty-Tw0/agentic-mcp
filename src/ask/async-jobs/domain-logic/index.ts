@@ -1,1 +1,1 @@
-export { buildAsyncStatusResponse, startAsyncAskInvocation } from './async.ts';
+export { buildAsyncStatusResponse, startAsyncAskInvocation } from './async';

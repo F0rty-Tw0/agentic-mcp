@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toRequestIdString } from './request-id.util.ts';
+import { toRequestIdString } from './request-id.util';
 
 describe('toRequestIdString', () => {
   it('GIVEN string request ID WHEN converted THEN returns the same string', () => {

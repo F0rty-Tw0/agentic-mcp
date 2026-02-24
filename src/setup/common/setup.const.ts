@@ -1,4 +1,4 @@
-import type { SupportedClient } from './setup.types.ts';
+import type { SupportedClient } from './setup.types';
 
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'opencode'] as const;
 

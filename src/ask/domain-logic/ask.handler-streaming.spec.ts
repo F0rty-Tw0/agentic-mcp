@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleAsk } from './ask.handler.ts';
-import type { ProgressContext } from '../../shared/common/index.ts';
-import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../common/index.ts';
-import type { AskStreamEvent, AskToolArgs } from '../common/index.ts';
+import { handleAsk } from './ask.handler';
+import type { ProgressContext } from "../../shared/common";
+import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from "../common";
+import type { AskStreamEvent, AskToolArgs } from "../common";
 import {
   ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
   createAskContext,
-} from '../common/stubs/index.ts';
+} from "../common/stubs";
 
-vi.mock('../args/domain-logic/arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
-vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
+vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => {
     await Promise.resolve();
 
@@ -23,12 +23,12 @@ vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
   }),
 }));
 
-vi.mock('../../shared/utils/platform.util.ts', () => ({
+vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
+const { executeCommand } = await import('../../shared/domain-logic/command-executor');
 
 type ProgressNotification = Readonly<{
   method: string;

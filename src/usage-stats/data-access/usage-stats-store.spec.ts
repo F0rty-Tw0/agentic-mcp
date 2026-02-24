@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { getUsageSummary, recordCall, resetForTests } from './usage-stats-store.ts';
-import { MAX_USAGE_RECORDS } from '../common/index.ts';
+import { getUsageSummary, recordCall, resetForTests } from './usage-stats-store';
+import { MAX_USAGE_RECORDS } from "../common";
 
 describe('usage-stats-store', () => {
   beforeEach(() => {

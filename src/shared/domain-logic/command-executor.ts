@@ -1,11 +1,11 @@
 import crossSpawn from 'cross-spawn';
 
-import { attachStreamCollector } from './command-stream-collector.util.ts';
-import type { StreamCollector } from './command-stream-collector.util.ts';
-import { createSemaphore } from './semaphore.ts';
-import { CommandExecutionError } from '../common/errors/index.ts';
-import type { ExecuteCommandOptions, ExecutionResult } from '../common/index.ts';
-import { killProcess } from '../utils/index.ts';
+import { attachStreamCollector } from './command-stream-collector.util';
+import type { StreamCollector } from './command-stream-collector.util';
+import { createSemaphore } from './semaphore';
+import type { ExecuteCommandOptions, ExecutionResult } from "../common";
+import { CommandExecutionError } from "../common/errors";
+import { killProcess } from "../utils";
 
 type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
 

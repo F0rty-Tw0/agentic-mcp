@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { detectInstalledProviders } from './detect-providers.ts';
+import { detectInstalledProviders } from './detect-providers';
 
 const mocks = vi.hoisted(() => ({
   resolveCliBinary: vi.fn<(command: string) => Promise<string | null>>(),
 }));
 
-vi.mock('../../shared/utils/index.ts', () => ({
+vi.mock('../../shared/utils/', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 

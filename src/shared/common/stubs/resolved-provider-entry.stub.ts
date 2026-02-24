@@ -1,5 +1,5 @@
-import { TEST_PROVIDER_CONFIG_STUB } from './provider-config.stub.ts';
-import type { ResolvedProviderEntry } from '../provider-config.type.ts';
+import { TEST_PROVIDER_CONFIG_STUB } from './provider-config.stub';
+import type { ResolvedProviderEntry } from '../provider-config.type';
 
 export const TEST_RESOLVED_PROVIDER_ENTRY_STUB: ResolvedProviderEntry = {
   name: 'test',

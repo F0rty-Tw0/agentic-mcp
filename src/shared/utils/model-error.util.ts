@@ -1,4 +1,4 @@
-import type { ExecuteCommandOptions, ExecutionResult, ResolvedProviderEntry } from '../common/index.ts';
+import type { ExecuteCommandOptions, ExecutionResult, ResolvedProviderEntry } from "../common";
 
 const MODEL_ERROR_PATTERN = /model[_ ]not[_ ]found|model.*does not exist|unknown model|invalid model|no such model/i;
 

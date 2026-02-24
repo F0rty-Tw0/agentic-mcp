@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { getUsageSummary } from '../data-access/usage-stats-store.ts';
+import { getUsageSummary } from '../data-access/usage-stats-store';
 
 export const handleUsageSummary = (): CallToolResult => {
   const summary = getUsageSummary();

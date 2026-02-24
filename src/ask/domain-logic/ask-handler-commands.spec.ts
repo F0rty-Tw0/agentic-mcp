@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildCommandFailure, buildNativeSessionArgs, resolveModelHint } from './ask-handler.ts';
-import { CommandExecutionError } from '../../shared/common/errors/index.ts';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
-import type { AskToolArgs } from '../common/index.ts';
+import { buildCommandFailure, buildNativeSessionArgs, resolveModelHint } from './ask-handler';
+import type { ProviderConfig, ResolvedProviderEntry } from "../../shared/common";
+import { CommandExecutionError } from "../../shared/common/errors";
+import type { AskToolArgs } from "../common";
 
 const mocks = vi.hoisted(() => ({
   detectModelError: vi.fn(),
@@ -13,14 +13,14 @@ const mocks = vi.hoisted(() => ({
   executeCommand: vi.fn(),
 }));
 
-vi.mock('../../shared/utils/index.ts', () => ({
+vi.mock('../../shared/utils/', () => ({
   detectModelError: mocks.detectModelError,
   extractAttemptedModel: mocks.extractAttemptedModel,
   fetchAvailableModels: mocks.fetchAvailableModels,
   buildModelHint: mocks.buildModelHint,
 }));
 
-vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
+vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: mocks.executeCommand,
 }));
 

@@ -1,4 +1,4 @@
-import type { ResolvedProvider } from '../../../shared/common/index.ts';
+import type { ResolvedProvider } from "../../../shared/common";
 
 export const TOOL_REGISTRY_RESOLVED_PROVIDER_STUB: ResolvedProvider = {
   name: 'claude',

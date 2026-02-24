@@ -1,33 +1,38 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { handleAsk } from './ask.handler.ts';
-import { ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB, ASK_DEFAULT_ARG_ARRAY_STUB,
-ASK_SUCCESS_EXECUTION_RESULT_STUB , ASK_TEST_ENV_STUB, createAskContext } from '../common/stubs/index.ts';
+import { handleAsk } from './ask.handler';
+import {
+  ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
+  ASK_DEFAULT_ARG_ARRAY_STUB,
+  ASK_SUCCESS_EXECUTION_RESULT_STUB,
+  ASK_TEST_ENV_STUB,
+  createAskContext,
+} from "../common/stubs";
 
-vi.mock('../args/domain-logic/arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
-vi.mock('../../shared/domain-logic/command-executor.ts', () => ({
+vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
 }));
 
-vi.mock('../../shared/utils/platform.util.ts', () => ({
+vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-vi.mock('../../shared/utils/model-error.util.ts', () => ({
+vi.mock('../../shared/utils/model-error.util', () => ({
   detectModelError: vi.fn(() => false),
   extractAttemptedModel: vi.fn(() => undefined),
   fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
   buildModelHint: vi.fn(() => ''),
 }));
 
-const { buildArgArray } = await import('../args/domain-logic/arg.builder.ts');
-const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
-const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
-const { detectModelError, buildModelHint } = await import('../../shared/utils/model-error.util.ts');
+const { buildArgArray } = await import('../args/domain-logic/arg.builder');
+const { executeCommand } = await import('../../shared/domain-logic/command-executor');
+const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
+const { detectModelError, buildModelHint } = await import('../../shared/utils/model-error.util');
 
 describe('handleAsk', () => {
   beforeEach(() => {

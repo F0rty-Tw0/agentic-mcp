@@ -1,4 +1,4 @@
-import type { ProviderConfig } from './provider-config.schema.ts';
+import type { ProviderConfig } from './provider-config.schema';
 
 export type ResolvedProviderEntry = Readonly<{
   name: string;

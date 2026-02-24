@@ -1,10 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { buildSessionPrompt } from './session-context.util.ts';
-import { SESSION_STORE } from '../../../session/session-store.ts';
-import type { ProgressContext, ResolvedProviderEntry } from '../../../shared/common/index.ts';
-import type { AskToolArgs, SessionMode } from '../../common/index.ts';
-import { runAskInvocation } from '../../domain-logic/ask-runner.ts';
+import { buildSessionPrompt } from './session-context.util';
+import { SESSION_STORE } from '../../../session/session-store';
+import type { ProgressContext, ResolvedProviderEntry } from "../../../shared/common";
+import type { AskToolArgs, SessionMode } from "../../common";
+import { runAskInvocation } from '../../domain-logic/ask-runner';
 
 export type SessionFlowState = Readonly<{
   sessionId: string;

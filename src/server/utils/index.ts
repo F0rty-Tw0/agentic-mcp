@@ -1,1 +1,1 @@
-export { toRequestIdString } from './request-id.util.ts';
+export { toRequestIdString } from './request-id.util';

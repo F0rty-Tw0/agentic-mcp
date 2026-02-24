@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractNativeSessionId } from './session-id-extractor.ts';
+import { extractNativeSessionId } from './session-id-extractor';
 
 describe('extractNativeSessionId', () => {
   it('GIVEN JSON output WHEN extracting THEN returns session_id', () => {

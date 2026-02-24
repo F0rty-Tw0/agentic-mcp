@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAskCommand, getFlag } from './command-def.util.ts';
-import { ValidationError } from '../../shared/common/errors/index.ts';
-import type { CommandDef, ProviderConfig } from '../../shared/common/index.ts';
-import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR } from '../common/index.ts';
-import { ASK_PROVIDER_CONFIG_STUB } from '../common/stubs/index.ts';
+import { getAskCommand, getFlag } from './command-def.util';
+import type { CommandDef, ProviderConfig } from "../../shared/common";
+import { ValidationError } from "../../shared/common/errors";
+import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR } from "../common";
+import { ASK_PROVIDER_CONFIG_STUB } from "../common/stubs";
 
 const makeProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => ({
   ...ASK_PROVIDER_CONFIG_STUB,

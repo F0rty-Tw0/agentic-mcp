@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSessionPrompt } from './session-context.util.ts';
+import { buildSessionPrompt } from './session-context.util';
 
 describe('buildSessionPrompt', () => {
   it('GIVEN empty sessionTurnsText and no userContext WHEN buildSessionPrompt called THEN returns only current request', () => {

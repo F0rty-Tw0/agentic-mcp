@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { InMemorySessionStore } from './session-store.ts';
+import { InMemorySessionStore } from './session-store';
 
 describe('InMemorySessionStore', () => {
   it('GIVEN a missing session WHEN createOrGet THEN returns empty session', () => {

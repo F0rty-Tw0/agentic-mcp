@@ -1,1 +1,1 @@
-export { buildArgArray } from './domain-logic/arg.builder.ts';
+export { buildArgArray } from './domain-logic/arg.builder';

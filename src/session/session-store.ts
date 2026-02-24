@@ -3,8 +3,8 @@ import {
   DEFAULT_MAX_CONTEXT_TURNS,
   MAX_SESSIONS,
   SESSION_TTL_MS,
-} from './session-store.const.ts';
-import type { SessionRecord, SessionTurn } from './session-store.types.ts';
+} from './session-store.const';
+import type { SessionRecord, SessionTurn } from './session-store.types';
 
 type SessionStoreEntry = {
   id: string;

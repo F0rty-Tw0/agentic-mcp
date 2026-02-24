@@ -1,4 +1,4 @@
-import type { FlagValue } from '../../shared/common/index.ts';
+import type { FlagValue } from "../../shared/common";
 
 export type AskToolArgs = Readonly<{
   action?: 'run' | 'status';

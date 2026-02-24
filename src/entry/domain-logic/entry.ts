@@ -2,10 +2,10 @@ import process from 'node:process';
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-import { createServer } from '../../server/create-server.ts';
-import { APP_VERSION } from '../../shared/common/index.ts';
-import { HELP_TEXT } from '../common/index.ts';
-import { parseConfigPath } from '../utils/index.ts';
+import { createServer } from '../../server/create-server';
+import { APP_VERSION } from "../../shared/common";
+import { HELP_TEXT } from "../common";
+import { parseConfigPath } from "../utils";
 
 export const entry = async (): Promise<void> => {
   const args = process.argv.slice(2);
@@ -25,7 +25,7 @@ export const entry = async (): Promise<void> => {
   }
 
   if (args[0] === 'setup') {
-    const { runSetup } = await import('../../setup/setup-cli.ts');
+    const { runSetup } = await import('../../setup/setup-cli');
 
     await runSetup(args.slice(1));
 

@@ -1,4 +1,4 @@
-import type { ProviderConfig } from '../../../shared/common/index.ts';
+import type { ProviderConfig } from "../../../shared/common";
 
 export const SIMPLE_TOOLS_PROVIDER_CONFIG_STUB: ProviderConfig = {
   enabled: true,

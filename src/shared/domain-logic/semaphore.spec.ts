@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSemaphore } from './semaphore.ts';
+import { createSemaphore } from './semaphore';
 
 describe('createSemaphore', () => {
   describe('acquireSlot', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildUsageSummaryToolDefinition } from './tool.builder.ts';
+import { buildUsageSummaryToolDefinition } from './tool.builder';
 
 describe('buildUsageSummaryToolDefinition', () => {
   it('GIVEN no arguments WHEN called THEN returns name "usage_summary"', () => {

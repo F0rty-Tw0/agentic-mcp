@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { z } from 'zod';
 
-import { buildAskAllToolDefinition } from './tool.builder.ts';
-import { ASK_ALL_TOOL_NAME } from '../common/index.ts';
+import { buildAskAllToolDefinition } from './tool.builder';
+import { ASK_ALL_TOOL_NAME } from "../common";
 
 describe('buildAskAllToolDefinition', () => {
   describe('tool name', () => {

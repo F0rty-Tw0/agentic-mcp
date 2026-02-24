@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildCommandOptions, buildExecutionEnv, validateAndResolveArgs } from './ask-handler.ts';
-import { ValidationError } from '../../shared/common/errors/index.ts';
-import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
-import type { AskToolArgs } from '../common/index.ts';
+import { buildCommandOptions, buildExecutionEnv, validateAndResolveArgs } from './ask-handler';
+import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from "../../shared/common";
+import { ValidationError } from "../../shared/common/errors";
+import type { AskToolArgs } from "../common";
 
 const mocks = vi.hoisted(() => ({
   validatePromptSize: vi.fn(),
@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   resolveProviderEnv: vi.fn(),
 }));
 
-vi.mock('../../shared/utils/index.ts', () => ({
+vi.mock('../../shared/utils/', () => ({
   validatePromptSize: mocks.validatePromptSize,
   validateModel: mocks.validateModel,
   validateSessionId: mocks.validateSessionId,
@@ -24,7 +24,7 @@ vi.mock('../../shared/utils/index.ts', () => ({
   buildMinimalEnv: mocks.buildMinimalEnv,
 }));
 
-vi.mock('../../shared/domain-logic/provider-env-resolver.ts', () => ({
+vi.mock('../../shared/domain-logic/provider-env-resolver', () => ({
   resolveProviderEnv: mocks.resolveProviderEnv,
 }));
 
@@ -130,7 +130,7 @@ describe('validateAndResolveArgs', () => {
   it('GIVEN args with files but no working_directory WHEN called THEN throws ValidationError', () => {
     mocks.validatePromptSize.mockReturnValue(undefined);
 
-    const args: AskToolArgs = { prompt: 'hello', files: ['file.ts'] };
+    const args: AskToolArgs = { prompt: 'hello', files: ['file'] };
 
     expect(() => validateAndResolveArgs(args)).toThrow(ValidationError);
     expect(() => validateAndResolveArgs(args)).toThrow('working_directory is required when files are specified');
@@ -139,13 +139,13 @@ describe('validateAndResolveArgs', () => {
   it('GIVEN args with files and working_directory WHEN called THEN calls validateFiles with resolved dir', () => {
     mocks.validatePromptSize.mockReturnValue(undefined);
     mocks.validateWorkingDirectory.mockReturnValue('/resolved/dir');
-    mocks.validateFiles.mockReturnValue(['/resolved/dir/file.ts']);
+    mocks.validateFiles.mockReturnValue(['/resolved/dir/file']);
 
-    const args: AskToolArgs = { prompt: 'hello', working_directory: '/some/dir', files: ['file.ts'] };
+    const args: AskToolArgs = { prompt: 'hello', working_directory: '/some/dir', files: ['file'] };
     const result = validateAndResolveArgs(args);
 
-    expect(mocks.validateFiles).toHaveBeenCalledWith(['file.ts'], '/resolved/dir');
-    expect(result.files).toStrictEqual(['/resolved/dir/file.ts']);
+    expect(mocks.validateFiles).toHaveBeenCalledWith(['file'], '/resolved/dir');
+    expect(result.files).toStrictEqual(['/resolved/dir/file']);
   });
 });
 

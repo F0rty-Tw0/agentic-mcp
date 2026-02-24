@@ -5,4 +5,4 @@ export {
   setAskJobCompleted,
   setAskJobFailed,
   resetAskJobStoreForTests,
-} from './job-store.ts';
+} from './job-store';

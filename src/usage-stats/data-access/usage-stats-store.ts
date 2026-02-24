@@ -1,5 +1,5 @@
-import { MAX_USAGE_RECORDS } from '../common/index.ts';
-import type { ProviderCallRecord, ProviderStats, UsageSummary } from '../common/index.ts';
+import { MAX_USAGE_RECORDS } from "../common";
+import type { ProviderCallRecord, ProviderStats, UsageSummary } from "../common";
 
 const callsByProvider = new Map<string, ProviderCallRecord[]>();
 

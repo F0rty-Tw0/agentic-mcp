@@ -1,8 +1,8 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { handleAsk } from '../../ask/domain-logic/ask.handler.ts';
-import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
-import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common/index.ts';
+import { handleAsk } from '../../ask/domain-logic/ask.handler';
+import type { ResolvedProviderEntry } from "../../shared/common";
+import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from "../common";
 
 const extractResponseText = (result: CallToolResult): string => {
   const first = result.content[0];

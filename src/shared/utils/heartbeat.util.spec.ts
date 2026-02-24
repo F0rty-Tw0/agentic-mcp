@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { startHeartbeat } from './heartbeat.util.ts';
-import type { ProgressContext } from '../common/index.ts';
+import { startHeartbeat } from './heartbeat.util';
+import type { ProgressContext } from "../common";
 
 const createExtra = (token?: string | number): ProgressContext => ({
   sendNotification: vi.fn().mockResolvedValue(undefined),

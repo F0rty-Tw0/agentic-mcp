@@ -7,8 +7,8 @@ import {
   setAskJobCompleted,
   setAskJobFailed,
   setAskJobRunning,
-} from './job-store.ts';
-import { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../common/index.ts';
+} from './job-store';
+import { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from "../common";
 
 describe('ask-job-store', () => {
   beforeEach(() => {

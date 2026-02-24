@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ParsedSetupArgs } from './setup-cli-args.util.ts';
+import type { ParsedSetupArgs } from './setup-cli-args.util';
 import {
   formatHumanSetupOutput,
   formatJsonSetupOutput,
   formatProviderSummary,
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
-} from './setup-cli-output.util.ts';
-import type { DetectedProvider, SetupApplyResult, SetupPlan } from '../common/index.ts';
+} from './setup-cli-output.util';
+import type { DetectedProvider, SetupApplyResult, SetupPlan } from "../common";
 
 const createArgs = (overrides: Partial<ParsedSetupArgs> = {}): ParsedSetupArgs => {
   const args: ParsedSetupArgs = {

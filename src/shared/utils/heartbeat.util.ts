@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ProgressContext } from '../common/index.ts';
+import type { ProgressContext } from "../common";
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 

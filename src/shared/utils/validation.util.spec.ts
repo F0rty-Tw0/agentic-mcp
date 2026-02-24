@@ -8,9 +8,9 @@ import {
   validatePromptSize,
   validateSessionId,
   validateWorkingDirectory,
-} from './validation.util.ts';
-import { ValidationError } from '../common/errors/index.ts';
-import { MAX_FILES, MAX_PROMPT_BYTES } from '../common/index.ts';
+} from './validation.util';
+import { MAX_FILES, MAX_PROMPT_BYTES } from "../common";
+import { ValidationError } from "../common/errors";
 
 describe('validateModel', () => {
   it('GIVEN valid simple model WHEN validated THEN does not throw', () => {
@@ -211,13 +211,13 @@ describe('validateFiles', () => {
   });
 
   it('GIVEN single relative file WHEN validated THEN returns resolved absolute path', () => {
-    const result = validateFiles(['src/index.ts'], workingDir);
+    const result = validateFiles(['src/'], workingDir);
 
-    expect(result).toStrictEqual([path.resolve(workingDir, 'src/index.ts')]);
+    expect(result).toStrictEqual([path.resolve(workingDir, 'src/')]);
   });
 
   it('GIVEN multiple files WHEN validated THEN returns all resolved paths', () => {
-    const files = ['a.ts', 'b.ts', 'c.ts'];
+    const files = ['a', 'b', 'c'];
 
     const result = validateFiles(files, workingDir);
 
@@ -228,19 +228,19 @@ describe('validateFiles', () => {
   });
 
   it('GIVEN files at exactly MAX_FILES WHEN validated THEN does not throw', () => {
-    const files = Array.from({ length: MAX_FILES }, (_, i) => `file${i}.ts`);
+    const files = Array.from({ length: MAX_FILES }, (_, i) => `file${i}`);
 
     expect(() => validateFiles(files, workingDir)).not.toThrow();
   });
 
   it('GIVEN files exceeding MAX_FILES WHEN validated THEN throws ValidationError', () => {
-    const files = Array.from({ length: MAX_FILES + 1 }, (_, i) => `file${i}.ts`);
+    const files = Array.from({ length: MAX_FILES + 1 }, (_, i) => `file${i}`);
 
     expect(() => validateFiles(files, workingDir)).toThrow(ValidationError);
   });
 
   it('GIVEN files exceeding limit WHEN validated THEN error message includes count', () => {
-    const files = Array.from({ length: MAX_FILES + 1 }, (_, i) => `file${i}.ts`);
+    const files = Array.from({ length: MAX_FILES + 1 }, (_, i) => `file${i}`);
 
     expect(() => validateFiles(files, workingDir)).toThrow(new RegExp(String(MAX_FILES + 1)));
   });
@@ -254,21 +254,21 @@ describe('validateFiles', () => {
   });
 
   it('GIVEN file path within working dir using .. WHEN validated THEN resolves correctly', () => {
-    const result = validateFiles(['src/../lib/util.ts'], workingDir);
+    const result = validateFiles(['src/../lib/util'], workingDir);
 
-    expect(result).toStrictEqual([path.resolve(workingDir, 'lib/util.ts')]);
+    expect(result).toStrictEqual([path.resolve(workingDir, 'lib/util')]);
   });
 
   it('GIVEN absolute file path inside working dir WHEN validated THEN returns it resolved', () => {
-    const absFile = path.join(workingDir, 'src/file.ts');
+    const absFile = path.join(workingDir, 'src/file');
 
     const result = validateFiles([absFile], workingDir);
 
-    expect(result).toStrictEqual([path.resolve(workingDir, 'src/file.ts')]);
+    expect(result).toStrictEqual([path.resolve(workingDir, 'src/file')]);
   });
 
   it('GIVEN absolute file path outside working dir WHEN validated THEN throws ValidationError', () => {
-    const outsideFile = path.resolve('/other/project/file.ts');
+    const outsideFile = path.resolve('/other/project/file');
 
     expect(() => validateFiles([outsideFile], workingDir)).toThrow(ValidationError);
   });
@@ -277,15 +277,15 @@ describe('validateFiles', () => {
     const winDir = 'C:\\project';
 
     it('GIVEN backslash relative path WHEN validated THEN resolves correctly', () => {
-      const result = validateFiles(['src\\index.ts'], winDir);
+      const result = validateFiles(['src\\'], winDir);
 
-      expect(result).toStrictEqual([path.resolve(winDir, 'src\\index.ts')]);
+      expect(result).toStrictEqual([path.resolve(winDir, 'src\\')]);
     });
 
     it('GIVEN mixed separators WHEN validated THEN resolves correctly', () => {
-      const result = validateFiles(['src/sub\\file.ts'], winDir);
+      const result = validateFiles(['src/sub\\file'], winDir);
 
-      expect(result).toStrictEqual([path.resolve(winDir, 'src/sub\\file.ts')]);
+      expect(result).toStrictEqual([path.resolve(winDir, 'src/sub\\file')]);
     });
 
     it('GIVEN backslash traversal above working dir WHEN validated THEN throws ValidationError', () => {
@@ -297,15 +297,15 @@ describe('validateFiles', () => {
     });
 
     it('GIVEN backslash traversal within working dir WHEN validated THEN resolves correctly', () => {
-      const result = validateFiles(['src\\..\\lib\\util.ts'], winDir);
+      const result = validateFiles(['src\\..\\lib\\util'], winDir);
 
-      expect(result).toStrictEqual([path.resolve(winDir, 'lib\\util.ts')]);
+      expect(result).toStrictEqual([path.resolve(winDir, 'lib\\util')]);
     });
 
     it('GIVEN deeply nested backslash path WHEN validated THEN resolves correctly', () => {
-      const result = validateFiles(['src\\components\\ui\\Button.tsx'], winDir);
+      const result = validateFiles(['src\\components\\ui\\Buttonx'], winDir);
 
-      expect(result).toStrictEqual([path.resolve(winDir, 'src\\components\\ui\\Button.tsx')]);
+      expect(result).toStrictEqual([path.resolve(winDir, 'src\\components\\ui\\Buttonx')]);
     });
   });
 });

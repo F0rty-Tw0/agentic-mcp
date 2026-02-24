@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildModelHint, detectModelError, extractAttemptedModel, fetchAvailableModels } from './model-error.util.ts';
-import type { ExecuteCommandOptions, ExecutionResult, ProviderConfig, ResolvedProviderEntry } from '../common/index.ts';
+import { buildModelHint, detectModelError, extractAttemptedModel, fetchAvailableModels } from './model-error.util';
+import type { ExecuteCommandOptions, ExecutionResult, ProviderConfig, ResolvedProviderEntry } from "../common";
 import {
   SUCCESS_EXECUTION_RESULT_STUB,
   TEST_PROVIDER_CONFIG_STUB,
   TEST_RESOLVED_PROVIDER_ENTRY_STUB,
-} from '../common/stubs/index.ts';
+} from "../common/stubs";
 
 const TEST_ENV_STUB: Readonly<Record<string, string>> = { PATH: '/usr/bin' };
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../common/index.ts';
-import type { AskJobRecord } from '../common/index.ts';
+import { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from "../common";
+import type { AskJobRecord } from "../common";
 
 type AskJobStoreEntry = Readonly<{
   createdAtMs: number;

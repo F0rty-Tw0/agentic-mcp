@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildSetupPlan } from './plan-setup.util.ts';
+import { buildSetupPlan } from './plan-setup.util';
 
 const AGENTIC_SERVER_ENTRY = {
   command: 'npx',
