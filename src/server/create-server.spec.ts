@@ -3,12 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server.ts';
 import type {
-  AsyncViFn,
   ProvidersFile,
   ResolvedProvider,
   ResolvedProviderEntry,
-  SyncViFn,
 } from '../shared/common/index.ts';
+import type { AsyncViFn, SyncViFn } from '../shared/common/test-utils/vi-fn.types.ts';
 
 type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
 
