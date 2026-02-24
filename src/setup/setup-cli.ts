@@ -1,107 +1,142 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
-import { CLIENT_CONFIG_PATHS, SUPPORTED_CLIENTS } from './common/index.ts';
-import type { SupportedClient } from './common/index.ts';
+import { CLIENT_CONFIG_PATHS } from './common/index.ts';
+import type {
+  DetectedProvider,
+  McpServerEntry,
+  SetupApplyResult,
+  SetupBackupPolicy,
+  SetupMode,
+  SetupPlan,
+  SupportedClient,
+} from './common/index.ts';
 import { detectInstalledProviders } from './domain-logic/detect-providers.ts';
-import { generateClientConfig } from './domain-logic/generate-config.ts';
+import { generateClientConfigEntry } from './domain-logic/generate-config.ts';
+import { applySetupPlan } from './utils/apply-setup-plan.util.ts';
+import { buildSetupPlan } from './utils/plan-setup.util.ts';
+import { parseSetupArgs } from './utils/setup-cli-args.util.ts';
+import {
+  formatHumanSetupOutput,
+  formatJsonSetupOutput,
+  isNonInteractiveWriteBlocked,
+  readExistingConfigText,
+} from './utils/setup-cli-output.util.ts';
 
-const DEFAULT_CLIENT: SupportedClient = 'generic';
+type SetupCliDependencies = Readonly<{
+  detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;
+  generateClientConfigEntry: (
+    client: SupportedClient,
+    detectedProviders: readonly DetectedProvider[]
+  ) => McpServerEntry;
+  buildSetupPlan: (input: {
+    client: SupportedClient;
+    homeDirectory: string;
+    pathOverride: string | undefined;
+    mode: SetupMode;
+    dryRun: boolean;
+    existingConfigText: string | undefined;
+    agenticServerEntry: McpServerEntry;
+    backup: SetupBackupPolicy;
+  }) => SetupPlan;
+  applySetupPlan: (plan: SetupPlan) => Promise<SetupApplyResult>;
+  homeDirectory: string;
+  stdoutWrite: (text: string) => void;
+  stderrWrite: (text: string) => void;
+  isInteractive: boolean;
+  promptConfirm: (question: string) => Promise<boolean>;
+  readConfigFile: (path: string) => Promise<string>;
+}>;
 
-const parseArgs = (args: readonly string[]): { client: SupportedClient; dryRun: boolean } => {
-  let client: SupportedClient = DEFAULT_CLIENT;
-  let dryRun = false;
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    if (arg === '--dry-run') {
-      dryRun = true;
-    } else if (arg === '--client' && i + 1 < args.length) {
-      const value = args[i + 1] as string;
-
-      if ((SUPPORTED_CLIENTS as readonly string[]).includes(value)) {
-        client = value as SupportedClient;
-      } else {
-        process.stderr.write(`Warning: unknown client "${value}", using "generic"\n`);
-      }
-
-      i++;
-    }
-  }
-
-  return { client, dryRun };
-};
-
-const promptConfirm = async (question: string): Promise<boolean> => {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
+const defaultPromptConfirm = async (question: string): Promise<boolean> => {
+  const readLine = createInterface({ input: process.stdin, output: process.stdout });
 
   return new Promise<boolean>((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
+    readLine.question(question, (answer) => {
+      readLine.close();
       resolve(answer.trim().toLowerCase() === 'y' || answer.trim().toLowerCase() === 'yes');
     });
   });
 };
 
-const printProviderSummary = (detectedProviders: Awaited<ReturnType<typeof detectInstalledProviders>>): void => {
-  process.stdout.write('\nDetected providers:\n');
-
-  for (const provider of detectedProviders) {
-    const status = provider.available ? `✓ ${provider.binaryPath}` : '✗ not found';
-
-    process.stdout.write(`  ${provider.name}: ${status}\n`);
-  }
+const defaultDependencies: SetupCliDependencies = {
+  detectInstalledProviders,
+  generateClientConfigEntry,
+  buildSetupPlan,
+  applySetupPlan,
+  homeDirectory: homedir(),
+  stdoutWrite: (text) => process.stdout.write(text),
+  stderrWrite: (text) => process.stderr.write(text),
+  isInteractive: Boolean(process.stdin.isTTY && process.stdout.isTTY),
+  promptConfirm: defaultPromptConfirm,
+  readConfigFile: async (configPath: string) => readFile(configPath, 'utf8'),
 };
 
-export const runSetup = async (args: readonly string[]): Promise<void> => {
-  const { client, dryRun } = parseArgs(args);
-
-  process.stdout.write(`agentic-mcp setup\n`);
-  process.stdout.write(`Client: ${client}\n`);
-
-  if (dryRun) {
-    process.stdout.write('Mode: dry-run (no files will be written)\n');
+const resolveTargetPath = (
+  homeDirectory: string,
+  client: SupportedClient,
+  pathOverride: string | undefined
+): string | undefined => {
+  if (pathOverride != null) {
+    return pathOverride;
   }
 
-  process.stdout.write('\nDetecting installed providers...\n');
-  const detectedProviders = await detectInstalledProviders();
+  if (client === 'generic') {
+    return undefined;
+  }
 
-  printProviderSummary(detectedProviders);
+  return path.join(homeDirectory, CLIENT_CONFIG_PATHS[client] as string);
+};
 
-  const configJson = generateClientConfig(client, detectedProviders);
-  const relativeConfigPath = CLIENT_CONFIG_PATHS[client];
-  const configPath = relativeConfigPath !== null ? path.join(homedir(), relativeConfigPath) : null;
+export const runSetup = async (
+  args: readonly string[],
+  injectedDependencies?: Partial<SetupCliDependencies>
+): Promise<void> => {
+  const dependencies: SetupCliDependencies = { ...defaultDependencies, ...injectedDependencies };
+  const parsedArgs = parseSetupArgs({ args, stderrWrite: dependencies.stderrWrite });
 
-  process.stdout.write('\nGenerated config:\n');
-  process.stdout.write(`${configJson}\n`);
+  const detectedProviders = await dependencies.detectInstalledProviders();
+  const serverEntry = dependencies.generateClientConfigEntry(parsedArgs.client, detectedProviders);
+  const targetPath = resolveTargetPath(dependencies.homeDirectory, parsedArgs.client, parsedArgs.pathOverride);
+  const existingConfigText = await readExistingConfigText(targetPath, dependencies.readConfigFile);
 
-  if (configPath === null) {
-    process.stdout.write('\nNo config file path for "generic" client. Copy the config above manually.\n');
+  const plan = dependencies.buildSetupPlan({
+    client: parsedArgs.client,
+    homeDirectory: dependencies.homeDirectory,
+    pathOverride: parsedArgs.pathOverride,
+    mode: parsedArgs.mode,
+    dryRun: parsedArgs.dryRun,
+    existingConfigText,
+    agenticServerEntry: serverEntry,
+    backup: parsedArgs.backup,
+  });
+
+  if (isNonInteractiveWriteBlocked(parsedArgs, plan, dependencies.isInteractive)) {
+    dependencies.stderrWrite(
+      'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
+    );
 
     return;
   }
 
-  if (dryRun) {
-    process.stdout.write(`\n[dry-run] Would write config to: ${configPath}\n`);
+  if (dependencies.isInteractive && !parsedArgs.yes && plan.writeIntent === 'write') {
+    const confirmed = await dependencies.promptConfirm(`Write config to ${plan.targetPath}? [y/N] `);
 
-    return;
+    if (!confirmed) {
+      dependencies.stdoutWrite('Aborted. No files written.\n');
+
+      return;
+    }
   }
 
-  const confirmed = await promptConfirm(`\nWrite config to ${configPath}? [y/N] `);
+  const result = await dependencies.applySetupPlan(plan);
+  const output =
+    parsedArgs.output === 'json'
+      ? formatJsonSetupOutput(parsedArgs, plan, result, detectedProviders)
+      : formatHumanSetupOutput(parsedArgs, plan, result, detectedProviders);
 
-  if (!confirmed) {
-    process.stdout.write('Aborted. No files written.\n');
-
-    return;
-  }
-
-  await mkdir(path.dirname(configPath), { recursive: true });
-  await writeFile(configPath, `${configJson}\n`, 'utf8');
-
-  process.stdout.write(`\nConfig written to: ${configPath}\n`);
-  process.stdout.write('Setup complete.\n');
+  dependencies.stdoutWrite(output);
 };

@@ -1,29 +1,28 @@
-import type { DetectedProvider, SupportedClient } from '../common/index.ts';
+import type { DetectedProvider, McpServerEntry, SupportedClient } from '../common/index.ts';
 
-type McpServerEntry = Readonly<{
-  command: string;
-  args: readonly string[];
-}>;
+const BASE_ENTRY: McpServerEntry = {
+  command: 'npx',
+  args: ['-y', 'agentic-mcp'],
+};
 
-type McpConfig = Readonly<{
-  mcpServers: Readonly<Record<string, McpServerEntry>>;
-}>;
-
-export const generateClientConfig = (
+export const generateClientConfigEntry = (
   client: SupportedClient,
   detectedProviders: readonly DetectedProvider[]
-): string => {
-  void client;
-  void detectedProviders;
+): McpServerEntry => {
+  const hasAnyAvailableProvider = detectedProviders.some((provider) => provider.available);
 
-  const config: McpConfig = {
-    mcpServers: {
-      'agentic-mcp': {
-        command: 'npx',
-        args: ['-y', 'agentic-mcp'],
-      },
-    },
-  };
+  switch (client) {
+    case 'claude-code':
+    case 'cursor':
+    case 'windsurf':
+      return BASE_ENTRY;
+    case 'generic':
+      if (hasAnyAvailableProvider) {
+        return BASE_ENTRY;
+      }
 
-  return JSON.stringify(config, null, 2);
+      return BASE_ENTRY;
+    default:
+      return BASE_ENTRY;
+  }
 };

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler.ts';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/index.ts';
+import { resetAskJobStoreForTests } from '../async-jobs/data-access/index.ts';
 import {
   ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_PROVIDER_CONFIG_STUB,
@@ -9,9 +10,8 @@ import {
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
 } from '../common/stubs/index.ts';
-import { resetAskJobStoreForTests } from '../data-access/ask-job-store.ts';
 
-vi.mock('./arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder.ts', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 

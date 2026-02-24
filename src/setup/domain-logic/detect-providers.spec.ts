@@ -46,7 +46,7 @@ describe('detectInstalledProviders', () => {
 
       for (const provider of result) {
         expect(provider.available).toBe(false);
-        expect(provider.binaryPath).toBeNull();
+        expect(provider.binaryPath).toBeUndefined();
       }
     });
   });
@@ -70,7 +70,7 @@ describe('detectInstalledProviders', () => {
 
       for (const p of others) {
         expect(p.available).toBe(false);
-        expect(p.binaryPath).toBeNull();
+        expect(p.binaryPath).toBeUndefined();
       }
     });
   });

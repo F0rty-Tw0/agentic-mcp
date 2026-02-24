@@ -12,7 +12,7 @@ import {
   ASK_TEST_ENV_STUB,
 } from '../common/stubs/index.ts';
 
-vi.mock('./arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder.ts', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 

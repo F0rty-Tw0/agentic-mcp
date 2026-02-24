@@ -16,7 +16,7 @@ import {
   ASK_TEST_ENV_STUB,
 } from '../common/stubs/index.ts';
 
-vi.mock('./arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder.ts', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
@@ -32,7 +32,7 @@ vi.mock('../../shared/utils/platform.util.ts', () => ({
 // Real validation — no mock (validates real behaviour)
 // Real toMcpError — no mock (validates real error mapping)
 
-const { buildArgArray } = await import('./arg.builder.ts');
+const { buildArgArray } = await import('../args/domain-logic/arg.builder.ts');
 const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
 const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
 

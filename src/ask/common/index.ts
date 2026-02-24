@@ -7,11 +7,13 @@ export {
   FLAG_SANDBOX,
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
+  SESSION_CONTINUE_FLAG_KEY,
+  SESSION_RESUME_FLAG_KEY,
 } from './command-def.const.ts';
 
 export type { ProgressContext } from './progress-context.types.ts';
 
-export { ASK_STREAM_EVENT_SCHEMA } from './stream-event.types.ts';
+export { ASK_STREAM_EVENT_SCHEMA } from '../streaming/common/stream-event.types.ts';
 
 export type {
   AskStreamChannel,
@@ -19,7 +21,7 @@ export type {
   AskStreamEvent,
   AskStreamEventType,
   AskStreamExecutionSummary,
-} from './stream-event.types.ts';
+} from '../streaming/common/stream-event.types.ts';
 
 export {
   HEARTBEAT_IDLE_INTERVAL_MS,
@@ -27,15 +29,17 @@ export {
   STREAM_COALESCE_WINDOW_MS,
   STREAM_PROGRESS_START,
   TERMINAL_EVENT_GRACE_TIMEOUT_MS,
-} from './streaming.const.ts';
+} from '../streaming/common/streaming.const.ts';
+
+export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const.ts';
 
 export type { AskToolArgs, BuiltArgs } from './tool-args.types.ts';
 
 export type { SessionMode } from './session-mode.type.ts';
 
-export type { AskJobRecord, AskJobState } from './ask-job.types.ts';
+export type { AskJobRecord, AskJobState } from '../async-jobs/common/job.types.ts';
 
-export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from './ask-job.const.ts';
+export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../async-jobs/common/job.const.ts';
 
 export { isLeveledFlag } from './tool-args.types.ts';
 

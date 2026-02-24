@@ -1,20 +1,21 @@
 import { randomUUID } from 'node:crypto';
 
-import { emitDone, emitError, emitSystemEvent, queueChunk } from './ask-stream-notifier-runtime.util.ts';
-import type { NotifierState } from './ask-stream-notifier-runtime.util.ts';
+import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime.util.ts';
+import type { NotifierState } from './notifier-runtime.util.ts';
 import {
   buildExecutionSummary,
   createNoopStreamNotifier,
   isStreamEnabled,
   resolveProgressToken,
-} from './ask-stream-notifier.helpers.ts';
-import type { StreamNotifier } from './ask-stream-notifier.helpers.ts';
+} from './notifier.helpers.ts';
+import type { StreamNotifier } from './notifier.helpers.ts';
+import type { ProgressContext } from '../../common/index.ts';
 import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common/index.ts';
-import type { AskStreamExecutionSummary, AskToolArgs, ProgressContext } from '../common/index.ts';
+import type { AskStreamExecutionSummary } from '../common/index.ts';
 
 export const createStreamNotifier = (input: {
   providerName: string;
-  args: AskToolArgs;
+  args: { stream_live?: boolean };
   extra?: ProgressContext;
 }): StreamNotifier => {
   const progressToken = resolveProgressToken(input.extra);

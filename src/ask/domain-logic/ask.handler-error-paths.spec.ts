@@ -5,7 +5,7 @@ import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common/
 import { ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB, ASK_DEFAULT_ARG_ARRAY_STUB,
 ASK_PROVIDER_CONFIG_STUB, ASK_RESOLVED_PROVIDER_ENTRY_STUB , ASK_SUCCESS_EXECUTION_RESULT_STUB , ASK_TEST_ENV_STUB } from '../common/stubs/index.ts';
 
-vi.mock('./arg.builder.ts', () => ({
+vi.mock('../args/domain-logic/arg.builder.ts', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
@@ -25,7 +25,7 @@ vi.mock('../../shared/utils/model-error.util.ts', () => ({
   buildModelHint: vi.fn(() => ''),
 }));
 
-const { buildArgArray } = await import('./arg.builder.ts');
+const { buildArgArray } = await import('../args/domain-logic/arg.builder.ts');
 const { executeCommand } = await import('../../shared/domain-logic/command-executor.ts');
 const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util.ts');
 const { detectModelError, buildModelHint } = await import('../../shared/utils/model-error.util.ts');

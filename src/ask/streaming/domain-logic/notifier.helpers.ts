@@ -1,11 +1,10 @@
+import type { ProgressContext } from '../../common/index.ts';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common/index.ts';
 import type {
   AskStreamChannel,
   AskStreamDiagnostics,
   AskStreamEvent,
   AskStreamExecutionSummary,
-  AskToolArgs,
-  ProgressContext,
 } from '../common/index.ts';
 
 export type ProgressToken = string | number;
@@ -39,7 +38,7 @@ export type AskStreamEventPayload =
     }>;
 
 type StreamEnabledInput = Readonly<{
-  args: AskToolArgs;
+  args: { stream_live?: boolean };
   progressToken: ProgressToken | null;
   extra?: ProgressContext;
 }>;

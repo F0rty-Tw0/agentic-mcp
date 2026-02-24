@@ -1,12 +1,12 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { buildAsyncStatusResponse, startAsyncAskInvocation } from './ask-async.util.ts';
 import { runAskInvocation } from './ask-runner.util.ts';
-import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util.ts';
 import { SESSION_STORE } from '../../session/session-store.ts';
 import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
+import { createAskJob } from '../async-jobs/data-access/index.ts';
+import { buildAsyncStatusResponse, startAsyncAskInvocation } from '../async-jobs/domain-logic/index.ts';
 import type { AskToolArgs, ProgressContext } from '../common/index.ts';
-import { createAskJob } from '../data-access/ask-job-store.ts';
+import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../session/index.ts';
 
 const runAskInvocationResponse = async (
   context: ResolvedProviderEntry,

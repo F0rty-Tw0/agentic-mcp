@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder.ts';
-import { ValidationError } from '../../shared/common/index.ts';
-import type { FlagValue, ProviderConfig } from '../../shared/common/index.ts';
-import { ASK_PROVIDER_CONFIG_STUB } from '../common/stubs/index.ts';
+import { ValidationError } from '../../../shared/common/index.ts';
+import type { FlagValue, ProviderConfig } from '../../../shared/common/index.ts';
+import { ASK_PROVIDER_CONFIG_STUB } from '../../common/stubs/index.ts';
 
 type AskCommandConfig = Readonly<{
   method: ProviderConfig['input']['method'];

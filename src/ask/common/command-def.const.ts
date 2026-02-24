@@ -13,3 +13,7 @@ export const FLAG_EFFORT = 'effort';
 export const FLAG_MAX_BUDGET = 'maxBudget';
 
 export const FLAG_SYSTEM_PROMPT = 'systemPrompt';
+
+export const SESSION_RESUME_FLAG_KEY = 'resume';
+
+export const SESSION_CONTINUE_FLAG_KEY = 'continue';

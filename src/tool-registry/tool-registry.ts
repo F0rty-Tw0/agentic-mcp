@@ -77,7 +77,7 @@ export const registerAllTools = (
   }
 
   // Register global ask_all tool
-  const askAllDef = buildAskAllToolDefinition(resolvedProviders.map((p) => p.name));
+  const askAllDef = buildAskAllToolDefinition(resolvedProviders.map((provider) => provider.name));
   const askAllConfig = {
     description: askAllDef.description,
     inputSchema: askAllDef.inputSchema,

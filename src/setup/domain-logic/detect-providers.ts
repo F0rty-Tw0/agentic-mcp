@@ -5,11 +5,12 @@ import type { DetectedProvider } from '../common/index.ts';
 export const detectInstalledProviders = async (): Promise<readonly DetectedProvider[]> => {
   const results = await Promise.all(
     KNOWN_PROVIDER_COMMANDS.map(async (name) => {
-      const binaryPath = await resolveCliBinary(name);
+      const resolvedBinaryPath = await resolveCliBinary(name);
+      const binaryPath = resolvedBinaryPath ?? undefined;
 
       const provider: DetectedProvider = {
         name,
-        available: binaryPath !== null,
+        available: binaryPath !== undefined,
         binaryPath,
       };
 

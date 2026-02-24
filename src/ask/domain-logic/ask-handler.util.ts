@@ -1,6 +1,5 @@
 import { CommandExecutionError, ValidationError } from '../../shared/common/index.ts';
 import type {
-  CommandDef,
   CommandExecutionErrorDetails,
   ExecuteCommandOptions,
   FlagValue,
@@ -21,12 +20,8 @@ import {
   validateSessionId,
   validateWorkingDirectory,
 } from '../../shared/utils/index.ts';
+import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common/index.ts';
 import type { AskToolArgs } from '../common/index.ts';
-
-const MAX_RESPONSE_TEXT_BYTES = 200 * 1024;
-
-const SESSION_RESUME_FLAG_KEY = 'resume';
-const SESSION_CONTINUE_FLAG_KEY = 'continue';
 
 type BuildCommandOptionsInput = Readonly<{
   context: ResolvedProviderEntry;
@@ -108,7 +103,7 @@ export const buildCommandOptions = ({
   return commandOptions;
 };
 
-const resolveFlagArgs = (flagValue: FlagValue | undefined, value: string): string[] => {
+const resolveSessionFlagArgs = (flagValue: FlagValue | undefined, value: string): string[] => {
   if (!flagValue) return [];
 
   if (typeof flagValue === 'string') return [flagValue, value];
@@ -120,23 +115,19 @@ const resolveFlagArgs = (flagValue: FlagValue | undefined, value: string): strin
   return [flagValue.flag, value];
 };
 
-const getSessionsCommand = (config: ProviderConfig): CommandDef | undefined => {
-  return config.commands.sessions;
-};
-
 export const buildNativeSessionArgs = (config: ProviderConfig, nativeSessionId: string): string[] => {
-  const sessionsCommand = getSessionsCommand(config);
+  const sessionsCommand = config.commands.sessions;
 
   if (!sessionsCommand?.flags) return [];
 
   const resumeFlag = sessionsCommand.flags[SESSION_RESUME_FLAG_KEY];
   const continueFlag = sessionsCommand.flags[SESSION_CONTINUE_FLAG_KEY];
 
-  const resumeArgs = resolveFlagArgs(resumeFlag, nativeSessionId);
+  const resumeArgs = resolveSessionFlagArgs(resumeFlag, nativeSessionId);
 
   if (resumeArgs.length > 0) return resumeArgs;
 
-  return resolveFlagArgs(continueFlag, nativeSessionId);
+  return resolveSessionFlagArgs(continueFlag, nativeSessionId);
 };
 
 export const resolveModelHint = async ({ context, args, stdout, stderr, env }: ModelHintContext): Promise<string> => {
@@ -146,14 +137,6 @@ export const resolveModelHint = async ({ context, args, stdout, stderr, env }: M
   const attemptedModel = args.model ?? extractAttemptedModel(stdout, stderr);
 
   return buildModelHint(context.name, attemptedModel, availableModels, Boolean(args.model));
-};
-
-export const buildCappedOutput = (output: string): string => {
-  const outputBytes = Buffer.byteLength(output, 'utf8');
-
-  if (outputBytes <= MAX_RESPONSE_TEXT_BYTES) return output;
-
-  return `${Buffer.from(output, 'utf8').subarray(0, MAX_RESPONSE_TEXT_BYTES).toString('utf8')}\n\n[output truncated — ${outputBytes} bytes total]`;
 };
 
 export const buildCommandFailure = async (
