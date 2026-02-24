@@ -7,7 +7,7 @@ import {
 } from './ask-handler.util.ts';
 import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util.ts';
 import type { AskExecution } from './ask-runner-response.util.ts';
-import { CommandExecutionError } from '../../shared/common/index.ts';
+import { CommandExecutionError } from '../../shared/common/errors/index.ts';
 import type { ResolvedProviderEntry } from '../../shared/common/index.ts';
 import { executeCommand } from '../../shared/domain-logic/command-executor.ts';
 import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry.ts';

@@ -1,6 +1,6 @@
-import { CommandExecutionError, ValidationError } from '../../shared/common/index.ts';
+import type { CommandExecutionErrorDetails } from '../../shared/common/errors/command-execution.error.ts';
+import { CommandExecutionError, ValidationError } from '../../shared/common/errors/index.ts';
 import type {
-  CommandExecutionErrorDetails,
   ExecuteCommandOptions,
   FlagValue,
   ProviderConfig,
