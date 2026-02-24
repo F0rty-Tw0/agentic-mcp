@@ -1,4 +1,4 @@
-export type SessionRole = 'user' | 'assistant';
+type SessionRole = 'user' | 'assistant';
 
 export type SessionTurn = Readonly<{
   role: SessionRole;
