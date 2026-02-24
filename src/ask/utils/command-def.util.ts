@@ -1,4 +1,4 @@
-import { ValidationError } from '../../shared/common/index.ts';
+import { ValidationError } from '../../shared/common/errors/index.ts';
 import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/common/index.ts';
 
 export const getAskCommand = (config: ProviderConfig): CommandDef => {
