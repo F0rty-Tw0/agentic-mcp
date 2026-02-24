@@ -3,8 +3,8 @@ import crossSpawn from 'cross-spawn';
 import { attachStreamCollector } from './command-stream-collector.util.ts';
 import type { StreamCollector } from './command-stream-collector.util.ts';
 import { createSemaphore } from './semaphore.ts';
+import { CommandExecutionError } from '../common/errors/index.ts';
 import type { ExecuteCommandOptions, ExecutionResult } from '../common/index.ts';
-import { CommandExecutionError } from '../common/index.ts';
 import { killProcess } from '../utils/index.ts';
 
 type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
