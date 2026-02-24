@@ -1,56 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createControllableChild } from '../common/test-utils/controllable-child.ts';
+
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
 const { default: crossSpawn } = await import('cross-spawn');
 const { executeCommand } = await import('./command-executor.ts');
-
-type EventHandler = (...args: unknown[]) => void;
-type HandlerMap = Record<string, EventHandler[]>;
-
-type ControllableChild = Readonly<{
-  child: Record<string, unknown>;
-  emitClose: (exitCode: number | null, signal: string | null) => void;
-  emitStdout: (chunk: Buffer) => void;
-}>;
-
-const createControllableChild = (): ControllableChild => {
-  const handlers: HandlerMap = {};
-  const stdoutHandlers: HandlerMap = {};
-
-  const on = (store: HandlerMap) => {
-    return (event: string, callback: EventHandler): void => {
-      store[event] ??= [];
-      store[event].push(callback);
-    };
-  };
-
-  const emit = (store: HandlerMap, event: string, ...args: unknown[]): void => {
-    const registered = store[event];
-
-    if (!registered) return;
-
-    registered.forEach((handler) => {
-      handler(...args);
-    });
-  };
-
-  return {
-    child: {
-      pid: 1,
-      stdout: { on: on(stdoutHandlers) },
-      stderr: { on: on({}) },
-      stdin: { write: vi.fn(), end: vi.fn() },
-      on: on(handlers),
-    },
-    emitClose: (exitCode, signal): void => {
-      emit(handlers, 'close', exitCode, signal);
-    },
-    emitStdout: (chunk): void => {
-      emit(stdoutHandlers, 'data', chunk);
-    },
-  };
-};
 
 const baseOptions = {
   binaryPath: '/usr/bin/test-cli',
