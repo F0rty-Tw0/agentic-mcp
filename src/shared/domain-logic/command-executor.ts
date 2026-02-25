@@ -8,43 +8,54 @@ import { CommandExecutionError } from '../common/errors';
 import { killProcess } from '../utils';
 
 type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
+type ResolveExecutionResultInput = Readonly<{
+  stdout: StreamCollector;
+  stderr: StreamCollector;
+  exitCode: number | null;
+  closeSignal: string | null;
+  timedOut: boolean;
+  startTime: number;
+}>;
 
 const MAX_CONCURRENT_SPAWNS = 5;
 const defaultSemaphore = createSemaphore(MAX_CONCURRENT_SPAWNS);
 
-const createAbortSubscription = (signal: AbortSignal | undefined, childPid: number | undefined): AbortSubscription => {
+const createAbortSubscription = (signal?: AbortSignal, childPid?: number): AbortSubscription => {
   const abortHandler = (): void => {
-    if (childPid != null) {
+    if (childPid !== undefined) {
       void killProcess(childPid);
     }
   };
 
   if (!signal) {
-    return { abortHandler, detach: () => undefined };
+    const abortSubscription: AbortSubscription = { abortHandler, detach: () => undefined };
+
+    return abortSubscription;
   }
 
   if (signal.aborted) abortHandler();
 
   signal.addEventListener('abort', abortHandler, { once: true });
 
-  return {
+  const abortSubscription: AbortSubscription = {
     abortHandler,
     detach: (): void => {
       signal.removeEventListener('abort', abortHandler);
     },
   };
+
+  return abortSubscription;
 };
 
-const setupTimeout = (
-  pid: number | undefined,
-  timeoutMs: number
-): Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }> => {
+type TimeoutHandle = Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }>;
+
+const setupTimeout = (timeoutMs: number, pid?: number): TimeoutHandle => {
   let timedOut = false;
 
   const timer = setTimeout(() => {
     timedOut = true;
 
-    if (pid != null) {
+    if (pid !== undefined) {
       void killProcess(pid);
     }
   }, timeoutMs);
@@ -55,24 +66,9 @@ const setupTimeout = (
   };
 };
 
-type ResolveExecutionResultInput = Readonly<{
-  stdout: StreamCollector;
-  stderr: StreamCollector;
-  exitCode: number | null;
-  closeSignal: string | null;
-  timedOut: boolean;
-  startTime: number;
-}>;
-
-const resolveExecutionResult = ({
-  stdout,
-  stderr,
-  exitCode,
-  closeSignal,
-  timedOut,
-  startTime,
-}: ResolveExecutionResultInput): ExecutionResult => {
-  return {
+const resolveExecutionResult = (resolveExecutionResultInput: ResolveExecutionResultInput): ExecutionResult => {
+  const { stdout, stderr, exitCode, closeSignal, timedOut, startTime } = resolveExecutionResultInput;
+  const executionResult: ExecutionResult = {
     stdout: stdout.output(),
     stderr: stderr.output(),
     exitCode,
@@ -83,6 +79,8 @@ const resolveExecutionResult = ({
     stderrBytes: stderr.bytes(),
     executionTimeMs: Date.now() - startTime,
   };
+
+  return executionResult;
 };
 
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
@@ -95,14 +93,14 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       cwd,
     });
 
-    if (child.pid != null && onSpawned) {
+    if (child.pid !== undefined && onSpawned) {
       onSpawned(child.pid);
     }
 
-    const timeout = setupTimeout(child.pid, timeoutMs);
+    const timeout = setupTimeout(timeoutMs, child.pid);
     const stdout = attachStreamCollector(child.stdout, onStdoutChunk);
     const stderr = attachStreamCollector(child.stderr, onStderrChunk);
-    const abort = createAbortSubscription(signal, child.pid ?? undefined);
+    const abort = createAbortSubscription(signal, child.pid);
 
     child.on('error', (error: Error) => {
       clearTimeout(timeout.timer);
@@ -120,16 +118,16 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       clearTimeout(timeout.timer);
       abort.detach();
 
-      resolve(
-        resolveExecutionResult({
-          stdout,
-          stderr,
-          exitCode,
-          closeSignal,
-          timedOut: timeout.markTimedOut(),
-          startTime,
-        })
-      );
+      const executionResultInput: ResolveExecutionResultInput = {
+        stdout,
+        stderr,
+        exitCode,
+        closeSignal,
+        timedOut: timeout.markTimedOut(),
+        startTime,
+      };
+
+      resolve(resolveExecutionResult(executionResultInput));
     });
 
     // Write stdin if provided, then close the stream

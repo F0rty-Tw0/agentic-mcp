@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AsyncViFn, SyncViFn } from '../common/test-utils/vi-fn.types';
+import type { AsyncViFn, SyncViFn } from '../common/test-utils';
 
 import { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from '.';
 

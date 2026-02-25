@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CommandExecutionError } from '../common/errors';
 import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
-import { createControllableChild } from '../common/test-utils/controllable-child';
-import type { ControllableChild } from '../common/test-utils/controllable-child';
+import { createControllableChild } from '../common/test-utils';
+import type { ControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
@@ -173,7 +173,7 @@ describe('executeCommand', () => {
     it('GIVEN a process exceeding timeoutMs WHEN timeout fires THEN timedOut is true and killProcess is called', async () => {
       vi.useFakeTimers();
 
-      const { child, emitClose } = createControllableChild();
+      const { child, emitClose } = createControllableChild(1234);
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
@@ -193,7 +193,7 @@ describe('executeCommand', () => {
     it('GIVEN a process with no pid WHEN timeout fires THEN killProcess is not called', async () => {
       vi.useFakeTimers();
 
-      const { child, emitClose } = createControllableChild(null);
+      const { child, emitClose } = createControllableChild();
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 

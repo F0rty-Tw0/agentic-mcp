@@ -1,8 +1,8 @@
 import { vi } from 'vitest';
 
-export type EventHandler = (...args: unknown[]) => void;
+type EventHandler = (...args: unknown[]) => void;
 
-export type HandlerMap = Record<string, EventHandler[]>;
+type HandlerMap = Record<string, EventHandler[]>;
 
 type EventEmitter = Readonly<{ handlers: HandlerMap; on: (event: string, fn: EventHandler) => void }>;
 
@@ -18,7 +18,7 @@ const createEventEmitter = (): EventEmitter => {
   };
 };
 
-export const emit = (emitter: EventEmitter, event: string, ...args: unknown[]): void => {
+const emit = (emitter: EventEmitter, event: string, ...args: unknown[]): void => {
   const fns = emitter.handlers[event];
 
   if (fns) {
@@ -39,14 +39,14 @@ export type ControllableChild = Readonly<{
   emitStderr: (data: Buffer) => void;
 }>;
 
-export const createControllableChild = (pid: number | null = 1234): ControllableChild => {
+export const createControllableChild = (pid?: number): ControllableChild => {
   const main = createEventEmitter();
   const stdoutEmitter = createEventEmitter();
   const stderrEmitter = createEventEmitter();
   const stdinMock = { write: vi.fn(), end: vi.fn() };
 
   const child: Record<string, unknown> = {
-    ...(pid != null ? { pid } : {}),
+    pid,
     stdout: { on: stdoutEmitter.on },
     stderr: { on: stderrEmitter.on },
     stdin: stdinMock,

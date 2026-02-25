@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
-import { createControllableChild } from '../common/test-utils/controllable-child';
+import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
