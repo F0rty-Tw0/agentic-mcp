@@ -1,12 +1,12 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { runAskInvocation } from './ask-runner';
+import { createBackgroundJob } from '../../background-jobs/data-access';
+import { buildJobStatusResponse, startBackgroundInvocation } from '../../background-jobs/domain-logic';
 import { SESSION_STORE } from '../../session/session-store';
-import type { ProgressContext, ResolvedProviderEntry } from "../../shared/common";
-import { createAskJob } from "../async-jobs/data-access";
-import { buildAsyncStatusResponse, startAsyncAskInvocation } from "../async-jobs/domain-logic";
-import type { AskToolArgs } from "../common";
-import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from "../session";
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
+import type { AskToolArgs } from '../common';
+import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../session';
 
 const runAskInvocationResponse = async (
   context: ResolvedProviderEntry,
@@ -64,13 +64,13 @@ export const handleAsk = async (
       };
     }
 
-    return buildAsyncStatusResponse(args.job_id);
+    return buildJobStatusResponse(args.job_id);
   }
 
   if ((args.mode ?? 'sync') === 'async') {
-    const asyncJob = createAskJob(context.name);
+    const asyncJob = createBackgroundJob(context.name);
 
-    startAsyncAskInvocation({ context, args, jobId: asyncJob.id, runAskInvocation: runAskInvocationResponse, extra });
+    void startBackgroundInvocation(asyncJob.id, async () => runAskInvocationResponse(context, args, extra));
 
     return {
       content: [{ type: 'text', text: JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state }) }],

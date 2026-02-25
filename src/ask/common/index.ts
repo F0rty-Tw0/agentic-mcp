@@ -35,9 +35,9 @@ export type { AskToolArgs, BuiltArgs } from './tool-args.types';
 
 export type { SessionMode } from './session-mode.type';
 
-export type { AskJobRecord, AskJobState } from '../async-jobs/common/job.types';
+export type { BackgroundJobRecord } from '../../background-jobs/common/job.types';
 
-export { ASK_JOB_TTL_MS, MAX_ASK_JOB_RECORDS } from '../async-jobs/common/job.const';
+export { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS } from '../../background-jobs/common/job.const';
 
 export { isLeveledFlag } from './tool-args.types';
 

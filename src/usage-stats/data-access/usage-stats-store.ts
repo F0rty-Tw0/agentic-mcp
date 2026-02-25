@@ -1,11 +1,10 @@
-import { MAX_USAGE_RECORDS } from "../common";
-import type { ProviderCallRecord, ProviderStats, UsageSummary } from "../common";
+import { nowIso } from '../../shared/utils';
+import { MAX_USAGE_RECORDS } from '../common';
+import type { ProviderCallRecord, ProviderStats, UsageSummary } from '../common';
 
 const callsByProvider = new Map<string, ProviderCallRecord[]>();
 
-const sessionStartedAt = new Date().toISOString();
-
-const nowIso = (): string => new Date().toISOString();
+const sessionStartedAt = nowIso();
 
 const totalRecordCount = (): number => {
   let count = 0;
