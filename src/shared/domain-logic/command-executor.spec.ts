@@ -270,6 +270,97 @@ describe('executeCommand', () => {
     });
   });
 
+  describe('abort signal', () => {
+    it('GIVEN an AbortSignal WHEN signal fires after spawn THEN killProcess is called with child pid', async () => {
+      const controller = new AbortController();
+      const { child, emitClose } = createControllableChild(5678);
+
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+
+      const resultPromise = executeCommand({
+        ...baseOptions,
+        signal: controller.signal,
+        bypassSemaphore: true,
+      });
+
+      controller.abort();
+      emitClose(null, 'SIGTERM');
+
+      await resultPromise;
+
+      expect(killProcess).toHaveBeenCalledWith(5678);
+    });
+
+    it('GIVEN an already-aborted signal WHEN executeCommand is called THEN killProcess is called immediately', async () => {
+      const controller = new AbortController();
+
+      controller.abort();
+
+      const { child, emitClose } = createControllableChild(9999);
+
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+
+      const resultPromise = executeCommand({
+        ...baseOptions,
+        signal: controller.signal,
+        bypassSemaphore: true,
+      });
+
+      emitClose(null, 'SIGTERM');
+
+      await resultPromise;
+
+      expect(killProcess).toHaveBeenCalledWith(9999);
+    });
+
+    it('GIVEN an AbortSignal with no-pid child WHEN signal fires THEN killProcess is not called', async () => {
+      const controller = new AbortController();
+      const { child, emitClose } = createControllableChild();
+
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+
+      const resultPromise = executeCommand({
+        ...baseOptions,
+        signal: controller.signal,
+        bypassSemaphore: true,
+      });
+
+      controller.abort();
+      emitClose(null, null);
+
+      await resultPromise;
+
+      expect(killProcess).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onSpawned callback', () => {
+    it('GIVEN onSpawned callback and child with pid WHEN spawned THEN callback receives pid', async () => {
+      const onSpawned = vi.fn();
+      const { child, emitClose } = createControllableChild(4321);
+
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+
+      const resultPromise = executeCommand({ ...baseOptions, onSpawned, bypassSemaphore: true });
+
+      emitClose(0, null);
+      await resultPromise;
+
+      expect(onSpawned).toHaveBeenCalledWith(4321);
+    });
+
+    it('GIVEN onSpawned callback and child without pid WHEN spawned THEN callback is not called', async () => {
+      const onSpawned = vi.fn();
+      const child = makeAutoClosingChild();
+
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+
+      await executeCommand({ ...baseOptions, onSpawned, bypassSemaphore: true });
+
+      expect(onSpawned).not.toHaveBeenCalled();
+    });
+  });
+
   describe('bypassSemaphore', () => {
     it('GIVEN bypassSemaphore is true WHEN executeCommand is called THEN it still executes and returns result', async () => {
       const child = makeAutoClosingChild({ stdout: 'hello', exitCode: 0 });
@@ -291,18 +382,6 @@ describe('executeCommand', () => {
       const result = await executeCommand({ ...baseOptions, bypassSemaphore: false });
 
       expect(result.stdout).toBe('world');
-      expect(result.exitCode).toBe(0);
-    });
-
-    it('GIVEN bypassSemaphore is true WHEN called THEN spawn is invoked and result is returned without semaphore gating', async () => {
-      const child = makeAutoClosingChild({ stdout: 'bypassed', exitCode: 0 });
-
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
-
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
-
-      expect(crossSpawn).toHaveBeenCalledTimes(1);
-      expect(result.stdout).toBe('bypassed');
       expect(result.exitCode).toBe(0);
     });
   });

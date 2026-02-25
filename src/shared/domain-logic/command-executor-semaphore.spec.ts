@@ -62,4 +62,41 @@ describe('executeCommand semaphore concurrency', () => {
 
     await Promise.all(promises);
   });
+
+  it('GIVEN 5 in-flight commands and one fails with spawn error WHEN slot is released THEN queued command proceeds', async () => {
+    const children = Array.from({ length: 6 }, () => createControllableChild());
+    let callIndex = 0;
+
+    vi.mocked(crossSpawn).mockImplementation(() => {
+      const child = children[callIndex];
+      const resolvedChild = child ?? children[0];
+
+      callIndex += 1;
+
+      expect(resolvedChild).toBeDefined();
+
+      return resolvedChild?.child as unknown as ReturnType<typeof crossSpawn>;
+    });
+
+    const promises = Array.from({ length: 6 }, async () => executeCommand(baseOptions));
+
+    // Suppress unhandled rejection from the command that will error
+    promises.forEach((promise) => {
+      void promise.catch(vi.fn());
+    });
+
+    await drainMicrotasks();
+    expect(crossSpawn).toHaveBeenCalledTimes(5);
+
+    children[0]?.emitError(new Error('ENOENT'));
+
+    await drainMicrotasks();
+    expect(crossSpawn).toHaveBeenCalledTimes(6);
+
+    children.slice(1).forEach((child) => {
+      child.emitClose(0, null);
+    });
+
+    await Promise.allSettled(promises);
+  });
 });

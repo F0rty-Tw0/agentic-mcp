@@ -2,7 +2,12 @@ export { APP_VERSION } from './app-version.const';
 
 export type { ConfigPathOptions } from './config-path-options.type';
 
-export type { ExecuteCommandOptions, ExecutionResult, StreamChunkCallback } from './command-executor.types';
+export type {
+  ExecuteCommandOptions,
+  ExecutionResult,
+  StreamChunkCallback,
+  StreamCollector,
+} from './command-executor.types';
 
 export {
   DEFAULT_MCP_TOOL_TIMEOUT_MS,

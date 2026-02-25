@@ -1,12 +1,10 @@
 import type { Readable } from 'node:stream';
 
-import type { StreamChunkCallback } from '../common';
+import type { StreamChunkCallback, StreamCollector } from '../common';
 
 const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
 
 type CollectStreamResult = Readonly<{ bytes: number; truncated: boolean }>;
-
-export type StreamCollector = Readonly<{ output: () => string; bytes: () => number; truncated: () => boolean }>;
 
 const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): CollectStreamResult => {
   const newBytes = currentBytes + chunk.length;
@@ -14,14 +12,18 @@ const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): C
   if (newBytes <= MAX_OUTPUT_BYTES) {
     chunks.push(chunk);
 
-    return { bytes: newBytes, truncated: false };
+    const streamResults: CollectStreamResult = { bytes: newBytes, truncated: false };
+
+    return streamResults;
   }
 
   const remaining = MAX_OUTPUT_BYTES - currentBytes;
 
   if (remaining > 0) chunks.push(chunk.subarray(0, remaining));
 
-  return { bytes: currentBytes + remaining, truncated: true };
+  const streamResults: CollectStreamResult = { bytes: currentBytes + remaining, truncated: true };
+
+  return streamResults;
 };
 
 export const attachStreamCollector = (stream: Readable | null, onChunk?: StreamChunkCallback): StreamCollector => {
@@ -45,9 +47,11 @@ export const attachStreamCollector = (stream: Readable | null, onChunk?: StreamC
     }
   });
 
-  return {
+  const streamCollector: StreamCollector = {
     output: () => Buffer.concat(chunks).toString('utf-8'),
     bytes: () => currentBytes,
     truncated: () => isTruncated,
   };
+
+  return streamCollector;
 };

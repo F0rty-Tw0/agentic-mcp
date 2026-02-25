@@ -1,5 +1,7 @@
 export type StreamChunkCallback = (chunk: string) => void;
 
+export type StreamCollector = Readonly<{ output: () => string; bytes: () => number; truncated: () => boolean }>;
+
 export type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
   args: readonly string[];

@@ -1,9 +1,8 @@
 import crossSpawn from 'cross-spawn';
 
 import { attachStreamCollector } from './command-stream-collector.util';
-import type { StreamCollector } from './command-stream-collector.util';
 import { createSemaphore } from './semaphore';
-import type { ExecuteCommandOptions, ExecutionResult } from '../common';
+import type { ExecuteCommandOptions, ExecutionResult, StreamCollector } from '../common';
 import { CommandExecutionError } from '../common/errors';
 import { killProcess } from '../utils';
 
@@ -22,9 +21,9 @@ const defaultSemaphore = createSemaphore(MAX_CONCURRENT_SPAWNS);
 
 const createAbortSubscription = (signal?: AbortSignal, childPid?: number): AbortSubscription => {
   const abortHandler = (): void => {
-    if (childPid !== undefined) {
-      void killProcess(childPid);
-    }
+    if (childPid === undefined) return;
+
+    void killProcess(childPid);
   };
 
   if (!signal) {
@@ -55,9 +54,9 @@ const setupTimeout = (timeoutMs: number, pid?: number): TimeoutHandle => {
   const timer = setTimeout(() => {
     timedOut = true;
 
-    if (pid !== undefined) {
-      void killProcess(pid);
-    }
+    if (pid === undefined) return;
+
+    void killProcess(pid);
   }, timeoutMs);
 
   return {

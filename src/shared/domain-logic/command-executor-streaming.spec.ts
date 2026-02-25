@@ -42,6 +42,27 @@ describe('executeCommand streaming callbacks', () => {
     expect(chunks).toStrictEqual(['first', 'second']);
   });
 
+  it('GIVEN onStderrChunk callback WHEN child emits stderr data THEN callback receives chunks in order', async () => {
+    const controllable = createControllableChild();
+    const chunks: string[] = [];
+
+    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as ReturnType<typeof crossSpawn>);
+
+    const resultPromise = executeCommand({
+      ...baseOptions,
+      onStderrChunk: (chunk: string): void => {
+        chunks.push(chunk);
+      },
+    });
+
+    controllable.emitStderr(Buffer.from('err1'));
+    controllable.emitStderr(Buffer.from('err2'));
+    controllable.emitClose(0, null);
+    await resultPromise;
+
+    expect(chunks).toStrictEqual(['err1', 'err2']);
+  });
+
   it('GIVEN chunk callback throws WHEN processing stream THEN execution still completes', async () => {
     const controllable = createControllableChild();
 
