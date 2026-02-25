@@ -1,12 +1,11 @@
+import crossSpawn from 'cross-spawn';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { executeCommand } from './command-executor';
 import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
-
-const { default: crossSpawn } = await import('cross-spawn');
-const { executeCommand } = await import('./command-executor');
 
 const baseOptions = {
   binaryPath: '/usr/bin/test-cli',

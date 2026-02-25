@@ -1,19 +1,18 @@
+import crossSpawn from 'cross-spawn';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { executeCommand } from './command-executor';
 import { CommandExecutionError } from '../common/errors';
 import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 import type { ControllableChild } from '../common/test-utils';
+import { killProcess } from '../utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
 vi.mock('../utils/platform.util', () => ({
   killProcess: vi.fn().mockResolvedValue(true),
 }));
-
-const { default: crossSpawn } = await import('cross-spawn');
-const { killProcess } = await import('../utils/platform.util');
-const { executeCommand } = await import('./command-executor');
 
 type AutoClosingOptions = Readonly<{
   stdout?: string;
