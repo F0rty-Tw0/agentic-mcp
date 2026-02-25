@@ -1,3 +1,5 @@
+export { nowIso } from './date-time.util';
+
 export { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from './platform.util';
 
 export { toMcpError } from './to-mcp-error.util';
