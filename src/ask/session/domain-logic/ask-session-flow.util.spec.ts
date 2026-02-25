@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util';
 import type { SessionFlowState } from './ask-session-flow.util';
-import type { ResolvedProviderEntry } from "../../../shared/common";
-import type { AskToolArgs, SessionMode } from "../../common";
+import type { ResolvedProviderEntry } from '../../../shared/common';
+import type { AskToolArgs, SessionMode } from '../../common';
 import type { AskExecution } from '../../domain-logic/ask-runner';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
@@ -216,7 +216,7 @@ describe('appendSessionMetadata', () => {
     const result = appendSessionMetadata(response, mode);
 
     expect(result.content).toHaveLength(2);
-    const last = result.content[result.content.length - 1];
+    const last = result.content.at(-1);
 
     expect(last).toStrictEqual({
       type: 'text',
@@ -231,7 +231,7 @@ describe('appendSessionMetadata', () => {
     const result = appendSessionMetadata(response, mode);
 
     expect(result.content).toHaveLength(2);
-    const last = result.content[result.content.length - 1];
+    const last = result.content.at(-1);
 
     expect(last).toStrictEqual({
       type: 'text',

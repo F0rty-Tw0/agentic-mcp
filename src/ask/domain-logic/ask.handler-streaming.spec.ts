@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import type { ProgressContext } from "../../shared/common";
-import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from "../common";
-import type { AskStreamEvent, AskToolArgs } from "../common";
+import type { ProgressContext } from '../../shared/common';
+import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
+import type { AskStreamEvent, AskToolArgs } from '../common';
 import {
   ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   ASK_TEST_ENV_STUB,
   createAskContext,
-} from "../common/stubs";
+} from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
@@ -87,7 +87,7 @@ describe('handleAsk streaming', () => {
     const eventTypes = events.map((event) => event.type);
 
     expect(eventTypes[0]).toBe('start');
-    expect(eventTypes[eventTypes.length - 1]).toBe('done');
+    expect(eventTypes.at(-1)).toBe('done');
     expect(eventTypes.filter((type) => type === 'chunk').length).toBeGreaterThan(0);
     expect(events[0]?.schema).toBe(ASK_STREAM_EVENT_SCHEMA);
     expect(events.map((event) => event.sequence)).toStrictEqual(

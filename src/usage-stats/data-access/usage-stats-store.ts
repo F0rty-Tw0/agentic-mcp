@@ -53,13 +53,13 @@ export const getUsageSummary = (): UsageSummary => {
   const providerStats: ProviderStats[] = [];
 
   for (const [provider, records] of callsByProvider) {
-    if (records.length === 0) continue;
+    if (!records.length) continue;
 
-    const successCount = records.filter((r) => r.success).length;
+    const successCount = records.filter((record) => record.success).length;
     const failureCount = records.length - successCount;
-    const totalExecutionTimeMs = records.reduce((sum, r) => sum + r.executionTimeMs, 0);
+    const totalExecutionTimeMs = records.reduce((sum, record) => sum + record.executionTimeMs, 0);
     const avgExecutionTimeMs = Math.round(totalExecutionTimeMs / records.length);
-    const lastCallAt = records[records.length - 1]?.calledAt ?? nowIso();
+    const lastCallAt = records.at(-1)?.calledAt ?? nowIso();
 
     providerStats.push({
       provider,

@@ -1,4 +1,4 @@
-import { validateSessionId } from "../shared/utils";
+import { validateSessionId } from '../shared/utils';
 
 const safeValidateSessionId = (value: string | undefined): string | undefined => {
   if (!value) return;
@@ -37,7 +37,7 @@ const parseNdjsonSessionId = (stdout: string): string | undefined => {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  const lastLine = lines[lines.length - 1];
+  const lastLine = lines.at(-1);
 
   if (!lastLine) return;
 

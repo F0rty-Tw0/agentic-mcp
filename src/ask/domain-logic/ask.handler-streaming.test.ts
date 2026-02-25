@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from "../../shared/common";
+import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
 
 type ProgressNotification = Readonly<{
   method: string;
@@ -67,7 +67,7 @@ describe('handleAsk live streaming integration', () => {
     );
     const sequences = events.map((event) => Number(event.sequence));
     const channels = events.filter((event) => event.type === 'chunk').map((event) => String(event.channel));
-    const terminal = events[events.length - 1];
+    const terminal = events.at(-1);
 
     expect(result.isError).not.toBe(true);
     expect(events.length).toBeGreaterThan(0);
