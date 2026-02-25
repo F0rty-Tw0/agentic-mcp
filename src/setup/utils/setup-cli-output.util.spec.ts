@@ -8,7 +8,7 @@ import {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
-import type { DetectedProvider, SetupApplyResult, SetupPlan } from "../common";
+import type { DetectedProvider, SetupApplyResult, SetupPlan } from '../common';
 
 const createArgs = (overrides: Partial<ParsedSetupArgs> = {}): ParsedSetupArgs => {
   const args: ParsedSetupArgs = {

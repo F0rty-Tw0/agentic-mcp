@@ -10,8 +10,8 @@ import {
   splitChunkByBytes,
   withEventEnvelope,
 } from './notifier.helpers';
-import type { ProgressContext } from "../../../shared/common";
-import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from "../common";
+import type { ProgressContext } from '../../../shared/common';
+import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 
 describe('resolveProgressToken', () => {
   it('GIVEN no extra WHEN called THEN returns null', () => {

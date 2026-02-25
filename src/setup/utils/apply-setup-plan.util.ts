@@ -2,7 +2,7 @@ import { constants as fsConstants } from 'node:fs';
 import { copyFile, mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { SetupApplyResult, SetupFs, SetupPlan } from "../common";
+import type { SetupApplyResult, SetupFs, SetupPlan } from '../common';
 
 const defaultFs: SetupFs = {
   mkdir: async (targetPath, options) => {

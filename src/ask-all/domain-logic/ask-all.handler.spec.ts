@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAskAll } from './ask-all.handler';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
-import type { ResolvedProviderEntry } from "../../shared/common";
-import type { AskAllResult, AskAllToolArgs } from "../common";
+import type { ResolvedProviderEntry } from '../../shared/common';
+import type { AskAllResult, AskAllToolArgs } from '../common';
 
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
 

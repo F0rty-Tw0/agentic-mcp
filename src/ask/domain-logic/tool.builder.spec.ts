@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildAskToolDefinition, buildSessionsToolDefinition } from './tool.builder';
-import type { ProviderConfig } from "../../shared/common";
+import type { ProviderConfig } from '../../shared/common';
 
 const createConfig = (flags: Record<string, unknown>): ProviderConfig => ({
   enabled: true,
@@ -51,7 +51,7 @@ describe('buildAskToolDefinition', () => {
       const result = buildAskToolDefinition('test', config);
 
       expect(result.inputSchema).toHaveProperty('stream_live');
-      expect(result.inputSchema.stream_live?.parse(true)).toBe(true);
+      expect(result.inputSchema?.stream_live?.parse(true)).toBe(true);
     });
 
     it('GIVEN ask tool definition WHEN inspecting description THEN it describes outcome and attribution', () => {
@@ -91,7 +91,7 @@ describe('buildAskToolDefinition', () => {
       const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
       const result = buildAskToolDefinition('test', config);
 
-      const description = (result.inputSchema.effort as { description: string }).description;
+      const description = (result.inputSchema?.effort as { description: string }).description;
 
       expect(description).toContain('low');
       expect(description).toContain('medium');
@@ -182,7 +182,7 @@ describe('buildAskToolDefinition', () => {
       const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
       const result = buildAskToolDefinition('test', config);
 
-      const effortSchema = result.inputSchema.effort;
+      const effortSchema = result.inputSchema?.effort;
 
       expect(effortSchema).toBeDefined();
       expect(effortSchema?.parse('low')).toBe('low');
@@ -192,7 +192,7 @@ describe('buildAskToolDefinition', () => {
       const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
       const result = buildAskToolDefinition('test', config);
 
-      const effortSchema = result.inputSchema.effort;
+      const effortSchema = result.inputSchema?.effort;
 
       expect(() => effortSchema?.parse('invalid')).toThrow();
     });
@@ -206,8 +206,8 @@ describe('buildAskToolDefinition', () => {
       const result = buildAskToolDefinition('test', config);
 
       expect(result.inputSchema).toHaveProperty('auto_mode');
-      expect(result.inputSchema.auto_mode?.parse('acceptEdits')).toBe('acceptEdits');
-      expect(() => result.inputSchema.auto_mode?.parse('invalid')).toThrow();
+      expect(result.inputSchema?.auto_mode?.parse('acceptEdits')).toBe('acceptEdits');
+      expect(() => result.inputSchema?.auto_mode?.parse('invalid')).toThrow();
     });
 
     it('GIVEN provider with array autoMode flag WHEN building tool definition THEN auto_mode is a z.boolean', () => {
@@ -215,7 +215,7 @@ describe('buildAskToolDefinition', () => {
       const result = buildAskToolDefinition('test', config);
 
       expect(result.inputSchema).toHaveProperty('auto_mode');
-      expect(result.inputSchema.auto_mode?.parse(true)).toBe(true);
+      expect(result.inputSchema?.auto_mode?.parse(true)).toBe(true);
     });
 
     it('GIVEN provider without autoMode flag WHEN building tool definition THEN auto_mode is absent', () => {

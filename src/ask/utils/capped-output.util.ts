@@ -1,4 +1,4 @@
-import { MAX_RESPONSE_TEXT_BYTES } from "../common";
+import { MAX_RESPONSE_TEXT_BYTES } from '../common';
 
 export const buildCappedOutput = (output: string): string => {
   const outputBytes = Buffer.byteLength(output, 'utf8');

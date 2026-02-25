@@ -9,8 +9,8 @@ import {
   validateSessionId,
   validateWorkingDirectory,
 } from './validation.util';
-import { MAX_FILES, MAX_PROMPT_BYTES } from "../common";
-import { ValidationError } from "../common/errors";
+import { MAX_FILES, MAX_PROMPT_BYTES } from '../common';
+import { ValidationError } from '../common/errors';
 
 describe('validateModel', () => {
   it('GIVEN valid simple model WHEN validated THEN does not throw', () => {

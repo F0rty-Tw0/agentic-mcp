@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { CommandDef, ProviderConfig, ToolDefinition } from "../../shared/common";
+import type { CommandDef, ProviderConfig, ToolDefinition } from '../../shared/common';
 import {
   FLAG_AUTO_MODE,
   FLAG_EFFORT,
@@ -11,8 +11,8 @@ import {
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
   isLeveledFlag,
-} from "../common";
-import { getAskCommand, getFlag } from "../utils";
+} from '../common';
+import { getAskCommand, getFlag } from '../utils';
 
 const addLeveledFlags = (schema: Record<string, z.ZodType>, askCmd: CommandDef): void => {
   const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);

@@ -4,8 +4,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import type { ConfigPathOptions, ProvidersFile } from "../shared/common";
-import { providersFileSchema } from "../shared/common";
+import type { ConfigPathOptions, ProvidersFile } from '../shared/common';
+import { providersFileSchema } from '../shared/common';
 
 const DANGEROUS_FLAGS = [
   '--dangerously-skip-permissions',

@@ -28,12 +28,14 @@ Supported clients: Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
 ### Safe Setup Defaults
 
 `agentic-mcp setup` is now safe by default:
+
 - Default mode is merge (`--mode merge`)
 - Existing configs are preserved and only `mcpServers["agentic-mcp"]` is updated
 - Writes use backup + atomic replace + read-back verification
 - Non-interactive writes require `--yes`
 
 Common flags:
+
 - `--dry-run` — show plan without writing
 - `--output json` — machine-readable result
 - `--mode merge|overwrite` — choose update strategy (`overwrite` is explicit/destructive)
@@ -43,7 +45,9 @@ Common flags:
 ## What Can You Do?
 
 ### Get an answer
+
 Ask any provider directly:
+
 - `ask_claude` — Get an answer from Claude
 - `ask_codex` — Get an answer from Codex
 - `ask_gemini` — Get an answer from Gemini
@@ -51,26 +55,31 @@ Ask any provider directly:
 - `ask_opencode` — Get an answer from OpenCode
 
 ### Compare providers
+
 Send the same prompt to multiple providers simultaneously:
+
 - `ask_all` — Query all available providers at once and compare responses side-by-side
 
 ### Track your usage
+
 See per-provider call counts, response times, and success rates:
+
 - `usage_summary` — View session statistics
 
 ### Explore
+
 - `list_providers` — See which AI models are available
 - `ping_*` — Check if a provider is ready
 - `help_*` — See what a provider can do
 
 ## Providers
 
-| Provider | CLI Tool | Status |
-|----------|----------|--------|
-| Claude | `claude` | ✅ Configured |
-| Codex | `codex` | ✅ Configured |
-| Copilot | `copilot` | ✅ Configured |
-| Gemini | `gemini` | ✅ Configured |
+| Provider | CLI Tool   | Status        |
+| -------- | ---------- | ------------- |
+| Claude   | `claude`   | ✅ Configured |
+| Codex    | `codex`    | ✅ Configured |
+| Copilot  | `copilot`  | ✅ Configured |
+| Gemini   | `gemini`   | ✅ Configured |
 | OpenCode | `opencode` | ✅ Configured |
 
 Adding a new provider? Just edit `providers.json` — no code changes needed.
@@ -88,6 +97,7 @@ Adding a new provider? Just edit `providers.json` — no code changes needed.
 ### Provider Config Structure
 
 Each provider is defined in `providers.json` with:
+
 - CLI binary name and resolution
 - Command definitions (ask, ping, help)
 - Flag mappings for model selection, context, files, etc.
@@ -101,12 +111,15 @@ See `providers.json` for examples.
 <summary>Advanced Features</summary>
 
 ### Streaming
+
 Enable live streaming with `stream_live: true` in ask tool calls. Responses stream via MCP progress notifications.
 
 ### Async Mode
+
 For long-running queries, use `mode: "async"` to get a job ID, then poll with `action: "status"`.
 
 ### Sessions
+
 Some providers support persistent sessions via `session_id` for multi-turn conversations.
 
 </details>

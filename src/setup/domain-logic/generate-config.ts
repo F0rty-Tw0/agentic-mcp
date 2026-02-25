@@ -1,4 +1,4 @@
-import type { DetectedProvider, McpServerEntry, SupportedClient } from "../common";
+import type { DetectedProvider, McpServerEntry, SupportedClient } from '../common';
 
 const BASE_ENTRY: McpServerEntry = {
   command: 'npx',

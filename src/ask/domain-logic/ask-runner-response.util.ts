@@ -3,11 +3,11 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { resolveModelHint } from './ask-handler';
 import { buildAttribution } from './attribution.builder';
 import { extractNativeSessionId } from '../../session/session-id-extractor';
-import type { ResolvedProviderEntry } from "../../shared/common";
-import { stripAnsi } from "../../shared/utils";
-import type { AskToolArgs, SessionMode } from "../common";
-import type { buildExecutionSummary, createStreamNotifier } from "../streaming/domain-logic";
-import { buildCappedOutput } from "../utils";
+import type { ResolvedProviderEntry } from '../../shared/common';
+import { stripAnsi } from '../../shared/utils';
+import type { AskToolArgs, SessionMode } from '../common';
+import type { buildExecutionSummary, createStreamNotifier } from '../streaming/domain-logic';
+import { buildCappedOutput } from '../utils';
 import { parseProviderOutput } from '../utils/output-parser.util';
 
 export type AskExecution = Readonly<{

@@ -3,9 +3,9 @@ import process from 'node:process';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { createServer } from '../../server/create-server';
-import { APP_VERSION } from "../../shared/common";
-import { HELP_TEXT } from "../common";
-import { parseConfigPath } from "../utils";
+import { APP_VERSION } from '../../shared/common';
+import { HELP_TEXT } from '../common';
+import { parseConfigPath } from '../utils';
 
 export const entry = async (): Promise<void> => {
   const args = process.argv.slice(2);

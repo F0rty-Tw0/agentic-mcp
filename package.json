@@ -28,9 +28,11 @@
     "test:integration": "vitest run --config vitest.config.integration.ts",
     "validate:providers": "tsx src/config/validate-providers.ts",
     "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "eslint --max-warnings 0 . --fix",
-    "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration && pnpm run build",
+    "prepublishOnly": "pnpm run format && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration && pnpm run build",
     "publish:pnpm": "pnpm run prepublishOnly && pnpm publish --provenance"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import type { ProviderConfig } from "../../../shared/common";
+import type { ProviderConfig } from '../../../shared/common';
 
 export const ASK_PROVIDER_CONFIG_STUB: ProviderConfig = {
   enabled: true,

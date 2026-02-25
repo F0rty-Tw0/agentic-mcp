@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import type { ToolDefinition } from "../../shared/common";
-import { ASK_ALL_TOOL_NAME } from "../common";
+import type { ToolDefinition } from '../../shared/common';
+import { ASK_ALL_TOOL_NAME } from '../common';
 
 export const buildAskAllToolDefinition = (providerNames: readonly string[]): ToolDefinition => {
   const providerList = providerNames.length > 0 ? providerNames.join(', ') : 'none configured';

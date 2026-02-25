@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 
 import { describe, expect, it } from 'vitest';
 
-import { providersFileSchema } from "../shared/common";
-import type { ProvidersFile } from "../shared/common";
+import { providersFileSchema } from '../shared/common';
+import type { ProvidersFile } from '../shared/common';
 
 const providersJsonUrl = new URL('./providers.json', import.meta.url);
 const providersSchemaUrl = new URL('./providers.schema.json', import.meta.url);

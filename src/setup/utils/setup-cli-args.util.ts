@@ -1,5 +1,5 @@
-import { SUPPORTED_CLIENTS } from "../common";
-import type { SetupBackupPolicy, SetupMode, SupportedClient } from "../common";
+import { SUPPORTED_CLIENTS } from '../common';
+import type { SetupBackupPolicy, SetupMode, SupportedClient } from '../common';
 
 const DEFAULT_CLIENT: SupportedClient = 'generic';
 const DEFAULT_OUTPUT: SetupOutputMode = 'human';

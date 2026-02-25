@@ -4,7 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
-import { CLIENT_CONFIG_PATHS } from "./common";
+import { CLIENT_CONFIG_PATHS } from './common';
 import type {
   DetectedProvider,
   McpServerEntry,
@@ -13,7 +13,7 @@ import type {
   SetupMode,
   SetupPlan,
   SupportedClient,
-} from "./common";
+} from './common';
 import { detectInstalledProviders } from './domain-logic/detect-providers';
 import { generateClientConfigEntry } from './domain-logic/generate-config';
 import { applySetupPlan } from './utils/apply-setup-plan.util';

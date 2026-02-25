@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { buildMergedClientConfig } from './merge-client-config.util';
-import { CLIENT_CONFIG_PATHS } from "../common";
+import { CLIENT_CONFIG_PATHS } from '../common';
 import type {
   McpServerEntry,
   SetupBackupPolicy,
@@ -9,7 +9,7 @@ import type {
   SetupMode,
   SetupPlan,
   SupportedClient,
-} from "../common";
+} from '../common';
 
 type BuildSetupPlanInput = Readonly<{
   client: SupportedClient;

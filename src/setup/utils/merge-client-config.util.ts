@@ -1,4 +1,4 @@
-import type { McpServerEntry } from "../common";
+import type { McpServerEntry } from '../common';
 
 type MergeClientConfigInput = Readonly<{
   existingConfigText: string | undefined;

@@ -1,5 +1,5 @@
-import { CommandExecutionError, ValidationError } from "../common/errors";
-import type { McpErrorResponse } from "../common/errors";
+import { CommandExecutionError, ValidationError } from '../common/errors';
+import type { McpErrorResponse } from '../common/errors';
 
 export const toMcpError = (error: unknown): McpErrorResponse => {
   const isKnownError = error instanceof ValidationError || error instanceof CommandExecutionError;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { CommandExecutionError, ValidationError } from "../common/errors";
+import { CommandExecutionError, ValidationError } from '../common/errors';
 
-import { toMcpError } from ".";
+import { toMcpError } from '.';
 
 describe('toMcpError', () => {
   it('GIVEN a ValidationError WHEN converted THEN delegates to toMcpResponse', () => {

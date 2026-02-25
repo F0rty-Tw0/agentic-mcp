@@ -9,9 +9,9 @@ import {
   resolveProgressToken,
 } from './ask-stream-notifier.helpers';
 import type { StreamNotifier } from './ask-stream-notifier.helpers';
-import type { ProgressContext } from "../../shared/common";
-import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from "../common";
-import type { AskStreamExecutionSummary, AskToolArgs } from "../common";
+import type { ProgressContext } from '../../shared/common';
+import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common';
+import type { AskStreamExecutionSummary, AskToolArgs } from '../common';
 
 export const createStreamNotifier = (input: {
   providerName: string;

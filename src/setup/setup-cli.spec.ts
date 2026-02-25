@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { SetupApplyResult, SetupPlan } from "./common";
+import type { SetupApplyResult, SetupPlan } from './common';
 import { runSetup } from './setup-cli';
 
 const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {

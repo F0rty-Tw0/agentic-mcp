@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { generateClientConfigEntry } from './generate-config';
-import type { DetectedProvider } from "../common";
+import type { DetectedProvider } from '../common';
 
 const makeProvider = (
   name: string,

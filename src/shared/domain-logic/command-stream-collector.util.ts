@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
 
-import type { StreamChunkCallback } from "../common";
+import type { StreamChunkCallback } from '../common';
 
 const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
 

@@ -1,5 +1,5 @@
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from "../common";
-import type { ResolvedProviderEntry } from "../common";
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common';
+import type { ResolvedProviderEntry } from '../common';
 
 const MCP_TOOL_TIMEOUT_ENV_KEY = 'MCP_TOOL_TIMEOUT';
 

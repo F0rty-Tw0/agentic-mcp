@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleListProviders } from './meta.handler';
-import type { ResolvedProvider } from "../../shared/common";
+import type { ResolvedProvider } from '../../shared/common';
 
 const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProvider => ({
   name: 'test-provider',

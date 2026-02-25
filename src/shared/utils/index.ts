@@ -4,8 +4,6 @@ export { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from './pla
 
 export { toMcpError } from './to-mcp-error.util';
 
-export type { ExecuteCommandFn } from './model-error.util';
-
 export { buildModelHint, detectModelError, extractAttemptedModel, fetchAvailableModels } from './model-error.util';
 
 export { startHeartbeat } from './heartbeat.util';

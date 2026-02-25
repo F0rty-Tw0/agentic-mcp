@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applySetupPlan } from './apply-setup-plan.util';
-import type { SetupFs, SetupPlan } from "../common";
+import type { SetupFs, SetupPlan } from '../common';
 
 const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
   const plan: SetupPlan = {

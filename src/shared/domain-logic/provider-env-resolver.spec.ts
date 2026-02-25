@@ -2,8 +2,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveProviderEnv } from './provider-env-resolver';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from "../common";
-import type { ProviderConfig, ResolvedProviderEntry } from "../common";
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common';
+import type { ProviderConfig, ResolvedProviderEntry } from '../common';
 
 const createContext = (overrides: Partial<ProviderConfig> = {}, providerName = 'test'): ResolvedProviderEntry => {
   const config: ProviderConfig = {

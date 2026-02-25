@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AsyncViFn, SyncViFn } from '../common/test-utils/vi-fn.types';
 
-import { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from ".";
+import { buildMinimalEnv, killProcess, resolveCliBinary, stripAnsi } from '.';
 
 type ExecFileCallback = (error: NodeJS.ErrnoException | null) => void;
 
