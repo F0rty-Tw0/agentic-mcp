@@ -1,0 +1,3 @@
+export const MAX_BACKGROUND_JOB_RECORDS = 500;
+
+export const BACKGROUND_JOB_TTL_MS = 15 * 60 * 1000;
