@@ -3,33 +3,31 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
+import { registerAllTools } from './tool-registry';
+import { handleAsk } from '../../ask/domain-logic/ask.handler';
+import { handleSessions } from '../../ask/domain-logic/sessions.handler';
+import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
+import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
+import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
+import { handleHelp } from '../../simple-tools/domain-logic/help.handler';
+import { handleListProviders } from '../../simple-tools/domain-logic/meta.handler';
+import { handlePing } from '../../simple-tools/domain-logic/ping.handler';
 import {
   TOOL_REGISTRY_PROVIDER_CONFIG_STUB,
   TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB,
   TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
   TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
   TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
-} from './common/stubs';
-import { registerAllTools } from './tool-registry';
-import { handleAsk } from '../ask/domain-logic/ask.handler';
-import { handleSessions } from '../ask/domain-logic/sessions.handler';
-import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler';
-import { handleProviderMetrics } from '../provider-metrics';
-import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../shared/common';
-import { handleHelp } from '../simple-tools/domain-logic/help.handler';
-import { handleListProviders } from '../simple-tools/domain-logic/meta.handler';
-import { handlePing } from '../simple-tools/domain-logic/ping.handler';
+} from '../common/stubs';
 
-vi.mock('../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
-vi.mock('../ask/domain-logic/sessions.handler', () => ({ handleSessions: vi.fn() }));
-vi.mock('../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
-vi.mock('../simple-tools/domain-logic/ping.handler', () => ({ handlePing: vi.fn() }));
-vi.mock('../provider-metrics', () => ({
-  handleProviderMetrics: vi.fn(),
-  buildProviderMetricsToolDefinition: vi.fn().mockReturnValue(TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB),
-}));
+vi.mock('../../provider-metrics');
+vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
+vi.mock('../../ask/domain-logic/sessions.handler', () => ({ handleSessions: vi.fn() }));
+vi.mock('../../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
+vi.mock('../../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
+vi.mock('../../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
+vi.mock('../../simple-tools/domain-logic/ping.handler', () => ({ handlePing: vi.fn() }));
+
 const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
 
 const makeProvider = (name = 'claude'): ResolvedProviderEntry => ({
@@ -78,6 +76,7 @@ describe('registerAllTools', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(buildProviderMetricsToolDefinition).mockReturnValue(TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB);
     server = { registerTool: vi.fn() };
     register = (resolvedProviders = [], allProviders = []): void => {
       registerAllTools(server as unknown as McpServer, resolvedProviders, allProviders);

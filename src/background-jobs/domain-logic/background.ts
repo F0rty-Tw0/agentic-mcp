@@ -6,7 +6,7 @@ import {
   setBackgroundJobCompleted,
   setBackgroundJobFailed,
   setBackgroundJobRunning,
-} from '../data-access/job-store';
+} from '../data-access';
 import { extractTextContent } from '../utils';
 
 type RunInvocationFn = () => Promise<CallToolResult>;
