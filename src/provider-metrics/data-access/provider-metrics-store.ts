@@ -1,6 +1,6 @@
 import { nowIso } from '../../shared/utils';
-import { MAX_USAGE_RECORDS } from '../common';
-import type { ProviderCallRecord, ProviderStats, UsageSummary } from '../common';
+import { MAX_METRIC_RECORDS } from '../common';
+import type { ProviderCallRecord, ProviderMetricsSummary, ProviderStats } from '../common';
 
 const callsByProvider = new Map<string, ProviderCallRecord[]>();
 
@@ -43,12 +43,12 @@ export const recordCall = (provider: string, executionTimeMs: number, success: b
   existing.push(record);
   callsByProvider.set(provider, existing);
 
-  while (totalRecordCount() > MAX_USAGE_RECORDS) {
+  while (totalRecordCount() > MAX_METRIC_RECORDS) {
     pruneOldestRecord();
   }
 };
 
-export const getUsageSummary = (): UsageSummary => {
+export const getProviderMetrics = (): ProviderMetricsSummary => {
   let totalCalls = 0;
   const providerStats: ProviderStats[] = [];
 
@@ -60,8 +60,7 @@ export const getUsageSummary = (): UsageSummary => {
     const totalExecutionTimeMs = records.reduce((sum, record) => sum + record.executionTimeMs, 0);
     const avgExecutionTimeMs = Math.round(totalExecutionTimeMs / records.length);
     const lastCallAt = records.at(-1)?.calledAt ?? nowIso();
-
-    providerStats.push({
+    const providerInfo: ProviderStats = {
       provider,
       totalCalls: records.length,
       successCount,
@@ -69,18 +68,17 @@ export const getUsageSummary = (): UsageSummary => {
       totalExecutionTimeMs,
       avgExecutionTimeMs,
       lastCallAt,
-    });
+    };
+
+    providerStats.push(providerInfo);
 
     totalCalls += records.length;
   }
-
-  return {
+  const metricsSummary: ProviderMetricsSummary = {
     sessionStartedAt,
     totalCalls,
     providers: providerStats,
   };
-};
 
-export const resetForTests = (): void => {
-  callsByProvider.clear();
+  return metricsSummary;
 };

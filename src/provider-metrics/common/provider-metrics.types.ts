@@ -15,7 +15,7 @@ export type ProviderStats = Readonly<{
   lastCallAt: string;
 }>;
 
-export type UsageSummary = Readonly<{
+export type ProviderMetricsSummary = Readonly<{
   sessionStartedAt: string;
   totalCalls: number;
   providers: readonly ProviderStats[];

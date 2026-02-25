@@ -10,6 +10,6 @@ type ToolAnnotations = Readonly<{
 export type ToolDefinition = Readonly<{
   name: string;
   description: string;
-  inputSchema: Readonly<Record<string, z.ZodType>>;
+  inputSchema?: Readonly<Record<string, z.ZodType>>;
   annotations: ToolAnnotations;
 }>;

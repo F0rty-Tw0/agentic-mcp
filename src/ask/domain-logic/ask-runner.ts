@@ -12,7 +12,7 @@ import { CommandExecutionError } from "../../shared/common/errors";
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
 import { startHeartbeat, toMcpError } from "../../shared/utils";
-import { recordCall } from '../../usage-stats/data-access/usage-stats-store';
+import { recordCall } from '../../provider-metrics/data-access/provider-metrics-store';
 import { buildArgArray } from "../cli-args";
 import { noop } from "../common";
 import type { AskToolArgs } from "../common";

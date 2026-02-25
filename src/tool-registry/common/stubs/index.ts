@@ -5,3 +5,5 @@ export { TOOL_REGISTRY_PROVIDER_CONFIG_STUB } from './tool-registry-provider-con
 export { TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB } from './tool-registry-resolved-provider-entry.stub';
 
 export { TOOL_REGISTRY_RESOLVED_PROVIDER_STUB } from './tool-registry-resolved-provider.stub';
+
+export { TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB } from './tool-registry-provider-metrics-tool-definition.stub';

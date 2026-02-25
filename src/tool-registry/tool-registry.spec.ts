@@ -5,19 +5,20 @@ import type { MockInstance } from 'vitest';
 
 import {
   TOOL_REGISTRY_PROVIDER_CONFIG_STUB,
+  TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB,
   TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
   TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
   TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
-} from "./common/stubs";
+} from './common/stubs';
 import { registerAllTools } from './tool-registry';
 import { handleAsk } from '../ask/domain-logic/ask.handler';
 import { handleSessions } from '../ask/domain-logic/sessions.handler';
 import { handleAskAll } from '../ask-all/domain-logic/ask-all.handler';
-import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from "../shared/common";
+import { handleProviderMetrics } from '../provider-metrics';
+import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../shared/common';
 import { handleHelp } from '../simple-tools/domain-logic/help.handler';
 import { handleListProviders } from '../simple-tools/domain-logic/meta.handler';
 import { handlePing } from '../simple-tools/domain-logic/ping.handler';
-import { handleUsageSummary } from '../usage-stats/domain-logic/usage-stats.handler';
 
 vi.mock('../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
 vi.mock('../ask/domain-logic/sessions.handler', () => ({ handleSessions: vi.fn() }));
@@ -25,8 +26,10 @@ vi.mock('../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn(
 vi.mock('../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
 vi.mock('../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
 vi.mock('../simple-tools/domain-logic/ping.handler', () => ({ handlePing: vi.fn() }));
-vi.mock('../usage-stats/domain-logic/usage-stats.handler', () => ({ handleUsageSummary: vi.fn() }));
-
+vi.mock('../provider-metrics', () => ({
+  handleProviderMetrics: vi.fn(),
+  buildProviderMetricsToolDefinition: vi.fn().mockReturnValue(TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB),
+}));
 const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
 
 const makeProvider = (name = 'claude'): ResolvedProviderEntry => ({
@@ -48,7 +51,7 @@ const SUCCESS_RESULT: CallToolResult = TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_ST
 type MockServer = Readonly<{ registerTool: MockInstance }>;
 
 const getRegisteredNames = (server: MockServer): string[] =>
-  server.registerTool.mock.calls.map((call: unknown[]) => call[0] as string);
+  server.registerTool.mock.calls.map(([call]: unknown[]) => call as string);
 
 const getHandler = (server: MockServer, toolName: string): ((...args: unknown[]) => unknown) => {
   const call = server.registerTool.mock.calls.find((c: unknown[]) => c[0] === toolName);
@@ -82,7 +85,7 @@ describe('registerAllTools', () => {
   });
 
   describe('registration counts', () => {
-    it('GIVEN no providers WHEN called THEN registers ask_all, usage_summary and list_providers', () => {
+    it('GIVEN no providers WHEN called THEN registers ask_all, provider_metrics and list_providers', () => {
       register();
 
       expect(server.registerTool).toHaveBeenCalledTimes(3);
@@ -364,32 +367,32 @@ describe('registerAllTools', () => {
     });
   });
 
-  describe('usage_summary tool', () => {
-    it('GIVEN no providers WHEN called THEN registers usage_summary', () => {
+  describe('provider_metrics tool', () => {
+    it('GIVEN no providers WHEN called THEN registers provider_metrics', () => {
       register();
 
       const names = getRegisteredNames(server);
 
-      expect(names).toContain('usage_summary');
+      expect(names).toContain('provider_metrics');
     });
 
-    it('GIVEN usage_summary tool WHEN registered THEN has readOnly and idempotent hints', () => {
+    it('GIVEN provider_metrics tool WHEN registered THEN has readOnly and idempotent hints', () => {
       register();
 
-      const metadata = getMetadata(server, 'usage_summary');
+      const metadata = getMetadata(server, 'provider_metrics');
 
       expect(metadata.annotations).toStrictEqual({ readOnlyHint: true, idempotentHint: true });
     });
 
-    it('GIVEN usage_summary handler WHEN invoked THEN delegates to handleUsageSummary', () => {
-      vi.mocked(handleUsageSummary).mockReturnValue(SUCCESS_RESULT);
+    it('GIVEN provider_metrics handler WHEN invoked THEN delegates to handleProviderMetrics', () => {
+      vi.mocked(handleProviderMetrics).mockReturnValue(SUCCESS_RESULT);
 
       register();
 
-      const handler = getHandler(server, 'usage_summary');
+      const handler = getHandler(server, 'provider_metrics');
       const result = handler();
 
-      expect(handleUsageSummary).toHaveBeenCalledOnce();
+      expect(handleProviderMetrics).toHaveBeenCalledOnce();
       expect(result).toBe(SUCCESS_RESULT);
     });
   });
