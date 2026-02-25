@@ -10,14 +10,14 @@ import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
 import { buildAskAllToolDefinition } from '../../ask-all/domain-logic/tool.builder';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
 import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
-import { handleHelp } from '../../simple-tools/domain-logic/help.handler';
-import { handleListProviders } from '../../simple-tools/domain-logic/meta.handler';
-import { handlePing } from '../../simple-tools/domain-logic/ping.handler';
 import {
   buildHelpToolDefinition,
   buildListProvidersDefinition,
   buildPingToolDefinition,
-} from '../../simple-tools/domain-logic/tool.builder';
+  handleHelp,
+  handleListProviders,
+  handlePing,
+} from '../../simple-tools';
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, config } = provider;

@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePing } from './ping.handler';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from "../../shared/common";
-import type { ResolvedProviderEntry } from "../../shared/common";
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
+import type { ResolvedProviderEntry } from '../../shared/common';
+import { executeCommand } from '../../shared/domain-logic/command-executor';
+import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
 import {
   SIMPLE_TOOLS_PING_VERSION_RESULT_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
   SIMPLE_TOOLS_TEST_ENV_STUB,
   createSimpleToolsContext,
-} from "../common/stubs";
+} from '../common/stubs';
 
 vi.mock('../../shared/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB)),
@@ -20,9 +22,6 @@ vi.mock('../../shared/utils/platform.util', () => ({
 }));
 
 // Real toMcpError — no mock (validates real error mapping)
-
-const { executeCommand } = await import('../../shared/domain-logic/command-executor');
-const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
 
 describe('handlePing', () => {
   beforeEach(() => {
