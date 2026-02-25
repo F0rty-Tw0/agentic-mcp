@@ -1,4 +1,4 @@
-import type { ExecuteCommandOptions, ExecutionResult, ResolvedProviderEntry } from "../common";
+import type { ExecuteCommandOptions, ExecutionResult, ResolvedProviderEntry } from '../common';
 
 const MODEL_ERROR_PATTERN = /model[_ ]not[_ ]found|model.*does not exist|unknown model|invalid model|no such model/i;
 
@@ -9,7 +9,7 @@ const QUOTED_MODEL_PATTERN = /(?:model|invalid model|unknown model)\s+["']([^"']
 
 const MODELS_COMMAND_TIMEOUT_MS = 10_000;
 
-export type ExecuteCommandFn = (options: ExecuteCommandOptions) => Promise<ExecutionResult>;
+type ExecuteCommandFn = (options: ExecuteCommandOptions) => Promise<ExecutionResult>;
 
 export const detectModelError = (stdout: string, stderr: string): boolean => {
   const modelErrorDetected = MODEL_ERROR_PATTERN.test(stdout) || MODEL_ERROR_PATTERN.test(stderr);

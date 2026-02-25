@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandFailure, buildNativeSessionArgs, resolveModelHint } from './ask-handler';
-import type { ProviderConfig, ResolvedProviderEntry } from "../../shared/common";
-import { CommandExecutionError } from "../../shared/common/errors";
-import type { AskToolArgs } from "../common";
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
+import { CommandExecutionError } from '../../shared/common/errors';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => ({
   detectModelError: vi.fn(),
@@ -183,17 +184,16 @@ describe('resolveModelHint', () => {
 
     const context = buildContext();
     const args: AskToolArgs = { prompt: 'hello' };
-    const env = { PATH: '/usr/bin' };
 
     const result = await resolveModelHint({
       context,
       args,
       stdout: 'error output',
       stderr: 'model not found',
-      env,
+      env: TEST_MINIMAL_ENV_STUB,
     });
 
-    expect(mocks.fetchAvailableModels).toHaveBeenCalledWith(context, env, mocks.executeCommand);
+    expect(mocks.fetchAvailableModels).toHaveBeenCalledWith(context, TEST_MINIMAL_ENV_STUB, mocks.executeCommand);
     expect(mocks.extractAttemptedModel).toHaveBeenCalledWith('error output', 'model not found');
     expect(mocks.buildModelHint).toHaveBeenCalledWith('test-provider', 'bad-model', ['model-a', 'model-b'], false);
     expect(result).toBe('. Available models: model-a, model-b');
@@ -226,7 +226,6 @@ describe('buildCommandFailure', () => {
 
     const context = buildContext();
     const args: AskToolArgs = { prompt: 'hello' };
-    const env = { PATH: '/usr/bin' };
     const result = {
       stdout: '',
       stderr: 'something went wrong',
@@ -235,7 +234,7 @@ describe('buildCommandFailure', () => {
       timedOut: false,
     };
 
-    const error = await buildCommandFailure(context, args, env, result);
+    const error = await buildCommandFailure(context, args, TEST_MINIMAL_ENV_STUB, result);
 
     expect(error).toBeInstanceOf(CommandExecutionError);
     expect(error.message).toBe('test-provider command failed');

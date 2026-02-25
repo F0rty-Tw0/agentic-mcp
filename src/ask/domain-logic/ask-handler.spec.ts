@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandOptions, buildExecutionEnv, validateAndResolveArgs } from './ask-handler';
-import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from "../../shared/common";
-import { ValidationError } from "../../shared/common/errors";
-import type { AskToolArgs } from "../common";
+import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
+import { ValidationError } from '../../shared/common/errors';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => ({
   validatePromptSize: vi.fn(),
@@ -172,7 +173,7 @@ describe('buildCommandOptions', () => {
     const resolved: AskToolArgs = { prompt: 'hello', working_directory: '/work/dir' };
     const cliArgs = ['--flag', 'value'];
     const stdinInput = 'stdin data';
-    const env = { PATH: '/usr/bin' };
+    const env = TEST_MINIMAL_ENV_STUB;
     const onStdoutChunk = vi.fn();
     const onStderrChunk = vi.fn();
     const controller = new AbortController();
@@ -192,7 +193,7 @@ describe('buildCommandOptions', () => {
 
     expect(result.binaryPath).toBe('/usr/bin/test');
     expect(result.args).toStrictEqual(['--flag', 'value']);
-    expect(result.env).toStrictEqual({ PATH: '/usr/bin' });
+    expect(result.env).toStrictEqual(TEST_MINIMAL_ENV_STUB);
     expect(result.timeoutMs).toBe(30_000);
     expect(result.stdin).toBe('stdin data');
     expect(result.cwd).toBe('/work/dir');
@@ -205,7 +206,7 @@ describe('buildCommandOptions', () => {
   it('GIVEN input without optional fields WHEN called THEN returns options with undefined optional fields', () => {
     const context = buildContext();
     const resolved: AskToolArgs = { prompt: 'hello' };
-    const env = { PATH: '/usr/bin' };
+    const env = TEST_MINIMAL_ENV_STUB;
 
     const result: ExecuteCommandOptions = buildCommandOptions({
       context,

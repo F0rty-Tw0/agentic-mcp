@@ -1,13 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import { resetBackgroundJobStoreForTests } from "../../background-jobs/data-access";
-import {
-  ASK_DEFAULT_ARG_ARRAY_STUB,
-  ASK_SUCCESS_EXECUTION_RESULT_STUB,
-  ASK_TEST_ENV_STUB,
-  createAskContext,
-} from "../common/stubs";
+import { resetBackgroundJobStoreForTests } from '../../background-jobs/data-access';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_SUCCESS_EXECUTION_RESULT_STUB, createAskContext } from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
@@ -22,7 +18,7 @@ vi.mock('../../shared/domain-logic/command-executor', () => ({
 }));
 
 vi.mock('../../shared/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
+  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 

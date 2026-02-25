@@ -2,14 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
 import type { ProgressContext } from '../../shared/common';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
 import type { AskStreamEvent, AskToolArgs } from '../common';
-import {
-  ASK_DEFAULT_ARG_ARRAY_STUB,
-  ASK_SUCCESS_EXECUTION_RESULT_STUB,
-  ASK_TEST_ENV_STUB,
-  createAskContext,
-} from '../common/stubs';
+import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_SUCCESS_EXECUTION_RESULT_STUB, createAskContext } from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
@@ -24,7 +20,7 @@ vi.mock('../../shared/domain-logic/command-executor', () => ({
 }));
 
 vi.mock('../../shared/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
+  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 

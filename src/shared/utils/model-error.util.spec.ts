@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildModelHint, detectModelError, extractAttemptedModel, fetchAvailableModels } from './model-error.util';
-import type { ExecuteCommandOptions, ExecutionResult, ProviderConfig, ResolvedProviderEntry } from "../common";
+import type { ExecuteCommandOptions, ExecutionResult, ProviderConfig, ResolvedProviderEntry } from '../common';
 import {
   SUCCESS_EXECUTION_RESULT_STUB,
+  TEST_MINIMAL_ENV_STUB,
   TEST_PROVIDER_CONFIG_STUB,
   TEST_RESOLVED_PROVIDER_ENTRY_STUB,
-} from "../common/stubs";
-
-const TEST_ENV_STUB: Readonly<Record<string, string>> = { PATH: '/usr/bin' };
+} from '../common/stubs';
 
 describe('detectModelError', () => {
   it('GIVEN stdout with model-not-found text WHEN detecting THEN returns true', () => {
@@ -132,7 +131,7 @@ describe('fetchAvailableModels', () => {
     return context;
   };
 
-  const mockEnv: Readonly<Record<string, string>> = TEST_ENV_STUB;
+  const mockEnv: Readonly<Record<string, string>> = TEST_MINIMAL_ENV_STUB;
   let mockExecuteCommand: ReturnType<typeof vi.fn<(options: ExecuteCommandOptions) => Promise<ExecutionResult>>>;
 
   beforeEach(() => {

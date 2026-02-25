@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CommandExecutionError } from "../common/errors";
+import { CommandExecutionError } from '../common/errors';
+import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils/controllable-child';
 import type { ControllableChild } from '../common/test-utils/controllable-child';
 
@@ -57,7 +58,7 @@ const makeAutoClosingChild = (options: AutoClosingOptions = {}): Record<string, 
 const baseOptions = {
   binaryPath: '/usr/bin/test-cli',
   args: ['run'],
-  env: { PATH: '/usr/bin' },
+  env: TEST_MINIMAL_ENV_STUB,
   timeoutMs: 5_000,
 };
 
@@ -96,7 +97,7 @@ describe('executeCommand', () => {
       await executeCommand({ ...baseOptions, cwd: '/workspace', bypassSemaphore: true });
 
       expect(crossSpawn).toHaveBeenCalledWith('/usr/bin/test-cli', ['run'], {
-        env: { PATH: '/usr/bin' },
+        env: TEST_MINIMAL_ENV_STUB,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: '/workspace',
       });

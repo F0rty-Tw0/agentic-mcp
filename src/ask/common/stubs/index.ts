@@ -1,7 +1,5 @@
 export { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_STDIN_ARG_ARRAY_STUB } from './ask-arg-array.stub';
 
-export { ASK_TEST_ENV_STUB } from './ask-env.stub';
-
 export {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,

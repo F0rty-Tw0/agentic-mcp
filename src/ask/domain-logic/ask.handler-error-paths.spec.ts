@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
-  ASK_TEST_ENV_STUB,
   createAskContext,
-} from "../common/stubs";
+} from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
@@ -18,7 +18,7 @@ vi.mock('../../shared/domain-logic/command-executor', () => ({
 }));
 
 vi.mock('../../shared/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => ASK_TEST_ENV_STUB),
+  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
@@ -42,7 +42,7 @@ describe('handleAsk', () => {
 
     vi.mocked(executeCommand).mockResolvedValue(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB);
 
-    vi.mocked(buildMinimalEnv).mockReturnValue(ASK_TEST_ENV_STUB);
+    vi.mocked(buildMinimalEnv).mockReturnValue(TEST_MINIMAL_ENV_STUB);
     vi.mocked(stripAnsi).mockImplementation((input: string) => input);
   });
 

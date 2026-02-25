@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils/controllable-child';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
@@ -11,7 +12,7 @@ const { executeCommand } = await import('./command-executor');
 const baseOptions = {
   binaryPath: '/usr/bin/test-cli',
   args: ['run'],
-  env: { PATH: '/usr/bin' },
+  env: TEST_MINIMAL_ENV_STUB,
   timeoutMs: 5_000,
   bypassSemaphore: false,
 };

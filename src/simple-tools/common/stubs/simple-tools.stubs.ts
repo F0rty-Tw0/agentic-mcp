@@ -1,7 +1,5 @@
 import type { ExecutionResult, ProviderConfig, ResolvedProviderEntry } from '../../../shared/common';
 
-export const SIMPLE_TOOLS_TEST_ENV_STUB: Readonly<Record<string, string>> = { PATH: '/usr/bin' };
-
 export const SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB: ExecutionResult = {
   stdout: '',
   stderr: '',

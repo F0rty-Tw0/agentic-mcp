@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ProgressContext } from "../common";
+import type { ProgressContext } from '../common';
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 
 type ProgressToken = string | number;
 
-const resolveProgressToken = (extra?: ProgressContext): ProgressToken | null => {
-  if (!extra?.sendNotification) return null;
+const resolveProgressToken = (extra?: ProgressContext): ProgressToken | undefined => {
+  if (!extra?.sendNotification) return;
 
   // eslint-disable-next-line no-underscore-dangle
   const providedToken = extra._meta?.progressToken;
@@ -43,7 +43,7 @@ const sendHeartbeat = (
 export const startHeartbeat = (extra?: ProgressContext): (() => void) => {
   const progressToken = resolveProgressToken(extra);
 
-  if (progressToken == null || !extra?.sendNotification) {
+  if (progressToken === undefined || !extra?.sendNotification) {
     return () => {
       /* empty */
     };
