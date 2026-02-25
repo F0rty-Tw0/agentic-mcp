@@ -1,5 +1,5 @@
-import type { CommandDef, FlagValue, ProviderConfig } from "../../shared/common";
-import { ValidationError } from "../../shared/common/errors";
+import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/common';
+import { ValidationError } from '../../shared/common/errors';
 
 export const getAskCommand = (config: ProviderConfig): CommandDef => {
   const { ask } = config.commands;
@@ -9,6 +9,6 @@ export const getAskCommand = (config: ProviderConfig): CommandDef => {
   return ask;
 };
 
-export const getFlag = (cmd: CommandDef, key: string): FlagValue | undefined => {
+export const getFlag = (cmd: CommandDef, key: string): FlagValue => {
   return cmd.flags?.[key];
 };

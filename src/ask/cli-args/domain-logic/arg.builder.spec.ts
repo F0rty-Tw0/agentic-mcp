@@ -1,37 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder';
-import type { FlagValue, ProviderConfig } from "../../../shared/common";
-import { ValidationError } from "../../../shared/common/errors";
-import { ASK_PROVIDER_CONFIG_STUB } from "../../common/stubs";
-
-type AskCommandConfig = Readonly<{
-  method: ProviderConfig['input']['method'];
-  args: string[];
-  trailingArgs: string[] | undefined;
-  flags: Record<string, FlagValue>;
-}>;
-
-const DEFAULT_CONFIG_OPTIONS: AskCommandConfig = {
-  method: 'positional',
-  args: ['run'],
-  trailingArgs: undefined,
-  flags: {},
-};
-
-const createConfig = (overrides: Partial<AskCommandConfig> = {}): ProviderConfig => {
-  const { method, args, trailingArgs, flags } = { ...DEFAULT_CONFIG_OPTIONS, ...overrides };
-
-  const providerConfig: ProviderConfig = {
-    ...ASK_PROVIDER_CONFIG_STUB,
-    commands: {
-      ask: { args, trailingArgs, flags },
-    },
-    input: { method },
-  };
-
-  return providerConfig;
-};
+import { ValidationError } from '../../../shared/common/errors';
+import { createCliArgsConfig as createConfig } from '../common/stubs';
 
 describe('buildArgArray', () => {
   describe('prompt delivery', () => {
@@ -297,7 +268,7 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN no flags object in command WHEN building args with values THEN values are skipped', () => {
-      const config = createConfig({ flags: undefined });
+      const config = createConfig();
 
       const result = buildArgArray(config, { prompt: 'test', model: 'gpt-4', auto_mode: true });
 

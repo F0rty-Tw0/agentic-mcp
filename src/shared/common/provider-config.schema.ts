@@ -18,7 +18,7 @@ const leveledFlagSchema = z.object({
   values: z.array(z.string()).min(1),
 });
 
-const flagValueSchema = z.union([z.string(), z.array(z.string()).min(1), leveledFlagSchema, z.null()]);
+const flagValueSchema = z.union([z.string(), z.array(z.string()).min(1), leveledFlagSchema, z.null(), z.undefined()]);
 
 const commandDefSchema = z.object({
   args: z.array(z.string()).optional(),

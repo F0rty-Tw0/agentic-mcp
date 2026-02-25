@@ -9,7 +9,7 @@ import {
   createAskContext,
 } from "../common/stubs";
 
-vi.mock('../args/domain-logic/arg.builder', () => ({
+vi.mock('../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
@@ -29,7 +29,7 @@ vi.mock('../../shared/utils/model-error.util', () => ({
   buildModelHint: vi.fn(() => ''),
 }));
 
-const { buildArgArray } = await import('../args/domain-logic/arg.builder');
+const { buildArgArray } = await import('../cli-args/domain-logic/arg.builder');
 const { executeCommand } = await import('../../shared/domain-logic/command-executor');
 const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
 const { detectModelError, buildModelHint } = await import('../../shared/utils/model-error.util');

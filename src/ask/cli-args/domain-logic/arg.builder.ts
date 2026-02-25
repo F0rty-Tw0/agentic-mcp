@@ -1,5 +1,5 @@
-import type { CommandDef, FlagValue, ProviderConfig } from "../../../shared/common";
-import { ValidationError } from "../../../shared/common/errors";
+import type { CommandDef, FlagValue, ProviderConfig } from '../../../shared/common';
+import { ValidationError } from '../../../shared/common/errors';
 import {
   FLAG_AUTO_MODE,
   FLAG_EFFORT,
@@ -34,18 +34,13 @@ const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] =
   return [flagValue.flag, argValue];
 };
 
-const appendValueFlag = (
-  cliArgs: string[],
-  askCmd: CommandDef,
-  flagKey: string,
-  value: string | boolean | undefined
-): void => {
+const appendValueFlag = (cliArgs: string[], askCmd: CommandDef, flagKey: string, value?: string | boolean): void => {
   // Falsy check is intentional: undefined = not provided, false = don't enable, "" = empty value
   if (!value) return;
 
   const flag = getFlag(askCmd, flagKey);
 
-  if (flag == null) return;
+  if (!flag) return;
 
   const argValue = typeof value === 'string' ? value : undefined;
   const flagArgs = resolveFlagToArgs(flag, argValue);
@@ -58,7 +53,7 @@ const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: readonly 
 
   const flag = getFlag(askCmd, FLAG_FILE);
 
-  if (flag == null) return;
+  if (!flag) return;
 
   if (typeof flag !== 'string') {
     throw new ValidationError(
@@ -71,7 +66,7 @@ const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: readonly 
   }
 };
 
-const appendSandboxFlag = (cliArgs: string[], askCmd: CommandDef, sandbox: string | boolean | undefined): void => {
+const appendSandboxFlag = (cliArgs: string[], askCmd: CommandDef, sandbox?: string | boolean): void => {
   if (!sandbox) return;
 
   const flag = getFlag(askCmd, FLAG_SANDBOX);
