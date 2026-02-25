@@ -1,9 +1,7 @@
-export { TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB } from './tool-registry-call-tool-result.stub';
-
-export { TOOL_REGISTRY_PROVIDER_CONFIG_STUB } from './tool-registry-provider-config.stub';
-
-export { TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB } from './tool-registry-resolved-provider-entry.stub';
-
-export { TOOL_REGISTRY_RESOLVED_PROVIDER_STUB } from './tool-registry-resolved-provider.stub';
-
-export { TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB } from './tool-registry-provider-metrics-tool-definition.stub';
+export {
+  TOOL_REGISTRY_PROVIDER_CONFIG_STUB,
+  TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB,
+  TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
+  TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
+  TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
+} from './tool-registry.stub';
