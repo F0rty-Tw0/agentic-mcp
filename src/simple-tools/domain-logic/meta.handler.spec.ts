@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleListProviders } from './meta.handler';
-import type { ResolvedProvider } from '../../shared/common';
+import type { McpPlainTextContent, ResolvedProvider } from '../../shared/common';
 
 const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProvider => ({
   name: 'test-provider',
@@ -19,7 +19,7 @@ describe('handleListProviders', () => {
 
       const result = handleListProviders(providers);
 
-      expect((result.content[0] as { text: string }).text).toContain('[available]');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('[available]');
     });
 
     it('GIVEN enabled but unavailable provider WHEN listing THEN shows "not found" status', () => {
@@ -27,7 +27,7 @@ describe('handleListProviders', () => {
 
       const result = handleListProviders(providers);
 
-      expect((result.content[0] as { text: string }).text).toContain('[not found]');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('[not found]');
     });
 
     it('GIVEN disabled provider WHEN listing THEN shows "disabled" status', () => {
@@ -35,7 +35,7 @@ describe('handleListProviders', () => {
 
       const result = handleListProviders(providers);
 
-      expect((result.content[0] as { text: string }).text).toContain('[disabled]');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('[disabled]');
     });
   });
 
@@ -64,7 +64,7 @@ describe('handleListProviders', () => {
 
       const result = handleListProviders(providers);
 
-      const text = (result.content[0] as { text: string }).text;
+      const text = (result.content[0] as McpPlainTextContent).text;
 
       expect(text).toBe(
         'Configured providers:\n' +

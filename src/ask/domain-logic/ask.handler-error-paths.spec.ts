@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
+import type { McpPlainTextContent } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import { executeCommand } from '../../shared/domain-logic/command-executor';
+import { buildModelHint, detectModelError } from '../../shared/utils/model-error.util';
+import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
+import { buildArgArray } from '../cli-args/domain-logic/arg.builder';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -28,11 +33,6 @@ vi.mock('../../shared/utils/model-error.util', () => ({
   fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
   buildModelHint: vi.fn(() => ''),
 }));
-
-const { buildArgArray } = await import('../cli-args/domain-logic/arg.builder');
-const { executeCommand } = await import('../../shared/domain-logic/command-executor');
-const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
-const { detectModelError, buildModelHint } = await import('../../shared/utils/model-error.util');
 
 describe('handleAsk', () => {
   beforeEach(() => {
@@ -63,7 +63,7 @@ describe('handleAsk', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0]?.type).toBe('text');
-      expect((result.content[0] as { text: string }).text).toContain('timed out');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('timed out');
     });
 
     it('GIVEN command killed by signal WHEN handling ask THEN returns isError response with signal info', async () => {
@@ -81,7 +81,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('SIGKILL');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('SIGKILL');
     });
 
     it('GIVEN non-zero exit code WHEN handling ask THEN returns isError response with exit code', async () => {
@@ -99,7 +99,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('Exit code: 1');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Exit code: 1');
     });
 
     it('GIVEN non-zero exit code with stderr WHEN handling ask THEN includes stderr in error response', async () => {
@@ -117,7 +117,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('fatal: unknown flag');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('fatal: unknown flag');
     });
   });
 
@@ -130,8 +130,8 @@ describe('handleAsk', () => {
 
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
-      expect((result.content[0] as { text: string }).text).toBe(shortOutput);
-      expect((result.content[0] as { text: string }).text).not.toContain('[output truncated');
+      expect((result.content[0] as McpPlainTextContent).text).toBe(shortOutput);
+      expect((result.content[0] as McpPlainTextContent).text).not.toContain('[output truncated');
     });
 
     it('GIVEN output exceeding MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN truncates output and appends marker with byte count', async () => {
@@ -142,7 +142,7 @@ describe('handleAsk', () => {
 
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
-      const text = (result.content[0] as { text: string }).text;
+      const text = (result.content[0] as McpPlainTextContent).text;
 
       expect(text).toContain('[output truncated —');
       expect(text).toContain('bytes total]');
@@ -169,7 +169,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt', model: 'bad-model' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('Model error: "bad-model" is not available');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Model error: "bad-model" is not available');
     });
 
     it('GIVEN exit 0 with model error in stdout WHEN handling ask THEN returns isError with model hint', async () => {
@@ -190,8 +190,8 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt', model: 'bad-model' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain(modelError);
-      expect((result.content[0] as { text: string }).text).toContain('Model error: "bad-model" is not available');
+      expect((result.content[0] as McpPlainTextContent).text).toContain(modelError);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Model error: "bad-model" is not available');
     });
   });
 
@@ -204,7 +204,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('spawn ENOENT');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('spawn ENOENT');
     });
 
     it('GIVEN buildArgArray throws WHEN handling ask THEN returns isError response', async () => {
@@ -217,7 +217,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('arg builder failed');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('arg builder failed');
     });
   });
 });

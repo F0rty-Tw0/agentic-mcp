@@ -13,11 +13,13 @@ import type { ProgressContext } from '../../shared/common';
 import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common';
 import type { AskStreamExecutionSummary, AskToolArgs } from '../common';
 
-export const createStreamNotifier = (input: {
+type CreateStreamNotifierInput = Readonly<{
   providerName: string;
   args: AskToolArgs;
   extra?: ProgressContext;
-}): StreamNotifier => {
+}>;
+
+export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNotifier => {
   const progressToken = resolveProgressToken(input.extra);
 
   if (!isStreamEnabled({ args: input.args, progressToken, extra: input.extra }) || !progressToken || !input.extra) {

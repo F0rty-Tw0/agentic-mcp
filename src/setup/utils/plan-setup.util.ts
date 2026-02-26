@@ -2,25 +2,7 @@ import path from 'node:path';
 
 import { buildMergedClientConfig } from './merge-client-config.util';
 import { CLIENT_CONFIG_PATHS } from '../common';
-import type {
-  McpServerEntry,
-  SetupBackupPolicy,
-  SetupMergeStatus,
-  SetupMode,
-  SetupPlan,
-  SupportedClient,
-} from '../common';
-
-type BuildSetupPlanInput = Readonly<{
-  client: SupportedClient;
-  homeDirectory: string;
-  pathOverride?: string;
-  mode: SetupMode;
-  dryRun: boolean;
-  existingConfigText?: string;
-  agenticServerEntry: McpServerEntry;
-  backup: SetupBackupPolicy;
-}>;
+import type { McpServerEntry, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
 
 type SetupConfigObject = Readonly<Record<string, unknown>>;
 
@@ -34,7 +16,7 @@ const buildOverwriteConfig = (agenticServerEntry: McpServerEntry): SetupConfigOb
   return overwriteConfig;
 };
 
-const resolveTargetPath = (input: BuildSetupPlanInput): string | undefined => {
+const resolveTargetPath = (input: SetupPlanInput): string | undefined => {
   if (input.pathOverride != null) return input.pathOverride;
 
   const clientPath = CLIENT_CONFIG_PATHS[input.client];
@@ -44,7 +26,7 @@ const resolveTargetPath = (input: BuildSetupPlanInput): string | undefined => {
   return path.join(input.homeDirectory, clientPath);
 };
 
-export const buildSetupPlan = (input: BuildSetupPlanInput): SetupPlan => {
+export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
   const targetPath = resolveTargetPath(input);
 
   let writeIntent: 'skip' | 'manual' | 'write';

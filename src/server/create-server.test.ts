@@ -13,6 +13,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer } from './create-server';
+import type { McpTextContent } from '../shared/common';
 
 let server: McpServer;
 let client: Client;
@@ -79,7 +80,7 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
 
   for (const tool of pingTools) {
     const result = (await client.callTool({ name: tool.name })) as CallToolResult;
-    const text = (result.content[0] as { type: 'text'; text: string }).text;
+    const text = (result.content[0] as McpTextContent).text;
 
     if (text.includes('available')) {
       return tool.name.replace('ping_', '');
@@ -101,7 +102,7 @@ describe('integration: ping', () => {
     expect(result.content).toHaveLength(1);
     expect(result.content[0]?.type).toBe('text');
 
-    const text = (result.content[0] as { type: 'text'; text: string }).text;
+    const text = (result.content[0] as McpTextContent).text;
 
     expect(text).toContain(provider);
     expect(text).toContain('available');
@@ -120,7 +121,7 @@ describe('integration: help', () => {
     expect(result.content).toHaveLength(1);
     expect(result.content[0]?.type).toBe('text');
 
-    const text = (result.content[0] as { type: 'text'; text: string }).text;
+    const text = (result.content[0] as McpTextContent).text;
 
     expect(text.length).toBeGreaterThan(0);
   });
@@ -134,7 +135,7 @@ describe('integration: list_providers', () => {
     expect(result.content).toHaveLength(1);
     expect(result.content[0]?.type).toBe('text');
 
-    const text = (result.content[0] as { type: 'text'; text: string }).text;
+    const text = (result.content[0] as McpTextContent).text;
 
     // Should contain at least one provider from bundled config
     expect(text).toMatch(/claude|codex|copilot|gemini|opencode/);
@@ -143,7 +144,7 @@ describe('integration: list_providers', () => {
   it('GIVEN a running server WHEN calling list_providers THEN each provider shows a status label', async () => {
     const result = (await client.callTool({ name: 'list_providers' })) as CallToolResult;
 
-    const text = (result.content[0] as { type: 'text'; text: string }).text;
+    const text = (result.content[0] as McpTextContent).text;
 
     // Status labels from meta-handler: "available", "not found", or "disabled"
     expect(text).toMatch(/available|not found|disabled/);

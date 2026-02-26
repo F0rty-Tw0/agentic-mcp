@@ -1,10 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ProgressContext } from '../common';
+import type { ProgressContext, ProgressToken } from '../common';
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
-
-type ProgressToken = string | number;
 
 const resolveProgressToken = (extra?: ProgressContext): ProgressToken | undefined => {
   if (!extra?.sendNotification) return;

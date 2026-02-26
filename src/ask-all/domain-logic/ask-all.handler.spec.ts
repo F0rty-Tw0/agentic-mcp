@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAskAll } from './ask-all.handler';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
-import type { ResolvedProviderEntry } from '../../shared/common';
+import type { McpTextContent, ResolvedProviderEntry } from '../../shared/common';
 import type { AskAllResult, AskAllToolArgs } from '../common';
 
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
@@ -26,7 +26,7 @@ const makeErrorResult = (text: string): CallToolResult => ({
 });
 
 const parseResult = (result: CallToolResult): AskAllResult =>
-  JSON.parse((result.content[0] as { type: 'text'; text: string }).text) as AskAllResult;
+  JSON.parse((result.content[0] as McpTextContent).text) as AskAllResult;
 
 describe('handleAskAll', () => {
   let claude: ResolvedProviderEntry;
@@ -78,7 +78,7 @@ describe('handleAskAll', () => {
       const result = await handleAskAll([claude, codex], args);
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { type: 'text'; text: string }).text).toContain('No matching providers');
+      expect((result.content[0] as McpTextContent).text).toContain('No matching providers');
     });
 
     it('GIVEN empty resolved providers WHEN called THEN returns isError result', async () => {

@@ -1,6 +1,6 @@
 export { createStreamNotifier, buildExecutionSummary } from './domain-logic/notifier.util';
 
-export type { StreamNotifier, ProgressToken, AskStreamEventPayload } from './domain-logic/notifier.helpers';
+export type { StreamNotifier, AskStreamEventPayload } from './domain-logic/notifier.helpers';
 
 export type { NotifierState } from './domain-logic/notifier-runtime.util';
 

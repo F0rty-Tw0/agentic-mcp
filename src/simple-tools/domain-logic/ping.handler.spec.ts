@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePing } from './ping.handler';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
-import type { ResolvedProviderEntry } from '../../shared/common';
+import type { McpPlainTextContent, ResolvedProviderEntry } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
@@ -275,7 +275,7 @@ describe('handlePing', () => {
       const result = await handlePing(context);
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('spawn ENOENT');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('spawn ENOENT');
     });
 
     it('GIVEN buildMinimalEnv throws WHEN handling ping THEN returns isError response', async () => {
@@ -288,7 +288,7 @@ describe('handlePing', () => {
       const result = await handlePing(context);
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('env construction failed');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('env construction failed');
     });
   });
 });

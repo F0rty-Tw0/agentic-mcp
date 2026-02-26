@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAsk } from './ask.handler';
 import { resetBackgroundJobStoreForTests } from '../../background-jobs/data-access';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_SUCCESS_EXECUTION_RESULT_STUB, createAskContext } from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
@@ -21,8 +22,6 @@ vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
-
-const { executeCommand } = await import('../../shared/domain-logic/command-executor');
 
 type AsyncJobPayload = Readonly<Record<string, string>>;
 

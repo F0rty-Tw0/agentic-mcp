@@ -1,8 +1,6 @@
-import type { ProgressContext } from '../../../shared/common';
+import type { ProgressContext, ProgressToken } from '../../../shared/common';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 import type { AskStreamChannel, AskStreamDiagnostics, AskStreamEvent, AskStreamExecutionSummary } from '../common';
-
-export type ProgressToken = string | number;
 
 export type StreamNotifier = Readonly<{
   onStdoutChunk: (chunk: string) => void;
@@ -36,6 +34,24 @@ type StreamEnabledInput = Readonly<{
   args: { stream_live?: boolean };
   progressToken?: ProgressToken;
   extra?: ProgressContext;
+}>;
+
+type BuildStreamDiagnosticsInput = Readonly<{
+  streamId: string;
+  sequence: number;
+  emittedChunks: number;
+  droppedChunks: number;
+  coalescedChunks: number;
+}>;
+
+type BuildExecutionSummaryInput = Readonly<{
+  exitCode: number | null;
+  signal: string | null;
+  timedOut: boolean;
+  truncated: boolean;
+  stdoutBytes: number;
+  stderrBytes: number;
+  executionTimeMs: number;
 }>;
 
 const noop = (): void => undefined;
@@ -87,13 +103,7 @@ export const splitChunkByBytes = (chunk: string): string[] => {
   return parts;
 };
 
-export const buildStreamDiagnostics = (input: {
-  streamId: string;
-  sequence: number;
-  emittedChunks: number;
-  droppedChunks: number;
-  coalescedChunks: number;
-}): AskStreamDiagnostics => {
+export const buildStreamDiagnostics = (input: BuildStreamDiagnosticsInput): AskStreamDiagnostics => {
   return {
     streamId: input.streamId,
     lastSequence: input.sequence - 1,
@@ -124,15 +134,7 @@ export const createNoopStreamNotifier = (): StreamNotifier => ({
   enabled: false,
 });
 
-export const buildExecutionSummary = (result: {
-  exitCode: number | null;
-  signal: string | null;
-  timedOut: boolean;
-  truncated: boolean;
-  stdoutBytes: number;
-  stderrBytes: number;
-  executionTimeMs: number;
-}): AskStreamExecutionSummary => ({
+export const buildExecutionSummary = (result: BuildExecutionSummaryInput): AskStreamExecutionSummary => ({
   exitCode: result.exitCode,
   signal: result.signal,
   timedOut: result.timedOut,

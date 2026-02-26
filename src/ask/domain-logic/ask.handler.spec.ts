@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAsk } from './ask.handler';
 import { SESSION_STORE } from '../../session/session-store';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
+import type { McpPlainTextContent, McpTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { getActiveRequest } from '../../shared/domain-logic/request-registry';
+import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
+import { buildArgArray } from '../cli-args/domain-logic/arg.builder';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -29,10 +32,6 @@ vi.mock('../../shared/utils/platform.util', () => ({
 
 // Real validation — no mock (validates real behaviour)
 // Real toMcpError — no mock (validates real error mapping)
-
-const { buildArgArray } = await import('../cli-args/domain-logic/arg.builder');
-const { executeCommand } = await import('../../shared/domain-logic/command-executor');
-const { buildMinimalEnv, stripAnsi } = await import('../../shared/utils/platform.util');
 
 const API_KEY = 'API_KEY';
 const MCP_TOOL_TIMEOUT = 'MCP_TOOL_TIMEOUT';
@@ -232,7 +231,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, {});
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('Prompt is required');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Prompt is required');
     });
 
     it('GIVEN empty prompt WHEN handling ask THEN returns isError response', async () => {
@@ -249,7 +248,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test', model: '../../etc/passwd' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('Invalid model identifier');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Invalid model identifier');
     });
 
     it('GIVEN invalid session_id WHEN handling ask THEN returns isError response', async () => {
@@ -258,7 +257,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test', session_id: '<script>alert(1)</script>' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('Invalid session ID');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Invalid session ID');
     });
 
     it('GIVEN files without working_directory WHEN handling ask THEN returns isError response', async () => {
@@ -267,7 +266,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test', files: ['file.txt'] });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('working_directory is required');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('working_directory is required');
     });
   });
 
@@ -281,7 +280,7 @@ describe('handleAsk', () => {
 
       const result = await handleAsk(context, { prompt: 'test prompt', session_id: sessionId });
       const resolvedArgs = vi.mocked(buildArgArray).mock.calls[0]?.[1] as { prompt: string };
-      const sessionMetadataContent = result.content[2] as { type: 'text'; text: string };
+      const sessionMetadataContent = result.content[2] as McpTextContent;
       const sessionMetadataText = sessionMetadataContent.text;
 
       expect(sessionMetadataContent.type).toBe('text');
@@ -299,7 +298,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt', session_id: 'ask-session-locked' });
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('session in use');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('session in use');
 
       SESSION_STORE.releaseLock(context.name, 'ask-session-locked');
     });

@@ -82,3 +82,7 @@ export const getProviderMetrics = (): ProviderMetricsSummary => {
 
   return metricsSummary;
 };
+
+export const resetProviderMetricsStoreForTests = (): void => {
+  callsByProvider.clear();
+};

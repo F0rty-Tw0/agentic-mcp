@@ -42,3 +42,5 @@ export { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS } from '../../backgro
 export { isLeveledFlag } from './tool-args.types';
 
 export type { ProviderAttribution } from './attribution.types';
+
+export type { ProgressNotification, ProgressNotificationParams } from './progress-notification.type';

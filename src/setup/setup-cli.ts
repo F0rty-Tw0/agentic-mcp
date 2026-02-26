@@ -9,9 +9,8 @@ import type {
   DetectedProvider,
   McpServerEntry,
   SetupApplyResult,
-  SetupBackupPolicy,
-  SetupMode,
   SetupPlan,
+  SetupPlanInput,
   SupportedClient,
 } from './common';
 import { detectInstalledProviders } from './domain-logic/detect-providers';
@@ -32,16 +31,7 @@ type SetupCliDependencies = Readonly<{
     client: SupportedClient,
     detectedProviders: readonly DetectedProvider[]
   ) => McpServerEntry;
-  buildSetupPlan: (input: {
-    client: SupportedClient;
-    homeDirectory: string;
-    pathOverride?: string;
-    mode: SetupMode;
-    dryRun: boolean;
-    existingConfigText?: string;
-    agenticServerEntry: McpServerEntry;
-    backup: SetupBackupPolicy;
-  }) => SetupPlan;
+  buildSetupPlan: (input: SetupPlanInput) => SetupPlan;
   applySetupPlan: (plan: SetupPlan) => Promise<SetupApplyResult>;
   homeDirectory: string;
   stdoutWrite: (text: string) => void;

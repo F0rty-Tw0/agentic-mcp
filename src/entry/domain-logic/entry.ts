@@ -3,6 +3,7 @@ import process from 'node:process';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { createServer } from '../../server/create-server';
+import { runSetup } from '../../setup/setup-cli';
 import { APP_VERSION } from '../../shared/common';
 import { HELP_TEXT } from '../common';
 import { parseConfigPath } from '../utils';
@@ -25,8 +26,6 @@ export const entry = async (): Promise<void> => {
   }
 
   if (args[0] === 'setup') {
-    const { runSetup } = await import('../../setup/setup-cli');
-
     await runSetup(args.slice(1));
 
     return;

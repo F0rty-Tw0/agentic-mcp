@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { SetupApplyResult, SetupPlan } from './common';
+import type { DetectedProvider, McpServerEntry, SetupApplyResult, SetupPlan } from './common';
 import { runSetup } from './setup-cli';
+
+const TEST_SERVER_ENTRY: McpServerEntry = {
+  command: 'npx',
+  args: ['-y', 'agentic-mcp'],
+};
 
 const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
   const plan: SetupPlan = {
@@ -31,6 +36,23 @@ const createApplyResult = (overrides: Partial<SetupApplyResult> = {}): SetupAppl
   return result;
 };
 
+const createDependencies = (overrides: Record<string, unknown> = {}): Record<string, unknown> => {
+  const defaults = {
+    detectInstalledProviders: vi.fn().mockResolvedValue([]),
+    generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
+    buildSetupPlan: vi.fn(() => createPlan()),
+    applySetupPlan: vi.fn().mockResolvedValue(createApplyResult()),
+    homeDirectory: '/home/dev',
+    stdoutWrite: vi.fn(),
+    stderrWrite: vi.fn(),
+    isInteractive: false,
+  };
+
+  const result: Record<string, unknown> = { ...defaults, ...overrides };
+
+  return result;
+};
+
 describe('runSetup', () => {
   it('GIVEN CLI flags WHEN running setup THEN passes parsed options to plan builder', async () => {
     const buildSetupPlan = vi.fn(() => createPlan());
@@ -38,19 +60,7 @@ describe('runSetup', () => {
 
     await runSetup(
       ['--client', 'cursor', '--mode', 'overwrite', '--path', '/tmp/custom.json', '--backup', 'always', '--yes'],
-      {
-        detectInstalledProviders: vi.fn().mockResolvedValue([]),
-        generateClientConfigEntry: vi.fn(() => ({
-          command: 'npx',
-          args: ['-y', 'agentic-mcp'],
-        })),
-        buildSetupPlan,
-        applySetupPlan,
-        homeDirectory: '/home/dev',
-        stdoutWrite: vi.fn(),
-        stderrWrite: vi.fn(),
-        isInteractive: false,
-      }
+      createDependencies({ buildSetupPlan, applySetupPlan })
     );
 
     expect(buildSetupPlan).toHaveBeenCalledWith(
@@ -67,25 +77,14 @@ describe('runSetup', () => {
   it('GIVEN --output json WHEN running setup THEN prints JSON contract', async () => {
     const stdoutWrite = vi.fn<(message: string) => void>();
 
-    await runSetup(['--output', 'json', '--dry-run'], {
-      detectInstalledProviders: vi.fn().mockResolvedValue([]),
-      generateClientConfigEntry: vi.fn(() => ({
-        command: 'npx',
-        args: ['-y', 'agentic-mcp'],
-      })),
-      buildSetupPlan: vi.fn(() =>
-        createPlan({
-          dryRun: true,
-          writeIntent: 'skip',
-          mergeStatusPreview: 'created',
-        })
-      ),
-      applySetupPlan: vi.fn().mockResolvedValue(createApplyResult({ status: 'skipped', path: undefined })),
-      homeDirectory: '/home/dev',
-      stdoutWrite,
-      stderrWrite: vi.fn(),
-      isInteractive: false,
-    });
+    await runSetup(
+      ['--output', 'json', '--dry-run'],
+      createDependencies({
+        buildSetupPlan: vi.fn(() => createPlan({ dryRun: true, writeIntent: 'skip', mergeStatusPreview: 'created' })),
+        applySetupPlan: vi.fn().mockResolvedValue(createApplyResult({ status: 'skipped', path: undefined })),
+        stdoutWrite,
+      })
+    );
 
     const output = stdoutWrite.mock.calls.map((call) => call[0]).join('');
     const parsed = JSON.parse(output) as { mode: string; dryRun: boolean; result: { status: string } };
@@ -99,19 +98,7 @@ describe('runSetup', () => {
     const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
     const stderrWrite = vi.fn<(message: string) => void>();
 
-    await runSetup([], {
-      detectInstalledProviders: vi.fn().mockResolvedValue([]),
-      generateClientConfigEntry: vi.fn(() => ({
-        command: 'npx',
-        args: ['-y', 'agentic-mcp'],
-      })),
-      buildSetupPlan: vi.fn(() => createPlan()),
-      applySetupPlan,
-      homeDirectory: '/home/dev',
-      stdoutWrite: vi.fn(),
-      stderrWrite,
-      isInteractive: false,
-    });
+    await runSetup([], createDependencies({ applySetupPlan, stderrWrite }));
 
     expect(applySetupPlan).not.toHaveBeenCalled();
     expect(stderrWrite).toHaveBeenCalledWith(expect.stringContaining('Use --yes to run non-interactive writes.'));
@@ -120,25 +107,149 @@ describe('runSetup', () => {
   it('GIVEN non-interactive dry-run without --yes WHEN running setup THEN dry-run still executes', async () => {
     const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult({ status: 'skipped', path: undefined }));
 
-    await runSetup(['--dry-run'], {
-      detectInstalledProviders: vi.fn().mockResolvedValue([]),
-      generateClientConfigEntry: vi.fn(() => ({
-        command: 'npx',
-        args: ['-y', 'agentic-mcp'],
-      })),
-      buildSetupPlan: vi.fn(() =>
-        createPlan({
-          dryRun: true,
-          writeIntent: 'skip',
-        })
-      ),
-      applySetupPlan,
-      homeDirectory: '/home/dev',
-      stdoutWrite: vi.fn(),
-      stderrWrite: vi.fn(),
-      isInteractive: false,
-    });
+    await runSetup(
+      ['--dry-run'],
+      createDependencies({
+        buildSetupPlan: vi.fn(() => createPlan({ dryRun: true, writeIntent: 'skip' })),
+        applySetupPlan,
+      })
+    );
 
+    expect(applySetupPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN interactive terminal without --yes WHEN user declines prompt THEN aborts without writing', async () => {
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+    const stdoutWrite = vi.fn<(message: string) => void>();
+    const promptConfirm = vi.fn().mockResolvedValue(false);
+    const targetPath = '/tmp/claude_desktop_config.json';
+
+    await runSetup(
+      [],
+      createDependencies({
+        buildSetupPlan: vi.fn(() => createPlan({ targetPath })),
+        applySetupPlan,
+        stdoutWrite,
+        isInteractive: true,
+        promptConfirm,
+      })
+    );
+
+    expect(promptConfirm).toHaveBeenCalledWith(`Write config to ${targetPath}? [y/N] `);
+    expect(applySetupPlan).not.toHaveBeenCalled();
+    expect(stdoutWrite).toHaveBeenCalledWith('Aborted. No files written.\n');
+  });
+
+  it('GIVEN interactive terminal without --yes WHEN user confirms prompt THEN applies the plan', async () => {
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+
+    await runSetup(
+      [],
+      createDependencies({
+        applySetupPlan,
+        isInteractive: true,
+        promptConfirm: vi.fn().mockResolvedValue(true),
+      })
+    );
+
+    expect(applySetupPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN interactive terminal with --yes WHEN write is needed THEN skips prompt and applies', async () => {
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+    const promptConfirm = vi.fn().mockResolvedValue(false);
+
+    await runSetup(['--yes'], createDependencies({ applySetupPlan, isInteractive: true, promptConfirm }));
+
+    expect(promptConfirm).not.toHaveBeenCalled();
+    expect(applySetupPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN default output WHEN running setup THEN prints human-readable output', async () => {
+    const stdoutWrite = vi.fn<(message: string) => void>();
+
+    await runSetup(['--yes'], createDependencies({ stdoutWrite }));
+
+    const output = stdoutWrite.mock.calls.map((call) => call[0]).join('');
+
+    expect(output).toContain('agentic-mcp setup');
+    expect(output).toContain('Result: written');
+  });
+
+  it('GIVEN generic client without --path WHEN running setup THEN existingConfigText is undefined', async () => {
+    const readConfigFile = vi.fn().mockResolvedValue('{}');
+    const buildSetupPlan = vi.fn(() => createPlan({ client: 'generic', writeIntent: 'manual' }));
+
+    await runSetup(
+      ['--client', 'generic', '--yes'],
+      createDependencies({
+        buildSetupPlan,
+        applySetupPlan: vi.fn().mockResolvedValue(createApplyResult({ status: 'manual', path: undefined })),
+        readConfigFile,
+      })
+    );
+
+    expect(readConfigFile).not.toHaveBeenCalled();
+    expect(buildSetupPlan).toHaveBeenCalledWith(expect.objectContaining({ existingConfigText: undefined }));
+  });
+
+  it('GIVEN detected providers WHEN running setup THEN passes them to generateClientConfigEntry', async () => {
+    const providers: readonly DetectedProvider[] = [
+      { name: 'claude', available: true, binaryPath: '/usr/bin/claude' },
+      { name: 'copilot', available: false },
+    ];
+    const generateClientConfigEntry = vi.fn(() => TEST_SERVER_ENTRY);
+
+    await runSetup(
+      ['--yes'],
+      createDependencies({
+        detectInstalledProviders: vi.fn().mockResolvedValue(providers),
+        generateClientConfigEntry,
+      })
+    );
+
+    expect(generateClientConfigEntry).toHaveBeenCalledWith('generic', providers);
+  });
+
+  it('GIVEN existing config file WHEN running setup THEN reads it and passes to plan builder', async () => {
+    const existingConfig = '{"mcpServers":{}}';
+    const readConfigFile = vi.fn().mockResolvedValue(existingConfig);
+    const buildSetupPlan = vi.fn(() => createPlan());
+
+    await runSetup(['--client', 'cursor', '--yes'], createDependencies({ buildSetupPlan, readConfigFile }));
+
+    const calledPath = readConfigFile.mock.calls[0]?.[0] as string;
+
+    expect(calledPath).toContain('.cursor');
+    expect(calledPath).toContain('mcp.json');
+    expect(buildSetupPlan).toHaveBeenCalledWith(expect.objectContaining({ existingConfigText: existingConfig }));
+  });
+
+  it('GIVEN config file does not exist WHEN running setup THEN existingConfigText is undefined', async () => {
+    const readConfigFile = vi.fn().mockRejectedValue(new Error('ENOENT'));
+    const buildSetupPlan = vi.fn(() => createPlan());
+
+    await runSetup(['--client', 'cursor', '--yes'], createDependencies({ buildSetupPlan, readConfigFile }));
+
+    expect(readConfigFile).toHaveBeenCalledTimes(1);
+    expect(buildSetupPlan).toHaveBeenCalledWith(expect.objectContaining({ existingConfigText: undefined }));
+  });
+
+  it('GIVEN interactive prompt WHEN writeIntent is skip THEN skips prompt entirely', async () => {
+    const promptConfirm = vi.fn().mockResolvedValue(false);
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult({ status: 'skipped', path: undefined }));
+
+    await runSetup(
+      [],
+      createDependencies({
+        buildSetupPlan: vi.fn(() => createPlan({ writeIntent: 'skip', dryRun: true })),
+        applySetupPlan,
+        isInteractive: true,
+        promptConfirm,
+      })
+    );
+
+    expect(promptConfirm).not.toHaveBeenCalled();
     expect(applySetupPlan).toHaveBeenCalledTimes(1);
   });
 });

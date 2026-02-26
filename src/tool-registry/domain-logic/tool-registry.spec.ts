@@ -22,37 +22,29 @@ vi.mock('../../provider-metrics');
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
 vi.mock('../../ask/domain-logic/sessions.handler', () => ({ handleSessions: vi.fn() }));
 vi.mock('../../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
-vi.mock('../../simple-tools', async (importOriginal) => ({
-  ...(await importOriginal()),
-  handleHelp: vi.fn(),
-  handleListProviders: vi.fn(),
-  handlePing: vi.fn(),
-}));
+vi.mock('../../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
+vi.mock('../../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
+vi.mock('../../simple-tools/domain-logic/ping.handler', () => ({ handlePing: vi.fn() }));
 
 const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
-
 const makeProvider = (name = 'claude'): ResolvedProviderEntry => ({
   ...TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
   name,
   binaryPath: `/usr/bin/${name}`,
   config: makeConfig(),
 });
-
 const makeResolvedProvider = (name = 'claude'): ResolvedProvider => ({
   ...TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
   name,
   description: `${name} provider`,
   binaryPath: `/usr/bin/${name}`,
 });
-
 const SUCCESS_RESULT: CallToolResult = TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB;
 
 type MockServer = Readonly<{ registerTool: MockInstance }>;
 type ToolMetadata = Readonly<Record<string, unknown>>;
-
 const getRegisteredNames = (server: MockServer): string[] =>
   server.registerTool.mock.calls.map(([call]: unknown[]) => call as string);
-
 const getHandler = (server: MockServer, toolName: string): ((...args: unknown[]) => unknown) => {
   const call = server.registerTool.mock.calls.find((c: unknown[]) => c[0] === toolName);
 
@@ -60,7 +52,6 @@ const getHandler = (server: MockServer, toolName: string): ((...args: unknown[])
 
   return call[2] as (...args: unknown[]) => unknown;
 };
-
 const getMetadata = (server: MockServer, toolName: string): ToolMetadata => {
   const call = server.registerTool.mock.calls.find((c: unknown[]) => c[0] === toolName);
 

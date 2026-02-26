@@ -2,6 +2,7 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { entry } from './entry';
 import type { ConfigPathOptions } from '../../shared/common';
 
 type MockServer = Readonly<{
@@ -31,13 +32,6 @@ vi.mock('../../server/create-server', () => ({
 vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
   StdioServerTransport: mocks.stdioServerTransport,
 }));
-
-const importEntry = async (): Promise<void> => {
-  const entryPath = './entry';
-  const mod = (await import(entryPath)) as { entry: () => Promise<void> };
-
-  await mod.entry();
-};
 
 const resetArgv = (): void => {
   process.argv = ['node', ''];
@@ -76,7 +70,7 @@ describe('main', () => {
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
 
-    await importEntry();
+    await entry();
 
     await vi.waitFor(() => {
       expect(exitSpy).toHaveBeenCalledWith(0);
@@ -92,7 +86,7 @@ describe('main', () => {
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
 
-    await importEntry();
+    await entry();
 
     await vi.waitFor(() => {
       expect(exitSpy).toHaveBeenCalledWith(0);
@@ -107,7 +101,7 @@ describe('main', () => {
   it('GIVEN a --config argument WHEN main() is called THEN it passes configPath to createServer and connects via stdio transport', async () => {
     process.argv = ['node', '', '--config', '/tmp/providers.json'];
 
-    await importEntry();
+    await entry();
 
     await vi.waitFor(() => {
       expect(mocks.connect).toHaveBeenCalledTimes(1);
@@ -123,6 +117,6 @@ describe('main', () => {
   it('GIVEN createServer throws WHEN main() is called THEN it rejects with the error', async () => {
     mocks.createServer.mockRejectedValueOnce(new Error('boom'));
 
-    await expect(importEntry()).rejects.toThrow('boom');
+    await expect(entry()).rejects.toThrow('boom');
   });
 });

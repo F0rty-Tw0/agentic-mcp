@@ -18,6 +18,8 @@ export {
 
 export type { CommandDef, FlagValue, ProviderConfig, ProvidersFile } from './provider-config.schema';
 
+export type { McpPlainTextContent, McpTextContent } from './mcp-content.type';
+
 export { providersFileSchema } from './provider-config.schema';
 
 export type { ProviderEnv, ResolvedProvider, ResolvedProviderEntry } from './provider-config.type';
@@ -25,3 +27,5 @@ export type { ProviderEnv, ResolvedProvider, ResolvedProviderEntry } from './pro
 export type { ToolDefinition } from './tool-definition.types';
 
 export type { ProgressContext } from './progress-context.types';
+
+export type { ProgressToken } from './progress-token.type';

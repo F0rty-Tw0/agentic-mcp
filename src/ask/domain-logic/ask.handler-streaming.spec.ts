@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAsk } from './ask.handler';
 import type { ProgressContext } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
-import type { AskStreamEvent, AskToolArgs } from '../common';
+import type { AskStreamEvent, AskToolArgs, ProgressNotification } from '../common';
 import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_SUCCESS_EXECUTION_RESULT_STUB, createAskContext } from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
@@ -23,13 +24,6 @@ vi.mock('../../shared/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
-
-const { executeCommand } = await import('../../shared/domain-logic/command-executor');
-
-type ProgressNotification = Readonly<{
-  method: string;
-  params: Readonly<{ message: string }>;
-}>;
 
 const createProgressContext = (notifications: ProgressNotification[]): ProgressContext => {
   const sendNotification = vi.fn(async (notification: ProgressNotification) => {

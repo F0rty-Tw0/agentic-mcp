@@ -52,6 +52,17 @@ export type SetupPlan = Readonly<{
   warnings: readonly string[];
 }>;
 
+export type SetupPlanInput = Readonly<{
+  client: SupportedClient;
+  homeDirectory: string;
+  pathOverride?: string;
+  mode: SetupMode;
+  dryRun: boolean;
+  existingConfigText?: string;
+  agenticServerEntry: McpServerEntry;
+  backup: SetupBackupPolicy;
+}>;
+
 export type SetupApplyStatus = 'written' | 'skipped' | 'manual' | 'verification-failed';
 
 export type SetupApplyResult = Readonly<{

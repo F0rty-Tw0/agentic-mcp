@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleHelp } from './help.handler';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
-import type { ResolvedProviderEntry } from '../../shared/common';
+import type { McpPlainTextContent, ResolvedProviderEntry } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
@@ -173,7 +173,7 @@ describe('handleHelp', () => {
       const result = await handleHelp(context);
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('spawn ENOENT');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('spawn ENOENT');
     });
 
     it('GIVEN buildMinimalEnv throws WHEN handling help THEN returns isError response', async () => {
@@ -186,7 +186,7 @@ describe('handleHelp', () => {
       const result = await handleHelp(context);
 
       expect(result.isError).toBe(true);
-      expect((result.content[0] as { text: string }).text).toContain('env construction failed');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('env construction failed');
     });
   });
 });

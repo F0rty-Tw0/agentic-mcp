@@ -1,6 +1,6 @@
 import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers';
-import type { AskStreamEventPayload, ProgressToken } from './notifier.helpers';
-import type { ProgressContext } from '../../../shared/common';
+import type { AskStreamEventPayload } from './notifier.helpers';
+import type { ProgressContext, ProgressToken } from '../../../shared/common';
 import { STREAM_COALESCE_WINDOW_MS } from '../common';
 import type { AskStreamChannel, AskStreamExecutionSummary } from '../common';
 

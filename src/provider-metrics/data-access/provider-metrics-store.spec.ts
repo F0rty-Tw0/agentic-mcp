@@ -1,15 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProviderMetricsSummary } from '../common';
 import { MAX_METRIC_RECORDS } from '../common';
+import { getProviderMetrics, recordCall, resetProviderMetricsStoreForTests } from './provider-metrics-store';
 
 describe('provider-metrics-store', () => {
-  let recordCall: (provider: string, executionTimeMs: number, success: boolean) => void;
-  let getProviderMetrics: () => ProviderMetricsSummary;
-
-  beforeEach(async () => {
-    vi.resetModules();
-    ({ recordCall, getProviderMetrics } = await import('./provider-metrics-store'));
+  beforeEach(() => {
+    vi.resetAllMocks();
+    resetProviderMetricsStoreForTests();
   });
 
   describe('recordCall', () => {

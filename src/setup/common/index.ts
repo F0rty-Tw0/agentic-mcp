@@ -13,6 +13,7 @@ export type {
   SetupMergeStatus,
   SetupMode,
   SetupPlan,
+  SetupPlanInput,
   SetupResult,
   SetupWriteIntent,
   SupportedClient,
