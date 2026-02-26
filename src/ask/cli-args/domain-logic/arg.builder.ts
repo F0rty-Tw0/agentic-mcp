@@ -48,7 +48,7 @@ const appendValueFlag = (cliArgs: string[], askCmd: CommandDef, flagKey: string,
   cliArgs.push(...flagArgs);
 };
 
-const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files: readonly string[] | undefined): void => {
+const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files?: readonly string[]): void => {
   if (!files?.length) return;
 
   const flag = getFlag(askCmd, FLAG_FILE);

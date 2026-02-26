@@ -30,14 +30,14 @@ export type SetupFs = Readonly<{
 
 export type ClientConfigTemplate = Readonly<{
   client: SupportedClient;
-  configPath: string | undefined;
+  configPath?: string;
   label: string;
 }>;
 
 export type DetectedProvider = Readonly<{
   name: string;
   available: boolean;
-  binaryPath: string | undefined;
+  binaryPath?: string;
 }>;
 
 export type SetupPlan = Readonly<{
@@ -46,7 +46,7 @@ export type SetupPlan = Readonly<{
   backup: SetupBackupPolicy;
   dryRun: boolean;
   writeIntent: SetupWriteIntent;
-  targetPath: string | undefined;
+  targetPath?: string;
   mergeStatusPreview: SetupMergeStatus;
   configText: string;
   warnings: readonly string[];
@@ -56,8 +56,8 @@ export type SetupApplyStatus = 'written' | 'skipped' | 'manual' | 'verification-
 
 export type SetupApplyResult = Readonly<{
   status: SetupApplyStatus;
-  path: string | undefined;
-  backupPath: string | undefined;
+  path?: string;
+  backupPath?: string;
   reason?: string;
 }>;
 
@@ -65,6 +65,6 @@ export type SetupResult = Readonly<{
   client: SupportedClient;
   detectedProviders: readonly DetectedProvider[];
   configJson: string;
-  configPath: string | undefined;
+  configPath?: string;
   written: boolean;
 }>;

@@ -14,7 +14,7 @@ export type NotifierState = {
   queuedStderr: string;
   lastChunkAtMs: number;
   stopped: boolean;
-  flushTimer: NodeJS.Timeout | undefined;
+  flushTimer?: NodeJS.Timeout;
 };
 
 type EmitterContext = Readonly<{

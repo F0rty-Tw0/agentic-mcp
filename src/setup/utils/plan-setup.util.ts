@@ -14,10 +14,10 @@ import type {
 type BuildSetupPlanInput = Readonly<{
   client: SupportedClient;
   homeDirectory: string;
-  pathOverride: string | undefined;
+  pathOverride?: string;
   mode: SetupMode;
   dryRun: boolean;
-  existingConfigText: string | undefined;
+  existingConfigText?: string;
   agenticServerEntry: McpServerEntry;
   backup: SetupBackupPolicy;
 }>;

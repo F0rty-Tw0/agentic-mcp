@@ -6,12 +6,11 @@ export const detectInstalledProviders = async (): Promise<readonly DetectedProvi
   const results = await Promise.all(
     KNOWN_PROVIDER_COMMANDS.map(async (name) => {
       const resolvedBinaryPath = await resolveCliBinary(name);
-      const binaryPath = resolvedBinaryPath ?? undefined;
 
       const provider: DetectedProvider = {
         name,
-        available: binaryPath !== undefined,
-        binaryPath,
+        available: resolvedBinaryPath !== undefined,
+        binaryPath: resolvedBinaryPath,
       };
 
       return provider;

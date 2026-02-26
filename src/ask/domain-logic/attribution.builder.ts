@@ -8,10 +8,10 @@ type AttributionMetadata = Readonly<{
 
 type BuildAttributionInput = Readonly<{
   provider: string;
-  model: string | undefined;
+  model?: string;
   result: Pick<ExecutionResult, 'executionTimeMs' | 'truncated' | 'stdoutBytes'>;
   outputFormat: 'json' | 'stream-json' | 'text';
-  metadata: AttributionMetadata | undefined;
+  metadata?: AttributionMetadata;
   sessionMode: SessionMode;
 }>;
 

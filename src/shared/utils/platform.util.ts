@@ -95,8 +95,10 @@ export const buildMinimalEnv = (providerEnv: ProviderEnv): Readonly<Record<strin
   return env;
 };
 
-export const resolveCliBinary = async (command: string): Promise<string | null> => {
-  return which(command, { nothrow: true });
+export const resolveCliBinary = async (command: string): Promise<string | undefined> => {
+  const resolvedBinary = await which(command, { nothrow: true });
+
+  return resolvedBinary ?? undefined;
 };
 
 export const stripAnsi = (input: string): string => stripVTControlCharacters(input);

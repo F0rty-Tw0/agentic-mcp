@@ -9,10 +9,10 @@ export type CommandExecutionErrorDetails = Readonly<{
 }>;
 
 export class CommandExecutionError extends Error {
-  public readonly exitCode: number | null | undefined;
-  public readonly signal: string | null | undefined;
-  public readonly timedOut: boolean | undefined;
-  public readonly stderr: string | undefined;
+  public readonly exitCode?: number | null;
+  public readonly signal?: string | null;
+  public readonly timedOut?: boolean;
+  public readonly stderr?: string;
 
   public constructor(message: string, details: CommandExecutionErrorDetails, options?: ErrorOptions) {
     super(message, options);

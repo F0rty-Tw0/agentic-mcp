@@ -1,7 +1,7 @@
 import type { McpServerEntry } from '../common';
 
 type MergeClientConfigInput = Readonly<{
-  existingConfigText: string | undefined;
+  existingConfigText?: string;
   agenticServerEntry: McpServerEntry;
 }>;
 

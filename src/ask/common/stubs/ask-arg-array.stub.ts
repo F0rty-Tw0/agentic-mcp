@@ -1,6 +1,6 @@
 type AskArgArray = Readonly<{
   args: readonly string[];
-  stdinInput: string | undefined;
+  stdinInput?: string;
 }>;
 
 export const ASK_DEFAULT_ARG_ARRAY_STUB: AskArgArray = {

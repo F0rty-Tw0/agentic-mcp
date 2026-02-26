@@ -248,7 +248,7 @@ describe('platform utilities', () => {
 
       const result = await resolveCliBinary('nonexistent');
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 

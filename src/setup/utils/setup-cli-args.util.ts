@@ -14,7 +14,7 @@ export type ParsedSetupArgs = Readonly<{
   yes: boolean;
   output: SetupOutputMode;
   mode: SetupMode;
-  pathOverride: string | undefined;
+  pathOverride?: string;
   backup: SetupBackupPolicy;
 }>;
 
@@ -31,7 +31,7 @@ type MutableParsedSetupArgs = {
   yes: boolean;
   output: SetupOutputMode;
   mode: SetupMode;
-  pathOverride: string | undefined;
+  pathOverride?: string;
   backup: SetupBackupPolicy;
 };
 

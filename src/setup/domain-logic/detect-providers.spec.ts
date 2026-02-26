@@ -3,15 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { detectInstalledProviders } from './detect-providers';
 
 const mocks = vi.hoisted(() => ({
-  resolveCliBinary: vi.fn<(command: string) => Promise<string | null>>(),
+  resolveCliBinary: vi.fn<(command: string) => Promise<string | undefined>>(),
 }));
 
 vi.mock('../../shared/utils/', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 
-const resolveOnlyClaudeBinary = async (cmd: string): Promise<string | null> => {
-  const binaryPath = await Promise.resolve(cmd === 'claude' ? '/usr/bin/claude' : null);
+const resolveOnlyClaudeBinary = async (cmd: string): Promise<string | undefined> => {
+  const binaryPath = await Promise.resolve(cmd === 'claude' ? '/usr/bin/claude' : undefined);
 
   return binaryPath;
 };
@@ -38,7 +38,7 @@ describe('detectInstalledProviders', () => {
 
   describe('no providers available', () => {
     it('GIVEN no provider binaries exist WHEN detecting THEN returns all providers as unavailable', async () => {
-      mocks.resolveCliBinary.mockResolvedValue(null);
+      mocks.resolveCliBinary.mockResolvedValue(undefined);
 
       const result = await detectInstalledProviders();
 
@@ -77,7 +77,7 @@ describe('detectInstalledProviders', () => {
 
   describe('provider names', () => {
     it('GIVEN known providers WHEN detecting THEN result contains all expected provider names', async () => {
-      mocks.resolveCliBinary.mockResolvedValue(null);
+      mocks.resolveCliBinary.mockResolvedValue(undefined);
 
       const result = await detectInstalledProviders();
       const names = result.map((p) => p.name);

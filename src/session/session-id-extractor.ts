@@ -1,6 +1,6 @@
 import { validateSessionId } from '../shared/utils';
 
-const safeValidateSessionId = (value: string | undefined): string | undefined => {
+const safeValidateSessionId = (value?: string): string | undefined => {
   if (!value) return;
 
   try {

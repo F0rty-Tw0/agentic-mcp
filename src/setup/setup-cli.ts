@@ -35,10 +35,10 @@ type SetupCliDependencies = Readonly<{
   buildSetupPlan: (input: {
     client: SupportedClient;
     homeDirectory: string;
-    pathOverride: string | undefined;
+    pathOverride?: string;
     mode: SetupMode;
     dryRun: boolean;
-    existingConfigText: string | undefined;
+    existingConfigText?: string;
     agenticServerEntry: McpServerEntry;
     backup: SetupBackupPolicy;
   }) => SetupPlan;
@@ -78,7 +78,7 @@ const defaultDependencies: SetupCliDependencies = {
 const resolveTargetPath = (
   homeDirectory: string,
   client: SupportedClient,
-  pathOverride: string | undefined
+  pathOverride?: string
 ): string | undefined => {
   if (pathOverride != null) {
     return pathOverride;
