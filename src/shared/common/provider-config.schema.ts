@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { OutputFormat } from './output-format.type';
+
 const PROVIDER_NAME_REGEX = /^[a-z][a-z0-9-]{0,31}$/;
 const RESERVED_PROVIDER_NAMES = ['providers'] as const;
 
@@ -34,6 +36,8 @@ const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),
 });
 
+const outputFormatSchema: z.ZodType<OutputFormat> = z.enum(['json', 'stream-json', 'text']);
+
 const providerConfigSchema = z.object({
   enabled: z.boolean(),
   description: z.string(),
@@ -47,7 +51,7 @@ const providerConfigSchema = z.object({
       pattern: z.string().optional(),
     })
     .optional(),
-  outputFormat: z.enum(['json', 'stream-json', 'text']),
+  outputFormat: outputFormatSchema,
   commands: commandsSchema,
   input: inputSchema,
 });

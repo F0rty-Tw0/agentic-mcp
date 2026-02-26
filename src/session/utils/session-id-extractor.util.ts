@@ -1,4 +1,11 @@
-import { validateSessionId } from '../shared/utils';
+import type { OutputFormat } from '../../shared/common';
+import { validateSessionId } from '../../shared/utils';
+
+type ParsedSessionResponse = Readonly<{
+  session_id?: unknown;
+  conversation_id?: unknown;
+  session?: Readonly<{ id?: unknown }>;
+}>;
 
 const safeValidateSessionId = (value?: string): string | undefined => {
   if (!value) return;
@@ -11,12 +18,6 @@ const safeValidateSessionId = (value?: string): string | undefined => {
     return;
   }
 };
-
-type ParsedSessionResponse = Readonly<{
-  session_id?: unknown;
-  conversation_id?: unknown;
-  session?: Readonly<{ id?: unknown }>;
-}>;
 
 const parseJsonSessionId = (stdout: string): string | undefined => {
   try {
@@ -53,7 +54,7 @@ const parseTextSessionId = (stdout: string): string | undefined => {
 export const extractNativeSessionId = (
   providerName: string,
   stdout: string,
-  outputFormat: 'json' | 'stream-json' | 'text'
+  outputFormat: OutputFormat
 ): string | undefined => {
   if (outputFormat === 'stream-json') return parseNdjsonSessionId(stdout);
 

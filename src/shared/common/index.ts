@@ -18,6 +18,8 @@ export {
 
 export type { CommandDef, FlagValue, ProviderConfig, ProvidersFile } from './provider-config.schema';
 
+export type { OutputFormat } from './output-format.type';
+
 export type { McpPlainTextContent, McpTextContent } from './mcp-content.type';
 
 export { providersFileSchema } from './provider-config.schema';

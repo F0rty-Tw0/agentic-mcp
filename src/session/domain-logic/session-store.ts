@@ -1,10 +1,6 @@
-import {
-  DEFAULT_MAX_CONTEXT_BYTES,
-  DEFAULT_MAX_CONTEXT_TURNS,
-  MAX_SESSIONS,
-  SESSION_TTL_MS,
-} from './session-store.const';
-import type { SessionRecord, SessionTurn } from './session-store.types';
+import { DEFAULT_MAX_CONTEXT_BYTES, DEFAULT_MAX_CONTEXT_TURNS, MAX_SESSIONS, SESSION_TTL_MS } from '../common';
+import type { SessionRecord, SessionTurn } from '../common';
+import { capTurnsByBytes, cloneRecord, formatTurns, toSessionKey } from '../utils/session-store.util';
 
 type SessionStoreEntry = {
   id: string;
@@ -19,39 +15,6 @@ type ContextBudget = Readonly<{
   maxContextTurns?: number;
   maxContextBytes?: number;
 }>;
-
-const toSessionKey = (provider: string, id: string): string => `${provider}:${id}`;
-
-const cloneRecord = (entry: SessionStoreEntry): SessionRecord => ({
-  id: entry.id,
-  provider: entry.provider,
-  turns: [...entry.turns],
-  createdAt: entry.createdAt,
-  lastAccessedAt: entry.lastAccessedAt,
-  nativeSessionId: entry.nativeSessionId,
-});
-
-const formatTurns = (turns: readonly SessionTurn[]): string => {
-  return turns.map((turn) => `${turn.role}: ${turn.text}`).join('\n');
-};
-
-const capTurnsByBytes = (turns: readonly SessionTurn[], maxContextBytes: number): readonly SessionTurn[] => {
-  const result: SessionTurn[] = [];
-
-  for (let index = turns.length - 1; index >= 0; index -= 1) {
-    const currentTurn = turns[index];
-
-    if (!currentTurn) continue;
-
-    const next = [currentTurn, ...result];
-
-    if (Buffer.byteLength(formatTurns(next), 'utf-8') > maxContextBytes) break;
-
-    result.unshift(currentTurn);
-  }
-
-  return result;
-};
 
 export class InMemorySessionStore {
   private readonly entries = new Map<string, SessionStoreEntry>();
