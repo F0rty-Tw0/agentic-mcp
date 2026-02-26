@@ -4,6 +4,8 @@ import { stripVTControlCharacters } from 'node:util';
 
 import which from 'which';
 
+import type { ProviderEnv } from '../common';
+
 const KILL_GRACE_MS = 5_000;
 
 const SAFE_ENV_KEYS = [
@@ -75,7 +77,7 @@ export const killProcess = async (pid: number): Promise<boolean> => {
   });
 };
 
-export const buildMinimalEnv = (providerEnv: Record<string, string | null>): Readonly<Record<string, string>> => {
+export const buildMinimalEnv = (providerEnv: ProviderEnv): Readonly<Record<string, string>> => {
   const env: Record<string, string> = {};
 
   for (const key of SAFE_ENV_KEYS) {

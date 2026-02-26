@@ -1,5 +1,7 @@
 import type { ProviderConfig } from './provider-config.schema';
 
+export type ProviderEnv = Record<string, string | null>;
+
 export type ResolvedProviderEntry = Readonly<{
   name: string;
   binaryPath: string;

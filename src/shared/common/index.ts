@@ -20,7 +20,7 @@ export type { CommandDef, FlagValue, ProviderConfig, ProvidersFile } from './pro
 
 export { providersFileSchema } from './provider-config.schema';
 
-export type { ResolvedProvider, ResolvedProviderEntry } from './provider-config.type';
+export type { ProviderEnv, ResolvedProvider, ResolvedProviderEntry } from './provider-config.type';
 
 export type { ToolDefinition } from './tool-definition.types';
 
