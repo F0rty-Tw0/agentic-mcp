@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { DetectedProvider, McpServerEntry, SetupApplyResult, SetupPlan } from './common';
+import type { DetectedProvider, McpServerEntry, SetupApplyResult, SetupPlan } from '../common';
 import { runSetup } from './setup-cli';
 
 const TEST_SERVER_ENTRY: McpServerEntry = {

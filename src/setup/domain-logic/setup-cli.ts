@@ -4,7 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
-import { CLIENT_CONFIG_PATHS } from './common';
+import { CLIENT_CONFIG_PATHS } from '../common';
 import type {
   DetectedProvider,
   McpServerEntry,
@@ -12,18 +12,18 @@ import type {
   SetupPlan,
   SetupPlanInput,
   SupportedClient,
-} from './common';
-import { detectInstalledProviders } from './domain-logic/detect-providers';
-import { generateClientConfigEntry } from './domain-logic/generate-config';
-import { applySetupPlan } from './utils/apply-setup-plan.util';
-import { buildSetupPlan } from './utils/plan-setup.util';
-import { parseSetupArgs } from './utils/setup-cli-args.util';
+} from '../common';
 import {
+  applySetupPlan,
+  buildSetupPlan,
   formatHumanSetupOutput,
   formatJsonSetupOutput,
   isNonInteractiveWriteBlocked,
+  parseSetupArgs,
   readExistingConfigText,
-} from './utils/setup-cli-output.util';
+} from '../utils';
+import { detectInstalledProviders } from './detect-providers';
+import { generateClientConfigEntry } from './generate-config';
 
 type SetupCliDependencies = Readonly<{
   detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;
