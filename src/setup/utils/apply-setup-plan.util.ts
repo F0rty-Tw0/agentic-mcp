@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import type { SetupApplyResult, SetupFs, SetupPlan } from '../common';
 
+type JsonRecord = Readonly<Record<string, unknown>>;
+
 const defaultFs: SetupFs = {
   mkdir: async (targetPath, options) => {
     await mkdir(targetPath, options);
@@ -36,7 +38,7 @@ const createFailedVerificationResult = (reason: string): SetupApplyResult => {
   return result;
 };
 
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => {
+const isRecord = (value: unknown): value is JsonRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 

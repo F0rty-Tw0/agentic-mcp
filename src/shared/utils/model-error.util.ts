@@ -10,6 +10,7 @@ const QUOTED_MODEL_PATTERN = /(?:model|invalid model|unknown model)\s+["']([^"']
 const MODELS_COMMAND_TIMEOUT_MS = 10_000;
 
 type ExecuteCommandFn = (options: ExecuteCommandOptions) => Promise<ExecutionResult>;
+type MinimalEnv = Readonly<Record<string, string>>;
 
 export const detectModelError = (stdout: string, stderr: string): boolean => {
   const modelErrorDetected = MODEL_ERROR_PATTERN.test(stdout) || MODEL_ERROR_PATTERN.test(stderr);
@@ -56,7 +57,7 @@ export const buildModelHint = (
 
 export const fetchAvailableModels = async (
   context: ResolvedProviderEntry,
-  env: Readonly<Record<string, string>>,
+  env: MinimalEnv,
   executeCommandFn: ExecuteCommandFn
 ): Promise<string | undefined> => {
   const { models } = context.config.commands;

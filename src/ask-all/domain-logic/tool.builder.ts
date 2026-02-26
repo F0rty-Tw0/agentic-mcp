@@ -3,10 +3,12 @@ import { z } from 'zod';
 import type { ToolDefinition } from '../../shared/common';
 import { ASK_ALL_TOOL_NAME } from '../common';
 
+type AskAllInputSchema = Readonly<Record<string, z.ZodType>>;
+
 export const buildAskAllToolDefinition = (providerNames: readonly string[]): ToolDefinition => {
   const providerList = providerNames.length > 0 ? providerNames.join(', ') : 'none configured';
 
-  const inputSchema: Record<string, z.ZodType> = {
+  const inputSchema: AskAllInputSchema = {
     prompt: z.string().describe('The prompt or question to send to all providers simultaneously'),
     providers: z
       .array(z.string())

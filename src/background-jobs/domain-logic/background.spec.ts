@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildJobStatusResponse, startBackgroundInvocation } from './background';
 import type { BackgroundJobRecord } from '../common';
 
+type StatusPayload = Readonly<Record<string, string>>;
+
 const mocks = vi.hoisted(() => ({
   getBackgroundJob: vi.fn(),
   setBackgroundJobCompleted: vi.fn(),
@@ -32,12 +34,12 @@ const buildBackgroundJobRecord = (overrides: Partial<BackgroundJobRecord> = {}):
   ...overrides,
 });
 
-const extractPayloadFromTextContent = (result: CallToolResult): Record<string, string> => {
+const extractPayloadFromTextContent = (result: CallToolResult): StatusPayload => {
   const content = result.content[0];
 
   if (content?.type !== 'text') throw new Error('expected text content');
 
-  const payload = JSON.parse(content.text) as Record<string, string>;
+  const payload = JSON.parse(content.text) as StatusPayload;
 
   return payload;
 };

@@ -22,8 +22,10 @@ type BuildSetupPlanInput = Readonly<{
   backup: SetupBackupPolicy;
 }>;
 
-const buildOverwriteConfig = (agenticServerEntry: McpServerEntry): Readonly<Record<string, unknown>> => {
-  const overwriteConfig: Readonly<Record<string, unknown>> = {
+type SetupConfigObject = Readonly<Record<string, unknown>>;
+
+const buildOverwriteConfig = (agenticServerEntry: McpServerEntry): SetupConfigObject => {
+  const overwriteConfig: SetupConfigObject = {
     mcpServers: {
       'agentic-mcp': agenticServerEntry,
     },

@@ -1,1 +1,3 @@
-export const TEST_MINIMAL_ENV_STUB: Readonly<Record<string, string>> = { PATH: '/usr/bin' };
+type TestMinimalEnv = Readonly<Record<string, string>>;
+
+export const TEST_MINIMAL_ENV_STUB: TestMinimalEnv = { PATH: '/usr/bin' };

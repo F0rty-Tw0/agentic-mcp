@@ -7,30 +7,32 @@ type MergeClientConfigInput = Readonly<{
 
 type MergeResultStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json';
 
+type JsonRecord = Readonly<Record<string, unknown>>;
+
 type MergeClientConfigResult = Readonly<{
   status: MergeResultStatus;
-  mergedConfig: Readonly<Record<string, unknown>>;
+  mergedConfig: JsonRecord;
   reason?: string;
 }>;
 
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => {
+const isRecord = (value: unknown): value is JsonRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const normalizeMcpServers = (value: unknown): Readonly<Record<string, unknown>> => {
+const normalizeMcpServers = (value: unknown): JsonRecord => {
   if (!isRecord(value)) {
-    const emptyServers: Readonly<Record<string, unknown>> = {};
+    const emptyServers: JsonRecord = {};
 
     return emptyServers;
   }
 
-  const servers: Readonly<Record<string, unknown>> = value;
+  const servers: JsonRecord = value;
 
   return servers;
 };
 
-const createBaseConfig = (agenticServerEntry: McpServerEntry): Readonly<Record<string, unknown>> => {
-  const result: Readonly<Record<string, unknown>> = {
+const createBaseConfig = (agenticServerEntry: McpServerEntry): JsonRecord => {
+  const result: JsonRecord = {
     mcpServers: {
       'agentic-mcp': agenticServerEntry,
     },
@@ -53,11 +55,8 @@ const parseExistingConfig = (existingConfigText: string): Readonly<{ parsedConfi
   }
 };
 
-const createUnchangedConfig = (
-  parsedRoot: Readonly<Record<string, unknown>>,
-  currentServers: Readonly<Record<string, unknown>>
-): Readonly<Record<string, unknown>> => {
-  const result: Readonly<Record<string, unknown>> = {
+const createUnchangedConfig = (parsedRoot: JsonRecord, currentServers: JsonRecord): JsonRecord => {
+  const result: JsonRecord = {
     ...parsedRoot,
     mcpServers: currentServers,
   };
@@ -66,11 +65,11 @@ const createUnchangedConfig = (
 };
 
 const createMergedConfig = (
-  parsedRoot: Readonly<Record<string, unknown>>,
-  currentServers: Readonly<Record<string, unknown>>,
+  parsedRoot: JsonRecord,
+  currentServers: JsonRecord,
   agenticServerEntry: McpServerEntry
-): Readonly<Record<string, unknown>> => {
-  const result: Readonly<Record<string, unknown>> = {
+): JsonRecord => {
+  const result: JsonRecord = {
     ...parsedRoot,
     mcpServers: {
       ...currentServers,

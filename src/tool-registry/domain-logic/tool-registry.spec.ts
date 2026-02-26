@@ -48,6 +48,7 @@ const makeResolvedProvider = (name = 'claude'): ResolvedProvider => ({
 const SUCCESS_RESULT: CallToolResult = TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB;
 
 type MockServer = Readonly<{ registerTool: MockInstance }>;
+type ToolMetadata = Readonly<Record<string, unknown>>;
 
 const getRegisteredNames = (server: MockServer): string[] =>
   server.registerTool.mock.calls.map(([call]: unknown[]) => call as string);
@@ -60,12 +61,12 @@ const getHandler = (server: MockServer, toolName: string): ((...args: unknown[])
   return call[2] as (...args: unknown[]) => unknown;
 };
 
-const getMetadata = (server: MockServer, toolName: string): Record<string, unknown> => {
+const getMetadata = (server: MockServer, toolName: string): ToolMetadata => {
   const call = server.registerTool.mock.calls.find((c: unknown[]) => c[0] === toolName);
 
   if (!call) throw new Error(`Tool "${toolName}" not registered`);
 
-  return call[1] as Record<string, unknown>;
+  return call[1] as ToolMetadata;
 };
 
 describe('registerAllTools', () => {

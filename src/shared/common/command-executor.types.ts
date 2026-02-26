@@ -2,10 +2,12 @@ export type StreamChunkCallback = (chunk: string) => void;
 
 export type StreamCollector = Readonly<{ output: () => string; bytes: () => number; truncated: () => boolean }>;
 
+type CommandEnv = Readonly<Record<string, string>>;
+
 export type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
   args: readonly string[];
-  env: Readonly<Record<string, string>>;
+  env: CommandEnv;
   timeoutMs: number;
   stdin?: string;
   cwd?: string;

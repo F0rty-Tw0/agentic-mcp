@@ -1,11 +1,13 @@
 import type { FlagValue, ProviderConfig } from '../../../../shared/common';
 import { ASK_PROVIDER_CONFIG_STUB } from '../../../common/stubs';
 
+type AskFlagMap = Readonly<Record<string, FlagValue>>;
+
 type AskCommandConfig = Readonly<{
   method: ProviderConfig['input']['method'];
   args: string[];
   trailingArgs?: string[];
-  flags: Record<string, FlagValue>;
+  flags: AskFlagMap;
 }>;
 
 const DEFAULT_CONFIG_OPTIONS: AskCommandConfig = {

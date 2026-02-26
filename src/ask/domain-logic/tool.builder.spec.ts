@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { buildAskToolDefinition, buildSessionsToolDefinition } from './tool.builder';
 import type { ProviderConfig } from '../../shared/common';
 
-const createConfig = (flags: Record<string, unknown>): ProviderConfig => ({
+type AskToolFlags = Readonly<Record<string, unknown>>;
+
+const createConfig = (flags: AskToolFlags): ProviderConfig => ({
   enabled: true,
   description: 'Test provider',
   command: 'test-cli',

@@ -9,6 +9,8 @@ import {
   TEST_RESOLVED_PROVIDER_ENTRY_STUB,
 } from '../common/stubs';
 
+type MinimalEnv = Readonly<Record<string, string>>;
+
 describe('detectModelError', () => {
   it('GIVEN stdout with model-not-found text WHEN detecting THEN returns true', () => {
     const result = detectModelError('Error: model not found', '');
@@ -131,7 +133,7 @@ describe('fetchAvailableModels', () => {
     return context;
   };
 
-  const mockEnv: Readonly<Record<string, string>> = TEST_MINIMAL_ENV_STUB;
+  const mockEnv: MinimalEnv = TEST_MINIMAL_ENV_STUB;
   let mockExecuteCommand: ReturnType<typeof vi.fn<(options: ExecuteCommandOptions) => Promise<ExecutionResult>>>;
 
   beforeEach(() => {

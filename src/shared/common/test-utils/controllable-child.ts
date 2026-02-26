@@ -4,6 +4,8 @@ type EventHandler = (...args: unknown[]) => void;
 
 type HandlerMap = Record<string, EventHandler[]>;
 
+type ChildProcessLike = Record<string, unknown>;
+
 type EventEmitter = Readonly<{ handlers: HandlerMap; on: (event: string, fn: EventHandler) => void }>;
 
 const createEventEmitter = (): EventEmitter => {
@@ -31,7 +33,7 @@ const emit = (emitter: EventEmitter, event: string, ...args: unknown[]): void =>
 type MockFn = ReturnType<typeof vi.fn>;
 
 export type ControllableChild = Readonly<{
-  child: Record<string, unknown>;
+  child: ChildProcessLike;
   stdin: Readonly<{ write: MockFn; end: MockFn }>;
   emitClose: (exitCode: number | null, signal: string | null) => void;
   emitError: (error: Error) => void;
@@ -45,7 +47,7 @@ export const createControllableChild = (pid?: number): ControllableChild => {
   const stderrEmitter = createEventEmitter();
   const stdinMock = { write: vi.fn(), end: vi.fn() };
 
-  const child: Record<string, unknown> = {
+  const child: ChildProcessLike = {
     pid,
     stdout: { on: stdoutEmitter.on },
     stderr: { on: stderrEmitter.on },

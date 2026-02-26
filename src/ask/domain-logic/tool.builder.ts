@@ -14,7 +14,10 @@ import {
 } from '../common';
 import { getAskCommand, getFlag } from '../utils';
 
-const addLeveledFlags = (schema: Record<string, z.ZodType>, askCmd: CommandDef): void => {
+type AskInputSchema = Readonly<Record<string, z.ZodType>>;
+type MutableAskInputSchema = Record<string, z.ZodType>;
+
+const addLeveledFlags = (schema: MutableAskInputSchema, askCmd: CommandDef): void => {
   const sandboxFlag = getFlag(askCmd, FLAG_SANDBOX);
 
   if (sandboxFlag != null) {
@@ -38,7 +41,7 @@ const addLeveledFlags = (schema: Record<string, z.ZodType>, askCmd: CommandDef):
   }
 };
 
-const addAutoModeField = (schema: Record<string, z.ZodType>, askCmd: CommandDef): void => {
+const addAutoModeField = (schema: MutableAskInputSchema, askCmd: CommandDef): void => {
   const flag = getFlag(askCmd, FLAG_AUTO_MODE);
 
   if (flag == null) return;
@@ -58,7 +61,7 @@ const addAutoModeField = (schema: Record<string, z.ZodType>, askCmd: CommandDef)
   }
 };
 
-const addStreamingAndAsyncFields = (schema: Record<string, z.ZodType>): void => {
+const addStreamingAndAsyncFields = (schema: MutableAskInputSchema): void => {
   schema.action = z
     .enum(['run', 'status'])
     .optional()
@@ -73,8 +76,8 @@ const addStreamingAndAsyncFields = (schema: Record<string, z.ZodType>): void => 
   schema.job_id = z.string().optional().describe('Job identifier used with action=status to poll async ask progress');
 };
 
-const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): Readonly<Record<string, z.ZodType>> => {
-  const schema: Record<string, z.ZodType> = {
+const buildAskInputSchema = (config: ProviderConfig, askCmd: CommandDef): AskInputSchema => {
+  const schema: MutableAskInputSchema = {
     context: z.string().optional().describe('Optional user-supplied context to prepend before the current prompt'),
     prompt: z
       .string()

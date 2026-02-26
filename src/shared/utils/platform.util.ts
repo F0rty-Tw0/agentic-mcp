@@ -6,6 +6,9 @@ import which from 'which';
 
 import type { ProviderEnv } from '../common';
 
+type MinimalEnv = Readonly<Record<string, string>>;
+type MutableMinimalEnv = Record<string, string>;
+
 const KILL_GRACE_MS = 5_000;
 
 const SAFE_ENV_KEYS = [
@@ -77,8 +80,8 @@ export const killProcess = async (pid: number): Promise<boolean> => {
   });
 };
 
-export const buildMinimalEnv = (providerEnv: ProviderEnv): Readonly<Record<string, string>> => {
-  const env: Record<string, string> = {};
+export const buildMinimalEnv = (providerEnv: ProviderEnv): MinimalEnv => {
+  const env: MutableMinimalEnv = {};
 
   for (const key of SAFE_ENV_KEYS) {
     const value = process.env[key];

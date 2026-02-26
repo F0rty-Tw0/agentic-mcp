@@ -8,6 +8,8 @@ type ProgressNotification = Readonly<{
   params: Readonly<{ message: string }>;
 }>;
 
+type StreamEvent = Readonly<Record<string, unknown>>;
+
 const createStreamingProviderContext = (): ResolvedProviderEntry => {
   const inlineScript = [
     "process.stdout.write('out-1\\n');",
@@ -62,9 +64,7 @@ describe('handleAsk live streaming integration', () => {
     const extra = createProgressContext(notifications);
 
     const result = await handleAsk(context, { prompt: 'ignored', stream_live: true }, extra);
-    const events = notifications.map(
-      (notification) => JSON.parse(notification.params.message) as Readonly<Record<string, unknown>>
-    );
+    const events = notifications.map((notification) => JSON.parse(notification.params.message) as StreamEvent);
     const sequences = events.map((event) => Number(event.sequence));
     const channels = events.filter((event) => event.type === 'chunk').map((event) => String(event.channel));
     const terminal = events.at(-1);

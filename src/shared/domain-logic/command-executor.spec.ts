@@ -21,6 +21,8 @@ type AutoClosingOptions = Readonly<{
   signal?: string | null;
 }>;
 
+type ChildProcessLike = Record<string, unknown>;
+
 const scheduleAutoClose = (emitter: ControllableChild, opts: Required<AutoClosingOptions>): void => {
   const emitOutputs = (): void => {
     if (opts.stdout) emitter.emitStdout(Buffer.from(opts.stdout));
@@ -46,7 +48,7 @@ const resolveAutoClosingOptions = (options: AutoClosingOptions): Required<AutoCl
   ...options,
 });
 
-const makeAutoClosingChild = (options: AutoClosingOptions = {}): Record<string, unknown> => {
+const makeAutoClosingChild = (options: AutoClosingOptions = {}): ChildProcessLike => {
   const emitter = createControllableChild();
 
   scheduleAutoClose(emitter, resolveAutoClosingOptions(options));

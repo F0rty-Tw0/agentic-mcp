@@ -18,12 +18,14 @@ import {
 import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common';
 import type { AskToolArgs } from '../common';
 
+type ExecutionEnv = Readonly<Record<string, string>>;
+
 type BuildCommandOptionsInput = Readonly<{
   context: ResolvedProviderEntry;
   resolved: AskToolArgs;
   cliArgs: readonly string[];
   stdinInput?: string;
-  env: Readonly<Record<string, string>>;
+  env: ExecutionEnv;
   onStdoutChunk?: (chunk: string) => void;
   onStderrChunk?: (chunk: string) => void;
   signal?: AbortSignal;
@@ -35,7 +37,7 @@ type ModelHintContext = Readonly<{
   args: AskToolArgs;
   stdout: string;
   stderr: string;
-  env: Readonly<Record<string, string>>;
+  env: ExecutionEnv;
 }>;
 
 const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
@@ -67,7 +69,7 @@ export const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
   return resolvedArgs;
 };
 
-export const buildExecutionEnv = (context: ResolvedProviderEntry): Readonly<Record<string, string>> => {
+export const buildExecutionEnv = (context: ResolvedProviderEntry): ExecutionEnv => {
   return buildMinimalEnv(resolveProviderEnv(context));
 };
 
@@ -137,7 +139,7 @@ export const resolveModelHint = async ({ context, args, stdout, stderr, env }: M
 export const buildCommandFailure = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
-  env: Readonly<Record<string, string>>,
+  env: ExecutionEnv,
   result: Readonly<{
     stdout: string;
     stderr: string;

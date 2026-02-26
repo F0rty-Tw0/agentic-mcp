@@ -29,6 +29,8 @@ type ProgressNotification = Readonly<{
   params: Readonly<{ message: string }>;
 }>;
 
+type HeartbeatEvent = Readonly<Record<string, unknown>>;
+
 const createProgressContext = (notifications: ProgressNotification[]): ProgressContext => {
   const sendNotification = vi.fn(async (notification: ProgressNotification) => {
     await Promise.resolve();
@@ -69,7 +71,7 @@ describe('handleAsk heartbeat fallback', () => {
     await handleAsk(context, { prompt: 'x', stream_live: true }, extra);
 
     const heartbeatCalls = notifications.filter((notification) => {
-      const event = JSON.parse(notification.params.message) as Readonly<Record<string, unknown>>;
+      const event = JSON.parse(notification.params.message) as HeartbeatEvent;
 
       return event.type === 'heartbeat';
     });

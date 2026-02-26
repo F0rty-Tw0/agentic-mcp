@@ -15,6 +15,8 @@ const readJson = async (url: URL): Promise<unknown> => {
 };
 
 type Providers = ProvidersFile['providers'];
+type JsonRecord = Readonly<Record<string, unknown>>;
+type JsonRecordMap = Readonly<Record<string, JsonRecord>>;
 
 const validProviderConfig: Providers[string] = {
   enabled: true,
@@ -108,12 +110,12 @@ describe('providers config', () => {
   });
 
   it('GIVEN providers.schema.json WHEN reading descriptors THEN required keys are present', async () => {
-    const schema = (await readJson(providersSchemaUrl)) as Record<string, unknown>;
+    const schema = (await readJson(providersSchemaUrl)) as JsonRecord;
 
     expect(schema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
 
-    const properties = schema.properties as Record<string, unknown>;
-    const defs = schema.$defs as Record<string, unknown>;
+    const properties = schema.properties as JsonRecord;
+    const defs = schema.$defs as JsonRecord;
 
     expect(properties.providers).toBeDefined();
     expect(defs.providerConfig).toBeDefined();
@@ -207,7 +209,7 @@ describe('providers config', () => {
 
   it('GIVEN provider entries WHEN checking legacy fields THEN capabilities is absent', async () => {
     const config = (await readJson(providersJsonUrl)) as {
-      providers: Record<string, Record<string, unknown>>;
+      providers: JsonRecordMap;
     };
 
     for (const [name, provider] of Object.entries(config.providers)) {

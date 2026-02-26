@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startHeartbeat } from './heartbeat.util';
 import type { ProgressContext } from '../common';
 
+type ProgressNotificationPayload = Readonly<Record<string, unknown>>;
+
 const createExtra = (token?: string | number): ProgressContext => ({
   sendNotification: vi.fn().mockResolvedValue(undefined),
   ['_meta']: token != null ? { progressToken: token } : {},
@@ -105,7 +107,7 @@ describe('startHeartbeat', () => {
 
       expect(extra.sendNotification).toHaveBeenCalledTimes(4);
 
-      const notification = (progress: number, seconds: number): Record<string, unknown> => ({
+      const notification = (progress: number, seconds: number): ProgressNotificationPayload => ({
         method: 'notifications/progress',
         params: { progressToken: 'tok-1', progress, message: `Processing… (${seconds}s elapsed)` },
       });

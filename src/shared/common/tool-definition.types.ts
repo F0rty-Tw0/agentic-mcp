@@ -7,9 +7,11 @@ type ToolAnnotations = Readonly<{
   openWorldHint?: boolean;
 }>;
 
+type ToolInputSchema = Readonly<Record<string, z.ZodType>>;
+
 export type ToolDefinition = Readonly<{
   name: string;
   description: string;
-  inputSchema?: Readonly<Record<string, z.ZodType>>;
+  inputSchema?: ToolInputSchema;
   annotations: ToolAnnotations;
 }>;

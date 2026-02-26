@@ -24,6 +24,8 @@ vi.mock('../../shared/utils/platform.util', () => ({
 
 const { executeCommand } = await import('../../shared/domain-logic/command-executor');
 
+type AsyncJobPayload = Readonly<Record<string, string>>;
+
 const readTextContent = (result: Awaited<ReturnType<typeof handleAsk>>): string => {
   const content = result.content[0];
 
@@ -42,7 +44,7 @@ describe('handleAsk async jobs', () => {
     const context = createAskContext();
 
     const result = await handleAsk(context, { prompt: 'x', mode: 'async' });
-    const payload = JSON.parse(readTextContent(result)) as Readonly<Record<string, string>>;
+    const payload = JSON.parse(readTextContent(result)) as AsyncJobPayload;
 
     expect(payload.job_id).toBeDefined();
     expect(payload.state).toBe('pending');
@@ -58,7 +60,7 @@ describe('handleAsk async jobs', () => {
     });
 
     const startResult = await handleAsk(context, { prompt: 'x', mode: 'async' });
-    const startPayload = JSON.parse(readTextContent(startResult)) as Readonly<Record<string, string>>;
+    const startPayload = JSON.parse(readTextContent(startResult)) as AsyncJobPayload;
     const jobId = startPayload.job_id;
 
     expect(jobId).toBeDefined();
@@ -68,7 +70,7 @@ describe('handleAsk async jobs', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     const statusResult = await handleAsk(context, { action: 'status', job_id: jobId });
-    const statusPayload = JSON.parse(readTextContent(statusResult)) as Readonly<Record<string, string>>;
+    const statusPayload = JSON.parse(readTextContent(statusResult)) as AsyncJobPayload;
 
     expect(statusPayload.state).toBe('completed');
     expect(statusPayload.result).toBe('completed output');
