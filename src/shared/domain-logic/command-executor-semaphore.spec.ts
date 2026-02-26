@@ -2,19 +2,13 @@ import crossSpawn from 'cross-spawn';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
-import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 vi.mock('../utils/platform.util', () => ({ killProcess: vi.fn().mockResolvedValue(true) }));
 
-const baseOptions = {
-  binaryPath: '/usr/bin/test-cli',
-  args: ['run'],
-  env: TEST_MINIMAL_ENV_STUB,
-  timeoutMs: 5_000,
-  bypassSemaphore: false,
-};
+const baseOptions = { ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: false };
 
 const drainMicrotasks = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 0));

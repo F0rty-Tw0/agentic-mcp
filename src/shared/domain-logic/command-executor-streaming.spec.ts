@@ -2,18 +2,12 @@ import crossSpawn from 'cross-spawn';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
-import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
-const baseOptions = {
-  binaryPath: '/usr/bin/test-cli',
-  args: ['run'],
-  env: TEST_MINIMAL_ENV_STUB,
-  timeoutMs: 5_000,
-  bypassSemaphore: true,
-};
+const baseOptions = { ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true };
 
 describe('executeCommand streaming callbacks', () => {
   beforeEach(() => {

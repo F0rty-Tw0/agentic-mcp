@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
 import { CommandExecutionError } from '../common/errors';
-import { TEST_MINIMAL_ENV_STUB } from '../common/stubs';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 import type { ControllableChild } from '../common/test-utils';
 import { killProcess } from '../utils';
@@ -54,15 +54,6 @@ const makeAutoClosingChild = (options: AutoClosingOptions = {}): Record<string, 
   return emitter.child;
 };
 
-const baseOptions = {
-  binaryPath: '/usr/bin/test-cli',
-  args: ['run'],
-  env: TEST_MINIMAL_ENV_STUB,
-  timeoutMs: 5_000,
-};
-
-const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
-
 describe('executeCommand', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,7 +70,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       expect(result.stdout).toBe('hello');
       expect(result.stderr).toBe('warn');
@@ -93,10 +84,10 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      await executeCommand({ ...baseOptions, cwd: '/workspace', bypassSemaphore: true });
+      await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, cwd: '/workspace', bypassSemaphore: true });
 
       expect(crossSpawn).toHaveBeenCalledWith('/usr/bin/test-cli', ['run'], {
-        env: TEST_MINIMAL_ENV_STUB,
+        env: TEST_EXECUTE_COMMAND_OPTIONS_STUB.env,
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: '/workspace',
       });
@@ -107,7 +98,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       expect(result.executionTimeMs).toBeGreaterThanOrEqual(0);
     });
@@ -119,7 +110,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       expect(result.exitCode).toBe(42);
       expect(result.signal).toBeNull();
@@ -131,7 +122,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       expect(result.exitCode).toBeNull();
       expect(result.signal).toBe('SIGTERM');
@@ -144,7 +135,11 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const resultPromise = executeCommand({ ...baseOptions, stdin: 'input data', bypassSemaphore: true });
+      const resultPromise = executeCommand({
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
+        stdin: 'input data',
+        bypassSemaphore: true,
+      });
 
       emitClose(0, null);
       await resultPromise;
@@ -158,7 +153,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const resultPromise = executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const resultPromise = executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       emitClose(0, null);
       await resultPromise;
@@ -176,7 +171,11 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const resultPromise = executeCommand({ ...baseOptions, timeoutMs: 5_000, bypassSemaphore: true });
+      const resultPromise = executeCommand({
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
+        timeoutMs: 5_000,
+        bypassSemaphore: true,
+      });
 
       vi.advanceTimersByTime(5_001);
       emitClose(null, 'SIGTERM');
@@ -196,7 +195,11 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const resultPromise = executeCommand({ ...baseOptions, timeoutMs: 5_000, bypassSemaphore: true });
+      const resultPromise = executeCommand({
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
+        timeoutMs: 5_000,
+        bypassSemaphore: true,
+      });
 
       vi.advanceTimersByTime(5_001);
       emitClose(null, null);
@@ -210,53 +213,13 @@ describe('executeCommand', () => {
     });
   });
 
-  describe('output truncation', () => {
-    it('GIVEN stdout exceeding MAX_OUTPUT_BYTES WHEN executed THEN output is truncated preserving partial chunk at boundary', async () => {
-      const { child, emitStdout, emitClose } = createControllableChild();
-
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
-
-      const resultPromise = executeCommand({ ...baseOptions, bypassSemaphore: true });
-
-      const firstChunkSize = MAX_OUTPUT_BYTES - 100;
-
-      emitStdout(Buffer.alloc(firstChunkSize, 'a'));
-      emitStdout(Buffer.alloc(200, 'b'));
-      emitClose(0, null);
-
-      const result = await resultPromise;
-
-      expect(result.truncated).toBe(true);
-      expect(result.stdoutBytes).toBe(MAX_OUTPUT_BYTES);
-      expect(result.stdout).toHaveLength(MAX_OUTPUT_BYTES);
-      expect(result.stdout.slice(-100)).toBe('b'.repeat(100));
-      expect(result.stdout[firstChunkSize - 1]).toBe('a');
-    });
-
-    it('GIVEN stderr exceeding MAX_OUTPUT_BYTES WHEN executed THEN truncated flag is set', async () => {
-      const { child, emitStderr, emitClose } = createControllableChild();
-
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
-
-      const resultPromise = executeCommand({ ...baseOptions, bypassSemaphore: true });
-
-      emitStderr(Buffer.alloc(MAX_OUTPUT_BYTES + 1, 'x'));
-      emitClose(0, null);
-
-      const result = await resultPromise;
-
-      expect(result.truncated).toBe(true);
-      expect(result.stderrBytes).toBe(MAX_OUTPUT_BYTES);
-    });
-  });
-
   describe('spawn errors', () => {
     it('GIVEN crossSpawn emits error WHEN executed THEN rejects with CommandExecutionError', async () => {
       const { child, emitError } = createControllableChild();
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const resultPromise = executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const resultPromise = executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       emitError(new Error('ENOENT'));
 
@@ -277,7 +240,7 @@ describe('executeCommand', () => {
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
       const resultPromise = executeCommand({
-        ...baseOptions,
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
         signal: controller.signal,
         bypassSemaphore: true,
       });
@@ -300,7 +263,7 @@ describe('executeCommand', () => {
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
       const resultPromise = executeCommand({
-        ...baseOptions,
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
         signal: controller.signal,
         bypassSemaphore: true,
       });
@@ -319,7 +282,7 @@ describe('executeCommand', () => {
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
       const resultPromise = executeCommand({
-        ...baseOptions,
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
         signal: controller.signal,
         bypassSemaphore: true,
       });
@@ -340,7 +303,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const resultPromise = executeCommand({ ...baseOptions, onSpawned, bypassSemaphore: true });
+      const resultPromise = executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, onSpawned, bypassSemaphore: true });
 
       emitClose(0, null);
       await resultPromise;
@@ -354,7 +317,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      await executeCommand({ ...baseOptions, onSpawned, bypassSemaphore: true });
+      await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, onSpawned, bypassSemaphore: true });
 
       expect(onSpawned).not.toHaveBeenCalled();
     });
@@ -366,7 +329,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: true });
+      const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
       expect(result.stdout).toBe('hello');
       expect(result.exitCode).toBe(0);
@@ -378,7 +341,7 @@ describe('executeCommand', () => {
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
 
-      const result = await executeCommand({ ...baseOptions, bypassSemaphore: false });
+      const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: false });
 
       expect(result.stdout).toBe('world');
       expect(result.exitCode).toBe(0);

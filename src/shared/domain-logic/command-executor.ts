@@ -6,6 +6,7 @@ import type { ExecuteCommandOptions, ExecutionResult, StreamCollector } from '..
 import { CommandExecutionError } from '../common/errors';
 import { killProcess } from '../utils';
 
+type TimeoutHandle = Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }>;
 type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
 type ResolveExecutionResultInput = Readonly<{
   stdout: StreamCollector;
@@ -45,8 +46,6 @@ const createAbortSubscription = (signal?: AbortSignal, childPid?: number): Abort
 
   return abortSubscription;
 };
-
-type TimeoutHandle = Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }>;
 
 const setupTimeout = (timeoutMs: number, pid?: number): TimeoutHandle => {
   let timedOut = false;
