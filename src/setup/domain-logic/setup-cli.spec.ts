@@ -25,7 +25,7 @@ const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
   return plan;
 };
 
-const createApplyResult = (overrides: Partial<SetupApplyResult> = {}): SetupApplyResult => {
+const createApplyResult = (overrides?: Partial<SetupApplyResult>): SetupApplyResult => {
   const result: SetupApplyResult = {
     status: 'written',
     path: '/tmp/claude_desktop_config.json',
@@ -36,7 +36,7 @@ const createApplyResult = (overrides: Partial<SetupApplyResult> = {}): SetupAppl
   return result;
 };
 
-const createDependencies = (overrides: Record<string, unknown> = {}): Record<string, unknown> => {
+const createDependencies = (overrides?: Record<string, unknown>): Record<string, unknown> => {
   const defaults = {
     detectInstalledProviders: vi.fn().mockResolvedValue([]),
     generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
@@ -48,7 +48,7 @@ const createDependencies = (overrides: Record<string, unknown> = {}): Record<str
     isInteractive: false,
   };
 
-  const result: Record<string, unknown> = { ...defaults, ...overrides };
+  const result = { ...defaults, ...overrides };
 
   return result;
 };
@@ -251,5 +251,50 @@ describe('runSetup', () => {
 
     expect(promptConfirm).not.toHaveBeenCalled();
     expect(applySetupPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN non-interactive write without injected stderr writer WHEN blocked THEN writes error to process stderr', async () => {
+    const stderrWriteSpy = vi.spyOn(process.stderr, 'write');
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+
+    await runSetup(['--client', 'cursor'], {
+      detectInstalledProviders: vi.fn().mockResolvedValue([]),
+      generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
+      buildSetupPlan: vi.fn(() => createPlan()),
+      applySetupPlan,
+      homeDirectory: '/home/dev',
+      isInteractive: false,
+    });
+
+    const writtenText = stderrWriteSpy.mock.calls
+      .map((call) => (typeof call[0] === 'string' ? call[0] : Buffer.from(call[0]).toString('utf8')))
+      .join('');
+
+    expect(writtenText).toContain('Use --yes to run non-interactive writes.');
+    expect(applySetupPlan).not.toHaveBeenCalled();
+
+    stderrWriteSpy.mockRestore();
+  });
+
+  it('GIVEN write success without injected stdout writer WHEN running setup THEN writes output to process stdout', async () => {
+    const stdoutWriteSpy = vi.spyOn(process.stdout, 'write');
+
+    await runSetup(['--client', 'cursor', '--yes'], {
+      detectInstalledProviders: vi.fn().mockResolvedValue([]),
+      generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
+      buildSetupPlan: vi.fn(() => createPlan()),
+      applySetupPlan: vi.fn().mockResolvedValue(createApplyResult()),
+      homeDirectory: '/home/dev',
+      isInteractive: false,
+    });
+
+    const writtenText = stdoutWriteSpy.mock.calls
+      .map((call) => (typeof call[0] === 'string' ? call[0] : Buffer.from(call[0]).toString('utf8')))
+      .join('');
+
+    expect(writtenText).toContain('agentic-mcp setup');
+    expect(writtenText).toContain('Result: written');
+
+    stdoutWriteSpy.mockRestore();
   });
 });

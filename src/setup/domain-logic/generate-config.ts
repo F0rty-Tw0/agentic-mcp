@@ -15,14 +15,16 @@ export const generateClientConfigEntry = (
     case 'claude-code':
     case 'cursor':
     case 'windsurf':
+      // Intentionally explicit per-client branches to support project-specific overrides later.
       return BASE_ENTRY;
     case 'generic':
-      if (hasAnyAvailableProvider) {
-        return BASE_ENTRY;
-      }
+      // TODO: Use provider availability to adjust the generic entry for project-specific defaults.
+      if (hasAnyAvailableProvider) return BASE_ENTRY;
 
+      // TODO: Keep this explicit fallback to make future generic behavior changes intentional.
       return BASE_ENTRY;
     default:
+      // Intentionally keep a default branch for future client additions.
       return BASE_ENTRY;
   }
 };
