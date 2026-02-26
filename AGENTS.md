@@ -5,6 +5,7 @@
 - **No enums, no namespaces** — `erasableSyntaxOnly` is on. You will try to write enums. Don't.
 - **No classes** — use functions and plain objects. The only exception is `Error` subclasses (they need `instanceof` and stack traces).
 - **No default exports** — all exports are named, inline on the declaration.
+- **No extensions on relative imports** — use `'./foo'`, never `'./foo.ts'` or `'./foo.js'`. Package imports keep their original extension.
 - **`node:` prefix mandatory** — always `import from 'node:fs/promises'`, never bare `'fs/promises'`.
 - **`import type` for type-only imports** — enforced by `verbatimModuleSyntax`. You will forget this.
 - **`catch (error: unknown)`** — never `any`, never bare `Error`.
