@@ -44,6 +44,7 @@
   "devDependencies": {
     "@types/cross-spawn": "catalog:dev",
     "@types/node": "catalog:dev",
+    "@vitest/coverage-v8": "catalog:dev",
     "esbuild": "catalog:dev",
     "eslint": "catalog:dev",
     "eslint-config-prettier": "catalog:dev",
