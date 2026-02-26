@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import { SESSION_STORE } from '../../session/session-store';
+import { SESSION_STORE } from '../../session';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
 import type { McpPlainTextContent, McpTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';

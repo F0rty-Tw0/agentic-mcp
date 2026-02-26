@@ -1,16 +1,17 @@
+import type { OutputFormat } from '../../shared/common';
 import type { ExecutionResult } from '../../shared/common/command-executor.types';
 import type { ProviderAttribution } from '../common/attribution.types';
 import type { SessionMode } from '../common/session-mode.type';
 
 type AttributionMetadata = Readonly<{
-  outputFormatObserved: 'text' | 'json' | 'stream-json';
+  outputFormatObserved: OutputFormat;
 }>;
 
 type BuildAttributionInput = Readonly<{
   provider: string;
   model?: string;
   result: Pick<ExecutionResult, 'executionTimeMs' | 'truncated' | 'stdoutBytes'>;
-  outputFormat: 'json' | 'stream-json' | 'text';
+  outputFormat: OutputFormat;
   metadata?: AttributionMetadata;
   sessionMode: SessionMode;
 }>;

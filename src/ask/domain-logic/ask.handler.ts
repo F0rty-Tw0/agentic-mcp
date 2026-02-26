@@ -3,7 +3,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { runAskInvocation } from './ask-runner';
 import { createBackgroundJob } from '../../background-jobs/data-access';
 import { buildJobStatusResponse, startBackgroundInvocation } from '../../background-jobs/domain-logic';
-import { SESSION_STORE } from '../../session/session-store';
+import { SESSION_STORE } from '../../session';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
 import type { AskToolArgs } from '../common';
 import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../session';

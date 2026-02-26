@@ -1,10 +1,12 @@
+import type { OutputFormat } from '../../shared/common';
+
 export type ProviderAttribution = Readonly<{
   provider: string;
   model?: string;
   executionTimeMs: number;
   outputBytes: number;
   truncated: boolean;
-  outputFormat: 'json' | 'stream-json' | 'text';
+  outputFormat: OutputFormat;
   sessionMode?: string;
-  outputFormatObserved?: string;
+  outputFormatObserved?: OutputFormat;
 }>;

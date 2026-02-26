@@ -1,7 +1,8 @@
+import type { OutputFormat } from '../../shared/common';
 import { stripAnsi } from '../../shared/utils';
 
 type ParsedMetadata = Readonly<{
-  outputFormatObserved: 'text' | 'json' | 'stream-json';
+  outputFormatObserved: OutputFormat;
   parsed?: unknown;
 }>;
 
@@ -53,10 +54,7 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
   };
 };
 
-export const parseProviderOutput = (
-  stdout: string,
-  outputFormat: 'json' | 'stream-json' | 'text'
-): ParsedProviderOutput => {
+export const parseProviderOutput = (stdout: string, outputFormat: OutputFormat): ParsedProviderOutput => {
   const cleanOutput = stripAnsi(stdout);
 
   if (outputFormat === 'json') return parseJson(cleanOutput);

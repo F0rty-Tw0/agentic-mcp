@@ -12,6 +12,11 @@ const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
 const mockCreateOrGet = vi.hoisted(() => vi.fn());
 const mockGetNativeSessionId = vi.hoisted(() => vi.fn<() => string | undefined>());
 const mockGetPrependContext = vi.hoisted(() => vi.fn<() => string>());
+const mockSessionStore = vi.hoisted(() => ({
+  createOrGet: mockCreateOrGet,
+  getNativeSessionId: mockGetNativeSessionId,
+  getPrependContext: mockGetPrependContext,
+}));
 
 vi.mock('../../domain-logic/ask-runner', () => ({
   runAskInvocation: mockRunAskInvocation,
@@ -21,14 +26,7 @@ vi.mock('./session-context.util', () => ({
   buildSessionPrompt: mockBuildSessionPrompt,
 }));
 
-vi.mock('../../../session/session-store', () => ({
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  SESSION_STORE: {
-    createOrGet: mockCreateOrGet,
-    getNativeSessionId: mockGetNativeSessionId,
-    getPrependContext: mockGetPrependContext,
-  },
-}));
+vi.mock('../../../session', () => Object.fromEntries([['SESSION_STORE', mockSessionStore]]));
 
 const createCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => ({
   content: [{ type: 'text', text: 'response text' }],

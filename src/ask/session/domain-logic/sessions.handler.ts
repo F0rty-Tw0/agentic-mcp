@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { SESSION_STORE } from '../../../session/session-store';
+import { SESSION_STORE } from '../../../session';
 
 export const handleSessions = (providerName: string): CallToolResult => {
   const sessions = SESSION_STORE.listByProvider(providerName);

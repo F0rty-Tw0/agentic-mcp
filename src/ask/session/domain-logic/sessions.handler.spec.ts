@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleSessions } from './sessions.handler';
-import { SESSION_STORE } from '../../../session/session-store';
+import { SESSION_STORE } from '../../../session';
 
 describe('handleSessions', () => {
   it('GIVEN no sessions for provider WHEN listing THEN returns no sessions text', () => {

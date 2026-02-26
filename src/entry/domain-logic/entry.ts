@@ -3,7 +3,7 @@ import process from 'node:process';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { createServer } from '../../server/create-server';
-import { runSetup } from '../../setup/setup-cli';
+import { runSetup } from '../../setup';
 import { APP_VERSION } from '../../shared/common';
 import { HELP_TEXT } from '../common';
 import { parseConfigPath } from '../utils';
