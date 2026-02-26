@@ -34,31 +34,31 @@ export type AskStreamEventPayload =
 
 type StreamEnabledInput = Readonly<{
   args: { stream_live?: boolean };
-  progressToken: ProgressToken | null;
+  progressToken?: ProgressToken;
   extra?: ProgressContext;
 }>;
 
 const noop = (): void => undefined;
 
-const toMeta = (extra?: ProgressContext): Readonly<{ progressToken?: ProgressToken }> | null => {
-  if (!extra) return null;
+const toMeta = (extra?: ProgressContext): Readonly<{ progressToken?: ProgressToken }> | undefined => {
+  if (!extra) return;
 
   // eslint-disable-next-line no-underscore-dangle
   const meta = extra._meta;
 
-  return meta ?? null;
+  return meta;
 };
 
-export const resolveProgressToken = (extra?: ProgressContext): ProgressToken | null => {
-  if (!extra?.sendNotification) return null;
+export const resolveProgressToken = (extra?: ProgressContext): ProgressToken | undefined => {
+  if (!extra?.sendNotification) return;
 
   const token = toMeta(extra)?.progressToken;
 
-  return token ?? null;
+  return token;
 };
 
 export const isStreamEnabled = ({ args, progressToken, extra }: StreamEnabledInput): boolean => {
-  return args.stream_live === true && progressToken != null && extra?.sendNotification != null;
+  return args.stream_live === true && progressToken !== undefined && extra?.sendNotification !== undefined;
 };
 
 export const splitChunkByBytes = (chunk: string): string[] => {

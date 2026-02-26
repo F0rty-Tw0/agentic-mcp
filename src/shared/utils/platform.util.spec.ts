@@ -243,7 +243,7 @@ describe('platform utilities', () => {
       expect(mocks.which).toHaveBeenCalledWith('agentic', { nothrow: true });
     });
 
-    it('GIVEN nonexistent binary WHEN resolving THEN returns null', async () => {
+    it('GIVEN nonexistent binary WHEN resolving THEN returns undefined', async () => {
       mocks.which.mockResolvedValue(null);
 
       const result = await resolveCliBinary('nonexistent');

@@ -23,7 +23,7 @@ describe('handleListProviders', () => {
     });
 
     it('GIVEN enabled but unavailable provider WHEN listing THEN shows "not found" status', () => {
-      const providers = [createProvider({ enabled: true, available: false, binaryPath: null })];
+      const providers = [createProvider({ enabled: true, available: false, binaryPath: undefined })];
 
       const result = handleListProviders(providers);
 
@@ -31,7 +31,7 @@ describe('handleListProviders', () => {
     });
 
     it('GIVEN disabled provider WHEN listing THEN shows "disabled" status', () => {
-      const providers = [createProvider({ enabled: false, available: false, binaryPath: null })];
+      const providers = [createProvider({ enabled: false, available: false, binaryPath: undefined })];
 
       const result = handleListProviders(providers);
 

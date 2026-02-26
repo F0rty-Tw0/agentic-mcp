@@ -14,26 +14,26 @@ import type { ProgressContext } from '../../../shared/common';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 
 describe('resolveProgressToken', () => {
-  it('GIVEN no extra WHEN called THEN returns null', () => {
+  it('GIVEN no extra WHEN called THEN returns undefined', () => {
     const result = resolveProgressToken(undefined);
 
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
-  it('GIVEN extra without sendNotification WHEN called THEN returns null', () => {
+  it('GIVEN extra without sendNotification WHEN called THEN returns undefined', () => {
     const extra = { _meta: { progressToken: 42 } } as unknown as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
-  it('GIVEN extra with sendNotification but no _meta WHEN called THEN returns null', () => {
+  it('GIVEN extra with sendNotification but no _meta WHEN called THEN returns undefined', () => {
     const extra = { sendNotification: async () => {}, _meta: undefined } as unknown as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('GIVEN extra with sendNotification and numeric progressToken WHEN called THEN returns the token', () => {
@@ -76,10 +76,10 @@ describe('isStreamEnabled', () => {
     expect(result).toBe(false);
   });
 
-  it('GIVEN stream_live=true but null progressToken WHEN called THEN returns false', () => {
+  it('GIVEN stream_live=true but undefined progressToken WHEN called THEN returns false', () => {
     const extra = { sendNotification: async () => {}, _meta: {} } as unknown as ProgressContext;
 
-    const result = isStreamEnabled({ args: { stream_live: true }, progressToken: null, extra });
+    const result = isStreamEnabled({ args: { stream_live: true }, progressToken: undefined, extra });
 
     expect(result).toBe(false);
   });

@@ -13,5 +13,5 @@ export type ResolvedProvider = Readonly<{
   description: string;
   enabled: boolean;
   available: boolean;
-  binaryPath: string | null;
+  binaryPath?: string;
 }>;

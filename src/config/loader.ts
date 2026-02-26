@@ -19,12 +19,12 @@ const DANGEROUS_FLAGS = [
 
 type DangerousFlag = (typeof DANGEROUS_FLAGS)[number];
 
-const userLocalConfigPath = (): string | null => {
+const userLocalConfigPath = (): string | undefined => {
   if (process.platform !== 'win32') return path.join(os.homedir(), '.config', 'agentic-mcp', 'providers.json');
 
   const appData = process.env.APPDATA;
 
-  return appData ? path.join(appData, 'agentic-mcp', 'providers.json') : null;
+  return appData ? path.join(appData, 'agentic-mcp', 'providers.json') : undefined;
 };
 
 const resolveConfigPath = async (explicit?: string): Promise<string> => {

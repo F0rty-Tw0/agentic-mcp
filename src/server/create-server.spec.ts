@@ -7,7 +7,7 @@ import type { AsyncViFn, SyncViFn } from '../shared/common/test-utils';
 
 type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
 
-type ResolveCliBinaryMock = AsyncViFn<[command: string], string | null>;
+type ResolveCliBinaryMock = AsyncViFn<[command: string], string | undefined>;
 
 type McpServerEntry = [server: McpServer, resolvedProviders: ResolvedProviderEntry[], allProviders: ResolvedProvider[]];
 
@@ -91,7 +91,7 @@ describe('createServer', () => {
 
     mocks.loadConfig.mockResolvedValue(config);
     mocks.resolveCliBinary.mockResolvedValueOnce('C:/bin/available-cli');
-    mocks.resolveCliBinary.mockResolvedValueOnce(null);
+    mocks.resolveCliBinary.mockResolvedValueOnce(undefined);
 
     const server = await createServer({
       configPath: 'custom/providers.json',
@@ -125,14 +125,14 @@ describe('createServer', () => {
           description: 'Missing provider',
           enabled: true,
           available: false,
-          binaryPath: null,
+          binaryPath: undefined,
         },
         {
           name: 'disabled',
           description: 'Disabled provider',
           enabled: false,
           available: false,
-          binaryPath: null,
+          binaryPath: undefined,
         },
       ]
     );
@@ -166,7 +166,7 @@ describe('createServer', () => {
           description: 'Disabled provider',
           enabled: false,
           available: false,
-          binaryPath: null,
+          binaryPath: undefined,
         },
       ]
     );
@@ -184,7 +184,7 @@ describe('createServer', () => {
       };
 
       mocks.loadConfig.mockResolvedValue(config);
-      mocks.resolveCliBinary.mockResolvedValue(null);
+      mocks.resolveCliBinary.mockResolvedValue(undefined);
 
       await createServer();
 

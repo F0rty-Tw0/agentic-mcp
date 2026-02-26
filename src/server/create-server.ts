@@ -17,13 +17,13 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
   const allProviders: ResolvedProvider[] = [];
 
   for (const [name, providerConfig] of Object.entries(config.providers)) {
-    const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : null;
+    const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : undefined;
 
     const provider: ResolvedProvider = {
       name,
       description: providerConfig.description,
       enabled: providerConfig.enabled,
-      available: binaryPath !== null,
+      available: binaryPath !== undefined,
       binaryPath,
     };
 
