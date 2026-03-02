@@ -15,11 +15,13 @@ const mocks = vi.hoisted(() => {
   };
   const connect = vi.fn<(transport: unknown) => Promise<void>>();
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
+  const runSetup = vi.fn<(args: readonly string[]) => Promise<void>>();
   const stdioServerTransport = vi.fn();
 
   return {
     connect,
     createServer,
+    runSetup,
     stdioServerTransport,
     transportInstance,
   };
@@ -27,6 +29,10 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('../../server', () => ({
   createServer: mocks.createServer,
+}));
+
+vi.mock('../../setup', () => ({
+  runSetup: mocks.runSetup,
 }));
 
 vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
@@ -55,6 +61,8 @@ describe('main', () => {
     mocks.createServer.mockResolvedValue({
       connect: mocks.connect,
     });
+
+    mocks.runSetup.mockReset();
 
     mocks.stdioServerTransport.mockReset();
     mocks.stdioServerTransport.mockImplementation(createMockTransport);
@@ -118,5 +126,16 @@ describe('main', () => {
     mocks.createServer.mockRejectedValueOnce(new Error('boom'));
 
     await expect(entry()).rejects.toThrow('boom');
+  });
+
+  it('GIVEN "setup" as first arg WHEN main() is called THEN it calls runSetup with remaining args and does not start the server', async () => {
+    process.argv = ['node', '', 'setup', '--client', 'claude'];
+
+    mocks.runSetup.mockResolvedValue(undefined);
+
+    await entry();
+
+    expect(mocks.runSetup).toHaveBeenCalledWith(['--client', 'claude']);
+    expect(mocks.createServer).not.toHaveBeenCalled();
   });
 });
