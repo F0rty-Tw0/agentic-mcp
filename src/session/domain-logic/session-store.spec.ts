@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { MAX_SESSIONS } from '../common';
 import { InMemorySessionStore } from './session-store';
 
 describe('InMemorySessionStore', () => {
@@ -25,6 +26,36 @@ describe('InMemorySessionStore', () => {
     expect(context).toContain('assistant: a1');
     expect(context).toContain('user: u2');
     expect(context).not.toContain('u1');
+  });
+
+  it('GIVEN existing session WHEN setNativeSessionId THEN getNativeSessionId returns it', () => {
+    const store = new InMemorySessionStore();
+
+    store.createOrGet('claude', 's1');
+    store.setNativeSessionId('claude', 's1', 'native-abc');
+
+    expect(store.getNativeSessionId('claude', 's1')).toBe('native-abc');
+  });
+
+  it('GIVEN no session WHEN setNativeSessionId THEN getNativeSessionId returns undefined', () => {
+    const store = new InMemorySessionStore();
+
+    store.setNativeSessionId('claude', 'missing', 'native-abc');
+
+    expect(store.getNativeSessionId('claude', 'missing')).toBeUndefined();
+  });
+
+  it('GIVEN store at capacity WHEN createOrGet adds a new session THEN oldest session is evicted', () => {
+    const store = new InMemorySessionStore();
+
+    for (let i = 0; i < MAX_SESSIONS; i++) {
+      store.createOrGet('claude', `s${i}`);
+    }
+
+    store.createOrGet('claude', 'overflow');
+
+    expect(store.get('claude', 's0')).toBeUndefined();
+    expect(store.get('claude', 'overflow')).toBeDefined();
   });
 
   it('GIVEN session lock WHEN second request tries to acquire THEN it fails until release', () => {

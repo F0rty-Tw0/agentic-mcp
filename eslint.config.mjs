@@ -9,6 +9,6 @@ export default [
   ...boundaries,
   ...prettier,
   {
-    ignores: ['dist', 'node_modules', '.omc', '.claude', './*.config.*', '!./src/**/*.config.*'],
+    ignores: ['dist', 'node_modules', 'coverage', '.omc', '.claude', './*.config.*', '!./src/**/*.config.*'],
   },
 ];

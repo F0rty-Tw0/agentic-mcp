@@ -76,7 +76,7 @@ export class InMemorySessionStore {
     return records;
   }
 
-  public addTurn(provider: string, id: string, turn: Readonly<{ role: 'user' | 'assistant'; text: string }>): void {
+  public addTurn(provider: string, id: string, turn: Omit<SessionTurn, 'timestamp'>): void {
     const key = toSessionKey(provider, id);
     const entry = this.entries.get(key);
 

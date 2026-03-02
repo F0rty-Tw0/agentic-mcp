@@ -22,10 +22,10 @@ const safeValidateSessionId = (value?: string): string | undefined => {
 const parseJsonSessionId = (stdout: string): string | undefined => {
   try {
     const parsed = JSON.parse(stdout) as ParsedSessionResponse;
-    const candidate =
-      (typeof parsed.session_id === 'string' ? parsed.session_id : undefined) ??
-      (typeof parsed.conversation_id === 'string' ? parsed.conversation_id : undefined) ??
-      (typeof parsed.session?.id === 'string' ? parsed.session.id : undefined);
+    const sessionId = typeof parsed.session_id === 'string' ? parsed.session_id : undefined;
+    const conversationId = typeof parsed.conversation_id === 'string' ? parsed.conversation_id : undefined;
+    const sessionIdInSession = typeof parsed.session?.id === 'string' ? parsed.session.id : undefined;
+    const candidate = sessionId ?? conversationId ?? sessionIdInSession;
 
     return safeValidateSessionId(candidate);
   } catch {
