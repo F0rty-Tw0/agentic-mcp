@@ -13,7 +13,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer } from './create-server';
-import type { McpTextContent } from '../shared/common';
+import type { McpTextContent } from '../../shared/common';
 
 let server: McpServer;
 let client: Client;

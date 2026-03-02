@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../../server/create-server', () => ({
+vi.mock('../../server', () => ({
   createServer: mocks.createServer,
 }));
 

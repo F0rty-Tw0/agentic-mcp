@@ -2,8 +2,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server';
-import type { ProvidersFile, ResolvedProvider, ResolvedProviderEntry } from '../shared/common';
-import type { AsyncViFn, SyncViFn } from '../shared/common/test-utils';
+import type { ProvidersFile, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
+import type { AsyncViFn, SyncViFn } from '../../shared/common/test-utils';
 
 type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
 
@@ -25,15 +25,15 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../config/loader', () => ({
+vi.mock('../../config/loader', () => ({
   loadConfig: mocks.loadConfig,
 }));
 
-vi.mock('../shared/utils/platform.util', () => ({
+vi.mock('../../shared/utils/platform.util', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 
-vi.mock('../tool-registry', () => ({
+vi.mock('../../tool-registry', () => ({
   registerAllTools: mocks.registerAllTools,
 }));
 
