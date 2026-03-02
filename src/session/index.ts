@@ -1,4 +1,4 @@
-export * from './domain-logic';
+export { InMemorySessionStore, SESSION_STORE } from './data-access';
 
 export { extractNativeSessionId } from './utils';
 
