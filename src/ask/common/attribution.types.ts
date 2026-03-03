@@ -1,4 +1,4 @@
-import type { OutputFormat } from '../../shared/common';
+import type { OutputFormat } from '../../shared';
 
 export type ProviderAttribution = Readonly<{
   provider: string;

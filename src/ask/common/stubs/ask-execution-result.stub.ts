@@ -1,4 +1,4 @@
-import type { ExecutionResult } from '../../../shared/common';
+import type { ExecutionResult } from '../../../shared';
 
 export const ASK_SUCCESS_EXECUTION_RESULT_STUB: ExecutionResult = {
   stdout: '',
