@@ -1,0 +1,134 @@
+/**
+ * Integration test — exercises the setup CLI with real filesystem operations.
+ * Uses runSetup with injected dependencies for controlled test environment.
+ * No mocks on filesystem — real writes, reads, backups.
+ *
+ * Uses `.test` extension to distinguish from unit `.spec` files.
+ * Run with: pnpm run test:integration
+ */
+
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { runSetup } from './setup-cli';
+
+let tempDir: string;
+let stdoutOutput: string;
+let stderrOutput: string;
+
+const stubProviders = [
+  { name: 'claude', available: true, binaryPath: '/usr/bin/claude' },
+] as const;
+
+const commonDeps = () => ({
+  detectInstalledProviders: async () => stubProviders,
+  stdoutWrite: (text: string) => {
+    stdoutOutput += text;
+  },
+  stderrWrite: (text: string) => {
+    stderrOutput += text;
+  },
+  homeDirectory: tempDir,
+  isInteractive: false,
+});
+
+beforeEach(async () => {
+  tempDir = await mkdtemp(path.join(os.tmpdir(), 'setup-test-'));
+  stdoutOutput = '';
+  stderrOutput = '';
+});
+
+afterEach(async () => {
+  await rm(tempDir, { recursive: true, force: true });
+});
+
+describe('integration: setup fresh write', () => {
+  it('GIVEN --yes and --path WHEN runSetup runs THEN a valid config file is created with agentic-mcp entry', async () => {
+    const targetPath = path.join(tempDir, 'config.json');
+
+    await runSetup(['--client', 'generic', '--yes', '--path', targetPath], commonDeps());
+
+    const content = await readFile(targetPath, 'utf8');
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const mcpServers = parsed.mcpServers as Record<string, unknown>;
+
+    expect(mcpServers).toBeDefined();
+    expect(mcpServers['agentic-mcp']).toBeDefined();
+  });
+});
+
+describe('integration: setup merge with existing config', () => {
+  it('GIVEN an existing config with other servers WHEN runSetup runs THEN both entries are preserved', async () => {
+    const targetPath = path.join(tempDir, 'existing.json');
+    const existingConfig = JSON.stringify({ mcpServers: { 'other-server': { command: 'other' } } }, null, 2);
+
+    await writeFile(targetPath, existingConfig, 'utf8');
+
+    await runSetup(['--client', 'generic', '--yes', '--path', targetPath], commonDeps());
+
+    const content = await readFile(targetPath, 'utf8');
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const mcpServers = parsed.mcpServers as Record<string, unknown>;
+
+    expect(mcpServers['other-server']).toBeDefined();
+    expect(mcpServers['agentic-mcp']).toBeDefined();
+  });
+});
+
+describe('integration: setup backup creation', () => {
+  it('GIVEN an existing config WHEN runSetup runs with backup THEN a .bak file is created', async () => {
+    const targetPath = path.join(tempDir, 'backup-test.json');
+    const originalContent = JSON.stringify({ mcpServers: { original: {} } }, null, 2);
+
+    await writeFile(targetPath, originalContent, 'utf8');
+
+    await runSetup(['--client', 'generic', '--yes', '--path', targetPath, '--backup'], commonDeps());
+
+    const backupContent = await readFile(`${targetPath}.bak`, 'utf8');
+
+    expect(backupContent).toBe(originalContent);
+  });
+});
+
+describe('integration: non-interactive safety gate', () => {
+  it('GIVEN non-interactive mode without --yes WHEN runSetup runs THEN it aborts with error message', async () => {
+    const targetPath = path.join(tempDir, 'blocked.json');
+
+    await runSetup(['--client', 'generic', '--path', targetPath], commonDeps());
+
+    expect(stderrOutput).toContain('non-interactive write requires explicit --yes');
+
+    let fileExists = true;
+
+    try {
+      await readFile(targetPath);
+    } catch {
+      fileExists = false;
+    }
+
+    expect(fileExists).toBe(false);
+  });
+});
+
+describe('integration: dry run', () => {
+  it('GIVEN --dry-run WHEN runSetup runs THEN no file is written but output is produced', async () => {
+    const targetPath = path.join(tempDir, 'dry-run.json');
+
+    await runSetup(['--client', 'generic', '--yes', '--path', targetPath, '--dry-run'], commonDeps());
+
+    expect(stdoutOutput.length).toBeGreaterThan(0);
+
+    let fileExists = true;
+
+    try {
+      await readFile(targetPath);
+    } catch {
+      fileExists = false;
+    }
+
+    expect(fileExists).toBe(false);
+  });
+});
