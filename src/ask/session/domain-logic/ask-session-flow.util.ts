@@ -1,10 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { buildSessionPrompt } from './session-context.util';
 import { SESSION_STORE } from '../../../session';
 import type { ProgressContext, ResolvedProviderEntry } from '../../../shared/common';
 import type { AskToolArgs, SessionMode } from '../../common';
 import { runAskInvocation } from '../../domain-logic/ask-runner';
+import { buildSessionPrompt } from '../utils/session-context.util';
 
 export type SessionFlowState = Readonly<{
   sessionId: string;
@@ -92,14 +92,5 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
       prompt: args.prompt as string,
     }),
     mode: 'tier1-prepend',
-  };
-};
-
-export const appendSessionMetadata = (response: CallToolResult, sessionMode: SessionMode): CallToolResult => {
-  if (sessionMode === 'none') return response;
-
-  return {
-    ...response,
-    content: [...response.content, { type: 'text', text: JSON.stringify({ sessionMode }, null, 2) }],
   };
 };

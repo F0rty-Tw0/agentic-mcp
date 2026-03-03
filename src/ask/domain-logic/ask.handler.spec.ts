@@ -2,6 +2,7 @@ import type { ServerNotification } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
+import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import { SESSION_STORE } from '../../session';
 import type { SessionRecord, SessionTurn } from '../../session';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
@@ -10,7 +11,6 @@ import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { getActiveRequest } from '../../shared/domain-logic/request-registry';
 import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
-import { buildArgArray } from '../cli-args/domain-logic/arg.builder';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -21,7 +21,7 @@ import {
 
 type ProgressNotificationMockCalls = Array<[ServerNotification & { params?: { message?: string } }]>;
 
-vi.mock('../cli-args/domain-logic/arg.builder', () => ({
+vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
+import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import type { McpPlainTextContent } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { buildModelHint, detectModelError } from '../../shared/utils/model-error.util';
 import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
-import { buildArgArray } from '../cli-args/domain-logic/arg.builder';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -14,7 +14,7 @@ import {
   createAskContext,
 } from '../common/stubs';
 
-vi.mock('../cli-args/domain-logic/arg.builder', () => ({
+vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 

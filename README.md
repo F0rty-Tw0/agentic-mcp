@@ -108,6 +108,37 @@ See `providers.json` for examples.
 </details>
 
 <details>
+<summary>CLI Argument Builder</summary>
+
+The `cli-args` module translates abstract MCP tool arguments into the concrete `string[]` needed to spawn each provider's CLI process. It uses the provider's declarative config to determine argument ordering, prompt delivery, and flag resolution — no per-provider code required.
+
+**Argument ordering:**
+
+```
+[command args] → [prompt] → [optional flags] → [trailing args]
+```
+
+**Prompt delivery** is determined by `config.input.method`:
+
+| Method       | Behavior                                   |
+| ------------ | ------------------------------------------ |
+| `positional` | Prompt appended as a positional argument   |
+| `flag`       | Prompt follows the flag prefix from `args` |
+| `stdin`      | Prompt sent via stdin, not in args         |
+
+**Flag types** in `providers.json`:
+
+| Shape         | Example config                                         | Output                       |
+| ------------- | ------------------------------------------------------ | ---------------------------- |
+| `string`      | `"--model"`                                            | `["--model", "gpt-4"]`       |
+| `string[]`    | `["--full-auto"]`                                      | `["--full-auto"]`            |
+| `LeveledFlag` | `{ flag: "--sandbox", values: ["read-only", "full"] }` | `["--sandbox", "read-only"]` |
+
+Supported optional flags: `model`, `working_directory`, `files`, `auto_mode`, `sandbox`, `effort`, `max_budget`, `system_prompt`. Flags missing from the provider config are silently skipped.
+
+</details>
+
+<details>
 <summary>Advanced Features</summary>
 
 ### Streaming

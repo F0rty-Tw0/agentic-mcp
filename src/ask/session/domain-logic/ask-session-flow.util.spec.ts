@@ -1,10 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util';
+import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util';
 import type { SessionFlowState } from './ask-session-flow.util';
 import type { ResolvedProviderEntry } from '../../../shared/common';
-import type { AskToolArgs, SessionMode } from '../../common';
+import type { AskToolArgs } from '../../common';
 import type { AskExecution } from '../../domain-logic/ask-runner';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
@@ -22,7 +22,7 @@ vi.mock('../../domain-logic/ask-runner', () => ({
   runAskInvocation: mockRunAskInvocation,
 }));
 
-vi.mock('./session-context.util', () => ({
+vi.mock('../utils/session-context.util', () => ({
   buildSessionPrompt: mockBuildSessionPrompt,
 }));
 
@@ -194,46 +194,6 @@ describe('buildSessionFlowState', () => {
       sessionTurnsText: 'previous turns text',
       userContext: 'extra ctx',
       prompt: 'ask something',
-    });
-  });
-});
-
-describe('appendSessionMetadata', () => {
-  it('GIVEN sessionMode "none" WHEN appendSessionMetadata called THEN returns response unchanged', () => {
-    const response = createCallToolResult({ content: [{ type: 'text', text: 'hello' }] });
-
-    const result = appendSessionMetadata(response, 'none');
-
-    expect(result).toBe(response);
-  });
-
-  it('GIVEN sessionMode "tier1-prepend" WHEN appendSessionMetadata called THEN appends metadata content', () => {
-    const response = createCallToolResult({ content: [{ type: 'text', text: 'hello' }] });
-    const mode: SessionMode = 'tier1-prepend';
-
-    const result = appendSessionMetadata(response, mode);
-
-    expect(result.content).toHaveLength(2);
-    const last = result.content.at(-1);
-
-    expect(last).toStrictEqual({
-      type: 'text',
-      text: JSON.stringify({ sessionMode: 'tier1-prepend' }, null, 2),
-    });
-  });
-
-  it('GIVEN sessionMode "tier2-native" WHEN appendSessionMetadata called THEN appends metadata content', () => {
-    const response = createCallToolResult({ content: [{ type: 'text', text: 'hello' }] });
-    const mode: SessionMode = 'tier2-native';
-
-    const result = appendSessionMetadata(response, mode);
-
-    expect(result.content).toHaveLength(2);
-    const last = result.content.at(-1);
-
-    expect(last).toStrictEqual({
-      type: 'text',
-      text: JSON.stringify({ sessionMode: 'tier2-native' }, null, 2),
     });
   });
 });

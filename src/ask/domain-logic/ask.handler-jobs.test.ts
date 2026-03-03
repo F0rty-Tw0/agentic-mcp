@@ -6,7 +6,7 @@ import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_SUCCESS_EXECUTION_RESULT_STUB, createAskContext } from '../common/stubs';
 
-vi.mock('../cli-args/domain-logic/arg.builder', () => ({
+vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 

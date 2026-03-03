@@ -1,0 +1,37 @@
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
+import { extractNativeSessionId } from '../../session';
+import type { ResolvedProviderEntry } from '../../shared/common';
+import { stripAnsi } from '../../shared/utils';
+import type { SessionMode } from '../common';
+
+export type AskExecution = Readonly<{
+  response: CallToolResult;
+  sessionMode: SessionMode;
+  responseText: string;
+  nativeSessionId?: string;
+  wasCancelled: boolean;
+}>;
+
+export const buildFailureExecution = (response: CallToolResult, wasCancelled: boolean): AskExecution => ({
+  response,
+  sessionMode: 'none',
+  responseText: '',
+  wasCancelled,
+});
+
+export const buildExecution = (
+  response: CallToolResult,
+  stdout: string,
+  context: ResolvedProviderEntry
+): AskExecution => {
+  const firstContent = response.content[0];
+
+  return {
+    response,
+    sessionMode: 'none',
+    responseText: firstContent?.type === 'text' ? firstContent.text : '',
+    nativeSessionId: extractNativeSessionId(context.name, stripAnsi(stdout), context.config.outputFormat),
+    wasCancelled: false,
+  };
+};

@@ -1,5 +1,6 @@
-import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util';
-import type { AskExecution } from './ask-runner-response.util';
+import { buildCommandFailure, buildExecutionEnv } from './ask-command';
+import { buildSuccessfulResponse } from './ask-runner-response.builder';
+import { buildArgArray } from '../../cli-args';
 import { recordCall } from '../../provider-metrics';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
 import { CommandExecutionError } from '../../shared/common/errors';
@@ -7,13 +8,13 @@ import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
 import { startHeartbeat, toMcpError } from '../../shared/utils';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
-import { buildArgArray } from '../cli-args';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
-import { buildCommandFailure, buildExecutionEnv } from './ask-command';
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
+import type { AskExecution } from '../utils/ask-runner-response.util';
+import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
 
-export type { AskExecution } from './ask-runner-response.util';
+export type { AskExecution } from '../utils/ask-runner-response.util';
 
 type RunInvocationInput = Readonly<{
   context: ResolvedProviderEntry;
