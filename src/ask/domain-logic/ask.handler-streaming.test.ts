@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
+import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import type { ProgressNotification } from '../common';
 
 type StreamEvent = Readonly<Record<string, unknown>>;

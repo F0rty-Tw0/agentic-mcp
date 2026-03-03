@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
 import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
-import type { McpPlainTextContent } from '../../shared/common';
-import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
-import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { buildModelHint, detectModelError } from '../../shared/utils/model-error.util';
-import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
+import type { McpPlainTextContent } from '../../shared';
+import {
+  TEST_MINIMAL_ENV_STUB,
+  buildMinimalEnv,
+  buildModelHint,
+  detectModelError,
+  executeCommand,
+  stripAnsi,
+} from '../../shared';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -18,23 +22,23 @@ vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
-vi.mock('../../shared/domain-logic/command-executor', () => ({
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
 }));
 
-vi.mock('../../shared/utils/platform.util', () => ({
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-vi.mock('../../shared/utils/model-error.util', () => ({
+vi.mock('../../shared/provider/utils/model-error.util', () => ({
   detectModelError: vi.fn(() => false),
   extractAttemptedModel: vi.fn(() => undefined),
   fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
   buildModelHint: vi.fn(() => ''),
 }));
 
-describe('handleAsk', () => {
+describe('handleAsk – errors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -44,6 +48,61 @@ describe('handleAsk', () => {
 
     vi.mocked(buildMinimalEnv).mockReturnValue(TEST_MINIMAL_ENV_STUB);
     vi.mocked(stripAnsi).mockImplementation((input: string) => input);
+  });
+
+  describe('validation errors', () => {
+    it('GIVEN missing prompt WHEN handling ask THEN returns isError response', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, {});
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Prompt is required');
+    });
+
+    it('GIVEN empty prompt WHEN handling ask THEN returns isError response', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, { prompt: '' });
+
+      expect(result.isError).toBe(true);
+    });
+
+    it('GIVEN invalid model WHEN handling ask THEN returns isError response', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, { prompt: 'test', model: '../../etc/passwd' });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Invalid model identifier');
+    });
+
+    it('GIVEN invalid session_id WHEN handling ask THEN returns isError response', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, { prompt: 'test', session_id: '<script>alert(1)</script>' });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Invalid session ID');
+    });
+
+    it('GIVEN files without working_directory WHEN handling ask THEN returns isError response', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, { prompt: 'test', files: ['file.txt'] });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('working_directory is required');
+    });
+
+    it('GIVEN action status without job_id WHEN handling ask THEN returns isError response', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, { action: 'status' });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('job_id is required');
+    });
   });
 
   describe('command failure', () => {
@@ -118,35 +177,6 @@ describe('handleAsk', () => {
 
       expect(result.isError).toBe(true);
       expect((result.content[0] as McpPlainTextContent).text).toContain('fatal: unknown flag');
-    });
-  });
-
-  describe('response text cap', () => {
-    it('GIVEN output within MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN returns full output without truncation marker', async () => {
-      const context = createAskContext();
-      const shortOutput = 'a'.repeat(100);
-
-      vi.mocked(stripAnsi).mockReturnValue(shortOutput);
-
-      const result = await handleAsk(context, { prompt: 'test prompt' });
-
-      expect((result.content[0] as McpPlainTextContent).text).toBe(shortOutput);
-      expect((result.content[0] as McpPlainTextContent).text).not.toContain('[output truncated');
-    });
-
-    it('GIVEN output exceeding MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN truncates output and appends marker with byte count', async () => {
-      const context = createAskContext();
-      const largeOutput = 'b'.repeat(200 * 1024 + 500);
-
-      vi.mocked(stripAnsi).mockReturnValue(largeOutput);
-
-      const result = await handleAsk(context, { prompt: 'test prompt' });
-
-      const text = (result.content[0] as McpPlainTextContent).text;
-
-      expect(text).toContain('[output truncated —');
-      expect(text).toContain('bytes total]');
-      expect(text.length).toBeLessThan(largeOutput.length);
     });
   });
 

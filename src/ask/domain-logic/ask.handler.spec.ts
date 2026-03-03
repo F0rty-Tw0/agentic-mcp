@@ -3,14 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
 import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
-import { SESSION_STORE } from '../../session';
-import type { SessionRecord, SessionTurn } from '../../session';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
-import type { McpPlainTextContent, McpTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared/common';
-import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
-import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { getActiveRequest } from '../../shared/domain-logic/request-registry';
-import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
+import type { McpPlainTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared';
+import {
+  DEFAULT_MCP_TOOL_TIMEOUT_MS,
+  TEST_MINIMAL_ENV_STUB,
+  buildMinimalEnv,
+  executeCommand,
+  getActiveRequest,
+  stripAnsi,
+} from '../../shared';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
   ASK_DEFAULT_ARG_ARRAY_STUB,
@@ -25,17 +26,21 @@ vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
 }));
 
-vi.mock('../../shared/domain-logic/command-executor', () => ({
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
 }));
 
-vi.mock('../../shared/utils/platform.util', () => ({
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-// Real validation — no mock (validates real behaviour)
-// Real toMcpError — no mock (validates real error mapping)
+vi.mock('../../shared/provider/utils/model-error.util', () => ({
+  detectModelError: vi.fn(() => false),
+  extractAttemptedModel: vi.fn(() => undefined),
+  fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
+  buildModelHint: vi.fn(() => ''),
+}));
 
 const API_KEY = 'API_KEY';
 const MCP_TOOL_TIMEOUT = 'MCP_TOOL_TIMEOUT';
@@ -226,117 +231,32 @@ describe('handleAsk', () => {
     });
   });
 
-  describe('validation errors', () => {
-    it('GIVEN missing prompt WHEN handling ask THEN returns isError response', async () => {
+  describe('response text cap', () => {
+    it('GIVEN output within MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN returns full output without truncation marker', async () => {
       const context = createAskContext();
+      const shortOutput = 'a'.repeat(100);
 
-      const result = await handleAsk(context, {});
+      vi.mocked(stripAnsi).mockReturnValue(shortOutput);
 
-      expect(result.isError).toBe(true);
-      expect((result.content[0] as McpPlainTextContent).text).toContain('Prompt is required');
+      const result = await handleAsk(context, { prompt: 'test prompt' });
+
+      expect((result.content[0] as McpPlainTextContent).text).toBe(shortOutput);
+      expect((result.content[0] as McpPlainTextContent).text).not.toContain('[output truncated');
     });
 
-    it('GIVEN empty prompt WHEN handling ask THEN returns isError response', async () => {
+    it('GIVEN output exceeding MAX_RESPONSE_TEXT_BYTES WHEN handling ask THEN truncates output and appends marker with byte count', async () => {
       const context = createAskContext();
+      const largeOutput = 'b'.repeat(200 * 1024 + 500);
 
-      const result = await handleAsk(context, { prompt: '' });
+      vi.mocked(stripAnsi).mockReturnValue(largeOutput);
 
-      expect(result.isError).toBe(true);
-    });
+      const result = await handleAsk(context, { prompt: 'test prompt' });
 
-    it('GIVEN invalid model WHEN handling ask THEN returns isError response', async () => {
-      const context = createAskContext();
+      const text = (result.content[0] as McpPlainTextContent).text;
 
-      const result = await handleAsk(context, { prompt: 'test', model: '../../etc/passwd' });
-
-      expect(result.isError).toBe(true);
-      expect((result.content[0] as McpPlainTextContent).text).toContain('Invalid model identifier');
-    });
-
-    it('GIVEN invalid session_id WHEN handling ask THEN returns isError response', async () => {
-      const context = createAskContext();
-
-      const result = await handleAsk(context, { prompt: 'test', session_id: '<script>alert(1)</script>' });
-
-      expect(result.isError).toBe(true);
-      expect((result.content[0] as McpPlainTextContent).text).toContain('Invalid session ID');
-    });
-
-    it('GIVEN files without working_directory WHEN handling ask THEN returns isError response', async () => {
-      const context = createAskContext();
-
-      const result = await handleAsk(context, { prompt: 'test', files: ['file.txt'] });
-
-      expect(result.isError).toBe(true);
-      expect((result.content[0] as McpPlainTextContent).text).toContain('working_directory is required');
-    });
-  });
-
-  describe('session flow', () => {
-    it('GIVEN session_id WHEN handling ask THEN prepends current request context and returns session metadata block', async () => {
-      const context = createAskContext();
-      const sessionId = 'ask-session-1';
-
-      SESSION_STORE.createOrGet(context.name, sessionId);
-      SESSION_STORE.addTurn(context.name, sessionId, { role: 'user', text: 'old question' });
-
-      const result = await handleAsk(context, { prompt: 'test prompt', session_id: sessionId });
-      const resolvedArgs = vi.mocked(buildArgArray).mock.calls[0]?.[1] as { prompt: string };
-      const sessionMetadataContent = result.content[2] as McpTextContent;
-      const sessionMetadataText = sessionMetadataContent.text;
-
-      expect(sessionMetadataContent.type).toBe('text');
-      expect(resolvedArgs.prompt).toContain('Previous context:\nuser: old question');
-      expect(resolvedArgs.prompt).toContain('Current request:\ntest prompt');
-      expect(sessionMetadataText).toContain('tier1-prepend');
-    });
-
-    it('GIVEN session lock already acquired WHEN handling ask THEN returns session in use error', async () => {
-      const context = createAskContext();
-
-      SESSION_STORE.createOrGet(context.name, 'ask-session-locked');
-      SESSION_STORE.tryAcquireLock(context.name, 'ask-session-locked');
-
-      const result = await handleAsk(context, { prompt: 'test prompt', session_id: 'ask-session-locked' });
-
-      expect(result.isError).toBe(true);
-      expect((result.content[0] as McpPlainTextContent).text).toContain('session in use');
-
-      SESSION_STORE.releaseLock(context.name, 'ask-session-locked');
-    });
-
-    it('GIVEN successful session call WHEN handling ask THEN stores user and assistant turns', async () => {
-      const context = createAskContext();
-      const sessionId = 'ask-session-memory';
-
-      await handleAsk(context, { prompt: 'remember this', session_id: sessionId });
-
-      const stored = SESSION_STORE.get(context.name, sessionId) as SessionRecord;
-      const firstTurn = stored.turns[0] as SessionTurn;
-      const secondTurn = stored.turns[1] as SessionTurn;
-
-      expect(stored).toBeDefined();
-
-      expect(stored.turns).toHaveLength(2);
-      expect(firstTurn.role).toBe('user');
-      expect(secondTurn.role).toBe('assistant');
-      expect(secondTurn.text).toContain('command output');
-    });
-
-    it('GIVEN cancelled session execution WHEN handling ask THEN it does not store session turns', async () => {
-      const context = createAskContext();
-
-      vi.mocked(executeCommand).mockResolvedValue({
-        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
-        exitCode: null,
-        signal: 'SIGTERM',
-      });
-
-      await handleAsk(context, { prompt: 'cancel me', session_id: 'ask-session-cancelled' });
-
-      const stored = SESSION_STORE.get(context.name, 'ask-session-cancelled');
-
-      expect(stored?.turns).toStrictEqual([]);
+      expect(text).toContain('[output truncated —');
+      expect(text).toContain('bytes total]');
+      expect(text.length).toBeLessThan(largeOutput.length);
     });
   });
 

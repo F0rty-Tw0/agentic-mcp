@@ -4,7 +4,7 @@ import { runAskInvocation } from './ask-runner';
 import { createBackgroundJob } from '../../background-jobs/data-access';
 import { buildJobStatusResponse, startBackgroundInvocation } from '../../background-jobs/domain-logic';
 import { SESSION_STORE } from '../../session';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
 import type { AskToolArgs } from '../common';
 import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../session';
 
