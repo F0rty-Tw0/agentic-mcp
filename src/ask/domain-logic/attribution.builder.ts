@@ -1,5 +1,4 @@
-import type { OutputFormat } from '../../shared/common';
-import type { ExecutionResult } from '../../shared/common/command-executor.types';
+import type { ExecutionResult, OutputFormat } from '../../shared';
 import type { ProviderAttribution } from '../common/attribution.types';
 import type { SessionMode } from '../common/session-mode.type';
 
