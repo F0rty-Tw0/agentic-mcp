@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { CommandDef, ProviderConfig, ToolDefinition } from '../../shared/common';
 import {
   FLAG_AUTO_MODE,
   FLAG_EFFORT,
@@ -13,6 +12,7 @@ import {
   isLeveledFlag,
 } from '../../ask/common';
 import { getAskCommand, getFlag } from '../../ask/utils';
+import type { CommandDef, ProviderConfig, ToolDefinition } from '../../shared/common';
 
 type AskInputSchema = Readonly<Record<string, z.ZodType>>;
 type MutableAskInputSchema = Record<string, z.ZodType>;

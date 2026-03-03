@@ -9,8 +9,9 @@ export const handleSessions = (providerName: string): CallToolResult => {
 
     return `- ${session.id}${native} turns=${session.turns.length}`;
   });
-
-  return {
+  const callToolResult: CallToolResult = {
     content: [{ type: 'text', text: lines.length > 0 ? lines.join('\n') : '(no sessions)' }],
   };
+
+  return callToolResult;
 };
