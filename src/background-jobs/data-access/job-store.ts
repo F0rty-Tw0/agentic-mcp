@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { nowIso } from '../../shared/utils';
+import { nowIso } from '../../shared';
 import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS } from '../common';
 import type { BackgroundJobRecord } from '../common';
 
