@@ -1,5 +1,5 @@
-import type { OutputFormat } from '../../shared/common';
-import { validateSessionId } from '../../shared/utils';
+import type { OutputFormat } from '../../shared';
+import { validateSessionId } from '../../shared';
 
 type ParsedSessionResponse = Readonly<{
   session_id?: unknown;
