@@ -10,6 +10,8 @@ import { killProcess } from '../utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
+type CrossSpawnResult = ReturnType<typeof crossSpawn>;
+
 vi.mock('../utils/platform.util', () => ({
   killProcess: vi.fn().mockResolvedValue(true),
 }));
@@ -70,7 +72,7 @@ describe('executeCommand', () => {
     it('GIVEN a command producing output WHEN executed THEN stdout and stderr are captured with byte counts', async () => {
       const child = makeAutoClosingChild({ stdout: 'hello', stderr: 'warn' });
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -84,7 +86,7 @@ describe('executeCommand', () => {
     it('GIVEN command options WHEN executed THEN crossSpawn receives binaryPath, args, env, cwd, and stdio config', async () => {
       const child = makeAutoClosingChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, cwd: '/workspace', bypassSemaphore: true });
 
@@ -98,7 +100,7 @@ describe('executeCommand', () => {
     it('GIVEN a completed command WHEN result is returned THEN executionTimeMs is a non-negative number', async () => {
       const child = makeAutoClosingChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -110,7 +112,7 @@ describe('executeCommand', () => {
     it('GIVEN a process exiting with non-zero code WHEN executed THEN exitCode is returned', async () => {
       const child = makeAutoClosingChild({ exitCode: 42 });
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -122,7 +124,7 @@ describe('executeCommand', () => {
     it('GIVEN a process killed by signal WHEN executed THEN signal is returned with null exitCode', async () => {
       const child = makeAutoClosingChild({ exitCode: null, signal: 'SIGTERM' });
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -135,7 +137,7 @@ describe('executeCommand', () => {
     it('GIVEN stdin option WHEN executed THEN stdin data is written and stream is closed', async () => {
       const { child, stdin, emitClose } = createControllableChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({
         ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
@@ -153,7 +155,7 @@ describe('executeCommand', () => {
     it('GIVEN no stdin option WHEN executed THEN stdin stream is closed without writing', async () => {
       const { child, stdin, emitClose } = createControllableChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -171,7 +173,7 @@ describe('executeCommand', () => {
 
       const { child, emitClose } = createControllableChild(1234);
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({
         ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
@@ -195,7 +197,7 @@ describe('executeCommand', () => {
 
       const { child, emitClose } = createControllableChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({
         ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
@@ -219,7 +221,7 @@ describe('executeCommand', () => {
     it('GIVEN crossSpawn emits error WHEN executed THEN rejects with CommandExecutionError', async () => {
       const { child, emitError } = createControllableChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -239,7 +241,7 @@ describe('executeCommand', () => {
       const controller = new AbortController();
       const { child, emitClose } = createControllableChild(5678);
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({
         ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
@@ -262,7 +264,7 @@ describe('executeCommand', () => {
 
       const { child, emitClose } = createControllableChild(9999);
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({
         ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
@@ -281,7 +283,7 @@ describe('executeCommand', () => {
       const controller = new AbortController();
       const { child, emitClose } = createControllableChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({
         ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
@@ -303,7 +305,7 @@ describe('executeCommand', () => {
       const onSpawned = vi.fn();
       const { child, emitClose } = createControllableChild(4321);
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const resultPromise = executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, onSpawned, bypassSemaphore: true });
 
@@ -317,7 +319,7 @@ describe('executeCommand', () => {
       const onSpawned = vi.fn();
       const child = makeAutoClosingChild();
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, onSpawned, bypassSemaphore: true });
 
@@ -329,7 +331,7 @@ describe('executeCommand', () => {
     it('GIVEN bypassSemaphore is true WHEN executeCommand is called THEN it still executes and returns result', async () => {
       const child = makeAutoClosingChild({ stdout: 'hello', exitCode: 0 });
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
 
@@ -341,7 +343,7 @@ describe('executeCommand', () => {
     it('GIVEN bypassSemaphore is false WHEN executeCommand is called THEN it executes normally', async () => {
       const child = makeAutoClosingChild({ stdout: 'world', exitCode: 0 });
 
-      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ReturnType<typeof crossSpawn>);
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
 
       const result = await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: false });
 

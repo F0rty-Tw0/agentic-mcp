@@ -45,7 +45,7 @@ const createProgressContext = (notifications: ProgressNotification[]): ProgressC
       await Promise.resolve();
       notifications.push(notification);
     },
-  } as unknown as ProgressContext;
+  } as ProgressContext;
 
   // eslint-disable-next-line no-underscore-dangle
   context._meta = { progressToken: 'progress-1' };

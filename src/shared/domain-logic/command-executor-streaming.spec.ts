@@ -7,6 +7,8 @@ import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
+type CrossSpawnResult = ReturnType<typeof crossSpawn>;
+
 const baseOptions = { ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true };
 
 describe('executeCommand streaming callbacks', () => {
@@ -18,7 +20,7 @@ describe('executeCommand streaming callbacks', () => {
     const controllable = createControllableChild();
     const chunks: string[] = [];
 
-    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as ReturnType<typeof crossSpawn>);
+    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as CrossSpawnResult);
 
     const resultPromise = executeCommand({
       ...baseOptions,
@@ -39,7 +41,7 @@ describe('executeCommand streaming callbacks', () => {
     const controllable = createControllableChild();
     const chunks: string[] = [];
 
-    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as ReturnType<typeof crossSpawn>);
+    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as CrossSpawnResult);
 
     const resultPromise = executeCommand({
       ...baseOptions,
@@ -59,7 +61,7 @@ describe('executeCommand streaming callbacks', () => {
   it('GIVEN chunk callback throws WHEN processing stream THEN execution still completes', async () => {
     const controllable = createControllableChild();
 
-    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as ReturnType<typeof crossSpawn>);
+    vi.mocked(crossSpawn).mockReturnValue(controllable.child as unknown as CrossSpawnResult);
 
     const resultPromise = executeCommand({
       ...baseOptions,

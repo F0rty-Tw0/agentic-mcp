@@ -10,7 +10,7 @@ import { HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
 
 vi.mock('./notifier-runtime.util');
 vi.mock('./notifier.helpers');
-vi.mock('node:crypto', () => ({ randomUUID: () => 'test-uuid-1234' }));
+vi.mock('node:crypto', () => ({ randomUUID: (): string => 'test-uuid-1234' }));
 
 const noopNotifier: StreamNotifier = {
   onStdoutChunk: vi.fn(),
@@ -22,11 +22,10 @@ const noopNotifier: StreamNotifier = {
   enabled: false,
 };
 
-const makeExtra = (): ProgressContext =>
-  ({
-    sendNotification: vi.fn().mockResolvedValue(undefined),
-    _meta: { progressToken: 42 },
-  }) as unknown as ProgressContext;
+const makeExtra = (): ProgressContext => ({
+  sendNotification: vi.fn().mockResolvedValue(undefined),
+  _meta: { progressToken: 42 },
+});
 
 describe('createStreamNotifier', () => {
   beforeEach(() => {

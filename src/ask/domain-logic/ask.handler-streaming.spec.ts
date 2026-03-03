@@ -32,12 +32,10 @@ const createProgressContext = (notifications: ProgressNotification[]): ProgressC
     notifications.push(notification);
   });
 
-  const context = {
+  const context: ProgressContext = {
     sendNotification,
-  } as unknown as ProgressContext;
-
-  // eslint-disable-next-line no-underscore-dangle
-  context._meta = { progressToken: 'token-1' };
+    _meta: { progressToken: 'token-1' },
+  };
 
   return context;
 };

@@ -13,6 +13,8 @@ import {
 import type { ProgressContext } from '../../shared/common';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 
+type PartialProgressContext = Partial<ProgressContext>;
+
 describe('resolveProgressToken', () => {
   it('GIVEN no extra WHEN called THEN returns undefined', () => {
     const result = resolveProgressToken(undefined);
@@ -21,7 +23,7 @@ describe('resolveProgressToken', () => {
   });
 
   it('GIVEN extra without sendNotification WHEN called THEN returns undefined', () => {
-    const extra = { _meta: { progressToken: 42 } } as unknown as ProgressContext;
+    const extra = { _meta: { progressToken: 42 } } as PartialProgressContext as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
@@ -29,7 +31,7 @@ describe('resolveProgressToken', () => {
   });
 
   it('GIVEN extra with sendNotification but no _meta WHEN called THEN returns undefined', () => {
-    const extra = { sendNotification: async () => {}, _meta: undefined } as unknown as ProgressContext;
+    const extra = { sendNotification: async () => {}, _meta: undefined } as PartialProgressContext as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
@@ -40,7 +42,7 @@ describe('resolveProgressToken', () => {
     const extra = {
       sendNotification: async () => {},
       _meta: { progressToken: 7 },
-    } as unknown as ProgressContext;
+    } as PartialProgressContext as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
@@ -51,7 +53,7 @@ describe('resolveProgressToken', () => {
     const extra = {
       sendNotification: async () => {},
       _meta: { progressToken: 'tok-abc' },
-    } as unknown as ProgressContext;
+    } as PartialProgressContext as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
@@ -61,7 +63,7 @@ describe('resolveProgressToken', () => {
 
 describe('isStreamEnabled', () => {
   it('GIVEN stream_live=true and valid progressToken and sendNotification WHEN called THEN returns true', () => {
-    const extra = { sendNotification: async () => {}, _meta: {} } as unknown as ProgressContext;
+    const extra = { sendNotification: async () => {}, _meta: {} } as PartialProgressContext as ProgressContext;
 
     const result = isStreamEnabled({ args: { stream_live: true }, progressToken: 1, extra });
 
@@ -69,7 +71,7 @@ describe('isStreamEnabled', () => {
   });
 
   it('GIVEN stream_live=false WHEN called THEN returns false', () => {
-    const extra = { sendNotification: async () => {}, _meta: {} } as unknown as ProgressContext;
+    const extra = { sendNotification: async () => {}, _meta: {} } as PartialProgressContext as ProgressContext;
 
     const result = isStreamEnabled({ args: { stream_live: false }, progressToken: 1, extra });
 
@@ -77,7 +79,7 @@ describe('isStreamEnabled', () => {
   });
 
   it('GIVEN stream_live=true but undefined progressToken WHEN called THEN returns false', () => {
-    const extra = { sendNotification: async () => {}, _meta: {} } as unknown as ProgressContext;
+    const extra = { sendNotification: async () => {}, _meta: {} } as PartialProgressContext as ProgressContext;
 
     const result = isStreamEnabled({ args: { stream_live: true }, progressToken: undefined, extra });
 
@@ -85,7 +87,7 @@ describe('isStreamEnabled', () => {
   });
 
   it('GIVEN stream_live=true but no sendNotification WHEN called THEN returns false', () => {
-    const extra = { _meta: {} } as unknown as ProgressContext;
+    const extra = { _meta: {} } as PartialProgressContext as ProgressContext;
 
     const result = isStreamEnabled({ args: { stream_live: true }, progressToken: 1, extra });
 

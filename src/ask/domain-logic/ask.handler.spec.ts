@@ -1,7 +1,9 @@
+import type { ServerNotification } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
 import { SESSION_STORE } from '../../session';
+import type { SessionRecord, SessionTurn } from '../../session';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
 import type { McpPlainTextContent, McpTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
@@ -16,6 +18,8 @@ import {
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
   createAskContext,
 } from '../common/stubs';
+
+type ProgressNotificationMockCalls = Array<[ServerNotification & { params?: { message?: string } }]>;
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({
   buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
@@ -42,7 +46,7 @@ describe('handleAsk', () => {
       sendNotification: vi.fn(async () => {
         await Promise.resolve();
       }),
-    } as unknown as ProgressContext;
+    };
 
     // eslint-disable-next-line no-underscore-dangle
     context._meta = { progressToken: 'token-1' };
@@ -200,9 +204,7 @@ describe('handleAsk', () => {
 
       await handleAsk(context, { prompt: 'test prompt', stream_live: false }, extra);
 
-      const calls = vi.mocked(extra.sendNotification).mock.calls as Array<
-        [Readonly<{ params?: Readonly<{ message?: string }> }>]
-      >;
+      const calls = vi.mocked(extra.sendNotification).mock.calls as ProgressNotificationMockCalls;
       const serializedMessages = calls.map(([notification]) => notification.params?.message ?? '').join(' ');
 
       expect(serializedMessages).not.toContain('"type":"chunk"');
@@ -309,9 +311,9 @@ describe('handleAsk', () => {
 
       await handleAsk(context, { prompt: 'remember this', session_id: sessionId });
 
-      const stored = SESSION_STORE.get(context.name, sessionId) as NonNullable<ReturnType<typeof SESSION_STORE.get>>;
-      const firstTurn = stored.turns[0] as { role: string; text: string };
-      const secondTurn = stored.turns[1] as { role: string; text: string };
+      const stored = SESSION_STORE.get(context.name, sessionId) as SessionRecord;
+      const firstTurn = stored.turns[0] as SessionTurn;
+      const secondTurn = stored.turns[1] as SessionTurn;
 
       expect(stored).toBeDefined();
 
@@ -341,10 +343,10 @@ describe('handleAsk', () => {
   describe('request tracking', () => {
     it('GIVEN requestId and spawned process WHEN command completes THEN active request is cleaned up', async () => {
       const context = createAskContext();
-      const extra = {
+      const extra: ProgressContext = {
         sendNotification: vi.fn(async () => Promise.resolve()),
         requestId: 'req-1',
-      } as ProgressContext;
+      };
 
       vi.mocked(executeCommand).mockImplementation(async (options) => {
         await Promise.resolve();
