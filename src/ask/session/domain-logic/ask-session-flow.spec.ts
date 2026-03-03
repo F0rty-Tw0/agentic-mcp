@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 import type { SessionFlowState } from './ask-session-flow';
-import type { ResolvedProviderEntry } from '../../../shared/common';
+import type { ResolvedProviderEntry } from '../../../shared';
 import type { AskToolArgs } from '../../common';
 import type { AskExecution } from '../../domain-logic/ask-runner';
 

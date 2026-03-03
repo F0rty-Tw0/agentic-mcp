@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { SESSION_STORE } from '../../../session';
-import type { ProgressContext, ResolvedProviderEntry } from '../../../shared/common';
+import type { ProgressContext, ResolvedProviderEntry } from '../../../shared';
 import type { AskToolArgs, SessionMode } from '../../common';
 import { runAskInvocation } from '../../domain-logic/ask-runner';
 import { buildSessionPrompt } from '../utils/session-context.util';
