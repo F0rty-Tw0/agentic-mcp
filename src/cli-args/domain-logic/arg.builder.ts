@@ -1,5 +1,3 @@
-import type { CommandDef, FlagValue, ProviderConfig } from '../../../shared/common';
-import { ValidationError } from '../../../shared/common/errors';
 import {
   FLAG_AUTO_MODE,
   FLAG_EFFORT,
@@ -9,9 +7,11 @@ import {
   FLAG_SANDBOX,
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
-} from '../../common';
-import type { AskToolArgs, BuiltArgs } from '../../common';
-import { getAskCommand, getFlag } from '../../utils';
+} from '../../ask/common';
+import type { AskToolArgs, BuiltArgs } from '../../ask/common';
+import { getAskCommand, getFlag } from '../../ask/utils';
+import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/common';
+import { ValidationError } from '../../shared/common/errors';
 
 const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
   if (!flagValue) return [];

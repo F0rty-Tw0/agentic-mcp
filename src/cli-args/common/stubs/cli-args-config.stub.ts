@@ -1,5 +1,5 @@
-import type { FlagValue, ProviderConfig } from '../../../../shared/common';
-import { ASK_PROVIDER_CONFIG_STUB } from '../../../common/stubs';
+import { ASK_PROVIDER_CONFIG_STUB } from '../../../ask/common/stubs';
+import type { FlagValue, ProviderConfig } from '../../../shared/common';
 
 type AskFlagMap = Readonly<Record<string, FlagValue>>;
 

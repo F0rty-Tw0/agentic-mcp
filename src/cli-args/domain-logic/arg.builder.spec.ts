@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder';
-import { ValidationError } from '../../../shared/common/errors';
+import { ValidationError } from '../../shared/common/errors';
 import { createCliArgsConfig as createConfig } from '../common/stubs';
 
 describe('buildArgArray', () => {
