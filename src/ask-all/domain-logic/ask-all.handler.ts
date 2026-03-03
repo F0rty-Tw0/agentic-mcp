@@ -4,12 +4,7 @@ import type { AskToolArgs } from '../../ask/common';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
 import type { ResolvedProviderEntry } from '../../shared/common';
 import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common';
-
-const extractResponseText = (result: CallToolResult): string => {
-  const [first] = result.content;
-
-  return first?.type === 'text' ? first.text : '';
-};
+import { extractResponseText } from '../utils';
 
 const runProviderAsk = async (provider: ResolvedProviderEntry, args: AskAllToolArgs): Promise<AskAllProviderResult> => {
   const startTime = Date.now();
