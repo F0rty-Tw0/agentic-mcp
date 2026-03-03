@@ -1,0 +1,1 @@
+export const MAX_ERROR_STDERR_BYTES = 4096;

@@ -1,0 +1,1 @@
+export const DEFAULT_MCP_TOOL_TIMEOUT_MS = 1_800_000;
