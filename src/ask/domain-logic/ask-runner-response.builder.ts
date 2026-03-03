@@ -2,7 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
-import type { ResolvedProviderEntry } from '../../shared/common';
+import type { ResolvedProviderEntry } from '../../shared';
 import type { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
 import type { AskToolArgs, SessionMode } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
