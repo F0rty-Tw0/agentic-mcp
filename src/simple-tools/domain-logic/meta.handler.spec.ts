@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleListProviders } from './meta.handler';
-import type { McpPlainTextContent, ResolvedProvider } from '../../shared/common';
+import type { McpPlainTextContent, ResolvedProvider } from '../../shared';
 
 const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProvider => ({
   name: 'test-provider',

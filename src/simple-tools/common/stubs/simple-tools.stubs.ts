@@ -1,4 +1,4 @@
-import type { ExecutionResult, ProviderConfig, ResolvedProviderEntry } from '../../../shared/common';
+import type { ExecutionResult, ProviderConfig, ResolvedProviderEntry } from '../../../shared';
 
 export const SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB: ExecutionResult = {
   stdout: '',

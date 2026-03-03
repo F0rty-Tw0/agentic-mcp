@@ -1,22 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePing } from './ping.handler';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/common';
-import type { McpPlainTextContent, ResolvedProviderEntry } from '../../shared/common';
-import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
-import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { buildMinimalEnv, stripAnsi } from '../../shared/utils/platform.util';
+import type { McpPlainTextContent, ResolvedProviderEntry } from '../../shared';
+import {
+  DEFAULT_MCP_TOOL_TIMEOUT_MS,
+  TEST_MINIMAL_ENV_STUB,
+  buildMinimalEnv,
+  executeCommand,
+  stripAnsi,
+} from '../../shared';
 import {
   SIMPLE_TOOLS_PING_VERSION_RESULT_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
   createSimpleToolsContext,
 } from '../common/stubs';
 
-vi.mock('../../shared/domain-logic/command-executor', () => ({
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
   executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB)),
 }));
 
-vi.mock('../../shared/utils/platform.util', () => ({
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
 }));

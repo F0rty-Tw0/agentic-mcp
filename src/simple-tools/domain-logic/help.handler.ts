@@ -1,9 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProviderEntry } from '../../shared/common';
-import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { resolveProviderEnv } from '../../shared/domain-logic/provider-env-resolver';
-import { buildMinimalEnv, stripAnsi, toMcpError } from '../../shared/utils';
+import type { ResolvedProviderEntry } from '../../shared';
+import { buildMinimalEnv, executeCommand, resolveProviderEnv, stripAnsi, toMcpError } from '../../shared';
 
 const HELP_TIMEOUT_MS = 10_000;
 
