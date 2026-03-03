@@ -17,7 +17,17 @@
 
 - Files: `kebab-case.ts` with role suffix: `.const.ts`, `.type.ts`, `.schema.ts`, `.handler.ts`, `.builder.ts`, `.util.ts`.
 - Constants: `SCREAMING_SNAKE_CASE`. Types: `PascalCase`. Functions: `camelCase`.
-- Barrel `index.ts` only inside `common/`, `stubs/`, `utils/` — named re-exports, no wildcards.
+- Barrel `index.ts` at four levels:
+  - **Module root** (`ask/index.ts`): wildcard re-exports from subdirs (`export * from './common'`).
+  - **`domain-logic/`**: named re-exports only — this is the module's public API surface.
+  - **`common/`**, **`utils/`**, **`stubs/`**: named re-exports, no wildcards.
+
+## Module Structure
+
+- Each feature lives in its own top-level `src/` directory (e.g., `ask/`, `streaming/`, `session/`).
+- Standard subdirectories: `domain-logic/` (business logic, handlers), `common/` (types, constants, stubs), `utils/` (pure helper functions).
+- Not every module needs all three — only create subdirs that have content.
+- Test stubs live in `common/stubs/` with their own barrel `index.ts`.
 
 ## Testing
 
@@ -40,3 +50,8 @@ No production code before a failing test. Red -> Green -> Refactor. If you wrote
 - **Null checks for config values** — use `value == null`, not `!value` (preserves falsy-but-valid values like `""` or `0`).
 - **Custom error classes** — throw `ValidationError` or `CommandExecutionError`, never bare `Error`.
 - **No magic numbers** — extract to constants in `src/shared/`.
+- **Single input object** — functions with 3+ parameters take one `Readonly<{...}>` typed object, not positional args. Name the type `*Input`, `*Context`, or `*Options`.
+- **Destructure at use-site** — destructure input objects inside the function body, not in the parameter list: `const { a, b } = input;`.
+- **Variable name mirrors type** — `buildAttributionInput: BuildAttributionInput`, `modelHintContext: ModelHintContext`.
+- **`Pick<>` for narrow dependencies** — when a function only needs a few fields from a large type, use `Pick<ExecutionResult, 'executionTimeMs' | 'truncated'>`.
+- **Private helpers as module-level `const`** — extract non-exported helper functions at module scope, not inline or nested.

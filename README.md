@@ -64,13 +64,19 @@ Send the same prompt to multiple providers simultaneously:
 
 See per-provider call counts, response times, and success rates:
 
-- `usage_summary` — View session statistics
+- `provider_metrics` — View session statistics (call counts, response times, success rates)
 
 ### Explore
 
 - `list_providers` — See which AI models are available
 - `ping_*` — Check if a provider is ready
 - `help_*` — See what a provider can do
+
+### Manage sessions
+
+Track multi-turn conversations with providers that support it:
+
+- `sessions_*` — List known ask sessions for a provider
 
 ## Providers
 
@@ -173,6 +179,34 @@ Some providers support persistent sessions via `session_id` for multi-turn conve
 2. Restart the server
 
 That's it. No code changes needed. See existing entries for the config shape.
+
+</details>
+
+<details>
+<summary>Project Structure</summary>
+
+```
+src/
+├── ask/              # Per-provider ask handler (command, execution, response, sessions)
+├── ask-all/          # Fan-out queries to all providers in parallel
+├── background-jobs/  # Async job queue for long-running asks
+├── cli-args/         # Declarative config → CLI argument builder
+├── config/           # Provider config loader (multi-source resolution)
+├── entry/            # CLI entry point (--version, --help, setup, server)
+├── provider-metrics/ # Per-provider call counts, timing, success rates
+├── server/           # MCP server factory
+├── session/          # Session store with locking for multi-turn conversations
+├── setup/            # `agentic-mcp setup` CLI for configuring MCP clients
+├── shared/           # Cross-cutting concerns
+│   ├── command-execution/  # Process spawning, semaphore, output collection
+│   ├── mcp-protocol/       # MCP types, heartbeat, error formatting
+│   ├── provider/           # Provider config types, env resolver, model errors
+│   └── validation/         # Request registry, Zod utilities
+├── simple-tools/     # ping, help, list_providers handlers
+├── streaming/        # Live output via MCP progress notifications
+├── tool-registry/    # MCP tool registration from provider config
+└── types/            # Ambient TypeScript declarations
+```
 
 </details>
 
