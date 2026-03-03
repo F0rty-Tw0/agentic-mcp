@@ -11,8 +11,8 @@ import {
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
   isLeveledFlag,
-} from '../common';
-import { getAskCommand, getFlag } from '../utils';
+} from '../../ask/common';
+import { getAskCommand, getFlag } from '../../ask/utils';
 
 type AskInputSchema = Readonly<Record<string, z.ZodType>>;
 type MutableAskInputSchema = Record<string, z.ZodType>;

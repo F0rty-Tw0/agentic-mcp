@@ -1,10 +1,3 @@
-import {
-  buildCommandFailure,
-  buildCommandOptions,
-  buildExecutionEnv,
-  buildNativeSessionArgs,
-  validateAndResolveArgs,
-} from './ask-handler';
 import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util';
 import type { AskExecution } from './ask-runner-response.util';
 import { recordCall } from '../../provider-metrics/data-access/provider-metrics-store';
@@ -17,6 +10,13 @@ import { buildArgArray } from '../cli-args';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
 import { buildExecutionSummary, createStreamNotifier } from '../streaming/domain-logic';
+import {
+  buildCommandFailure,
+  buildCommandOptions,
+  buildExecutionEnv,
+  buildNativeSessionArgs,
+  validateAndResolveArgs,
+} from '../utils/ask-command.util';
 
 export type { AskExecution } from './ask-runner-response.util';
 

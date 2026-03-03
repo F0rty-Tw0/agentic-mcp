@@ -4,7 +4,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { AskToolArgs } from '../../ask/common';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
 import { handleSessions } from '../../ask/domain-logic/sessions.handler';
-import { buildAskToolDefinition, buildSessionsToolDefinition } from '../../ask/domain-logic/tool.builder';
+import { buildAskToolDefinition, buildSessionsToolDefinition } from './ask-tool.builder';
 import type { AskAllToolArgs } from '../../ask-all/common';
 import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
 import { buildAskAllToolDefinition } from '../../ask-all/domain-logic/tool.builder';
