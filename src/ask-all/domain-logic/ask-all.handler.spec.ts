@@ -8,12 +8,11 @@ import type { AskAllResult, AskAllToolArgs } from '../common';
 
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
 
-const makeProvider = (name: string): ResolvedProviderEntry =>
-  ({
-    name,
-    binaryPath: `/usr/bin/${name}`,
-    config: {} as ResolvedProviderEntry['config'],
-  }) as ResolvedProviderEntry;
+const makeProvider = (name: string): ResolvedProviderEntry => ({
+  name,
+  binaryPath: `/usr/bin/${name}`,
+  config: {} as ResolvedProviderEntry['config'],
+});
 
 const makeSuccessResult = (text: string): CallToolResult => ({
   content: [{ type: 'text', text }],
