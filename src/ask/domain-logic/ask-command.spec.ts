@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandFailure, buildExecutionEnv, resolveModelHint } from './ask-command';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
-import { CommandExecutionError } from '../../shared/common/errors';
-import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import { CommandExecutionError, TEST_MINIMAL_ENV_STUB } from '../../shared';
 import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => ({
@@ -21,24 +20,30 @@ const mocks = vi.hoisted(() => ({
   executeCommand: vi.fn(),
 }));
 
-vi.mock('../../shared/utils/', () => ({
+vi.mock('../../shared/validation/utils/validation.util', () => ({
   validatePromptSize: mocks.validatePromptSize,
   validateModel: mocks.validateModel,
   validateSessionId: mocks.validateSessionId,
   validateWorkingDirectory: mocks.validateWorkingDirectory,
   validateFiles: mocks.validateFiles,
+}));
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   buildMinimalEnv: mocks.buildMinimalEnv,
+}));
+
+vi.mock('../../shared/provider/utils/model-error.util', () => ({
   detectModelError: mocks.detectModelError,
   extractAttemptedModel: mocks.extractAttemptedModel,
   fetchAvailableModels: mocks.fetchAvailableModels,
   buildModelHint: mocks.buildModelHint,
 }));
 
-vi.mock('../../shared/domain-logic/provider-env-resolver', () => ({
+vi.mock('../../shared/provider/domain-logic/provider-env-resolver', () => ({
   resolveProviderEnv: mocks.resolveProviderEnv,
 }));
 
-vi.mock('../../shared/domain-logic/command-executor', () => ({
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
   executeCommand: mocks.executeCommand,
 }));
 

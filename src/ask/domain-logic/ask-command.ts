@@ -1,15 +1,14 @@
-import type { ResolvedProviderEntry } from '../../shared/common';
-import { CommandExecutionError } from '../../shared/common/errors';
-import type { CommandExecutionErrorDetails } from '../../shared/common/errors/command-execution.error';
-import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { resolveProviderEnv } from '../../shared/domain-logic/provider-env-resolver';
+import type { CommandExecutionErrorDetails, ResolvedProviderEntry } from '../../shared';
 import {
+  CommandExecutionError,
   buildMinimalEnv,
   buildModelHint,
   detectModelError,
+  executeCommand,
   extractAttemptedModel,
   fetchAvailableModels,
-} from '../../shared/utils';
+  resolveProviderEnv,
+} from '../../shared';
 import type { AskToolArgs } from '../common';
 
 type ExecutionEnv = Readonly<Record<string, string>>;
