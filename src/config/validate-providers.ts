@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { providersFileSchema } from '../shared/common';
+import { providersFileSchema } from '../shared';
 
 const providersUrl = new URL('./providers.json', import.meta.url);
 const providersPath = fileURLToPath(providersUrl);
