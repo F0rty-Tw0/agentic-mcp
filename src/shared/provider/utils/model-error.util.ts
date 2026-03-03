@@ -1,4 +1,4 @@
-import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution/common';
+import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution';
 import type { ResolvedProviderEntry } from '../common';
 
 const MODEL_ERROR_PATTERN = /model[_ ]not[_ ]found|model.*does not exist|unknown model|invalid model|no such model/i;
