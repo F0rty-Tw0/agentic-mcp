@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { ToolDefinition } from '../../shared/common';
+import type { ToolDefinition } from '../../shared';
 import { ASK_ALL_TOOL_NAME } from '../common';
 
 type AskAllInputSchema = Readonly<Record<string, z.ZodType>>;
