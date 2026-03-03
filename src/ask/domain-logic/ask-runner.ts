@@ -10,13 +10,8 @@ import { buildExecutionSummary, createStreamNotifier } from '../../streaming/dom
 import { buildArgArray } from '../cli-args';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
-import {
-  buildCommandFailure,
-  buildCommandOptions,
-  buildExecutionEnv,
-  buildNativeSessionArgs,
-  validateAndResolveArgs,
-} from '../utils/ask-command.util';
+import { buildCommandFailure, buildExecutionEnv } from './ask-command';
+import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
 
 export type { AskExecution } from './ask-runner-response.util';
 
@@ -36,21 +31,21 @@ type ExecuteInput = Readonly<{
 }>;
 
 const resolveRequestId = (extra?: ProgressContext): string | undefined =>
-  extra?.requestId !== undefined ? String(extra.requestId) : undefined;
+  extra?.requestId ? String(extra.requestId) : undefined;
 
 const buildCliArgs = (
   config: ResolvedProviderEntry['config'],
   baseCliArgs: readonly string[],
   tier2SessionId?: string
-): string[] => [...baseCliArgs, ...(tier2SessionId ? buildNativeSessionArgs(config, tier2SessionId) : [])];
+): string[] => {
+  const tier2SessionArgs = tier2SessionId ? buildNativeSessionArgs(config, tier2SessionId) : [];
+  const cliArgs = [...baseCliArgs, ...tier2SessionArgs];
 
-const executeAndBuildResponse = async ({
-  context,
-  args,
-  extra,
-  tier2SessionId,
-  streamNotifier,
-}: ExecuteInput): Promise<AskExecution> => {
+  return cliArgs;
+};
+
+const executeAndBuildResponse = async (executeInput: ExecuteInput): Promise<AskExecution> => {
+  const { context, args, extra, tier2SessionId, streamNotifier } = executeInput;
   const resolved = validateAndResolveArgs(args);
   const { args: baseCliArgs, stdinInput } = buildArgArray(context.config, resolved);
   const env = buildExecutionEnv(context);
@@ -58,19 +53,22 @@ const executeAndBuildResponse = async ({
   const cliArgs = buildCliArgs(context.config, baseCliArgs, tier2SessionId);
 
   streamNotifier.emitStart();
-  const result = await executeCommand(
-    buildCommandOptions({
-      context,
-      resolved,
-      cliArgs,
-      stdinInput,
-      env,
-      onStdoutChunk: streamNotifier.onStdoutChunk,
-      onStderrChunk: streamNotifier.onStderrChunk,
-      signal: extra?.signal,
-      onSpawned: requestId ? (pid: number): void => registerActiveRequest(requestId, pid) : undefined,
-    })
-  );
+
+  const onSpawned = requestId ? (pid: number): void => registerActiveRequest(requestId, pid) : undefined;
+  const commandOptions = {
+    context,
+    resolved,
+    cliArgs,
+    stdinInput,
+    env,
+    onStdoutChunk: streamNotifier.onStdoutChunk,
+    onStderrChunk: streamNotifier.onStderrChunk,
+    signal: extra?.signal,
+    onSpawned,
+  };
+  const buildOptions = buildCommandOptions(commandOptions);
+
+  const result = await executeCommand(buildOptions);
 
   const summary = buildExecutionSummary(result);
 
@@ -83,7 +81,7 @@ const executeAndBuildResponse = async ({
     return buildFailureExecution(error.toMcpResponse(), extra?.signal?.aborted ?? false);
   }
 
-  const response = await buildSuccessfulResponse({
+  const successResponseInput = {
     context,
     args,
     env,
@@ -94,26 +92,27 @@ const executeAndBuildResponse = async ({
     stdoutBytes: result.stdoutBytes,
     streamNotifier,
     summary,
-    sessionMode: 'none',
-  });
+    sessionMode: 'none' as const,
+  };
+
+  const response = await buildSuccessfulResponse(successResponseInput);
 
   recordCall(context.name, result.executionTimeMs, !response.isError);
 
   return buildExecution(response, result.stdout, context);
 };
 
-export const runAskInvocation = async ({
-  context,
-  args,
-  extra,
-  tier2SessionId,
-}: RunInvocationInput): Promise<AskExecution> => {
-  const streamNotifier = createStreamNotifier({ providerName: context.name, args, extra });
+export const runAskInvocation = async (runInvocationInput: RunInvocationInput): Promise<AskExecution> => {
+  const { context, args, extra, tier2SessionId } = runInvocationInput;
+  const input = { providerName: context.name, args, extra };
+  const streamNotifier = createStreamNotifier(input);
   const stopHeartbeat = streamNotifier.enabled ? noop : startHeartbeat(extra);
-  const requestId = extra?.requestId !== undefined ? String(extra.requestId) : undefined;
+  const requestId = extra?.requestId ? String(extra.requestId) : undefined;
 
   try {
-    return await executeAndBuildResponse({ context, args, extra, tier2SessionId, streamNotifier });
+    const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, streamNotifier };
+
+    return await executeAndBuildResponse(executeInput);
   } catch (error) {
     streamNotifier.emitError(error instanceof Error ? error.message : 'Unknown error');
     recordCall(context.name, 0, false);

@@ -4,10 +4,10 @@ import { buildAttribution } from './attribution.builder';
 import { extractNativeSessionId } from '../../session';
 import type { ResolvedProviderEntry } from '../../shared/common';
 import { stripAnsi } from '../../shared/utils';
-import type { AskToolArgs, SessionMode } from '../common';
 import type { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
+import type { AskToolArgs, SessionMode } from '../common';
 import { buildCappedOutput } from '../utils';
-import { resolveModelHint } from '../utils/ask-command.util';
+import { resolveModelHint } from './ask-command';
 import { parseProviderOutput } from '../utils/output-parser.util';
 
 export type AskExecution = Readonly<{
@@ -41,40 +41,48 @@ export const buildFailureExecution = (response: CallToolResult, wasCancelled: bo
   wasCancelled,
 });
 
-export const buildSuccessfulResponse = async ({
-  context,
-  args,
-  env,
-  stdout,
-  stderr,
-  executionTimeMs,
-  truncated,
-  stdoutBytes,
-  streamNotifier,
-  summary,
-  sessionMode,
-}: SuccessResponseInput): Promise<CallToolResult> => {
+export const buildSuccessfulResponse = async (successResponseInput: SuccessResponseInput): Promise<CallToolResult> => {
+  const {
+    context,
+    args,
+    env,
+    stdout,
+    stderr,
+    executionTimeMs,
+    truncated,
+    stdoutBytes,
+    streamNotifier,
+    summary,
+    sessionMode,
+  } = successResponseInput;
   const parsedOutput = parseProviderOutput(stdout, context.config.outputFormat);
   const modelHint = await resolveModelHint({ context, args, stdout: parsedOutput.text, stderr, env });
 
   if (modelHint) {
     streamNotifier.emitError('Model validation failed', summary);
 
-    return { isError: true, content: [{ type: 'text', text: parsedOutput.text + modelHint }] };
+    const callToolResult: CallToolResult = {
+      isError: true,
+      content: [{ type: 'text', text: parsedOutput.text + modelHint }],
+    };
+
+    return callToolResult;
   }
 
   streamNotifier.emitDone(summary);
-  const attribution = buildAttribution({
+  const buildAttributionInput = {
     provider: context.name,
     model: args.model,
     result: { executionTimeMs, truncated, stdoutBytes },
     outputFormat: context.config.outputFormat,
     metadata: parsedOutput.metadata,
     sessionMode,
-  });
-  const content = [
-    { type: 'text' as const, text: buildCappedOutput(parsedOutput.text) || '(no output)' },
-    { type: 'text' as const, text: JSON.stringify(attribution, null, 2) },
+  };
+  const attribution = buildAttribution(buildAttributionInput);
+
+  const content: CallToolResult['content'] = [
+    { type: 'text', text: buildCappedOutput(parsedOutput.text) || '(no output)' },
+    { type: 'text', text: JSON.stringify(attribution, null, 2) },
   ];
 
   return { content };

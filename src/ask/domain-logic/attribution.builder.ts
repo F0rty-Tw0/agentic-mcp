@@ -16,23 +16,17 @@ type BuildAttributionInput = Readonly<{
   sessionMode: SessionMode;
 }>;
 
-export const buildAttribution = ({
-  provider,
-  model,
-  result,
-  outputFormat,
-  metadata,
-  sessionMode,
-}: BuildAttributionInput): ProviderAttribution => {
+export const buildAttribution = (buildAttributionInput: BuildAttributionInput): ProviderAttribution => {
+  const { provider, model, result, outputFormat, metadata, sessionMode } = buildAttributionInput;
   const attribution: ProviderAttribution = {
     provider,
-    ...(model !== undefined ? { model } : {}),
+    model,
     executionTimeMs: result.executionTimeMs,
     outputBytes: result.stdoutBytes,
     truncated: result.truncated,
     outputFormat,
-    ...(sessionMode !== 'none' ? { sessionMode } : {}),
-    ...(metadata !== undefined ? { outputFormatObserved: metadata.outputFormatObserved } : {}),
+    sessionMode: sessionMode !== 'none' ? sessionMode : undefined,
+    outputFormatObserved: metadata?.outputFormatObserved,
   };
 
   return attribution;
