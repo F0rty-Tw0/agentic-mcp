@@ -41,7 +41,7 @@ const sendHeartbeat = (
 export const startHeartbeat = (extra?: ProgressContext): (() => void) => {
   const progressToken = resolveProgressToken(extra);
 
-  if (progressToken === undefined || !extra?.sendNotification) {
+  if (!progressToken || !extra?.sendNotification) {
     return () => {
       /* empty */
     };
