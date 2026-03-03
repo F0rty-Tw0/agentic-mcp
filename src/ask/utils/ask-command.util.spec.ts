@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from './ask-command.util';
-import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
-import { ValidationError } from '../../shared/common/errors';
-import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
+import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB, ValidationError } from '../../shared';
 import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => ({
@@ -14,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   validateFiles: vi.fn(),
 }));
 
-vi.mock('../../shared/utils/', () => ({
+vi.mock('../../shared/validation/utils/validation.util', () => ({
   validatePromptSize: mocks.validatePromptSize,
   validateModel: mocks.validateModel,
   validateSessionId: mocks.validateSessionId,

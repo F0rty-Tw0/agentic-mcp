@@ -1,12 +1,12 @@
-import type { ExecuteCommandOptions, FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared/common';
-import { ValidationError } from '../../shared/common/errors';
+import type { ExecuteCommandOptions, FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import {
+  ValidationError,
   validateFiles,
   validateModel,
   validatePromptSize,
   validateSessionId,
   validateWorkingDirectory,
-} from '../../shared/utils';
+} from '../../shared';
 import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common';
 import type { AskToolArgs } from '../common';
 

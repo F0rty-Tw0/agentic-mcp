@@ -1,5 +1,5 @@
-import type { OutputFormat } from '../../shared/common';
-import { stripAnsi } from '../../shared/utils';
+import type { OutputFormat } from '../../shared';
+import { stripAnsi } from '../../shared';
 
 type ParsedMetadata = Readonly<{
   outputFormatObserved: OutputFormat;
