@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   resolveCliBinary: vi.fn<(command: string) => Promise<string | undefined>>(),
 }));
 
-vi.mock('../../shared/utils/', () => ({
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
 }));
 

@@ -1,4 +1,4 @@
-import { resolveCliBinary } from '../../shared/utils';
+import { resolveCliBinary } from '../../shared';
 import { KNOWN_PROVIDER_COMMANDS } from '../common';
 import type { DetectedProvider } from '../common';
 
