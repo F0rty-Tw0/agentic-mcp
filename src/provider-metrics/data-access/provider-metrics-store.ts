@@ -1,4 +1,4 @@
-import { nowIso } from '../../shared/utils';
+import { nowIso } from '../../shared';
 import { MAX_METRIC_RECORDS } from '../common';
 import type { ProviderCallRecord, ProviderMetricsSummary, ProviderStats } from '../common';
 

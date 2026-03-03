@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ToolDefinition } from '../../shared/common';
+import type { ToolDefinition } from '../../shared';
 import { getProviderMetrics } from '../data-access/provider-metrics-store';
 
 export const handleProviderMetrics = (): CallToolResult => {
