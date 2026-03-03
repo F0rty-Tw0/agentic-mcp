@@ -2,11 +2,15 @@ import { buildCommandFailure, buildExecutionEnv } from './ask-command';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { buildArgArray } from '../../cli-args';
 import { recordCall } from '../../provider-metrics';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
-import { CommandExecutionError } from '../../shared/common/errors';
-import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
-import { startHeartbeat, toMcpError } from '../../shared/utils';
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import {
+  CommandExecutionError,
+  executeCommand,
+  registerActiveRequest,
+  startHeartbeat,
+  toMcpError,
+  unregisterActiveRequest,
+} from '../../shared';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';

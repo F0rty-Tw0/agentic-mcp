@@ -1,8 +1,8 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ResolvedProviderEntry } from '../../shared/common';
-import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/common/stubs';
+import type { ResolvedProviderEntry } from '../../shared';
+import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
 import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
 
 vi.mock('../../session', () => ({
@@ -13,7 +13,7 @@ vi.mock('../../session', () => ({
   }),
 }));
 
-vi.mock('../../shared/utils', () => ({
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   stripAnsi: vi.fn((s: string) => s),
 }));
 
