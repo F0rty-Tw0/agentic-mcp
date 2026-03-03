@@ -7,7 +7,7 @@ import type { AskToolArgs } from '../../ask';
 import { buildAskAllToolDefinition, handleAskAll } from '../../ask-all';
 import type { AskAllToolArgs } from '../../ask-all';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
-import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
+import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import {
   buildHelpToolDefinition,
   buildListProvidersDefinition,

@@ -12,7 +12,7 @@ import {
   isLeveledFlag,
 } from '../../ask/common';
 import { getAskCommand, getFlag } from '../../ask/utils';
-import type { CommandDef, ProviderConfig, ToolDefinition } from '../../shared/common';
+import type { CommandDef, ProviderConfig, ToolDefinition } from '../../shared';
 
 type AskInputSchema = Readonly<Record<string, z.ZodType>>;
 type MutableAskInputSchema = Record<string, z.ZodType>;

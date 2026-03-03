@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildAskToolDefinition, buildSessionsToolDefinition } from './ask-tool.builder';
-import type { ProviderConfig } from '../../shared/common';
+import type { ProviderConfig } from '../../shared';
 
 type AskToolFlags = Readonly<Record<string, unknown>>;
 

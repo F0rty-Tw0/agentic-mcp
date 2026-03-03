@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry, ToolDefinition } from '../../../shared/common';
+import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry, ToolDefinition } from '../../../shared';
 
 export const TOOL_REGISTRY_PROVIDER_CONFIG_STUB: ProviderConfig = {
   enabled: true,

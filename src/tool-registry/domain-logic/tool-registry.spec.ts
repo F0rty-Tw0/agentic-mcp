@@ -8,7 +8,7 @@ import { handleAsk } from '../../ask/domain-logic/ask.handler';
 import { handleSessions } from '../../ask/session';
 import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
-import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
+import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import { handleHelp, handleListProviders, handlePing } from '../../simple-tools';
 import {
   TOOL_REGISTRY_PROVIDER_CONFIG_STUB,
