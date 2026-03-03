@@ -2,10 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CancelledNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { loadConfig } from '../../config/loader';
-import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
-import { APP_VERSION } from '../../shared/common';
-import { getActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
-import { killProcess, resolveCliBinary } from '../../shared/utils';
+import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import { APP_VERSION, getActiveRequest, killProcess, resolveCliBinary, unregisterActiveRequest } from '../../shared';
 import { registerAllTools } from '../../tool-registry';
 import { NO_PROVIDERS_WARNING, SERVER_NAME } from '../common';
 import { toRequestIdString } from '../utils';

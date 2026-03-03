@@ -3,8 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server';
-import type { ProvidersFile, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
-import type { AsyncViFn, SyncViFn } from '../../shared/common/test-utils';
+import type { AsyncViFn, ProvidersFile, ResolvedProvider, ResolvedProviderEntry, SyncViFn } from '../../shared';
 
 type ActiveRequest = Readonly<{ requestId: string; pid: number }>;
 
@@ -44,12 +43,12 @@ vi.mock('../../config/loader', () => ({
   loadConfig: mocks.loadConfig,
 }));
 
-vi.mock('../../shared/utils/platform.util', () => ({
+vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   resolveCliBinary: mocks.resolveCliBinary,
   killProcess: mocks.killProcess,
 }));
 
-vi.mock('../../shared/domain-logic/request-registry', () => ({
+vi.mock('../../shared/validation/domain-logic/request-registry', () => ({
   getActiveRequest: mocks.getActiveRequest,
   unregisterActiveRequest: mocks.unregisterActiveRequest,
 }));
