@@ -2,12 +2,10 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { buildAskToolDefinition, buildSessionsToolDefinition } from './ask-tool.builder';
-import type { AskToolArgs } from '../../ask/common';
-import { handleAsk } from '../../ask/domain-logic/ask.handler';
-import { handleSessions } from '../../ask/session';
-import type { AskAllToolArgs } from '../../ask-all/common';
-import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
-import { buildAskAllToolDefinition } from '../../ask-all/domain-logic/tool.builder';
+import { handleAsk, handleSessions } from '../../ask';
+import type { AskToolArgs } from '../../ask';
+import { buildAskAllToolDefinition, handleAskAll } from '../../ask-all';
+import type { AskAllToolArgs } from '../../ask-all';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
 import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from '../../shared/common';
 import {

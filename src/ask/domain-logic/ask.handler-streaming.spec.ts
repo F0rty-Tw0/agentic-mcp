@@ -30,10 +30,11 @@ const createProgressContext = (notifications: ProgressNotification[]): ProgressC
   const sendNotification = vi.fn(async (notification: ProgressNotification) => {
     await Promise.resolve();
     notifications.push(notification);
-  });
+  }) as unknown as ProgressContext['sendNotification'];
 
   const context: ProgressContext = {
     sendNotification,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     _meta: { progressToken: 'token-1' },
   };
 

@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { AskToolArgs } from '../../ask/common';
-import { handleAsk } from '../../ask/domain-logic/ask.handler';
+import { handleAsk } from '../../ask';
+import type { AskToolArgs } from '../../ask';
 import type { ResolvedProviderEntry } from '../../shared/common';
 import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common';
 import { extractResponseText } from '../utils';

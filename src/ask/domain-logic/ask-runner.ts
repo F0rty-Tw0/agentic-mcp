@@ -1,12 +1,12 @@
 import { buildExecution, buildFailureExecution, buildSuccessfulResponse } from './ask-runner-response.util';
 import type { AskExecution } from './ask-runner-response.util';
-import { recordCall } from '../../provider-metrics/data-access/provider-metrics-store';
+import { recordCall } from '../../provider-metrics';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared/common';
 import { CommandExecutionError } from '../../shared/common/errors';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
 import { startHeartbeat, toMcpError } from '../../shared/utils';
-import { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
+import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
 import { buildArgArray } from '../cli-args';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
