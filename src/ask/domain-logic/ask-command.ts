@@ -1,4 +1,4 @@
-import type { CommandExecutionErrorDetails, ResolvedProviderEntry } from '../../shared';
+import type { CommandExecutionErrorDetails, ExecutionResult, ResolvedProviderEntry } from '../../shared';
 import {
   CommandExecutionError,
   buildMinimalEnv,
@@ -22,29 +22,28 @@ type ModelHintContext = Readonly<{
 }>;
 
 export const buildExecutionEnv = (context: ResolvedProviderEntry): ExecutionEnv => {
-  return buildMinimalEnv(resolveProviderEnv(context));
+  const providerEnv = resolveProviderEnv(context);
+
+  return buildMinimalEnv(providerEnv);
 };
 
-export const resolveModelHint = async ({ context, args, stdout, stderr, env }: ModelHintContext): Promise<string> => {
+export const resolveModelHint = async (modelHintContext: ModelHintContext): Promise<string> => {
+  const { context, args, stdout, stderr, env } = modelHintContext;
+
   if (!detectModelError(stdout, stderr)) return '';
 
   const availableModels = await fetchAvailableModels(context, env, executeCommand);
   const attemptedModel = args.model ?? extractAttemptedModel(stdout, stderr);
+  const modelHint = buildModelHint(context.name, attemptedModel, availableModels, Boolean(args.model));
 
-  return buildModelHint(context.name, attemptedModel, availableModels, Boolean(args.model));
+  return modelHint;
 };
 
 export const buildCommandFailure = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
   env: ExecutionEnv,
-  result: Readonly<{
-    stdout: string;
-    stderr: string;
-    exitCode: number | null;
-    signal: string | null;
-    timedOut: boolean;
-  }>
+  result: ExecutionResult
 ): Promise<CommandExecutionError> => {
   const details: CommandExecutionErrorDetails = {
     exitCode: result.exitCode,
@@ -52,8 +51,9 @@ export const buildCommandFailure = async (
     timedOut: result.timedOut,
     stderr: result.stderr,
   };
+  const modelHintContext: ModelHintContext = { context, args, stdout: result.stdout, stderr: result.stderr, env };
+  const suffix = await resolveModelHint(modelHintContext);
+  const error = new CommandExecutionError(`${context.name} command failed${suffix}`, details);
 
-  const suffix = await resolveModelHint({ context, args, stdout: result.stdout, stderr: result.stderr, env });
-
-  return new CommandExecutionError(`${context.name} command failed${suffix}`, details);
+  return error;
 };

@@ -17,6 +17,7 @@ type BuildAttributionInput = Readonly<{
 
 export const buildAttribution = (buildAttributionInput: BuildAttributionInput): ProviderAttribution => {
   const { provider, model, result, outputFormat, metadata, sessionMode } = buildAttributionInput;
+
   const attribution: ProviderAttribution = {
     provider,
     model,

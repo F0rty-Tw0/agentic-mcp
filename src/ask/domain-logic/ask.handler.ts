@@ -23,13 +23,17 @@ const handleSessionAsk = async (
   args: AskToolArgs,
   extra?: ProgressContext
 ): Promise<CallToolResult> => {
-  const sessionId = args.session_id as string;
+  const sessionId = args.session_id;
+
+  if (!sessionId) throw new Error('session_id is required for session-based ask');
 
   if (!SESSION_STORE.tryAcquireLock(context.name, sessionId)) {
-    return {
+    const callToolResult: CallToolResult = {
       isError: true,
       content: [{ type: 'text', text: `session in use: ${sessionId}` }],
     };
+
+    return callToolResult;
   }
 
   try {
@@ -58,10 +62,12 @@ export const handleAsk = async (
 ): Promise<CallToolResult> => {
   if ((args.action ?? 'run') === 'status') {
     if (!args.job_id) {
-      return {
+      const calLToolResult: CallToolResult = {
         isError: true,
         content: [{ type: 'text', text: 'job_id is required when action=status' }],
       };
+
+      return calLToolResult;
     }
 
     return buildJobStatusResponse(args.job_id);
@@ -71,10 +77,13 @@ export const handleAsk = async (
     const asyncJob = createBackgroundJob(context.name);
 
     void startBackgroundInvocation(asyncJob.id, async () => runAskInvocationResponse(context, args, extra));
+    const text = JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state });
 
-    return {
-      content: [{ type: 'text', text: JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state }) }],
+    const callToolResult: CallToolResult = {
+      content: [{ type: 'text', text }],
     };
+
+    return callToolResult;
   }
 
   if (!args.session_id) {

@@ -82,8 +82,10 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput): Promise<AskE
 
     streamNotifier.emitError(error.message, summary);
     recordCall(context.name, result.executionTimeMs, false);
+    const wasCancelled = extra?.signal?.aborted ?? false;
+    const response = error.toMcpResponse();
 
-    return buildFailureExecution(error.toMcpResponse(), extra?.signal?.aborted ?? false);
+    return buildFailureExecution(response, wasCancelled);
   }
 
   const successResponseInput = {
@@ -104,7 +106,9 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput): Promise<AskE
 
   recordCall(context.name, result.executionTimeMs, !response.isError);
 
-  return buildExecution(response, result.stdout, context);
+  const execution = buildExecution(response, result.stdout, context);
+
+  return execution;
 };
 
 export const runAskInvocation = async (runInvocationInput: RunInvocationInput): Promise<AskExecution> => {
@@ -119,7 +123,9 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
 
     return await executeAndBuildResponse(executeInput);
   } catch (error) {
-    streamNotifier.emitError(error instanceof Error ? error.message : 'Unknown error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    streamNotifier.emitError(errorMessage);
     recordCall(context.name, 0, false);
 
     if (error instanceof CommandExecutionError) return buildFailureExecution(error.toMcpResponse(), false);
