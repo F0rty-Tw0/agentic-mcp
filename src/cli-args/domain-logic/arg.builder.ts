@@ -10,8 +10,8 @@ import {
 } from '../../ask/common';
 import type { AskToolArgs, BuiltArgs } from '../../ask/common';
 import { getAskCommand, getFlag } from '../../ask/utils';
-import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/common';
-import { ValidationError } from '../../shared/common/errors';
+import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
+import { ValidationError } from '../../shared';
 
 const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
   if (!flagValue) return [];
