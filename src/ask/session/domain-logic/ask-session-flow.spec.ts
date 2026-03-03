@@ -1,8 +1,8 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util';
-import type { SessionFlowState } from './ask-session-flow.util';
+import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
+import type { SessionFlowState } from './ask-session-flow';
 import type { ResolvedProviderEntry } from '../../../shared/common';
 import type { AskToolArgs } from '../../common';
 import type { AskExecution } from '../../domain-logic/ask-runner';

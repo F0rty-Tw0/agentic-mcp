@@ -1,3 +1,3 @@
-export { buildSessionFlowState, executeSessionFlow } from './ask-session-flow.util';
+export { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 
 export { handleSessions } from './sessions.handler';
