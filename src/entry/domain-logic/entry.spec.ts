@@ -3,7 +3,7 @@ import process from 'node:process';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entry } from './entry';
-import type { ConfigPathOptions } from '../../shared/common';
+import type { ConfigPathOptions } from '../../shared';
 
 type MockServer = Readonly<{
   connect: (transport: unknown) => Promise<void>;

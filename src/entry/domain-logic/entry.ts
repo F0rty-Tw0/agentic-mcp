@@ -4,7 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { createServer } from '../../server';
 import { runSetup } from '../../setup';
-import { APP_VERSION } from '../../shared/common';
+import { APP_VERSION } from '../../shared';
 import { HELP_TEXT } from '../common';
 import { parseConfigPath } from '../utils';
 
