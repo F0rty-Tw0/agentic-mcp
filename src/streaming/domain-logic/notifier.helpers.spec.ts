@@ -10,7 +10,7 @@ import {
   splitChunkByBytes,
   withEventEnvelope,
 } from './notifier.helpers';
-import type { ProgressContext } from '../../shared/common';
+import type { ProgressContext } from '../../shared';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 
 describe('resolveProgressToken', () => {

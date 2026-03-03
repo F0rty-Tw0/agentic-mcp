@@ -1,4 +1,4 @@
-import type { ProgressContext, ProgressToken } from '../../shared/common';
+import type { ProgressContext, ProgressToken } from '../../shared';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 import type { AskStreamChannel, AskStreamDiagnostics, AskStreamEvent, AskStreamExecutionSummary } from '../common';
 

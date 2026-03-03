@@ -5,7 +5,7 @@ import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-run
 import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from './notifier.helpers';
 import type { StreamNotifier } from './notifier.helpers';
 import { createStreamNotifier } from './notifier.util';
-import type { ProgressContext } from '../../shared/common';
+import type { ProgressContext } from '../../shared';
 import { HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
 
 vi.mock('./notifier-runtime.util');
