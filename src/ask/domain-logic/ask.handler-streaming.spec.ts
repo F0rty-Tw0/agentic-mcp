@@ -4,8 +4,9 @@ import { handleAsk } from './ask.handler';
 import type { ProgressContext } from '../../shared/common';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/common/stubs';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
-import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
-import type { AskStreamEvent, AskToolArgs, ProgressNotification } from '../common';
+import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../../streaming/common';
+import type { AskStreamEvent } from '../../streaming/common';
+import type { AskToolArgs, ProgressNotification } from '../common';
 import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_SUCCESS_EXECUTION_RESULT_STUB, createAskContext } from '../common/stubs';
 
 vi.mock('../cli-args/domain-logic/arg.builder', () => ({

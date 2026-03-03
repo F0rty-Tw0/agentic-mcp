@@ -1,9 +1,0 @@
-export const HEARTBEAT_IDLE_INTERVAL_MS = 30_000;
-
-export const MAX_STREAM_CHUNK_BYTES = 4_096;
-
-export const STREAM_COALESCE_WINDOW_MS = 100;
-
-export const TERMINAL_EVENT_GRACE_TIMEOUT_MS = 5_000;
-
-export const STREAM_PROGRESS_START = 1;

@@ -6,10 +6,10 @@ import { CommandExecutionError } from '../../shared/common/errors';
 import { executeCommand } from '../../shared/domain-logic/command-executor';
 import { registerActiveRequest, unregisterActiveRequest } from '../../shared/domain-logic/request-registry';
 import { startHeartbeat, toMcpError } from '../../shared/utils';
+import { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
 import { buildArgArray } from '../cli-args';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
-import { buildExecutionSummary, createStreamNotifier } from '../streaming/domain-logic';
 import {
   buildCommandFailure,
   buildCommandOptions,
