@@ -1,9 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { buildExecution, buildFailureExecution } from './ask-runner-response.util';
 import type { ResolvedProviderEntry } from '../../shared/common';
 import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/common/stubs';
+import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
 
 vi.mock('../../session', () => ({
   extractNativeSessionId: vi.fn((_name: string, stdout: string) => {
