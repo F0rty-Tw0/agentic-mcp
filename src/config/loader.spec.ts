@@ -5,7 +5,7 @@ import process from 'node:process';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { loadConfig } from './loader';
+import { loadConfig, warnDangerousFlags } from './loader';
 import type { ProvidersFile } from '../shared';
 
 const tempDirs: string[] = [];
@@ -134,7 +134,7 @@ describe('loadConfig', () => {
     expect(loaded.providers.claude).toBeDefined();
   });
 
-  it('GIVEN dangerous auto-mode flags WHEN loading THEN a warning is written to stderr', async () => {
+  it('GIVEN dangerous auto-mode flags WHEN calling warnDangerousFlags THEN a warning is written to stderr', async () => {
     const tempDir = await createTempDir();
     const configPath = await writeConfig(
       tempDir,
@@ -153,10 +153,30 @@ describe('loadConfig', () => {
 
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
-    await loadConfig({ configPath });
+    const config = await loadConfig({ configPath });
+
+    warnDangerousFlags(config);
 
     expect(stderrSpy).toHaveBeenCalledWith(
       expect.stringContaining('Warning: provider "unsafe" uses dangerous auto-mode flag "--full-auto"')
     );
+  });
+
+  it('GIVEN dangerous flags WHEN filtering by provider name THEN only warns for matching providers', async () => {
+    const tempDir = await createTempDir();
+    const configPath = await writeConfig(
+      tempDir,
+      'multi-dangerous.json',
+      buildConfig('safe', {
+        commands: { ask: { args: ['run'], flags: {} } },
+      })
+    );
+
+    const config = await loadConfig({ configPath });
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    warnDangerousFlags(config, ['nonexistent']);
+
+    expect(stderrSpy).not.toHaveBeenCalled();
   });
 });

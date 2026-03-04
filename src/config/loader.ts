@@ -53,8 +53,10 @@ const resolveConfigPath = async (explicit?: string): Promise<string> => {
   return fileURLToPath(new URL('./providers.json', import.meta.url));
 };
 
-const warnDangerousFlags = (config: ProvidersFile): void => {
+export const warnDangerousFlags = (config: ProvidersFile, providerNames?: readonly string[]): void => {
   for (const [name, provider] of Object.entries(config.providers)) {
+    if (providerNames && !providerNames.includes(name)) continue;
+
     const askCommand = provider.commands.ask;
 
     if (!askCommand) continue;
@@ -75,8 +77,6 @@ export const loadConfig = async (options?: ConfigPathOptions): Promise<Providers
   const raw = await readFile(configPath, 'utf-8');
   const json: unknown = JSON.parse(raw);
   const config = providersFileSchema.parse(json);
-
-  warnDangerousFlags(config);
 
   return config;
 };
