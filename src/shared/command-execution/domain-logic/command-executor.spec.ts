@@ -92,7 +92,7 @@ describe('executeCommand', () => {
 
       expect(crossSpawn).toHaveBeenCalledWith('/usr/bin/test-cli', ['run'], {
         env: TEST_EXECUTE_COMMAND_OPTIONS_STUB.env,
-        stdio: ['pipe', 'pipe', 'pipe'],
+        stdio: ['ignore', 'pipe', 'pipe'],
         cwd: '/workspace',
       });
     });
@@ -152,7 +152,7 @@ describe('executeCommand', () => {
       expect(stdin.end).toHaveBeenCalled();
     });
 
-    it('GIVEN no stdin option WHEN executed THEN stdin stream is closed without writing', async () => {
+    it('GIVEN no stdin option WHEN executed THEN stdin is ignored and not written to', async () => {
       const { child, stdin, emitClose } = createControllableChild();
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as CrossSpawnResult);
@@ -163,7 +163,7 @@ describe('executeCommand', () => {
       await resultPromise;
 
       expect(stdin.write).not.toHaveBeenCalled();
-      expect(stdin.end).toHaveBeenCalled();
+      expect(stdin.end).not.toHaveBeenCalled();
     });
   });
 

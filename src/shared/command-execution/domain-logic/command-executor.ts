@@ -87,7 +87,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
   return new Promise<ExecutionResult>((resolve, reject) => {
     const child = crossSpawn(binaryPath, args, {
       env,
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'],
       cwd,
     });
 
@@ -132,8 +132,6 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
     if (stdin && child.stdin) {
       child.stdin.write(stdin);
       child.stdin.end();
-    } else {
-      child.stdin?.end();
     }
   });
 };
