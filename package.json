@@ -23,6 +23,8 @@
   "scripts": {
     "build": "node build.mjs",
     "dev": "tsx src/index.ts",
+    "inspect": "pnpx @modelcontextprotocol/inspector node dist/index.js",
+    "inspect:dev": "pnpx @modelcontextprotocol/inspector tsx src/index.ts",
     "start": "node dist/index.js",
     "format": "prettier --write --list-different .",
     "format:check": "prettier --list-different .",
