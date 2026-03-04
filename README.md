@@ -42,6 +42,59 @@ Common flags:
 - `--path <file>` — target a specific config file
 - `--backup if-exists|always|never` — backup policy before writes
 
+## CLI Usage
+
+In addition to running as an MCP server, agentic-mcp can be invoked directly from the command line:
+
+```bash
+npx agentic-mcp <command> [options]
+```
+
+Or if installed globally:
+
+```bash
+agentic-mcp <command> [options]
+```
+
+### Commands
+
+| Command | Description |
+| --- | --- |
+| `ask_<provider> <prompt>` | Query a provider (e.g. `ask_claude "explain X"`) |
+| `ask_all <prompt>` | Query all providers in parallel |
+| `ping_<provider>` | Check if a provider is available |
+| `help_<provider>` | Show provider CLI help output |
+| `list_providers` | List all configured providers |
+| `provider_metrics` | Show call statistics |
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `--config <path>` | Path to providers config file |
+| `--model <name>` | Model to use (ask commands) |
+| `--working-dir <path>` | Working directory for the provider |
+| `--system-prompt <text>` | System prompt |
+| `--auto-mode <value>` | Auto-mode flag value |
+| `--effort <value>` | Effort level |
+| `--max-budget <value>` | Max budget |
+| `--file <path>` | File to include (repeatable) |
+| `--providers <list>` | Comma-separated provider list (ask_all) |
+| `--async` | Run asynchronously |
+| `--session-id <id>` | Session ID for multi-turn |
+
+### Examples
+
+```bash
+agentic-mcp ask_claude "what is TypeScript?"
+agentic-mcp ask_codex "fix this bug" --model o4-mini
+agentic-mcp ask_all "explain MCP" --providers claude,gemini
+agentic-mcp list_providers
+agentic-mcp ping_claude
+```
+
+CLI mode uses the same config resolution as MCP mode (see [Configuration](#configuration)).
+
 ## What Can You Do?
 
 ### Get an answer
@@ -189,6 +242,7 @@ That's it. No code changes needed. See existing entries for the config shape.
 src/
 ├── ask/              # Per-provider ask handler (command, execution, response, sessions)
 ├── ask-all/          # Fan-out queries to all providers in parallel
+├── cli/              # CLI router for direct command-line invocation
 ├── background-jobs/  # Async job queue for long-running asks
 ├── cli-args/         # Declarative config → CLI argument builder
 ├── config/           # Provider config loader (multi-source resolution)
