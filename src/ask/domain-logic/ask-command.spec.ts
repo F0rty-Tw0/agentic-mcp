@@ -164,6 +164,10 @@ describe('buildCommandFailure', () => {
       exitCode: 1,
       signal: null,
       timedOut: false,
+      truncated: false,
+      stdoutBytes: 0,
+      stderrBytes: 21,
+      executionTimeMs: 100,
     };
 
     const error = await buildCommandFailure(context, args, TEST_MINIMAL_ENV_STUB, result);
@@ -191,6 +195,10 @@ describe('buildCommandFailure', () => {
       exitCode: 2,
       signal: null,
       timedOut: false,
+      truncated: false,
+      stdoutBytes: 15,
+      stderrBytes: 0,
+      executionTimeMs: 100,
     };
 
     const error = await buildCommandFailure(context, args, env, result);
@@ -210,6 +218,10 @@ describe('buildCommandFailure', () => {
       exitCode: null,
       signal: null,
       timedOut: true,
+      truncated: false,
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      executionTimeMs: 100,
     };
 
     const error = await buildCommandFailure(context, args, {}, result);
@@ -229,6 +241,10 @@ describe('buildCommandFailure', () => {
       exitCode: null,
       signal: 'SIGTERM',
       timedOut: false,
+      truncated: false,
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      executionTimeMs: 100,
     };
 
     const error = await buildCommandFailure(context, args, {}, result);
