@@ -55,9 +55,7 @@ describe('runCli', () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
-    stdoutSpy.mockRestore();
-    stderrSpy.mockRestore();
+    vi.restoreAllMocks();
     process.exitCode = undefined;
   });
 
