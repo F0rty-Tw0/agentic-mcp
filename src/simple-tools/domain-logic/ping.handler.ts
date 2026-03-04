@@ -3,7 +3,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ResolvedProviderEntry } from '../../shared';
 import { buildMinimalEnv, executeCommand, resolveProviderEnv, stripAnsi, toMcpError } from '../../shared';
 
-const PING_TIMEOUT_MS = 10_000;
+const PING_TIMEOUT_MS = 30_000;
 
 const createPingResponse = (text: string): CallToolResult => {
   const pingResponse: CallToolResult = {
