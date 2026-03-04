@@ -282,7 +282,19 @@ describe('platform utilities', () => {
         expect(result).toBe('C:\\real\\tool.EXE');
       });
 
-      it('GIVEN win32 and .bat resolved WHEN no .exe exists THEN returns the .bat path', async () => {
+      it('GIVEN win32 and .bat resolved WHEN .cmd exists in PATH THEN returns the .cmd path', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+        mocks.which
+          .mockResolvedValueOnce('C:\\vscode\\copilot.BAT')
+          .mockResolvedValueOnce(['C:\\vscode\\copilot.BAT', 'C:\\npm\\copilot.cmd']);
+
+        const result = await resolveCliBinary('copilot');
+
+        expect(result).toBe('C:\\npm\\copilot.cmd');
+      });
+
+      it('GIVEN win32 and .bat resolved WHEN no .exe or .cmd exists THEN returns the .bat path', async () => {
         Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
 
         mocks.which
@@ -292,6 +304,18 @@ describe('platform utilities', () => {
         const result = await resolveCliBinary('copilot');
 
         expect(result).toBe('C:\\wrapper\\copilot.bat');
+      });
+
+      it('GIVEN win32 and .cmd resolved WHEN no .exe exists THEN returns the .cmd path without searching for .bat', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+        mocks.which
+          .mockResolvedValueOnce('C:\\npm\\tool.cmd')
+          .mockResolvedValueOnce(['C:\\npm\\tool.cmd', 'C:\\vscode\\tool.BAT']);
+
+        const result = await resolveCliBinary('tool');
+
+        expect(result).toBe('C:\\npm\\tool.cmd');
       });
 
       it('GIVEN linux and .bat resolved WHEN .exe exists THEN returns the .bat path unchanged', async () => {

@@ -106,7 +106,12 @@ export const resolveCliBinary = async (command: string): Promise<string | undefi
 
   // On Windows, .bat/.cmd wrappers often use Read-Host (PowerShell) or CONIN$ for interactive
   // prompts, which hang when spawned as subprocesses. Prefer a real .exe if one exists in PATH.
+  // When no .exe exists, prefer .cmd over .bat — npm creates simple .cmd wrappers that work
+  // well with cross-spawn, while .bat bootstrappers (e.g., VS Code extensions) often call
+  // PowerShell with Read-Host which hangs in non-interactive contexts.
   const isBatOrCmd = /\.(bat|cmd)$/i;
+  const isBat = /\.bat$/i;
+  const isCmd = /\.cmd$/i;
   const isExe = /\.exe$/i;
 
   if (process.platform === 'win32' && isBatOrCmd.test(resolvedBinary)) {
@@ -114,6 +119,12 @@ export const resolveCliBinary = async (command: string): Promise<string | undefi
     const exeMatch = allMatches.find((match) => isExe.test(match));
 
     if (exeMatch) return exeMatch;
+
+    if (isBat.test(resolvedBinary)) {
+      const cmdMatch = allMatches.find((match) => isCmd.test(match));
+
+      if (cmdMatch) return cmdMatch;
+    }
   }
 
   return resolvedBinary;
