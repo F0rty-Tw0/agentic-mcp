@@ -23,12 +23,22 @@ const stubProviders = [
   { name: 'claude', available: true, binaryPath: '/usr/bin/claude' },
 ] as const;
 
-const commonDeps = () => ({
-  detectInstalledProviders: async () => stubProviders,
-  stdoutWrite: (text: string) => {
+const commonDeps = (): {
+  detectInstalledProviders: () => Promise<typeof stubProviders>;
+  stdoutWrite: (text: string) => void;
+  stderrWrite: (text: string) => void;
+  homeDirectory: string;
+  isInteractive: boolean;
+} => ({
+  detectInstalledProviders: async (): Promise<typeof stubProviders> => {
+    const result = await Promise.resolve(stubProviders);
+
+    return result;
+  },
+  stdoutWrite: (text: string): void => {
     stdoutOutput += text;
   },
-  stderrWrite: (text: string) => {
+  stderrWrite: (text: string): void => {
     stderrOutput += text;
   },
   homeDirectory: tempDir,
