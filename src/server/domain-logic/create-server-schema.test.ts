@@ -44,7 +44,7 @@ describe('integration: ask tool input schema', () => {
     for (const tool of askTools) {
       const properties = (tool.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
 
-      expect(properties['prompt'], `${tool.name} should have inputSchema.properties.prompt`).toBeDefined();
+      expect(properties.prompt, `${tool.name} should have inputSchema.properties.prompt`).toBeDefined();
     }
   });
 
@@ -57,13 +57,13 @@ describe('integration: ask tool input schema', () => {
 
     const alwaysPresentFields = ['stream_live', 'mode', 'action', 'job_id'] as const;
 
-    for (const tool of askTools) {
+    const missingFields = askTools.flatMap((tool) => {
       const properties = (tool.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
 
-      for (const field of alwaysPresentFields) {
-        expect(properties[field], `${tool.name} should have inputSchema.properties.${field}`).toBeDefined();
-      }
-    }
+      return alwaysPresentFields.filter((f) => !(f in properties)).map((f) => `${tool.name}.${f}`);
+    });
+
+    expect(missingFields, 'All ask tools should have standard optional fields').toStrictEqual([]);
   });
 });
 
