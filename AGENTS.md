@@ -10,8 +10,9 @@
 - **`import type` for type-only imports** — enforced by `verbatimModuleSyntax`. You will forget this.
 - **`catch (error: unknown)`** — never `any`, never bare `Error`.
 - **`toStrictEqual` over `toEqual`** — always. Use `toBe` for primitives.
-- **No `eslint-disable` comments** — fix the code instead.
+- **No `eslint-disable` comments** — fix the code instead. Refactor to reduce complexity, extract helpers, restructure loops.
 - **No JSDoc, no block comments (`/* */`), no commented-out code.**
+- **camelCase for local variables** — never `snake_case`. Map to snake_case keys only at the object-literal boundary: `{ working_directory: workingDirectory }`.
 
 ## File & Naming
 
@@ -37,16 +38,29 @@
 - `vi.mock()` always with factory function. `vi.mocked()` for typed access. `vi.hoisted()` for shared mock refs.
 - No `it.each` / `describe.each` — write explicit individual `it()` calls.
 - Factory functions for test data: `create*`/`build*`/`make*` with `overrides: Partial<T> = {}`.
+- **Complete stubs** — test stubs must include ALL required properties of the type they represent. Never pass partial objects where full types are expected; use factory functions with defaults for every field.
+- **No `expect` inside conditionals** — never put `expect()` inside `if`, `try/catch`, or ternary. Use `.catch()` chains or restructure assertions to be unconditional.
+- **Use `vi.restoreAllMocks()`** — in `afterEach`, prefer `vi.restoreAllMocks()` over calling `.mockRestore()` on individual spies (avoids unsafe `any` access).
+- **Complexity max 3 in tests** — the linter enforces a lower complexity threshold in test files. Extract helper functions (`pollOnce`, `isAvailable`, etc.) to keep each test callback under the limit.
 
 ## TDD (Mandatory)
 
 No production code before a failing test. Red -> Green -> Refactor. If you wrote implementation first, delete it and start from a failing test.
 
+## Size & Complexity Limits
+
+- **Max 50 lines per function** — extract helpers when approaching the limit. Applies to source and test helpers alike.
+- **Max complexity 10 (source), 3 (tests)** — the linter counts `if`, `for`, `while`, `catch`, `||`, `&&`, `??`, `?.` as branches. Use data-driven maps, helper functions, and early returns to stay within limits.
+- **Spread conditionals count as branches** — `...(x && { key: x })` repeated N times = N branches. Use a loop over a field map or build an intermediate object and filter instead.
+- **Padding lines between statement groups** — the `@stylistic/padding-line-between-statements` rule requires blank lines after `const`/`let` before expression statements.
+- **Dot notation over bracket notation** — use `obj.key` not `obj['key']` when the key is a static string literal.
+- **`promise-function-async` + `require-await`** — if a function returns a `Promise`, it must be `async`. If it's `async`, it must contain `await`. Satisfy both: `async () => { const result = await Promise.resolve(value); return result; }`.
+
 ## Patterns You Must Follow
 
 - **Guard-first** — early returns over nested blocks.
 - **`Readonly<>`** — wrap type aliases by default. Also wrap nested `Record<>` fields.
-- **Named return variables** — `const result: Type = { ... }; return result;` instead of returning literals directly.
+- **Named variables before use** — `const result: Type = { ... }; return result;` instead of returning literals directly. Same for push: `const item: Type = { ... }; list.push(item);` — never inline objects into `push()`, `return`, or function arguments.
 - **Null checks for config values** — use `value == null`, not `!value` (preserves falsy-but-valid values like `""` or `0`).
 - **Custom error classes** — throw `ValidationError` or `CommandExecutionError`, never bare `Error`.
 - **No magic numbers** — extract to constants in `src/shared/`.
