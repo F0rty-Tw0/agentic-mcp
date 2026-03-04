@@ -52,8 +52,7 @@ describe('printResult', () => {
   });
 
   afterEach(() => {
-    stdoutSpy.mockRestore();
-    stderrSpy.mockRestore();
+    vi.restoreAllMocks();
     process.exitCode = undefined;
   });
 
