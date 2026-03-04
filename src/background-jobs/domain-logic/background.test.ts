@@ -52,17 +52,35 @@ const createAsyncProviderContext = (script: string): ResolvedProviderEntry => {
   return context;
 };
 
-const pollUntilDone = async (context: ResolvedProviderEntry, jobId: string, maxAttempts = 50): Promise<JobPayload> => {
+const TERMINAL_STATES = new Set(['completed', 'failed']);
+
+const pollOnce = async (context: ResolvedProviderEntry, jobId: string): Promise<JobPayload | undefined> => {
+  const status = await handleAsk(context, { prompt: '', action: 'status', job_id: jobId });
+  const payload = parsePayload(status);
+
+  return TERMINAL_STATES.has(payload.state) ? payload : undefined;
+};
+
+const delay = async (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const pollLoop = async (context: ResolvedProviderEntry, jobId: string, maxAttempts: number): Promise<JobPayload | undefined> => {
   for (let i = 0; i < maxAttempts; i++) {
-    const status = await handleAsk(context, { prompt: '', action: 'status', job_id: jobId });
-    const payload = parsePayload(status);
+    const result = await pollOnce(context, jobId);
 
-    if (payload.state === 'completed' || payload.state === 'failed') return payload;
+    if (result) return result;
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await delay(50);
   }
 
-  throw new Error('Job did not complete in time');
+  return undefined;
+};
+
+const pollUntilDone = async (context: ResolvedProviderEntry, jobId: string): Promise<JobPayload> => {
+  const result = await pollLoop(context, jobId, 50);
+
+  if (!result) throw new Error('Job did not complete in time');
+
+  return result;
 };
 
 beforeEach(() => {
@@ -111,7 +129,9 @@ describe('integration: async job lifecycle', () => {
     const result = await handleAsk(context, { prompt: '', action: 'status', job_id: 'nonexistent-id' });
 
     expect(result.isError).toBe(true);
+
     const text = (result.content[0] as { text: string }).text;
+
     expect(text).toContain('Unknown job_id');
   });
 });
