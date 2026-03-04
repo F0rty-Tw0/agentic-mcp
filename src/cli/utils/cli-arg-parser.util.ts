@@ -1,121 +1,132 @@
 import type { AskToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
 
-export const parseAskArgs = (args: readonly string[]): AskToolArgs => {
-  let prompt: string | undefined;
-  let model: string | undefined;
-  let working_directory: string | undefined;
-  let auto_mode: string | undefined;
-  let system_prompt: string | undefined;
-  let effort: string | undefined;
-  let max_budget: string | undefined;
-  let context: string | undefined;
-  let session_id: string | undefined;
-  let mode: 'async' | undefined;
-  let action: 'status' | undefined;
-  let jobId: string | undefined;
-  const files: string[] = [];
+type ParseState = {
+  prompt?: string;
+  model?: string;
+  workingDirectory?: string;
+  autoMode?: string;
+  systemPrompt?: string;
+  effort?: string;
+  maxBudget?: string;
+  context?: string;
+  sessionId?: string;
+  mode?: 'async';
+  action?: 'status';
+  jobId?: string;
+  files: string[];
+};
+
+const VALUE_FLAGS: Readonly<Record<string, keyof ParseState>> = {
+  '--model': 'model',
+  '--working-dir': 'workingDirectory',
+  '--auto-mode': 'autoMode',
+  '--system-prompt': 'systemPrompt',
+  '--effort': 'effort',
+  '--max-budget': 'maxBudget',
+  '--context': 'context',
+  '--session-id': 'sessionId',
+};
+
+const parseValueFlag = (state: ParseState, flag: string, value: string): boolean => {
+  const key = VALUE_FLAGS[flag];
+
+  if (!key) return false;
+
+  (state as unknown as Record<string, string>)[key] = value;
+
+  return true;
+};
+
+const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | undefined): number => {
+  if (arg === '--config') return 2;
+
+  if (arg === '--file') {
+    if (nextArg) state.files.push(nextArg);
+
+    return 2;
+  }
+
+  if (arg === '--async') {
+    state.mode = 'async';
+
+    return 1;
+  }
+
+  if (arg === '--job-id') {
+    state.action = 'status';
+    state.jobId = nextArg;
+
+    return 2;
+  }
+
+  return 0;
+};
+
+const tokenizeArgs = (args: readonly string[]): ParseState => {
+  const state: ParseState = { files: [] };
   let i = 0;
 
   while (i < args.length) {
     const arg = args[i];
+    const nextArg = args[i + 1];
 
-    if (arg === '--config') {
+    if (parseValueFlag(state, arg as string, nextArg as string)) {
       i += 2;
       continue;
     }
 
-    if (arg === '--model') {
-      model = args[i + 1];
-      i += 2;
+    const skip = parseSpecialFlags(state, arg as string, nextArg);
+
+    if (skip > 0) {
+      i += skip;
       continue;
     }
 
-    if (arg === '--working-dir') {
-      working_directory = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--auto-mode') {
-      auto_mode = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--system-prompt') {
-      system_prompt = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--effort') {
-      effort = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--max-budget') {
-      max_budget = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--file') {
-      files.push(args[i + 1] as string);
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--context') {
-      context = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--session-id') {
-      session_id = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg === '--async') {
-      mode = 'async';
-      i += 1;
-      continue;
-    }
-
-    if (arg === '--job-id') {
-      action = 'status';
-      jobId = args[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (arg && !arg.startsWith('--') && prompt === undefined) {
-      prompt = arg;
-      i += 1;
-      continue;
+    if (arg && !arg.startsWith('--') && state.prompt === undefined) {
+      state.prompt = arg;
     }
 
     i += 1;
   }
 
-  const result: AskToolArgs = {
-    ...(prompt !== undefined && { prompt }),
-    ...(model !== undefined && { model }),
-    ...(working_directory !== undefined && { working_directory }),
-    ...(auto_mode !== undefined && { auto_mode }),
-    ...(system_prompt !== undefined && { system_prompt }),
-    ...(effort !== undefined && { effort }),
-    ...(max_budget !== undefined && { max_budget }),
-    ...(context !== undefined && { context }),
-    ...(session_id !== undefined && { session_id }),
-    ...(mode !== undefined && { mode }),
-    ...(action !== undefined && { action }),
-    ...(jobId !== undefined && { job_id: jobId }),
-    ...(files.length > 0 && { files }),
-  };
+  return state;
+};
+
+const STATE_TO_ARG_MAP: readonly (readonly [keyof ParseState, string])[] = [
+  ['prompt', 'prompt'],
+  ['model', 'model'],
+  ['workingDirectory', 'working_directory'],
+  ['autoMode', 'auto_mode'],
+  ['systemPrompt', 'system_prompt'],
+  ['effort', 'effort'],
+  ['maxBudget', 'max_budget'],
+  ['context', 'context'],
+  ['sessionId', 'session_id'],
+  ['mode', 'mode'],
+  ['action', 'action'],
+  ['jobId', 'job_id'],
+];
+
+const buildAskToolArgs = (state: ParseState): AskToolArgs => {
+  const result: Record<string, unknown> = {};
+
+  for (const [stateKey, argKey] of STATE_TO_ARG_MAP) {
+    if (state[stateKey] !== undefined) {
+      result[argKey] = state[stateKey];
+    }
+  }
+
+  if (state.files.length > 0) {
+    result.files = state.files;
+  }
+
+  return result as AskToolArgs;
+};
+
+export const parseAskArgs = (args: readonly string[]): AskToolArgs => {
+  const state = tokenizeArgs(args);
+  const result = buildAskToolArgs(state);
 
   return result;
 };
@@ -131,6 +142,7 @@ export const parseAskAllArgs = (args: readonly string[]): AskAllToolArgs => {
 
     if (arg === '--providers') {
       const csv = args[i + 1];
+
       providers = csv ? csv.split(',') : undefined;
       i += 2;
       continue;
