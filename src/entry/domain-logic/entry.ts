@@ -2,6 +2,7 @@ import process from 'node:process';
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
+import { isCliSubcommand, runCli } from '../../cli';
 import { createServer } from '../../server';
 import { runSetup } from '../../setup';
 import { APP_VERSION } from '../../shared';
@@ -13,22 +14,26 @@ export const entry = async (): Promise<void> => {
 
   if (args.includes('--version')) {
     process.stdout.write(`${APP_VERSION}\n`);
-    process.exit(0);
 
-    return;
+    return process.exit(0);
   }
 
   if (args.includes('--help')) {
     process.stdout.write(HELP_TEXT);
-    process.exit(0);
 
-    return;
+    return process.exit(0);
   }
 
-  if (args[0] === 'setup') {
-    await runSetup(args.slice(1));
+  const [firstArg] = args;
 
-    return;
+  if (firstArg === 'setup') {
+    return runSetup(args.slice(1));
+  }
+
+  if (firstArg && isCliSubcommand(firstArg)) {
+    const configPath = parseConfigPath(process.argv);
+
+    return runCli(firstArg, args.slice(1), configPath);
   }
 
   const configPath = parseConfigPath(process.argv);

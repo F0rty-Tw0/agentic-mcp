@@ -16,11 +16,15 @@ const mocks = vi.hoisted(() => {
   const connect = vi.fn<(transport: unknown) => Promise<void>>();
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
   const runSetup = vi.fn<(args: readonly string[]) => Promise<void>>();
+  const runCli = vi.fn<(subcommand: string, remainingArgs: readonly string[], configPath?: string) => Promise<void>>();
+  const isCliSubcommand = vi.fn<(arg: string) => boolean>();
   const stdioServerTransport = vi.fn();
 
   return {
     connect,
     createServer,
+    isCliSubcommand,
+    runCli,
     runSetup,
     stdioServerTransport,
     transportInstance,
@@ -29,6 +33,11 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('../../server', () => ({
   createServer: mocks.createServer,
+}));
+
+vi.mock('../../cli', () => ({
+  isCliSubcommand: mocks.isCliSubcommand,
+  runCli: mocks.runCli,
 }));
 
 vi.mock('../../setup', () => ({
@@ -61,6 +70,12 @@ describe('main', () => {
     mocks.createServer.mockResolvedValue({
       connect: mocks.connect,
     });
+
+    mocks.isCliSubcommand.mockReset();
+    mocks.isCliSubcommand.mockReturnValue(false);
+
+    mocks.runCli.mockReset();
+    mocks.runCli.mockResolvedValue(undefined);
 
     mocks.runSetup.mockReset();
 
@@ -137,5 +152,62 @@ describe('main', () => {
 
     expect(mocks.runSetup).toHaveBeenCalledWith(['--client', 'claude']);
     expect(mocks.createServer).not.toHaveBeenCalled();
+  });
+
+  describe('CLI subcommand routing', () => {
+    it('GIVEN a recognized CLI subcommand WHEN main() is called THEN it calls runCli with subcommand and remaining args', async () => {
+      process.argv = ['node', '', 'ask_claude', 'hello world'];
+
+      mocks.isCliSubcommand.mockReturnValue(true);
+
+      await entry();
+
+      expect(mocks.runCli).toHaveBeenCalledWith('ask_claude', ['hello world'], undefined);
+      expect(mocks.createServer).not.toHaveBeenCalled();
+    });
+
+    it('GIVEN a CLI subcommand with --config WHEN main() is called THEN it passes configPath to runCli', async () => {
+      process.argv = ['node', '', 'ping_claude', '--config', '/tmp/custom.json'];
+
+      mocks.isCliSubcommand.mockReturnValue(true);
+
+      await entry();
+
+      expect(mocks.runCli).toHaveBeenCalledWith('ping_claude', ['--config', '/tmp/custom.json'], '/tmp/custom.json');
+      expect(mocks.createServer).not.toHaveBeenCalled();
+    });
+
+    it('GIVEN a CLI subcommand with no extra args WHEN main() is called THEN it calls runCli with empty remaining args', async () => {
+      process.argv = ['node', '', 'list_providers'];
+
+      mocks.isCliSubcommand.mockReturnValue(true);
+
+      await entry();
+
+      expect(mocks.runCli).toHaveBeenCalledWith('list_providers', [], undefined);
+      expect(mocks.createServer).not.toHaveBeenCalled();
+    });
+
+    it('GIVEN an unrecognized first arg WHEN main() is called THEN it falls through to MCP server startup', async () => {
+      process.argv = ['node', '', 'unknown_command'];
+
+      mocks.isCliSubcommand.mockReturnValue(false);
+
+      await entry();
+
+      expect(mocks.runCli).not.toHaveBeenCalled();
+      expect(mocks.createServer).toHaveBeenCalled();
+      expect(mocks.connect).toHaveBeenCalled();
+    });
+
+    it('GIVEN no args WHEN main() is called THEN it starts the MCP server', async () => {
+      process.argv = ['node', ''];
+
+      await entry();
+
+      expect(mocks.runCli).not.toHaveBeenCalled();
+      expect(mocks.createServer).toHaveBeenCalled();
+      expect(mocks.connect).toHaveBeenCalled();
+    });
   });
 });
