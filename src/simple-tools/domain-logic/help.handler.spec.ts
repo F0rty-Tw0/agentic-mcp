@@ -74,7 +74,7 @@ describe('handleHelp', () => {
       });
     });
 
-    it('GIVEN provider context WHEN handling help THEN calls executeCommand with --help flag and 10s timeout', async () => {
+    it('GIVEN provider context WHEN handling help THEN calls executeCommand with --help flag and 30s timeout', async () => {
       const context = createSimpleToolsContext();
 
       await handleHelp(context);
@@ -83,7 +83,7 @@ describe('handleHelp', () => {
         binaryPath: '/usr/bin/test-cli',
         args: ['--help'],
         env: TEST_MINIMAL_ENV_STUB,
-        timeoutMs: 10_000,
+        timeoutMs: 30_000,
         bypassSemaphore: true,
       });
     });

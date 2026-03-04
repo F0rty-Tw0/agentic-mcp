@@ -67,7 +67,7 @@ describe('handlePing', () => {
       });
     });
 
-    it('GIVEN provider with versionCheck WHEN handling ping THEN calls executeCommand with correct args and 10s timeout', async () => {
+    it('GIVEN provider with versionCheck WHEN handling ping THEN calls executeCommand with correct args and 30s timeout', async () => {
       const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       await handlePing(context);
@@ -76,7 +76,7 @@ describe('handlePing', () => {
         binaryPath: '/usr/bin/test-cli',
         args: ['--version'],
         env: TEST_MINIMAL_ENV_STUB,
-        timeoutMs: 10_000,
+        timeoutMs: 30_000,
         bypassSemaphore: true,
       });
     });
