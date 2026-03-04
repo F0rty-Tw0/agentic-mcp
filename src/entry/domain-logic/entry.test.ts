@@ -34,7 +34,6 @@ describe('integration: CLI entry point binary', () => {
   it('GIVEN the binary is not built WHEN tests run THEN skip gracefully', () => {
     if (binaryExists) return;
 
-    // eslint-disable-next-line no-console
     console.warn(`Binary not found at ${BINARY_PATH}. Run "pnpm run build" first.`);
     expect(binaryExists).toBe(false);
   });
@@ -71,15 +70,10 @@ describe('integration: CLI entry point binary', () => {
     async () => {
       if (!binaryExists) return;
 
-      try {
-        await execFileAsync(process.execPath, [BINARY_PATH, '--config', '/nonexistent/path.json']);
-        expect.fail('Should have thrown');
-      } catch (error: unknown) {
-        const execError = error as { code: number; stderr: string };
+      const error = await execFileAsync(process.execPath, [BINARY_PATH, '--config', '/nonexistent/path.json']).catch((e: unknown) => e) as { code: number; stderr: string };
 
-        expect(execError.code).not.toBe(0);
-        expect(execError.stderr).toBeTruthy();
-      }
+      expect(error.code).not.toBe(0);
+      expect(error.stderr).toBeTruthy();
     },
     TIMEOUT_MS
   );
