@@ -101,7 +101,21 @@ export const buildMinimalEnv = (providerEnv: ProviderEnv): MinimalEnv => {
 export const resolveCliBinary = async (command: string): Promise<string | undefined> => {
   const resolvedBinary = await which(command, { nothrow: true });
 
-  return resolvedBinary ?? undefined;
+  if (!resolvedBinary) return undefined;
+
+  // On Windows, .bat/.cmd wrappers often use Read-Host (PowerShell) or CONIN$ for interactive
+  // prompts, which hang when spawned as subprocesses. Prefer a real .exe if one exists in PATH.
+  const isBatOrCmd = /\.(bat|cmd)$/i;
+  const isExe = /\.exe$/i;
+
+  if (process.platform === 'win32' && isBatOrCmd.test(resolvedBinary)) {
+    const allMatches = await which(command, { nothrow: true, all: true });
+    const exeMatch = allMatches.find((match) => isExe.test(match));
+
+    if (exeMatch) return exeMatch;
+  }
+
+  return resolvedBinary;
 };
 
 export const stripAnsi = (input: string): string => stripVTControlCharacters(input);

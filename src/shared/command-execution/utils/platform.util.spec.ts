@@ -8,7 +8,7 @@ type ExecFileCallback = (error: NodeJS.ErrnoException | null) => void;
 
 type ExecFileMock = SyncViFn<[file: string, args: string[], callback: ExecFileCallback], void>;
 
-type WhichMock = AsyncViFn<[command: string, options: { readonly nothrow: boolean }], string | null>;
+type WhichMock = AsyncViFn<[command: string, options: Record<string, unknown>], string | string[] | null>;
 
 const mocks = vi.hoisted(() => {
   const execFile = vi.fn<ExecFileMock>();
@@ -249,6 +249,72 @@ describe('platform utilities', () => {
       const result = await resolveCliBinary('nonexistent');
 
       expect(result).toBeUndefined();
+    });
+
+    describe('windows BAT wrapper bypass', () => {
+      const originalPlatform = process.platform;
+
+      afterEach(() => {
+        Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
+      });
+
+      it('GIVEN win32 and .bat resolved WHEN .exe exists in PATH THEN returns the .exe path', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+        mocks.which
+          .mockResolvedValueOnce('C:\\wrapper\\copilot.BAT')
+          .mockResolvedValueOnce(['C:\\wrapper\\copilot.BAT', 'C:\\real\\copilot.exe']);
+
+        const result = await resolveCliBinary('copilot');
+
+        expect(result).toBe('C:\\real\\copilot.exe');
+      });
+
+      it('GIVEN win32 and .cmd resolved WHEN .exe exists in PATH THEN returns the .exe path', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+        mocks.which
+          .mockResolvedValueOnce('C:\\wrapper\\tool.cmd')
+          .mockResolvedValueOnce(['C:\\wrapper\\tool.cmd', 'C:\\real\\tool.EXE']);
+
+        const result = await resolveCliBinary('tool');
+
+        expect(result).toBe('C:\\real\\tool.EXE');
+      });
+
+      it('GIVEN win32 and .bat resolved WHEN no .exe exists THEN returns the .bat path', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+        mocks.which
+          .mockResolvedValueOnce('C:\\wrapper\\copilot.bat')
+          .mockResolvedValueOnce(['C:\\wrapper\\copilot.bat']);
+
+        const result = await resolveCliBinary('copilot');
+
+        expect(result).toBe('C:\\wrapper\\copilot.bat');
+      });
+
+      it('GIVEN linux and .bat resolved WHEN .exe exists THEN returns the .bat path unchanged', async () => {
+        Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+
+        mocks.which.mockResolvedValueOnce('/usr/bin/tool.bat');
+
+        const result = await resolveCliBinary('tool');
+
+        expect(result).toBe('/usr/bin/tool.bat');
+        expect(mocks.which).toHaveBeenCalledTimes(1);
+      });
+
+      it('GIVEN win32 and .exe resolved WHEN called THEN returns directly without searching all', async () => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+        mocks.which.mockResolvedValueOnce('C:\\bin\\tool.exe');
+
+        const result = await resolveCliBinary('tool');
+
+        expect(result).toBe('C:\\bin\\tool.exe');
+        expect(mocks.which).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
