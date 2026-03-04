@@ -13,6 +13,7 @@ const KILL_GRACE_MS = 5_000;
 
 const SAFE_ENV_KEYS = [
   'PATH',
+  'PATHEXT',
   'HOME',
   'USERPROFILE',
   'APPDATA',

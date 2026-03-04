@@ -167,6 +167,44 @@ describe('handleHelp', () => {
     });
   });
 
+  describe('timeout', () => {
+    it('GIVEN command times out WHEN handling help THEN returns isError with timeout message', async () => {
+      const context = createSimpleToolsContext();
+
+      vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
+        timedOut: true,
+        stdout: '',
+        stderr: '',
+      });
+
+      const result = await handleHelp(context);
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('timed out');
+    });
+  });
+
+  describe('empty output', () => {
+    it('GIVEN empty stdout and stderr WHEN handling help THEN returns isError with exit info', async () => {
+      const context = createSimpleToolsContext();
+
+      vi.mocked(executeCommand).mockResolvedValue({
+        ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
+        stdout: '',
+        stderr: '',
+        exitCode: 1,
+        signal: null,
+      });
+
+      const result = await handleHelp(context);
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('no help output');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('exit 1');
+    });
+  });
+
   describe('unexpected errors', () => {
     it('GIVEN executeCommand throws WHEN handling help THEN returns isError response', async () => {
       const context = createSimpleToolsContext();
