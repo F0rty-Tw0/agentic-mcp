@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CancelledNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 
-import { loadConfig } from '../../config/loader';
+import { loadConfig, warnDangerousFlags } from '../../config/loader';
 import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import { APP_VERSION, getActiveRequest, killProcess, resolveCliBinary, unregisterActiveRequest } from '../../shared';
 import { registerAllTools } from '../../tool-registry';
@@ -10,6 +10,8 @@ import { toRequestIdString } from '../utils';
 
 export const createServer = async (options?: ConfigPathOptions): Promise<McpServer> => {
   const config = await loadConfig(options);
+
+  warnDangerousFlags(config);
 
   const resolvedProviders: ResolvedProviderEntry[] = [];
   const allProviders: ResolvedProvider[] = [];

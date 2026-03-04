@@ -41,6 +41,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('../../config/loader', () => ({
   loadConfig: mocks.loadConfig,
+  warnDangerousFlags: vi.fn(),
 }));
 
 vi.mock('../../shared/command-execution/utils/platform.util', () => ({
