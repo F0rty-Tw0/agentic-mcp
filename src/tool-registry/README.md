@@ -11,9 +11,9 @@ MCP tool registration — registers all MCP tools with the server instance, buil
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Tool registry types |
+| Directory       | Purpose                                          |
+| --------------- | ------------------------------------------------ |
+| `common/`       | Tool registry types                              |
 | `domain-logic/` | Tool registry orchestration and ask tool builder |
 
 ## Key Files
@@ -24,6 +24,7 @@ MCP tool registration — registers all MCP tools with the server instance, buil
 ## Integration Tests
 
 None directly in this module. Tool registration is integration-tested via `server/` tests:
+
 - `create-server.test.ts` — Verifies all expected tools are registered and callable through the MCP client
 - `create-server-schema.test.ts` — Verifies config-to-tool-schema fidelity: input schemas have correct fields, descriptions are non-empty, per-provider tool triples are complete, and global tools are present
 

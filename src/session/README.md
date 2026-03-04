@@ -13,11 +13,11 @@ Session store with locking — provides thread-safe, in-memory multi-turn conver
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Session types (turn shape, session record, lock state) |
-| `data-access/` | `InMemorySessionStore` singleton |
-| `utils/` | Session ID extraction from provider responses, store utility helpers |
+| Directory      | Purpose                                                              |
+| -------------- | -------------------------------------------------------------------- |
+| `common/`      | Session types (turn shape, session record, lock state)               |
+| `data-access/` | `InMemorySessionStore` singleton                                     |
+| `utils/`       | Session ID extraction from provider responses, store utility helpers |
 
 ## Key Files
 
@@ -26,6 +26,7 @@ Session store with locking — provides thread-safe, in-memory multi-turn conver
 ## Integration Tests
 
 None directly in this module. Session management is thoroughly integration-tested via `ask/domain-logic/ask.handler-sessions.test.ts`, which exercises:
+
 - Lock contention (two concurrent calls to the same session)
 - Sequential turn accumulation across multiple calls
 - Session listing by provider name

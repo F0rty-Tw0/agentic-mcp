@@ -1,1 +1,7 @@
-export { buildModelHint, detectModelError, extractAttemptedModel, fetchAvailableModels } from './model-error.util';
+export {
+  buildModelHint,
+  detectModelError,
+  extractAttemptedModel,
+  fetchAvailableModels,
+  parseFirstAvailableModel,
+} from './model-error.util';

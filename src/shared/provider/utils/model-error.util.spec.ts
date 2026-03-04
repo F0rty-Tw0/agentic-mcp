@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildModelHint, detectModelError, extractAttemptedModel, fetchAvailableModels } from './model-error.util';
+import {
+  buildModelHint,
+  detectModelError,
+  extractAttemptedModel,
+  fetchAvailableModels,
+  parseFirstAvailableModel,
+} from './model-error.util';
 import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution/common';
 import { SUCCESS_EXECUTION_RESULT_STUB, TEST_MINIMAL_ENV_STUB } from '../../command-execution/common/stubs';
 import type { ProviderConfig, ResolvedProviderEntry } from '../common';
@@ -260,5 +266,55 @@ describe('fetchAvailableModels', () => {
     const result = await fetchAvailableModels(context, mockEnv, mockExecuteCommand);
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('parseFirstAvailableModel', () => {
+  it('GIVEN newline-separated model list WHEN parsing THEN returns first model', () => {
+    const result = parseFirstAvailableModel('opencode/big-pickle\nopencode/gpt-5-nano\ngithub-copilot/claude-sonnet-4');
+
+    expect(result).toBe('opencode/big-pickle');
+  });
+
+  it('GIVEN models with leading whitespace WHEN parsing THEN returns trimmed first model', () => {
+    const result = parseFirstAvailableModel('  opencode/gpt-5-nano\n  github-copilot/claude-sonnet-4\n');
+
+    expect(result).toBe('opencode/gpt-5-nano');
+  });
+
+  it('GIVEN models with comment lines WHEN parsing THEN skips comments', () => {
+    const result = parseFirstAvailableModel('# Available models\nopencode/gpt-5-nano\ngithub-copilot/claude-sonnet-4');
+
+    expect(result).toBe('opencode/gpt-5-nano');
+  });
+
+  it('GIVEN models with dash-prefixed lines WHEN parsing THEN skips dashed lines', () => {
+    const result = parseFirstAvailableModel('- header\nopencode/gpt-5-nano');
+
+    expect(result).toBe('opencode/gpt-5-nano');
+  });
+
+  it('GIVEN empty string WHEN parsing THEN returns undefined', () => {
+    const result = parseFirstAvailableModel('');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('GIVEN only whitespace and empty lines WHEN parsing THEN returns undefined', () => {
+    const result = parseFirstAvailableModel('  \n  \n  ');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('GIVEN Windows-style line endings WHEN parsing THEN returns first model', () => {
+    const result = parseFirstAvailableModel('opencode/big-pickle\r\nopencode/gpt-5-nano\r\n');
+
+    expect(result).toBe('opencode/big-pickle');
+  });
+
+  it('GIVEN leading empty lines WHEN parsing THEN skips them and returns first model', () => {
+    const result = parseFirstAvailableModel('\n\nopencode/gpt-5-nano');
+
+    expect(result).toBe('opencode/gpt-5-nano');
   });
 });

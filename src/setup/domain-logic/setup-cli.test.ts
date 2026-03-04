@@ -19,9 +19,7 @@ let tempDir: string;
 let stdoutOutput: string;
 let stderrOutput: string;
 
-const stubProviders = [
-  { name: 'claude', available: true, binaryPath: '/usr/bin/claude' },
-] as const;
+const stubProviders = [{ name: 'claude', available: true, binaryPath: '/usr/bin/claude' }] as const;
 
 const commonDeps = (): {
   detectInstalledProviders: () => Promise<typeof stubProviders>;

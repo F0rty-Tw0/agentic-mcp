@@ -44,7 +44,10 @@ const resolveProviders = async (config: ProvidersFile): Promise<ResolvedProvider
   return result;
 };
 
-const findProviderOrFail = (providers: readonly ResolvedProviderEntry[], name: string): ResolvedProviderEntry | undefined => {
+const findProviderOrFail = (
+  providers: readonly ResolvedProviderEntry[],
+  name: string
+): ResolvedProviderEntry | undefined => {
   const provider = providers.find((p) => p.name === name);
 
   if (!provider) {

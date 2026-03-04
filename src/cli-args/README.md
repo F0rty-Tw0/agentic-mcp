@@ -13,8 +13,8 @@ Declarative CLI argument builder — converts ask tool arguments into CLI string
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
+| Directory       | Purpose          |
+| --------------- | ---------------- |
 | `domain-logic/` | Argument builder |
 
 ## Key Files

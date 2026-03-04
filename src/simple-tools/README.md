@@ -10,9 +10,9 @@ Meta tools — implements the utility MCP tools for provider discovery and healt
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Tool name constants, handler types |
+| Directory       | Purpose                                                   |
+| --------------- | --------------------------------------------------------- |
+| `common/`       | Tool name constants, handler types                        |
 | `domain-logic/` | Handlers for ping, help, list_providers, and tool builder |
 
 ## Key Files
@@ -25,6 +25,7 @@ Meta tools — implements the utility MCP tools for provider discovery and healt
 ## Integration Tests
 
 None directly in this module. All three tools are integration-tested via `server/domain-logic/create-server.test.ts`, which:
+
 - Calls `ping_<provider>` on available providers and verifies the response contains `"available"`
 - Calls `help_<provider>` and verifies non-empty help text is returned
 - Calls `list_providers` and verifies provider names and status labels appear in the output

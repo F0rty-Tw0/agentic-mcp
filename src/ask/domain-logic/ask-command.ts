@@ -7,6 +7,7 @@ import {
   executeCommand,
   extractAttemptedModel,
   fetchAvailableModels,
+  parseFirstAvailableModel,
   resolveProviderEnv,
 } from '../../shared';
 import type { AskToolArgs } from '../common';
@@ -37,6 +38,22 @@ export const resolveModelHint = async (modelHintContext: ModelHintContext): Prom
   const modelHint = buildModelHint(context.name, attemptedModel, availableModels, Boolean(args.model));
 
   return modelHint;
+};
+
+export const resolveModelFallback = async (modelFallbackContext: ModelHintContext): Promise<string | undefined> => {
+  const { context, args, stdout, stderr, env } = modelFallbackContext;
+
+  if (args.model) return;
+
+  if (!detectModelError(stdout, stderr)) return;
+
+  const availableModels = await fetchAvailableModels(context, env, executeCommand);
+
+  if (!availableModels) return;
+
+  const fallbackModel = parseFirstAvailableModel(availableModels);
+
+  return fallbackModel;
 };
 
 export const buildCommandFailure = async (

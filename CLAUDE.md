@@ -34,12 +34,14 @@
 ## MCP Tools Exposed
 
 Per provider (5 providers = 5x each):
+
 - `ask_<provider>` — query a provider
 - `sessions_<provider>` — list known sessions (if provider supports sessions)
 - `ping_<provider>` — check readiness
 - `help_<provider>` — show capabilities
 
 Global:
+
 - `ask_all` — fan-out to all providers
 - `provider_metrics` — session call stats
 - `list_providers` — available providers and status

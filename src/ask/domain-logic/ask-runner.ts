@@ -1,8 +1,8 @@
-import { buildCommandFailure, buildExecutionEnv } from './ask-command';
+import { buildCommandFailure, buildExecutionEnv, resolveModelFallback } from './ask-command';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { buildArgArray } from '../../cli-args';
 import { recordCall } from '../../provider-metrics';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import type { ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
 import {
   CommandExecutionError,
   executeCommand,
@@ -12,6 +12,7 @@ import {
   unregisterActiveRequest,
 } from '../../shared';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
+import type { AskStreamExecutionSummary } from '../../streaming';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
@@ -49,7 +50,23 @@ const buildCliArgs = (
   return cliArgs;
 };
 
-const executeAndBuildResponse = async (executeInput: ExecuteInput): Promise<AskExecution> => {
+const handleFailedExecution = async (
+  executeInput: ExecuteInput,
+  result: ExecutionResult,
+  summary: AskStreamExecutionSummary
+): Promise<AskExecution> => {
+  const { context, args, extra, streamNotifier } = executeInput;
+  const env = buildExecutionEnv(context);
+  const error = await buildCommandFailure(context, args, env, result);
+
+  streamNotifier.emitError(error.message, summary);
+  recordCall(context.name, result.executionTimeMs, false);
+  const wasCancelled = extra?.signal?.aborted ?? false;
+
+  return buildFailureExecution(error.toMcpResponse(), wasCancelled);
+};
+
+const runExecution = async (executeInput: ExecuteInput): Promise<{ result: ExecutionResult }> => {
   const { context, args, extra, tier2SessionId, streamNotifier } = executeInput;
   const resolved = validateAndResolveArgs(args);
   const { args: baseCliArgs, stdinInput } = buildArgArray(context.config, resolved);
@@ -72,22 +89,38 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput): Promise<AskE
     onSpawned,
   };
   const buildOptions = buildCommandOptions(commandOptions);
-
   const result = await executeCommand(buildOptions);
 
+  return { result };
+};
+
+const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = false): Promise<AskExecution> => {
+  const { context, args, streamNotifier } = executeInput;
+  const { result } = await runExecution(executeInput);
   const summary = buildExecutionSummary(result);
 
   if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
-    const error = await buildCommandFailure(context, args, env, result);
+    if (!isRetry) {
+      const env = buildExecutionEnv(context);
+      const fallbackModel = await resolveModelFallback({
+        context,
+        args,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        env,
+      });
 
-    streamNotifier.emitError(error.message, summary);
-    recordCall(context.name, result.executionTimeMs, false);
-    const wasCancelled = extra?.signal?.aborted ?? false;
-    const response = error.toMcpResponse();
+      if (fallbackModel) {
+        const retryInput: ExecuteInput = { ...executeInput, args: { ...args, model: fallbackModel } };
 
-    return buildFailureExecution(response, wasCancelled);
+        return executeAndBuildResponse(retryInput, true);
+      }
+    }
+
+    return handleFailedExecution(executeInput, result, summary);
   }
 
+  const env = buildExecutionEnv(context);
   const successResponseInput = {
     context,
     args,

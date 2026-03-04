@@ -106,7 +106,10 @@ describe('integration: provider tool completeness', () => {
     for (const tool of sessionTools) {
       const providerName = tool.name.replace('sessions_', '');
 
-      expect(toolNames.has(`ask_${providerName}`), `ask_${providerName} should exist for sessions_${providerName}`).toBe(true);
+      expect(
+        toolNames.has(`ask_${providerName}`),
+        `ask_${providerName} should exist for sessions_${providerName}`
+      ).toBe(true);
     }
   });
 });

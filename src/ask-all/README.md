@@ -11,11 +11,11 @@ Fan-out to all providers — implements the `ask_all` MCP tool that sends a prom
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Tool argument types, result types |
+| Directory       | Purpose                                                         |
+| --------------- | --------------------------------------------------------------- |
+| `common/`       | Tool argument types, result types                               |
 | `domain-logic/` | Handler (parallel invocation) and tool builder (MCP definition) |
-| `utils/` | Response text extraction from provider results |
+| `utils/`        | Response text extraction from provider results                  |
 
 ## Key Files
 

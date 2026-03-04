@@ -56,6 +56,15 @@ export const buildModelHint = (
   return modelHint;
 };
 
+const isModelLine = (line: string): boolean => Boolean(line) && !line.startsWith('#') && !line.startsWith('-');
+
+export const parseFirstAvailableModel = (availableModels: string): string | undefined => {
+  const lines = availableModels.split(/\r?\n/);
+  const firstModel = lines.map((line) => line.trim()).find((line) => isModelLine(line));
+
+  return firstModel;
+};
+
 export const fetchAvailableModels = async (
   context: ResolvedProviderEntry,
   env: MinimalEnv,

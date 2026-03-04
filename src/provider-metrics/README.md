@@ -11,11 +11,11 @@ Per-provider call statistics tracker — records call counts, response times, su
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Metrics types (per-provider stats shape) |
-| `data-access/` | In-memory metrics store |
-| `domain-logic/` | Metrics handler and tool builder |
+| Directory       | Purpose                                  |
+| --------------- | ---------------------------------------- |
+| `common/`       | Metrics types (per-provider stats shape) |
+| `data-access/`  | In-memory metrics store                  |
+| `domain-logic/` | Metrics handler and tool builder         |
 
 ## Key Files
 

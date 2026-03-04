@@ -12,12 +12,12 @@ Async job queue for long-running provider invocations. When a caller sets `mode:
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Job status payload types (`JobPayload`, state enum) |
-| `data-access/` | In-memory job store (module-scoped `Map`) |
+| Directory       | Purpose                                                 |
+| --------------- | ------------------------------------------------------- |
+| `common/`       | Job status payload types (`JobPayload`, state enum)     |
+| `data-access/`  | In-memory job store (module-scoped `Map`)               |
 | `domain-logic/` | Job status response builder and async invocation runner |
-| `utils/` | Text extraction from MCP content arrays |
+| `utils/`        | Text extraction from MCP content arrays                 |
 
 ## Key Files
 
@@ -32,12 +32,12 @@ Run with: `pnpm run test:integration`
 
 Exercises the async background job lifecycle end-to-end using real child processes via `handleAsk`. The job store is reset in `beforeEach` to ensure test isolation.
 
-| Test | What It Verifies | Expected Output |
-|------|-----------------|-----------------|
-| Async job creation returns pending state | When `handleAsk` is called with `mode: "async"`, it immediately returns a `job_id` with `"pending"` state | `payload.job_id` is truthy; `payload.state` is `"pending"` |
-| Successful job transitions to completed | After creating an async job, polling with `action: "status"` eventually shows `"completed"` with the process output | `finalPayload.state` is `"completed"`; `finalPayload.result` contains `"async-output"` |
-| Failing job transitions to failed | When the child process exits with code 1 and writes to stderr, the job state becomes `"failed"` with the error captured | `finalPayload.state` is `"failed"`; `finalPayload.error` is truthy |
-| Unknown job_id returns error | Polling status for a non-existent job ID returns an error response | `result.isError` is `true`; text contains `"Unknown job_id"` |
+| Test                                     | What It Verifies                                                                                                        | Expected Output                                                                        |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Async job creation returns pending state | When `handleAsk` is called with `mode: "async"`, it immediately returns a `job_id` with `"pending"` state               | `payload.job_id` is truthy; `payload.state` is `"pending"`                             |
+| Successful job transitions to completed  | After creating an async job, polling with `action: "status"` eventually shows `"completed"` with the process output     | `finalPayload.state` is `"completed"`; `finalPayload.result` contains `"async-output"` |
+| Failing job transitions to failed        | When the child process exits with code 1 and writes to stderr, the job state becomes `"failed"` with the error captured | `finalPayload.state` is `"failed"`; `finalPayload.error` is truthy                     |
+| Unknown job_id returns error             | Polling status for a non-existent job ID returns an error response                                                      | `result.isError` is `true`; text contains `"Unknown job_id"`                           |
 
 ## Unit Tests
 

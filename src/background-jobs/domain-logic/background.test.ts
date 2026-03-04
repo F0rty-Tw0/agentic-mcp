@@ -63,7 +63,11 @@ const pollOnce = async (context: ResolvedProviderEntry, jobId: string): Promise<
 
 const delay = async (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-const pollLoop = async (context: ResolvedProviderEntry, jobId: string, maxAttempts: number): Promise<JobPayload | undefined> => {
+const pollLoop = async (
+  context: ResolvedProviderEntry,
+  jobId: string,
+  maxAttempts: number
+): Promise<JobPayload | undefined> => {
   for (let i = 0; i < maxAttempts; i++) {
     const result = await pollOnce(context, jobId);
 
@@ -124,7 +128,7 @@ describe('integration: async job lifecycle', () => {
   });
 
   it('GIVEN a fake job_id WHEN checking status THEN returns isError with Unknown job_id', async () => {
-    const context = createAsyncProviderContext("process.exit(0);");
+    const context = createAsyncProviderContext('process.exit(0);');
 
     const result = await handleAsk(context, { prompt: '', action: 'status', job_id: 'nonexistent-id' });
 

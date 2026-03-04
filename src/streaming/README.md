@@ -13,9 +13,9 @@ MCP progress notifications — manages live output streaming from provider CLI p
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Stream event types (chunk, done, error) |
+| Directory       | Purpose                                                  |
+| --------------- | -------------------------------------------------------- |
+| `common/`       | Stream event types (chunk, done, error)                  |
 | `domain-logic/` | Notifier creation, helpers, and runtime state management |
 
 ## Key Files
@@ -27,6 +27,7 @@ MCP progress notifications — manages live output streaming from provider CLI p
 ## Integration Tests
 
 None directly in this module. Streaming is integration-tested via `ask/domain-logic/ask.handler-streaming.test.ts`, which:
+
 - Spawns a real Node.js process that writes interleaved stdout and stderr
 - Enables `stream_live: true` and collects progress notifications
 - Verifies contiguous sequence numbering, presence of both channels, and a terminal `done` event

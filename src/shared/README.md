@@ -15,6 +15,7 @@ Process spawning and stream collection — executes provider CLIs as child proce
 - Tracks active processes for cancellation notification support
 
 **Key files:**
+
 - `domain-logic/command-executor.ts` — `executeCommand()` — spawns child processes and collects output
 - `domain-logic/semaphore.ts` — Counting semaphore for concurrency limiting
 - `domain-logic/command-stream-collector.util.ts` — Accumulates stdout/stderr into a result object
@@ -34,6 +35,7 @@ Provider configuration types and environment resolution.
 - Provides test stubs/factories in `common/stubs/`
 
 **Key files:**
+
 - `domain-logic/provider-env-resolver.ts` — Resolves env vars from provider config's `env` map
 
 **Unit tests:** 1 `.spec.ts` file covering environment variable resolution.
@@ -49,6 +51,7 @@ MCP protocol utilities — types and helpers for MCP communication.
 - Provides heartbeat/keep-alive signaling utilities
 
 **Key files:**
+
 - `utils/heartbeat.util.ts` — Keep-alive signaling for long-running operations
 - `utils/to-mcp-error.util.ts` — Error-to-MCP-response conversion
 
@@ -65,6 +68,7 @@ Request validation and registry — validates tool arguments and provides Zod ut
 - Exports Zod validation helpers used across the project
 
 **Key files:**
+
 - `domain-logic/request-registry.ts` — Validates and registers ask args with active process tracking
 
 **Unit tests:** 3 `.spec.ts` files covering request registry, date/time validation, and Zod utilities.
@@ -72,6 +76,7 @@ Request validation and registry — validates tool arguments and provides Zod ut
 ## Integration Tests
 
 None directly in this module. The shared utilities are exercised transitively through integration tests in other modules:
+
 - `command-executor` is tested via every `ask/` integration test that spawns real child processes
 - `provider` types are used in all integration test fixtures
 - `mcp-protocol` utilities are tested via `server/` integration tests

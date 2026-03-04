@@ -11,11 +11,11 @@ CLI entry point — the first code that runs when the `agentic-mcp` binary is ex
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `common/` | Help text constant |
-| `domain-logic/` | Main `entry()` function |
-| `utils/` | Config path parsing from CLI args |
+| Directory       | Purpose                           |
+| --------------- | --------------------------------- |
+| `common/`       | Help text constant                |
+| `domain-logic/` | Main `entry()` function           |
+| `utils/`        | Config path parsing from CLI args |
 
 ## Key Files
 
@@ -31,12 +31,12 @@ Run with: `pnpm run test:integration`
 
 Exercises the CLI entry point end-to-end by spawning the built binary as a real child process. Tests gracefully skip if the binary has not been built.
 
-| Test | What It Verifies | Expected Output |
-|------|-----------------|-----------------|
-| Binary not built (skip) | When `dist/index.cjs` doesn't exist, tests skip gracefully with a warning | Console warning printed; `binaryExists` is `false` |
-| `--version` flag | Spawning the binary with `--version` prints a semver-like version string and exits cleanly | stdout matches `/\d+\.\d+\.\d+/` |
-| `--help` flag | Spawning the binary with `--help` prints usage information and exits cleanly | stdout length > 0; text matches `/agentic-mcp\|usage/i` |
-| Invalid `--config` path | Spawning with `--config /nonexistent/path.json` exits with non-zero code and stderr output | Exit code is not 0; stderr is truthy |
+| Test                    | What It Verifies                                                                           | Expected Output                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| Binary not built (skip) | When `dist/index.cjs` doesn't exist, tests skip gracefully with a warning                  | Console warning printed; `binaryExists` is `false`      |
+| `--version` flag        | Spawning the binary with `--version` prints a semver-like version string and exits cleanly | stdout matches `/\d+\.\d+\.\d+/`                        |
+| `--help` flag           | Spawning the binary with `--help` prints usage information and exits cleanly               | stdout length > 0; text matches `/agentic-mcp\|usage/i` |
+| Invalid `--config` path | Spawning with `--config /nonexistent/path.json` exits with non-zero code and stderr output | Exit code is not 0; stderr is truthy                    |
 
 ## Unit Tests
 

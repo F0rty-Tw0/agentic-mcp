@@ -58,30 +58,30 @@ agentic-mcp <command> [options]
 
 ### Commands
 
-| Command | Description |
-| --- | --- |
+| Command                   | Description                                      |
+| ------------------------- | ------------------------------------------------ |
 | `ask_<provider> <prompt>` | Query a provider (e.g. `ask_claude "explain X"`) |
-| `ask_all <prompt>` | Query all providers in parallel |
-| `ping_<provider>` | Check if a provider is available |
-| `help_<provider>` | Show provider CLI help output |
-| `list_providers` | List all configured providers |
-| `provider_metrics` | Show call statistics |
+| `ask_all <prompt>`        | Query all providers in parallel                  |
+| `ping_<provider>`         | Check if a provider is available                 |
+| `help_<provider>`         | Show provider CLI help output                    |
+| `list_providers`          | List all configured providers                    |
+| `provider_metrics`        | Show call statistics                             |
 
 ### Options
 
-| Option | Description |
-| --- | --- |
-| `--config <path>` | Path to providers config file |
-| `--model <name>` | Model to use (ask commands) |
-| `--working-dir <path>` | Working directory for the provider |
-| `--system-prompt <text>` | System prompt |
-| `--auto-mode <value>` | Auto-mode flag value |
-| `--effort <value>` | Effort level |
-| `--max-budget <value>` | Max budget |
-| `--file <path>` | File to include (repeatable) |
-| `--providers <list>` | Comma-separated provider list (ask_all) |
-| `--async` | Run asynchronously |
-| `--session-id <id>` | Session ID for multi-turn |
+| Option                   | Description                             |
+| ------------------------ | --------------------------------------- |
+| `--config <path>`        | Path to providers config file           |
+| `--model <name>`         | Model to use (ask commands)             |
+| `--working-dir <path>`   | Working directory for the provider      |
+| `--system-prompt <text>` | System prompt                           |
+| `--auto-mode <value>`    | Auto-mode flag value                    |
+| `--effort <value>`       | Effort level                            |
+| `--max-budget <value>`   | Max budget                              |
+| `--file <path>`          | File to include (repeatable)            |
+| `--providers <list>`     | Comma-separated provider list (ask_all) |
+| `--async`                | Run asynchronously                      |
+| `--session-id <id>`      | Session ID for multi-turn               |
 
 ### Examples
 

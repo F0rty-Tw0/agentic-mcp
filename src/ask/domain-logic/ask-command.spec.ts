@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildCommandFailure, buildExecutionEnv, resolveModelHint } from './ask-command';
+import { buildCommandFailure, buildExecutionEnv, resolveModelFallback, resolveModelHint } from './ask-command';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import { CommandExecutionError, TEST_MINIMAL_ENV_STUB } from '../../shared';
 import type { AskToolArgs } from '../common';
@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   detectModelError: vi.fn(),
   extractAttemptedModel: vi.fn(),
   fetchAvailableModels: vi.fn(),
+  parseFirstAvailableModel: vi.fn(),
   buildModelHint: vi.fn(),
   executeCommand: vi.fn(),
 }));
@@ -36,6 +37,7 @@ vi.mock('../../shared/provider/utils/model-error.util', () => ({
   detectModelError: mocks.detectModelError,
   extractAttemptedModel: mocks.extractAttemptedModel,
   fetchAvailableModels: mocks.fetchAvailableModels,
+  parseFirstAvailableModel: mocks.parseFirstAvailableModel,
   buildModelHint: mocks.buildModelHint,
 }));
 
@@ -250,5 +252,68 @@ describe('buildCommandFailure', () => {
     const error = await buildCommandFailure(context, args, {}, result);
 
     expect(error.signal).toBe('SIGTERM');
+  });
+});
+
+describe('resolveModelFallback', () => {
+  it('GIVEN user-specified model WHEN called THEN returns undefined without checking', async () => {
+    const context = buildContext();
+    const args: AskToolArgs = { prompt: 'hello', model: 'user-model' };
+
+    const result = await resolveModelFallback({ context, args, stdout: 'model not found', stderr: '', env: {} });
+
+    expect(result).toBeUndefined();
+    expect(mocks.detectModelError).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN no model error detected WHEN called THEN returns undefined', async () => {
+    mocks.detectModelError.mockReturnValue(false);
+
+    const context = buildContext();
+    const args: AskToolArgs = { prompt: 'hello' };
+
+    const result = await resolveModelFallback({ context, args, stdout: 'some output', stderr: '', env: {} });
+
+    expect(result).toBeUndefined();
+    expect(mocks.fetchAvailableModels).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN model error and available models WHEN called THEN returns first available model', async () => {
+    mocks.detectModelError.mockReturnValue(true);
+    mocks.fetchAvailableModels.mockResolvedValue('opencode/gpt-5-nano\ngithub-copilot/claude-sonnet-4');
+    mocks.parseFirstAvailableModel.mockReturnValue('opencode/gpt-5-nano');
+
+    const context = buildContext();
+    const args: AskToolArgs = { prompt: 'hello' };
+
+    const result = await resolveModelFallback({ context, args, stdout: 'model not found', stderr: '', env: {} });
+
+    expect(result).toBe('opencode/gpt-5-nano');
+    expect(mocks.parseFirstAvailableModel).toHaveBeenCalledWith('opencode/gpt-5-nano\ngithub-copilot/claude-sonnet-4');
+  });
+
+  it('GIVEN model error but no available models WHEN called THEN returns undefined', async () => {
+    mocks.detectModelError.mockReturnValue(true);
+    mocks.fetchAvailableModels.mockResolvedValue(undefined);
+
+    const context = buildContext();
+    const args: AskToolArgs = { prompt: 'hello' };
+
+    const result = await resolveModelFallback({ context, args, stdout: 'model not found', stderr: '', env: {} });
+
+    expect(result).toBeUndefined();
+    expect(mocks.parseFirstAvailableModel).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN model error and empty model list WHEN called THEN returns undefined', async () => {
+    mocks.detectModelError.mockReturnValue(true);
+    mocks.fetchAvailableModels.mockResolvedValue('');
+
+    const context = buildContext();
+    const args: AskToolArgs = { prompt: 'hello' };
+
+    const result = await resolveModelFallback({ context, args, stdout: 'model not found', stderr: '', env: {} });
+
+    expect(result).toBeUndefined();
   });
 });

@@ -146,7 +146,9 @@ describe('integration: CLI router', () => {
       async () => {
         if (!binaryExists) return;
 
-        const error = await execFileAsync(process.execPath, [BINARY_PATH, 'unknown_cmd']).catch((e: unknown) => e) as { code: number; stderr: string };
+        const error = (await execFileAsync(process.execPath, [BINARY_PATH, 'unknown_cmd']).catch(
+          (err: unknown) => err
+        )) as { code: number; stderr: string };
 
         expect(error.code).not.toBe(0);
         expect(error.stderr).toContain('Unknown command');
@@ -159,7 +161,9 @@ describe('integration: CLI router', () => {
       async () => {
         if (!binaryExists) return;
 
-        const error = await execFileAsync(process.execPath, [BINARY_PATH, 'ask_nonexistent', 'test']).catch((e: unknown) => e) as { code: number; stderr: string };
+        const error = (await execFileAsync(process.execPath, [BINARY_PATH, 'ask_nonexistent', 'test']).catch(
+          (err: unknown) => err
+        )) as { code: number; stderr: string };
 
         expect(error.code).not.toBe(0);
         expect(error.stderr).toContain('not found');
@@ -172,7 +176,12 @@ describe('integration: CLI router', () => {
       async () => {
         if (!binaryExists) return;
 
-        const error = await execFileAsync(process.execPath, [BINARY_PATH, 'list_providers', '--config', '/nonexistent/path.json']).catch((e: unknown) => e) as { code: number; stderr: string };
+        const error = (await execFileAsync(process.execPath, [
+          BINARY_PATH,
+          'list_providers',
+          '--config',
+          '/nonexistent/path.json',
+        ]).catch((err: unknown) => err)) as { code: number; stderr: string };
 
         expect(error.code).not.toBe(0);
         expect(error.stderr).toBeTruthy();
