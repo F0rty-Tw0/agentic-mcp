@@ -17,6 +17,7 @@
   "bin": {
     "agentic-mcp": "dist/index.js"
   },
+  "exports": {},
   "files": [
     "dist"
   ],
@@ -73,6 +74,7 @@
     "claude",
     "codex",
     "copilot",
-    "gemini"
+    "gemini",
+    "opencode"
   ]
 }

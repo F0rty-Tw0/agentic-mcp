@@ -1,4 +1,4 @@
-import { cpSync, readFileSync, rmSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 import * as esbuild from 'esbuild';
 
@@ -19,4 +19,8 @@ await esbuild.build({
   },
 });
 
-cpSync('src/config/providers.json', 'dist/providers.json');
+const providers = JSON.parse(readFileSync('src/config/providers.json', 'utf-8'));
+
+delete providers.$schema;
+
+writeFileSync('dist/providers.json', JSON.stringify(providers, null, 2));
