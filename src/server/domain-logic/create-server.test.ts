@@ -38,7 +38,7 @@ describe('integration: tool listing', () => {
   it('GIVEN a running server WHEN listing tools THEN list_providers is registered', async () => {
     const { tools } = await client.listTools();
 
-    const toolNames = tools.map((t) => t.name);
+    const toolNames = tools.map((tool) => tool.name);
 
     expect(toolNames).toContain('list_providers');
   });
@@ -46,11 +46,11 @@ describe('integration: tool listing', () => {
   it('GIVEN a running server WHEN listing tools THEN ask/ping/help tools exist for available providers', async () => {
     const { tools } = await client.listTools();
 
-    const toolNames = tools.map((t) => t.name);
+    const toolNames = tools.map((tool) => tool.name);
     // Exclude global tools (ask_all) — they don't have per-provider ping/help counterparts
-    const askTools = toolNames.filter((n) => n.startsWith('ask_') && n !== 'ask_all');
-    const pingTools = toolNames.filter((n) => n.startsWith('ping_'));
-    const helpTools = toolNames.filter((n) => n.startsWith('help_'));
+    const askTools = toolNames.filter((name) => name.startsWith('ask_') && name !== 'ask_all');
+    const pingTools = toolNames.filter((name) => name.startsWith('ping_'));
+    const helpTools = toolNames.filter((name) => name.startsWith('help_'));
 
     // Every provider with ask should also have ping and help
     for (const askTool of askTools) {
@@ -76,7 +76,7 @@ describe('integration: tool listing', () => {
  */
 const findAvailableProvider = async (): Promise<string | undefined> => {
   const { tools } = await client.listTools();
-  const pingTools = tools.filter((t) => t.name.startsWith('ping_'));
+  const pingTools = tools.filter((tool) => tool.name.startsWith('ping_'));
 
   for (const tool of pingTools) {
     const result = (await client.callTool({ name: tool.name })) as CallToolResult;
