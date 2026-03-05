@@ -20,7 +20,7 @@
   "hooks": {
     "before:init": "pnpm run ci",
     "after:bump": "node build.mjs",
-    "after:git:release": "pnpm publish --provenance --access public --no-git-checks"
+    "after:git:release": "pnpm publish --access public --no-git-checks"
   },
   "plugins": {
     "@release-it/keep-a-changelog": {
