@@ -17,7 +17,9 @@
   "bin": {
     "agentic-mcp": "dist/index.js"
   },
-  "exports": {},
+  "exports": {
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist"
   ],
@@ -36,7 +38,8 @@
     "test:integration": "vitest run --reporter=dot --config vitest.config.integration.ts",
     "validate:providers": "tsx src/config/validate-providers.ts",
     "prepublishOnly": "pnpm run format && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration && pnpm run build",
-    "publish:pnpm": "pnpm run prepublishOnly && pnpm publish --provenance"
+    "release": "release-it",
+    "release:ci": "release-it --ci"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "catalog:runtime",
@@ -45,6 +48,7 @@
     "zod": "catalog:runtime"
   },
   "devDependencies": {
+    "@release-it/keep-a-changelog": "catalog:dev",
     "@types/cross-spawn": "catalog:dev",
     "@types/node": "catalog:dev",
     "@vitest/coverage-v8": "catalog:dev",
@@ -53,6 +57,7 @@
     "eslint-config-prettier": "catalog:dev",
     "lint-suite": "catalog:dev",
     "prettier": "catalog:dev",
+    "release-it": "^19.2.4",
     "tsx": "catalog:dev",
     "typescript": "catalog:dev",
     "vitest": "catalog:dev"

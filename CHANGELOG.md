@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — Initial release
+## [0.1.0] — Initial release
 
 - Multi-model AI gateway exposing CLI AI tools as MCP servers
 - Providers: Claude, Codex, Copilot, Gemini, OpenCode

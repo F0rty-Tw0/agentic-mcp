@@ -3,6 +3,7 @@ packages:
 
 catalogs:
   dev:
+    '@release-it/keep-a-changelog': ^7.0.1
     '@types/cross-spawn': ^6.0.6
     '@types/node': ^25.3.3
     '@vitest/coverage-v8': '^4.0.18'

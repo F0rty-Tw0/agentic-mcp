@@ -1,0 +1,38 @@
+{
+  "git": {
+    "commit": true,
+    "commitMessage": "chore(release): 🔖 v${version}",
+    "tag": true,
+    "tagName": "v${version}",
+    "tagAnnotation": "Release v${version}",
+    "push": true,
+    "requireBranch": "master",
+    "requireCleanWorkingDir": true
+  },
+  "npm": {
+    "publish": true,
+    "publishArgs": ["--provenance"]
+  },
+  "github": {
+    "release": true,
+    "releaseName": "v${version}"
+  },
+  "hooks": {
+    "before:init": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration",
+    "after:bump": "pnpm run build"
+  },
+  "plugins": {
+    "@release-it/keep-a-changelog": {
+      "filename": "CHANGELOG.md",
+      "head": "Unreleased",
+      "addUnreleased": true,
+      "addVersionUrl": true,
+      "versionUrlFormats": {
+        "repositoryUrl": "https://github.com/F0rty-Tw0/agentic-mcp",
+        "unreleasedUrl": "{repositoryUrl}/compare/v{tagName}...HEAD",
+        "versionUrl": "{repositoryUrl}/compare/v{previousTag}...v{tagName}",
+        "firstVersionUrl": "{repositoryUrl}/releases/tag/v{tagName}"
+      }
+    }
+  }
+}
