@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix runtime crash caused by `vitest` leaking into production bundle via barrel re-export
+
 ## [0.1.1] - 2026-03-05
 
 - Add automated release workflow with release-it
