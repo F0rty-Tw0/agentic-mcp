@@ -3,7 +3,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server';
-import type { AsyncViFn, ProvidersFile, ResolvedProvider, ResolvedProviderEntry, SyncViFn } from '../../shared';
+import type { ProvidersFile, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import type { AsyncViFn, SyncViFn } from '../../shared/command-execution/common/test-utils';
 
 type ActiveRequest = Readonly<{ requestId: string; pid: number }>;
 
