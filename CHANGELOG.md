@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased]
+
 ## [0.1.0] — Initial release
 
 - Multi-model AI gateway exposing CLI AI tools as MCP servers
