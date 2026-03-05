@@ -10,9 +10,8 @@
     "requireCleanWorkingDir": true
   },
   "npm": {
-    "publish": true,
-    "skipChecks": true,
-    "publishArgs": ["--provenance", "--access", "public"]
+    "publish": false,
+    "skipChecks": true
   },
   "github": {
     "release": true,
@@ -20,7 +19,8 @@
   },
   "hooks": {
     "before:init": "pnpm run ci",
-    "after:bump": "node build.mjs"
+    "after:bump": "node build.mjs",
+    "after:git:release": "pnpm publish --provenance --access public --no-git-checks"
   },
   "plugins": {
     "@release-it/keep-a-changelog": {
