@@ -12,7 +12,7 @@
   "npm": {
     "publish": true,
     "skipChecks": true,
-    "publishArgs": ["--provenance"]
+    "publishArgs": ["--provenance", "--access", "public"]
   },
   "github": {
     "release": true,
