@@ -37,7 +37,8 @@
     "test": "vitest run --reporter=dot",
     "test:integration": "vitest run --reporter=dot --config vitest.config.integration.ts",
     "validate:providers": "tsx src/config/validate-providers.ts",
-    "prepublishOnly": "pnpm run format && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration && pnpm run build",
+    "ci": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration",
+    "prepublishOnly": "pnpm run ci && node build.mjs",
     "release": "release-it",
     "release:ci": "release-it --ci"
   },

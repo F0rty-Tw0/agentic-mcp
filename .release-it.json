@@ -19,8 +19,8 @@
     "releaseName": "v${version}"
   },
   "hooks": {
-    "before:init": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration",
-    "after:bump": "pnpm run build"
+    "before:init": "pnpm run ci",
+    "after:bump": "node build.mjs"
   },
   "plugins": {
     "@release-it/keep-a-changelog": {
