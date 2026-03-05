@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Add automated release workflow with release-it
+- Configure npm publish with provenance
+- Add GitHub Actions release workflow (manual dispatch)
+- Lock down package exports to CLI-only usage
+
 ## [0.1.0] — Initial release
 
 - Multi-model AI gateway exposing CLI AI tools as MCP servers

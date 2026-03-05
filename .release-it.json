@@ -27,7 +27,6 @@
       "filename": "CHANGELOG.md",
       "head": "Unreleased",
       "addUnreleased": true,
-      "strictLatest": false,
       "addVersionUrl": true,
       "versionUrlFormats": {
         "repositoryUrl": "https://github.com/F0rty-Tw0/agentic-mcp",
