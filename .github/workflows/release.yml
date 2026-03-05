@@ -48,12 +48,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Configure npm auth
-        run: echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          echo ".npmrc" >> .git/info/exclude
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Release
-        run: pnpm run release:ci -- ${{ inputs.version }}
+        run: >
+          pnpm run release:ci -- ${{ inputs.version }}
+          --hooks.after:git:release="pnpm publish --provenance --access public --no-git-checks"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
