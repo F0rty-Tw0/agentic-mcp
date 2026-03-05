@@ -1,6 +1,6 @@
 {
   "name": "agentic-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-model AI gateway — query any CLI AI tool through MCP",
   "license": "MIT",
   "author": "Artiom Tofan",
