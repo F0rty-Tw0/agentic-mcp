@@ -10,6 +10,10 @@ export const registerGracefulShutdown = (close: CloseFn): void => {
     }
   };
 
-  process.on('SIGINT', () => { void handler(); });
-  process.on('SIGTERM', () => { void handler(); });
+  process.on('SIGINT', () => {
+    void handler();
+  });
+  process.on('SIGTERM', () => {
+    void handler();
+  });
 };

@@ -30,10 +30,10 @@ describe('registerGracefulShutdown', () => {
   });
 
   it('GIVEN SIGINT fires WHEN handler runs THEN calls the close function', async () => {
-    let sigintHandler: (() => void) | undefined;
+    let sigintHandler: () => unknown | Promise<void> = () => undefined;
 
     vi.spyOn(process, 'on').mockImplementation((event: string | symbol, handler: (...args: unknown[]) => void) => {
-      if (event === 'SIGINT') sigintHandler = handler as () => void;
+      if (event === 'SIGINT') sigintHandler = handler;
 
       return process;
     });
@@ -42,14 +42,14 @@ describe('registerGracefulShutdown', () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
     registerGracefulShutdown(closeFn);
-    await sigintHandler?.();
+    await sigintHandler();
 
     expect(closeFn).toHaveBeenCalledOnce();
     expect(exitSpy).toHaveBeenCalledWith(0);
   });
 
   it('GIVEN SIGTERM fires WHEN handler runs THEN calls the close function', async () => {
-    let sigtermHandler: (() => void) | undefined;
+    let sigtermHandler: () => unknown | Promise<void> = () => undefined;
 
     vi.spyOn(process, 'on').mockImplementation((event: string | symbol, handler: (...args: unknown[]) => void) => {
       if (event === 'SIGTERM') sigtermHandler = handler as () => void;
@@ -61,14 +61,14 @@ describe('registerGracefulShutdown', () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
     registerGracefulShutdown(closeFn);
-    await sigtermHandler?.();
+    await sigtermHandler();
 
     expect(closeFn).toHaveBeenCalledOnce();
     expect(exitSpy).toHaveBeenCalledWith(0);
   });
 
   it('GIVEN close function throws WHEN signal fires THEN exits with code 1', async () => {
-    let sigintHandler: (() => void) | undefined;
+    let sigintHandler: () => unknown | Promise<void> = () => undefined;
 
     vi.spyOn(process, 'on').mockImplementation((event: string | symbol, handler: (...args: unknown[]) => void) => {
       if (event === 'SIGINT') sigintHandler = handler as () => void;
@@ -80,7 +80,7 @@ describe('registerGracefulShutdown', () => {
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
     registerGracefulShutdown(closeFn);
-    await sigintHandler?.();
+    await sigintHandler();
 
     expect(exitSpy).toHaveBeenCalledWith(1);
   });

@@ -40,8 +40,7 @@ describe('parseProviderOutput', () => {
   });
 
   it('GIVEN json output with mixed json events and ansi WHEN parsing THEN strips ansi and keeps structured content', () => {
-    const output =
-      '\u001b[32m{\"type\":\"item.completed\",\"item\":{\"type\":\"reasoning\",\"text\":\"done\"}}\u001b[39m';
+    const output = '\u001b[32m{"type":"item.completed","item":{"type":"reasoning","text":"done"}}\u001b[39m';
 
     const result = parseProviderOutput(output, 'json');
 
