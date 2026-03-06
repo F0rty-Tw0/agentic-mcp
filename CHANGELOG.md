@@ -2,8 +2,6 @@
 
 ## [Unreleased]
 
-## [0.1.3] - 2026-03-06
-
 - Remove `--no-auto-update` from Copilot provider trailing args to fix model validation rejecting newer models (e.g. `gpt-5.3-codex`)
 
 ## [0.1.2] - 2026-03-05
