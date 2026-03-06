@@ -41,7 +41,7 @@ const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefi
   const lines = stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+    .filter((line) => line.length);
 
   if (!lines.length) return;
 
@@ -102,7 +102,7 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
   const lines = stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+    .filter((line) => line.length);
 
   if (!lines.length) {
     const parsedProviderOutput: ParsedProviderOutput = { text: '' };
