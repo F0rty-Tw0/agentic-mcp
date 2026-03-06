@@ -8,7 +8,7 @@ import {
   setBackgroundJobFailed,
   setBackgroundJobRunning,
 } from './job-store';
-import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS } from '../common';
+import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS, MAX_RESULT_TEXT_LENGTH } from '../common';
 
 describe('background-job-store', () => {
   beforeEach(() => {
@@ -333,6 +333,30 @@ describe('background-job-store', () => {
 
       expect(getBackgroundJob(first.id)).toStrictEqual(first);
       expect(getBackgroundJob(second.id)).toStrictEqual(second);
+    });
+  });
+
+  describe('result text truncation', () => {
+    it('GIVEN a completed job WHEN resultText exceeds MAX_RESULT_TEXT_LENGTH THEN resultText is truncated', () => {
+      const job = createBackgroundJob('claude');
+      const longText = 'x'.repeat(MAX_RESULT_TEXT_LENGTH + 100);
+
+      setBackgroundJobCompleted(job.id, longText);
+
+      const result = getBackgroundJob(job.id);
+
+      expect(result?.resultText?.length).toBeLessThanOrEqual(MAX_RESULT_TEXT_LENGTH);
+    });
+
+    it('GIVEN a completed job WHEN resultText is within MAX_RESULT_TEXT_LENGTH THEN resultText is preserved', () => {
+      const job = createBackgroundJob('claude');
+      const shortText = 'hello world';
+
+      setBackgroundJobCompleted(job.id, shortText);
+
+      const result = getBackgroundJob(job.id);
+
+      expect(result?.resultText).toBe(shortText);
     });
   });
 

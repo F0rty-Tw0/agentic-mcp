@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { nowIso } from '../../shared';
-import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS } from '../common';
+import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS, MAX_RESULT_TEXT_LENGTH } from '../common';
 import type { BackgroundJobRecord } from '../common';
 
 type BackgroundJobStoreEntry = Readonly<{
@@ -27,6 +27,12 @@ const enforceBoundedCapacity = (): void => {
 
     backgroundJobStore.delete(oldestKey);
   }
+};
+
+const truncateResultText = (text: string): string => {
+  if (text.length <= MAX_RESULT_TEXT_LENGTH) return text;
+
+  return text.slice(0, MAX_RESULT_TEXT_LENGTH);
 };
 
 const updateJob = (
@@ -81,7 +87,7 @@ export const setBackgroundJobCompleted = (id: string, resultText: string): Backg
   return updateJob(id, (existing) => ({
     ...existing,
     state: 'completed',
-    resultText,
+    resultText: truncateResultText(resultText),
     error: undefined,
     updatedAt: nowIso(),
   }));
