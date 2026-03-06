@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-03-06
+
+- Remove `--no-auto-update` from Copilot provider trailing args to fix model validation rejecting newer models (e.g. `gpt-5.3-codex`)
+
 ## [0.1.2] - 2026-03-05
 
 - Fix runtime crash caused by `vitest` leaking into production bundle via barrel re-export
@@ -25,7 +29,7 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.1...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...HEAD
+[0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...vv0.1.3
 [0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.1...vv0.1.2
 [0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/vv0.1.1
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...HEAD
