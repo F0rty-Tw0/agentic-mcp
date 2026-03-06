@@ -7,7 +7,7 @@ import { createServer } from '../../server';
 import { runSetup } from '../../setup';
 import { APP_VERSION } from '../../shared';
 import { HELP_TEXT } from '../common';
-import { parseConfigPath } from '../utils';
+import { parseConfigPath, registerGracefulShutdown } from '../utils';
 
 export const entry = async (): Promise<void> => {
   const args = process.argv.slice(2);
@@ -42,4 +42,8 @@ export const entry = async (): Promise<void> => {
   const transport = new StdioServerTransport();
 
   await server.connect(transport);
+
+  registerGracefulShutdown(async () => {
+    await server.close();
+  });
 };

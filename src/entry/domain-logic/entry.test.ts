@@ -16,7 +16,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 
-const BINARY_PATH = 'dist/index.cjs';
+const BINARY_PATH = 'dist/index.js';
 const TIMEOUT_MS = 10_000;
 
 let binaryExists = false;
