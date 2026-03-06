@@ -36,6 +36,7 @@
     "lint:fix": "eslint --max-warnings 0 . --fix",
     "test": "vitest run --reporter=dot",
     "test:integration": "vitest run --reporter=dot --config vitest.config.integration.ts",
+    "test:coverage": "vitest run --coverage",
     "validate:providers": "tsx src/config/validate-providers.ts",
     "ci": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run test:integration",
     "prepublishOnly": "node build.mjs",

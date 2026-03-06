@@ -3,25 +3,36 @@
 
 provider:
   - changed-files:
-      - any-glob-to-any-file: 'providers.json'
+      - any-glob-to-any-file: 'src/config/providers.json'
 
 config:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/config/**'
-          - 'src/types.ts'
-          - 'providers.json'
+          - 'providers.schema.json'
 
 core:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/server.ts'
-          - 'src/tools/**'
+          - 'src/server/**'
+          - 'src/tool-registry/**'
           - 'src/session/**'
-          - 'src/utils/**'
+          - 'src/shared/**'
 
 documentation:
   - changed-files:
       - any-glob-to-any-file:
           - '**/*.md'
           - 'docs/**'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+
+testing:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'vitest.config*.ts'
+          - 'src/**/*.spec.ts'
+          - 'src/**/*.test.ts'
