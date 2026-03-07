@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-03-07
+
 - Add fuzzy model matching via `selectClosestAvailableModel` when exact model not found
 - Add `resolveRequestedModel` to remap models using provider's available model listing
 - Add copilot model alias resolution (e.g. `codex 5.3` → `gpt-5.3-codex`)
@@ -36,6 +38,9 @@
 - `ask_all` fan-out to all providers in parallel
 
 [Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...HEAD
+[0.1.4]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...vv0.1.4
 [0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...vv0.1.3
 [0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.1...vv0.1.2
 [0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/vv0.1.1
+
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.4...HEAD
