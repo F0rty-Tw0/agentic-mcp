@@ -22,6 +22,18 @@ type BuildCommandOptionsInput = Readonly<{
   onSpawned?: (pid: number) => void;
 }>;
 
+const COPILOT_MODEL_ALIASES: Readonly<Record<string, string>> = {
+  'codex 5.3': 'gpt-5.3-codex',
+};
+
+const resolveModelAlias = (providerName: string | undefined, model: string | undefined): string | undefined => {
+  if (model == null) return model;
+
+  if (providerName !== 'copilot') return model;
+
+  return COPILOT_MODEL_ALIASES[model.toLowerCase()] ?? model;
+};
+
 const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
   if (!files?.length) return [];
 
@@ -32,10 +44,12 @@ const resolveFilesArg = (files?: readonly string[], workingDir?: string): string
   return validateFiles(files, workingDir);
 };
 
-export const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
+export const validateAndResolveArgs = (args: AskToolArgs, providerName?: string): AskToolArgs => {
+  const model = resolveModelAlias(providerName, args.model);
+
   validatePromptSize(args.prompt);
 
-  if (args.model) validateModel(args.model);
+  if (model) validateModel(model);
 
   if (args.session_id) validateSessionId(args.session_id);
 
@@ -46,6 +60,7 @@ export const validateAndResolveArgs = (args: AskToolArgs): AskToolArgs => {
 
   const resolvedArgs: AskToolArgs = {
     ...args,
+    ...(model ? { model } : {}),
     ...workingDir,
     ...files,
   };
