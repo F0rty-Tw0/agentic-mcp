@@ -46,7 +46,7 @@ const resolveFilesArg = (files?: readonly string[], workingDir?: string): string
 };
 
 const resolveAskTimeoutMs = (providerTimeoutMs: number): number => {
-  const resolvedTimeoutMs = Math.max(providerTimeoutMs, DEFAULT_MCP_TOOL_TIMEOUT_MS);
+  const resolvedTimeoutMs = providerTimeoutMs || DEFAULT_MCP_TOOL_TIMEOUT_MS;
 
   return resolvedTimeoutMs;
 };

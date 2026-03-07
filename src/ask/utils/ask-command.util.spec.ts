@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from './ask-command.util';
 import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS, TEST_MINIMAL_ENV_STUB, ValidationError } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB, ValidationError } from '../../shared';
 import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => ({
@@ -155,7 +155,7 @@ describe('validateAndResolveArgs', () => {
 });
 
 describe('buildCommandOptions', () => {
-  it('GIVEN provider timeout lower than MCP default WHEN called THEN uses MCP default timeout floor', () => {
+  it('GIVEN provider timeout lower than MCP default WHEN called THEN uses provider timeout', () => {
     const context = buildContext({ config: buildProviderConfig({ timeout: 30_000 }) });
     const resolved: AskToolArgs = { prompt: 'hello' };
     const env = TEST_MINIMAL_ENV_STUB;
@@ -167,7 +167,7 @@ describe('buildCommandOptions', () => {
       env,
     });
 
-    expect(result.timeoutMs).toBe(DEFAULT_MCP_TOOL_TIMEOUT_MS);
+    expect(result.timeoutMs).toBe(30_000);
   });
 
   it('GIVEN full input WHEN called THEN returns correct ExecuteCommandOptions shape', () => {
@@ -196,7 +196,7 @@ describe('buildCommandOptions', () => {
     expect(result.binaryPath).toBe('/usr/bin/test');
     expect(result.args).toStrictEqual(['--flag', 'value']);
     expect(result.env).toStrictEqual(TEST_MINIMAL_ENV_STUB);
-    expect(result.timeoutMs).toBe(DEFAULT_MCP_TOOL_TIMEOUT_MS);
+    expect(result.timeoutMs).toBe(30_000);
     expect(result.stdin).toBe('stdin data');
     expect(result.cwd).toBe('/work/dir');
     expect(result.onStdoutChunk).toBe(onStdoutChunk);
