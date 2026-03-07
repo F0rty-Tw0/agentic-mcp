@@ -18,6 +18,7 @@ import type { AskToolArgs } from '../common';
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
 import type { AskExecution } from '../utils/ask-runner-response.util';
 import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
+import { resolveRequestedModel } from '../utils/resolve-requested-model.util';
 
 export type { AskExecution } from '../utils/ask-runner-response.util';
 
@@ -68,9 +69,10 @@ const handleFailedExecution = async (
 
 const runExecution = async (executeInput: ExecuteInput): Promise<{ result: ExecutionResult }> => {
   const { context, args, extra, tier2SessionId, streamNotifier } = executeInput;
-  const resolved = validateAndResolveArgs(args);
-  const { args: baseCliArgs, stdinInput } = buildArgArray(context.config, resolved);
   const env = buildExecutionEnv(context);
+  const remappedArgs = await resolveRequestedModel({ context, args, env });
+  const resolved = validateAndResolveArgs(remappedArgs, context.name);
+  const { args: baseCliArgs, stdinInput } = buildArgArray(context.config, resolved);
   const requestId = resolveRequestId(extra);
   const cliArgs = buildCliArgs(context.config, baseCliArgs, tier2SessionId);
 
