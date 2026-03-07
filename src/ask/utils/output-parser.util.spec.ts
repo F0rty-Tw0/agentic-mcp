@@ -10,6 +10,14 @@ describe('parseProviderOutput', () => {
     expect(result.text).toContain('"ok": true');
   });
 
+  it('GIVEN JSON string WHEN parsing THEN returns string text with json metadata', () => {
+    const result = parseProviderOutput('"hello world"', 'json');
+
+    expect(result.metadata?.outputFormatObserved).toBe('json');
+    expect(result.text).toBe('hello world');
+    expect(result.metadata?.parsed).toBe('hello world');
+  });
+
   it('GIVEN malformed JSON WHEN parsing THEN falls back to raw text', () => {
     const result = parseProviderOutput('not-json', 'json');
 
@@ -23,6 +31,22 @@ describe('parseProviderOutput', () => {
     expect(result.metadata?.outputFormatObserved).toBe('stream-json');
     expect(result.text).toContain('"a": 1');
     expect(result.text).toContain('"b": 2');
+  });
+
+  it('GIVEN empty NDJSON WHEN parsing THEN returns empty text without metadata', () => {
+    const result = parseProviderOutput('  \n\n  ', 'stream-json');
+
+    expect(result.text).toBe('');
+    expect(result.metadata).toBeUndefined();
+  });
+
+  it('GIVEN malformed NDJSON line WHEN parsing THEN returns raw stdout', () => {
+    const output = '{"a":1}\nnot-json';
+
+    const result = parseProviderOutput(output, 'stream-json');
+
+    expect(result.text).toBe(output);
+    expect(result.metadata).toBeUndefined();
   });
 
   it('GIVEN json output with mixed log lines WHEN parsing THEN extracts latest agent message text', () => {
@@ -46,5 +70,22 @@ describe('parseProviderOutput', () => {
 
     expect(result.metadata?.outputFormatObserved).toBe('json');
     expect(result.text).toContain('"type": "item.completed"');
+  });
+
+  it('GIVEN mixed JSON lines without agent messages WHEN parsing THEN returns pretty-printed parsed lines', () => {
+    const output = ['starting...', '{"type":"item.started"}', '{"type":"item.completed"}', 'done'].join('\n');
+
+    const result = parseProviderOutput(output, 'json');
+
+    expect(result.metadata?.outputFormatObserved).toBe('json');
+    expect(result.text).toContain('"type": "item.started"');
+    expect(result.text).toContain('"type": "item.completed"');
+  });
+
+  it('GIVEN text output with ansi WHEN parsing THEN strips ansi and marks text format metadata', () => {
+    const result = parseProviderOutput('\u001b[33mplain text\u001b[39m', 'text');
+
+    expect(result.text).toBe('plain text');
+    expect(result.metadata?.outputFormatObserved).toBe('text');
   });
 });
