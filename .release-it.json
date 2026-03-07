@@ -19,7 +19,8 @@
   },
   "hooks": {
     "before:init": "pnpm run ci",
-    "after:bump": "pnpm run format && node build.mjs",
+    "after:bump": "node build.mjs",
+    "before:release": "pnpm run format",
     "after:git:release": "pnpm publish --access public --no-git-checks"
   },
   "plugins": {
