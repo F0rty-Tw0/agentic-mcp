@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Add fuzzy model matching via `selectClosestAvailableModel` when exact model not found
+- Add `resolveRequestedModel` to remap models using provider's available model listing
+- Add copilot model alias resolution (e.g. `codex 5.3` → `gpt-5.3-codex`)
+- Integrate model resolution into ask pipeline before CLI arg building
+- Add edge-case test coverage for output parser (JSON strings, empty/malformed NDJSON)
+
 ## [0.1.3] - 2026-03-06
 
 - Remove `--no-auto-update` from Copilot provider trailing args to fix model validation rejecting newer models (e.g. `gpt-5.3-codex`)
@@ -29,8 +35,7 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...HEAD
 [0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...vv0.1.3
 [0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.1...vv0.1.2
 [0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/vv0.1.1
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...HEAD
