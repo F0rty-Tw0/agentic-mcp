@@ -68,6 +68,18 @@ describe('validateAndResolveArgs', () => {
     expect(mocks.validateModel).toHaveBeenCalledWith('gpt-4');
   });
 
+  it('GIVEN copilot codex 5.3 alias WHEN called THEN validates normalized model value', () => {
+    mocks.validatePromptSize.mockReturnValue(undefined);
+    mocks.validateModel.mockReturnValue(undefined);
+
+    const args: AskToolArgs = { prompt: 'hello', model: 'codex 5.3' };
+
+    const result = validateAndResolveArgs(args, 'copilot');
+
+    expect(mocks.validateModel).toHaveBeenCalledWith('gpt-5.3-codex');
+    expect(result.model).toBe('gpt-5.3-codex');
+  });
+
   it('GIVEN args without model WHEN called THEN does not call validateModel', () => {
     mocks.validatePromptSize.mockReturnValue(undefined);
 

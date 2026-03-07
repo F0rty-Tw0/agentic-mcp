@@ -4,4 +4,5 @@ export {
   extractAttemptedModel,
   fetchAvailableModels,
   parseFirstAvailableModel,
+  selectClosestAvailableModel,
 } from './model-error.util';
