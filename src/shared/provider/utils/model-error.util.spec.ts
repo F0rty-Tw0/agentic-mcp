@@ -6,6 +6,7 @@ import {
   extractAttemptedModel,
   fetchAvailableModels,
   parseFirstAvailableModel,
+  selectClosestAvailableModel,
 } from './model-error.util';
 import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution/common';
 import { SUCCESS_EXECUTION_RESULT_STUB, TEST_MINIMAL_ENV_STUB } from '../../command-execution/common/stubs';
@@ -316,5 +317,31 @@ describe('parseFirstAvailableModel', () => {
     const result = parseFirstAvailableModel('\n\nopencode/gpt-5-nano');
 
     expect(result).toBe('opencode/gpt-5-nano');
+  });
+});
+
+describe('selectClosestAvailableModel', () => {
+  it('GIVEN exact model match WHEN selecting THEN returns exact model', () => {
+    const availableModels = 'openai/gpt-5.4\nopenai/gpt-5.3-codex';
+
+    const result = selectClosestAvailableModel('openai/gpt-5.4', availableModels);
+
+    expect(result).toBe('openai/gpt-5.4');
+  });
+
+  it('GIVEN friendly codex 5.4 label WHEN selecting THEN returns closest exposed model', () => {
+    const availableModels = 'openai/gpt-5.4\nopenai/gpt-5.3-codex';
+
+    const result = selectClosestAvailableModel('codex 5.4', availableModels);
+
+    expect(result).toBe('openai/gpt-5.4');
+  });
+
+  it('GIVEN no meaningful overlap WHEN selecting THEN returns undefined', () => {
+    const availableModels = 'google/gemini-2.5-pro\nclaude-sonnet-4.6';
+
+    const result = selectClosestAvailableModel('codex 5.4', availableModels);
+
+    expect(result).toBeUndefined();
   });
 });

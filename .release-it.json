@@ -19,7 +19,7 @@
   },
   "hooks": {
     "before:init": "pnpm run ci",
-    "after:bump": "node build.mjs",
+    "after:bump": "pnpm run format && node build.mjs",
     "after:git:release": "pnpm publish --access public --no-git-checks"
   },
   "plugins": {

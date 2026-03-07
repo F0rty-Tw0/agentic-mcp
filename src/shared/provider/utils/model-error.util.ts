@@ -58,11 +58,102 @@ export const buildModelHint = (
 
 const isModelLine = (line: string): boolean => Boolean(line) && !line.startsWith('#') && !line.startsWith('-');
 
+const tokenizeModel = (value: string): string[] => {
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  if (!normalized) return [];
+
+  return normalized.split(/\s+/);
+};
+
+const extractModelVersion = (value: string): { major: number; minor: number } | undefined => {
+  const match = /(\d+)\.(\d+)/.exec(value);
+
+  if (!match?.[1] || !match[2]) return;
+
+  const major = Number.parseInt(match[1], 10);
+  const minor = Number.parseInt(match[2], 10);
+
+  if (Number.isNaN(major) || Number.isNaN(minor)) return;
+
+  return { major, minor };
+};
+
+const scoreByVersion = (requestedModel: string, candidateModel: string): number => {
+  const requestedVersion = extractModelVersion(requestedModel);
+  const candidateVersion = extractModelVersion(candidateModel);
+
+  if (!requestedVersion || !candidateVersion) return 0;
+
+  if (requestedVersion.major === candidateVersion.major && requestedVersion.minor === candidateVersion.minor) return 32;
+
+  if (requestedVersion.major !== candidateVersion.major) return 0;
+
+  const minorDistance = Math.abs(requestedVersion.minor - candidateVersion.minor);
+
+  return Math.max(0, 14 - minorDistance * 3);
+};
+
+const scoreModelCandidate = (requestedModel: string, candidateModel: string): number => {
+  const requestedTokens = tokenizeModel(requestedModel);
+  const candidateTokens = tokenizeModel(candidateModel);
+
+  if (!requestedTokens.length || !candidateTokens.length) return 0;
+
+  const requestedSet = new Set(requestedTokens);
+  const sharedTokenCount = candidateTokens.filter((token) => requestedSet.has(token)).length;
+  const hasCodexHint = requestedSet.has('codex');
+  const hasCodexCandidate = candidateTokens.includes('codex');
+  const hasGptCandidate = candidateTokens.includes('gpt');
+  let score = sharedTokenCount * 6 + scoreByVersion(requestedModel, candidateModel);
+
+  if (hasCodexHint && hasCodexCandidate) score += 12;
+
+  if (hasCodexHint && !hasCodexCandidate && hasGptCandidate) score += 8;
+
+  return score;
+};
+
+const parseAvailableModels = (availableModels: string): string[] => {
+  return availableModels
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => isModelLine(line));
+};
+
 export const parseFirstAvailableModel = (availableModels: string): string | undefined => {
-  const lines = availableModels.split(/\r?\n/);
-  const firstModel = lines.map((line) => line.trim()).find((line) => isModelLine(line));
+  const firstModel = parseAvailableModels(availableModels)[0];
 
   return firstModel;
+};
+
+export const selectClosestAvailableModel = (requestedModel: string, availableModels: string): string | undefined => {
+  const models = parseAvailableModels(availableModels);
+
+  if (!models.length) return;
+
+  const exactMatch = models.find((model) => model.toLowerCase() === requestedModel.toLowerCase());
+
+  if (exactMatch) return exactMatch;
+
+  let bestModel: string | undefined;
+  let bestScore = 0;
+
+  for (const model of models) {
+    const candidateScore = scoreModelCandidate(requestedModel, model);
+
+    if (candidateScore <= bestScore) continue;
+
+    bestScore = candidateScore;
+    bestModel = model;
+  }
+
+  if (bestScore < 12) return;
+
+  return bestModel;
 };
 
 export const fetchAvailableModels = async (

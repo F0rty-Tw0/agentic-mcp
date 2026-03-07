@@ -11,12 +11,14 @@ const mocks = vi.hoisted(() => ({
   validateSessionId: vi.fn(),
   validateWorkingDirectory: vi.fn(),
   validateFiles: vi.fn(),
+  modelRegex: /^[a-zA-Z0-9][a-zA-Z0-9._:\-/]{0,127}$/,
   buildMinimalEnv: vi.fn(),
   resolveProviderEnv: vi.fn(),
   detectModelError: vi.fn(),
   extractAttemptedModel: vi.fn(),
   fetchAvailableModels: vi.fn(),
   parseFirstAvailableModel: vi.fn(),
+  selectClosestAvailableModel: vi.fn(),
   buildModelHint: vi.fn(),
   executeCommand: vi.fn(),
 }));
@@ -27,6 +29,7 @@ vi.mock('../../shared/validation/utils/validation.util', () => ({
   validateSessionId: mocks.validateSessionId,
   validateWorkingDirectory: mocks.validateWorkingDirectory,
   validateFiles: mocks.validateFiles,
+  modelRegex: mocks.modelRegex,
 }));
 
 vi.mock('../../shared/command-execution/utils/platform.util', () => ({
@@ -38,6 +41,7 @@ vi.mock('../../shared/provider/utils/model-error.util', () => ({
   extractAttemptedModel: mocks.extractAttemptedModel,
   fetchAvailableModels: mocks.fetchAvailableModels,
   parseFirstAvailableModel: mocks.parseFirstAvailableModel,
+  selectClosestAvailableModel: mocks.selectClosestAvailableModel,
   buildModelHint: mocks.buildModelHint,
 }));
 

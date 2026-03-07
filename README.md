@@ -25,6 +25,30 @@ agentic-mcp setup --client claude-code
 
 Supported clients: Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
 
+## AI Discoverability
+
+Want agents to reliably find and use the right tools? See https://github.com/F0rty-Tw0/agentic-mcp/blob/master/MCP-SKILLS-DISCOVERABILITY.md for copy-paste prompts, skill instructions, and MCP/CLI discovery workflow.
+
+Repository skill package: https://github.com/F0rty-Tw0/agentic-mcp/blob/master/skills/using-agentic-mcp/SKILL.md
+
+### Paste This to Your AI Agent
+
+```text
+Set up agentic-mcp for me end-to-end.
+
+Requirements:
+1) If your environment supports skills, load the equivalent "using skills" guidance first (for example skills-using or /using-skills).
+2) Run setup for Claude Code:
+   npx agentic-mcp setup --client claude-code --yes
+3) Verify installation by calling these MCP tools in order:
+   - list_providers
+   - ping_claude
+   - help_claude
+4) If setup fails, diagnose and fix, then rerun verification.
+5) Report final status with what was configured and which providers are available.
+6) Ask if any other providers should be set up too; if yes, configure and verify them the same way.
+```
+
 ### Safe Setup Defaults
 
 `agentic-mcp setup` is now safe by default:
