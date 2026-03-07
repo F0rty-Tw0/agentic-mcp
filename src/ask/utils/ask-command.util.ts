@@ -1,5 +1,6 @@
 import type { ExecuteCommandOptions, FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import {
+  DEFAULT_MCP_TOOL_TIMEOUT_MS,
   ValidationError,
   validateFiles,
   validateModel,
@@ -44,6 +45,12 @@ const resolveFilesArg = (files?: readonly string[], workingDir?: string): string
   return validateFiles(files, workingDir);
 };
 
+const resolveAskTimeoutMs = (providerTimeoutMs: number): number => {
+  const resolvedTimeoutMs = Math.max(providerTimeoutMs, DEFAULT_MCP_TOOL_TIMEOUT_MS);
+
+  return resolvedTimeoutMs;
+};
+
 export const validateAndResolveArgs = (args: AskToolArgs, providerName?: string): AskToolArgs => {
   const model = resolveModelAlias(providerName, args.model);
 
@@ -72,11 +79,12 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
   const { context, resolved, cliArgs, stdinInput, env, onStdoutChunk, onStderrChunk, signal, onSpawned } =
     buildCommandOptionsInput;
 
+  const timeoutMs = resolveAskTimeoutMs(context.config.timeout);
   const commandOptions: ExecuteCommandOptions = {
     binaryPath: context.binaryPath,
     args: [...cliArgs],
     env,
-    timeoutMs: context.config.timeout,
+    timeoutMs,
     stdin: stdinInput,
     cwd: resolved.working_directory,
     onStdoutChunk,

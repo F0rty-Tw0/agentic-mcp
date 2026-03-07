@@ -123,7 +123,7 @@ describe('handleAsk', () => {
           binaryPath: '/usr/bin/test-cli',
           args: ['exec', 'test prompt'],
           env: TEST_MINIMAL_ENV_STUB,
-          timeoutMs: 120_000,
+          timeoutMs: DEFAULT_MCP_TOOL_TIMEOUT_MS,
           stdin: undefined,
           cwd: undefined,
         })

@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](#status)
+[![Status](https://img.shields.io/badge/Status-Live-brightgreen.svg)](#status)
 
 Multi-model AI gateway that wraps any agentic CLI tool as an [MCP](https://modelcontextprotocol.io/) server. Add a new AI provider by editing a JSON file — no code changes, no rebuilds.
 
