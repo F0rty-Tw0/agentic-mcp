@@ -9,3 +9,5 @@ export { parseProviderOutput } from './output-parser.util';
 export type { AskExecution } from './ask-runner-response.util';
 
 export { buildExecution, buildFailureExecution } from './ask-runner-response.util';
+
+export { resolveRequestedModel } from './resolve-requested-model.util';
