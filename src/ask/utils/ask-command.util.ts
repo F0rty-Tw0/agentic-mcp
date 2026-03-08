@@ -85,6 +85,7 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
     args: [...cliArgs],
     env,
     timeoutMs,
+    idleTimeoutMs: context.config.idleTimeout,
     stdin: stdinInput,
     cwd: resolved.working_directory,
     onStdoutChunk,
