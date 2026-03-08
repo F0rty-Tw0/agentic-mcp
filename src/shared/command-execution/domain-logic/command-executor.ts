@@ -1,13 +1,12 @@
 import crossSpawn from 'cross-spawn';
 
+import { setupIdleTimeout } from './command-idle-timeout.util';
 import { attachStreamCollector } from './command-stream-collector.util';
+import { createAbortSubscription, setupTimeout } from './command-timeout.util';
 import { createSemaphore } from './semaphore';
 import type { ExecuteCommandOptions, ExecutionResult, StreamCollector } from '../common';
 import { CommandExecutionError } from '../common/errors';
-import { killProcess } from '../utils';
 
-type TimeoutHandle = Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }>;
-type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
 type ResolveExecutionResultInput = Readonly<{
   stdout: StreamCollector;
   stderr: StreamCollector;
@@ -20,53 +19,10 @@ type ResolveExecutionResultInput = Readonly<{
 const MAX_CONCURRENT_SPAWNS = 5;
 const defaultSemaphore = createSemaphore(MAX_CONCURRENT_SPAWNS);
 
-const createAbortSubscription = (signal?: AbortSignal, childPid?: number): AbortSubscription => {
-  const abortHandler = (): void => {
-    if (childPid === undefined) return;
-
-    void killProcess(childPid);
-  };
-
-  if (!signal) {
-    const abortSubscription: AbortSubscription = { abortHandler, detach: () => undefined };
-
-    return abortSubscription;
-  }
-
-  if (signal.aborted) abortHandler();
-
-  signal.addEventListener('abort', abortHandler, { once: true });
-
-  const abortSubscription: AbortSubscription = {
-    abortHandler,
-    detach: (): void => {
-      signal.removeEventListener('abort', abortHandler);
-    },
-  };
-
-  return abortSubscription;
-};
-
-const setupTimeout = (timeoutMs: number, pid?: number): TimeoutHandle => {
-  let timedOut = false;
-
-  const timer = setTimeout(() => {
-    timedOut = true;
-
-    if (pid === undefined) return;
-
-    void killProcess(pid);
-  }, timeoutMs);
+const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionResult => {
+  const { stdout, stderr, exitCode, closeSignal, timedOut, startTime } = input;
 
   return {
-    timer,
-    markTimedOut: () => timedOut,
-  };
-};
-
-const resolveExecutionResult = (resolveExecutionResultInput: ResolveExecutionResultInput): ExecutionResult => {
-  const { stdout, stderr, exitCode, closeSignal, timedOut, startTime } = resolveExecutionResultInput;
-  const executionResult: ExecutionResult = {
     stdout: stdout.output(),
     stderr: stderr.output(),
     exitCode,
@@ -77,58 +33,68 @@ const resolveExecutionResult = (resolveExecutionResultInput: ResolveExecutionRes
     stderrBytes: stderr.bytes(),
     executionTimeMs: Date.now() - startTime,
   };
+};
 
-  return executionResult;
+const wrapChunkCallback = (
+  idleTimeout: ReturnType<typeof setupIdleTimeout>,
+  callback?: (chunk: string) => void
+): ((chunk: string) => void) => {
+  return (chunk: string): void => {
+    idleTimeout.reset();
+    callback?.(chunk);
+  };
 };
 
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
-  const { binaryPath, args, env, timeoutMs, stdin, cwd, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
+  const {
+    binaryPath,
+    args,
+    env,
+    timeoutMs,
+    idleTimeoutMs,
+    stdin,
+    cwd,
+    onStdoutChunk,
+    onStderrChunk,
+    signal,
+    onSpawned,
+  } = options;
 
   return new Promise<ExecutionResult>((resolve, reject) => {
-    const child = crossSpawn(binaryPath, args, {
-      env,
-      stdio: [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'],
-      cwd,
-    });
+    const child = crossSpawn(binaryPath, args, { env, stdio: [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'], cwd });
 
-    if (child.pid !== undefined && onSpawned) {
-      onSpawned(child.pid);
-    }
+    if (child.pid !== undefined && onSpawned) onSpawned(child.pid);
 
     const timeout = setupTimeout(timeoutMs, child.pid);
-    const stdout = attachStreamCollector(child.stdout, onStdoutChunk);
-    const stderr = attachStreamCollector(child.stderr, onStderrChunk);
+    const idleTimeout = setupIdleTimeout(idleTimeoutMs, child.pid);
+    const stdout = attachStreamCollector(child.stdout, wrapChunkCallback(idleTimeout, onStdoutChunk));
+    const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
     const abort = createAbortSubscription(signal, child.pid);
 
-    child.on('error', (error: Error) => {
+    const cleanup = (): void => {
       clearTimeout(timeout.timer);
+      idleTimeout.clear();
       abort.detach();
-      const commandError = new CommandExecutionError(
-        `Failed to spawn "${binaryPath}": ${error.message}`,
-        { stderr: error.message },
-        { cause: error }
-      );
+    };
 
-      reject(commandError);
+    child.on('error', (error: Error) => {
+      cleanup();
+      reject(
+        new CommandExecutionError(
+          `Failed to spawn "${binaryPath}": ${error.message}`,
+          { stderr: error.message },
+          { cause: error }
+        )
+      );
     });
 
     child.on('close', (exitCode, closeSignal) => {
-      clearTimeout(timeout.timer);
-      abort.detach();
-
-      const executionResultInput: ResolveExecutionResultInput = {
-        stdout,
-        stderr,
-        exitCode,
-        closeSignal,
-        timedOut: timeout.markTimedOut(),
-        startTime,
-      };
-
-      resolve(resolveExecutionResult(executionResultInput));
+      cleanup();
+      resolve(
+        resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut: timeout.markTimedOut(), startTime })
+      );
     });
 
-    // Write stdin if provided, then close the stream
     if (stdin && child.stdin) {
       child.stdin.write(stdin);
       child.stdin.end();

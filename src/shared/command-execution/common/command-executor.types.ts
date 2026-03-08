@@ -9,6 +9,7 @@ export type ExecuteCommandOptions = Readonly<{
   args: readonly string[];
   env: CommandEnv;
   timeoutMs: number;
+  idleTimeoutMs?: number;
   stdin?: string;
   cwd?: string;
   bypassSemaphore?: boolean;
