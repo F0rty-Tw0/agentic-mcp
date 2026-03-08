@@ -141,7 +141,12 @@
         "timeout": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 300000 (5 min) for fast providers and 600000 (10 min) for reasoning-heavy providers."
+          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 600000 (10 min) for fast providers and 1800000 (30 min) for reasoning-heavy providers."
+        },
+        "idleTimeout": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Idle timeout in milliseconds. If the process stops producing output for this duration after initial output was received, it is killed and the collected output is returned as a successful result. Useful for CLI tools that complete their work but do not exit the process. Optional — omit to disable idle-based termination."
         },
         "env": {
           "type": "object",

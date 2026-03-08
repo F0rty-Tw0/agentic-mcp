@@ -6,7 +6,7 @@
       "enabled": true,
       "description": "Claude Code CLI (Anthropic) — autonomous coding agent",
       "command": "claude",
-      "timeout": 600000,
+      "timeout": 1800000,
       "env": { "CLAUDECODE": "" },
       "outputFormat": "json",
       "commands": {
@@ -42,7 +42,7 @@
       "enabled": true,
       "description": "OpenAI Codex CLI — AI coding assistant with session management",
       "command": "codex",
-      "timeout": 600000,
+      "timeout": 1800000,
       "env": {},
       "outputFormat": "json",
       "commands": {
@@ -81,13 +81,14 @@
       "enabled": true,
       "description": "GitHub Copilot CLI — AI pair programmer",
       "command": "copilot",
-      "timeout": 600000,
+      "timeout": 1800000,
+      "idleTimeout": 30000,
       "env": {},
       "outputFormat": "text",
       "commands": {
         "ask": {
           "args": ["-p"],
-          "trailingArgs": ["--allow-all", "--disable-builtin-mcps", "--no-ask-user", "-s", "--no-color"],
+          "trailingArgs": ["--allow-all", "--disable-builtin-mcps", "--no-ask-user", "--max-autopilot-continues", "50", "-s", "--no-color"],
           "flags": {
             "model": "--model",
             "autoMode": ["--yolo"],
@@ -107,7 +108,7 @@
       "enabled": true,
       "description": "Google Gemini CLI — large-context AI assistant",
       "command": "gemini",
-      "timeout": 600000,
+      "timeout": 1800000,
       "env": {},
       "outputFormat": "json",
       "commands": {
@@ -126,7 +127,7 @@
       "enabled": true,
       "description": "OpenCode — multi-model CLI coding assistant",
       "command": "opencode",
-      "timeout": 600000,
+      "timeout": 1800000,
       "env": {},
       "outputFormat": "json",
       "commands": {
