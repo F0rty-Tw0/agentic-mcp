@@ -43,6 +43,7 @@ const providerConfigSchema = z.object({
   description: z.string(),
   command: z.string(),
   timeout: z.number().positive(),
+  idleTimeout: z.number().positive().optional(),
   env: z.record(z.string(), z.string().nullable()),
   prerequisites: z.array(z.string()).optional(),
   versionCheck: z
