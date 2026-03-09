@@ -5,7 +5,7 @@ import { resetBackgroundJobStoreForTests } from '../../background-jobs/data-acce
 import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import { SESSION_STORE } from '../../session';
 import type { SessionRecord, SessionTurn } from '../../session';
-import type { McpPlainTextContent, McpTextContent, ProgressContext } from '../../shared';
+import type { McpPlainTextContent, ProgressContext } from '../../shared';
 import { TEST_MINIMAL_ENV_STUB, executeCommand } from '../../shared';
 import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../../streaming/common';
 import type { AskStreamEvent } from '../../streaming/common';
@@ -34,7 +34,7 @@ vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-type AsyncJobPayload = Readonly<Record<string, string>>;
+type AsyncJobPayload = Readonly<Record<string, unknown>>;
 
 const createProgressContext = (notifications: ProgressNotification[]): ProgressContext => {
   const sendNotification = vi.fn(async (notification: ProgressNotification) => {
@@ -73,7 +73,7 @@ describe('handleAsk', () => {
   });
 
   describe('session flow', () => {
-    it('GIVEN session_id WHEN handling ask THEN prepends current request context and returns session metadata block', async () => {
+    it('GIVEN include_structured is omitted WHEN handling session ask THEN prepends current request context without structuredContent', async () => {
       const context = createAskContext();
       const sessionId = 'ask-session-1';
 
@@ -82,13 +82,38 @@ describe('handleAsk', () => {
 
       const result = await handleAsk(context, { prompt: 'test prompt', session_id: sessionId });
       const resolvedArgs = vi.mocked(buildArgArray).mock.calls[0]?.[1] as { prompt: string };
-      const sessionMetadataContent = result.content[2] as McpTextContent;
-      const sessionMetadataText = sessionMetadataContent.text;
 
-      expect(sessionMetadataContent.type).toBe('text');
+      expect(result.content[0]).toStrictEqual({ type: 'text', text: 'command output' });
       expect(resolvedArgs.prompt).toContain('Previous context:\nuser: old question');
       expect(resolvedArgs.prompt).toContain('Current request:\ntest prompt');
-      expect(sessionMetadataText).toContain('tier1-prepend');
+      expect(result.structuredContent).toBeUndefined();
+    });
+
+    it('GIVEN include_structured is true WHEN handling session ask THEN returns session metadata in structuredContent', async () => {
+      const context = createAskContext();
+      const sessionId = 'ask-session-structured';
+
+      SESSION_STORE.createOrGet(context.name, sessionId);
+      SESSION_STORE.addTurn(context.name, sessionId, { role: 'user', text: 'old question' });
+
+      const result = await handleAsk(context, {
+        prompt: 'test prompt',
+        session_id: sessionId,
+        include_structured: true,
+      });
+
+      expect(result.structuredContent).toMatchObject({
+        response: 'command output',
+        attribution: {
+          provider: 'test',
+          executionTimeMs: 100,
+          outputBytes: 14,
+          truncated: false,
+          outputFormat: 'json',
+          sessionMode: 'tier1-prepend',
+        },
+        sessionMode: 'tier1-prepend',
+      });
     });
 
     it('GIVEN session lock already acquired WHEN handling ask THEN returns session in use error', async () => {
@@ -192,7 +217,7 @@ describe('handleAsk', () => {
 
       const startResult = await handleAsk(context, { prompt: 'x', mode: 'async' });
       const startPayload = JSON.parse(readTextContent(startResult)) as AsyncJobPayload;
-      const jobId = startPayload.job_id;
+      const jobId = startPayload.job_id as string | undefined;
 
       expect(jobId).toBeDefined();
 
@@ -205,6 +230,42 @@ describe('handleAsk', () => {
 
       expect(statusPayload.state).toBe('completed');
       expect(statusPayload.result).toBe('completed output');
+      expect(statusPayload.structuredContent).toBeUndefined();
+    });
+
+    it('GIVEN include_structured is true for async ask WHEN polling status THEN returns structured payload', async () => {
+      const context = createAskContext();
+
+      vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
+        stdout: 'completed output',
+        stdoutBytes: 16,
+      });
+
+      const startResult = await handleAsk(context, { prompt: 'x', mode: 'async', include_structured: true });
+      const startPayload = JSON.parse(readTextContent(startResult)) as AsyncJobPayload;
+      const jobId = startPayload.job_id as string | undefined;
+
+      expect(jobId).toBeDefined();
+
+      if (!jobId) throw new Error('job_id should be present');
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const statusResult = await handleAsk(context, { action: 'status', job_id: jobId });
+      const statusPayload = JSON.parse(readTextContent(statusResult)) as AsyncJobPayload;
+
+      expect(statusPayload.state).toBe('completed');
+      expect(statusPayload.structuredContent).toMatchObject({
+        response: 'completed output',
+        attribution: {
+          provider: 'test',
+          executionTimeMs: 100,
+          outputBytes: 16,
+          truncated: false,
+          outputFormat: 'json',
+        },
+      });
     });
   });
 

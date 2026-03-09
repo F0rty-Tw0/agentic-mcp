@@ -71,13 +71,32 @@ describe('handleAsk', () => {
   });
 
   describe('successful execution', () => {
-    it('GIVEN valid prompt WHEN handling ask THEN returns text content with command output', async () => {
+    it('GIVEN include_structured is omitted WHEN handling ask THEN returns only surfaced text content', async () => {
       const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.content[0]).toStrictEqual({ type: 'text', text: 'command output' });
-      expect(result.content).toHaveLength(2);
+      expect(result.content).toHaveLength(1);
+      expect(result.structuredContent).toBeUndefined();
+    });
+
+    it('GIVEN include_structured is true WHEN handling ask THEN returns structuredContent', async () => {
+      const context = createAskContext();
+
+      const result = await handleAsk(context, { prompt: 'test prompt', include_structured: true });
+
+      expect(result.content[0]).toStrictEqual({ type: 'text', text: 'command output' });
+      expect(result.structuredContent).toMatchObject({
+        response: 'command output',
+        attribution: {
+          provider: 'test',
+          executionTimeMs: 100,
+          outputBytes: 14,
+          truncated: false,
+          outputFormat: 'json',
+        },
+      });
     });
 
     it('GIVEN valid prompt WHEN handling ask THEN calls buildArgArray with config and resolved args', async () => {
@@ -152,7 +171,7 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt' });
 
       expect(result.content[0]).toStrictEqual({ type: 'text', text: '(no output)' });
-      expect(result.content).toHaveLength(2);
+      expect(result.content).toHaveLength(1);
     });
 
     it('GIVEN output with ANSI codes WHEN handling ask THEN strips ANSI from output', async () => {
@@ -164,7 +183,7 @@ describe('handleAsk', () => {
 
       expect(stripAnsi).toHaveBeenCalledWith('command output');
       expect(result.content[0]).toStrictEqual({ type: 'text', text: 'clean output' });
-      expect(result.content).toHaveLength(2);
+      expect(result.content).toHaveLength(1);
     });
 
     it('GIVEN working_directory arg WHEN handling ask THEN passes cwd to executeCommand', async () => {
