@@ -9,6 +9,11 @@ type BackgroundJobStoreEntry = Readonly<{
   record: BackgroundJobRecord;
 }>;
 
+type SetBackgroundJobCompletedInput = Readonly<{
+  resultText: string;
+  structuredContent?: Readonly<Record<string, unknown>>;
+}>;
+
 const backgroundJobStore = new Map<string, BackgroundJobStoreEntry>();
 
 const pruneExpiredJobs = (nowMs: number): void => {
@@ -83,11 +88,17 @@ export const setBackgroundJobRunning = (id: string): BackgroundJobRecord | undef
   }));
 };
 
-export const setBackgroundJobCompleted = (id: string, resultText: string): BackgroundJobRecord | undefined => {
+export const setBackgroundJobCompleted = (
+  id: string,
+  setBackgroundJobCompletedInput: SetBackgroundJobCompletedInput
+): BackgroundJobRecord | undefined => {
+  const { resultText, structuredContent } = setBackgroundJobCompletedInput;
+
   return updateJob(id, (existing) => ({
     ...existing,
     state: 'completed',
     resultText: truncateResultText(resultText),
+    structuredContent,
     error: undefined,
     updatedAt: nowIso(),
   }));
@@ -99,6 +110,7 @@ export const setBackgroundJobFailed = (id: string, error: string): BackgroundJob
     state: 'failed',
     error,
     resultText: undefined,
+    structuredContent: undefined,
     updatedAt: nowIso(),
   }));
 };

@@ -122,7 +122,7 @@ describe('background-job-store', () => {
 
       setBackgroundJobRunning(job.id);
 
-      const result = setBackgroundJobCompleted(job.id, 'the answer');
+      const result = setBackgroundJobCompleted(job.id, { resultText: 'the answer' });
 
       expect(result?.state).toBe('completed');
     });
@@ -132,9 +132,25 @@ describe('background-job-store', () => {
 
       setBackgroundJobRunning(job.id);
 
-      const result = setBackgroundJobCompleted(job.id, 'the answer');
+      const result = setBackgroundJobCompleted(job.id, { resultText: 'the answer' });
 
       expect(result?.resultText).toBe('the answer');
+    });
+
+    it('GIVEN structuredContent WHEN setBackgroundJobCompleted called THEN structuredContent is stored', () => {
+      const job = createBackgroundJob('claude');
+
+      setBackgroundJobRunning(job.id);
+
+      const result = setBackgroundJobCompleted(job.id, {
+        resultText: 'the answer',
+        structuredContent: { response: 'the answer', attribution: { provider: 'test' } },
+      });
+
+      expect(result?.structuredContent).toStrictEqual({
+        response: 'the answer',
+        attribution: { provider: 'test' },
+      });
     });
 
     it('GIVEN a job that previously had an error WHEN setBackgroundJobCompleted called THEN error is cleared', () => {
@@ -142,7 +158,7 @@ describe('background-job-store', () => {
 
       setBackgroundJobFailed(job.id, 'oops');
 
-      const result = setBackgroundJobCompleted(job.id, 'recovered');
+      const result = setBackgroundJobCompleted(job.id, { resultText: 'recovered' });
 
       expect(result?.error).toBeUndefined();
     });
@@ -154,13 +170,13 @@ describe('background-job-store', () => {
 
       vi.spyOn(Date.prototype, 'toISOString').mockReturnValue('2099-06-15T12:00:00.000Z');
 
-      const result = setBackgroundJobCompleted(job.id, 'done');
+      const result = setBackgroundJobCompleted(job.id, { resultText: 'done' });
 
       expect(result?.updatedAt).toBe('2099-06-15T12:00:00.000Z');
     });
 
     it('GIVEN an unknown id WHEN setBackgroundJobCompleted called THEN returns null', () => {
-      const result = setBackgroundJobCompleted('non-existent-id', 'text');
+      const result = setBackgroundJobCompleted('non-existent-id', { resultText: 'text' });
 
       expect(result).toBeUndefined();
     });
@@ -190,11 +206,24 @@ describe('background-job-store', () => {
     it('GIVEN a job that previously had resultText WHEN setBackgroundJobFailed called THEN resultText is cleared', () => {
       const job = createBackgroundJob('claude');
 
-      setBackgroundJobCompleted(job.id, 'previous result');
+      setBackgroundJobCompleted(job.id, { resultText: 'previous result' });
 
       const result = setBackgroundJobFailed(job.id, 'now failed');
 
       expect(result?.resultText).toBeUndefined();
+    });
+
+    it('GIVEN a job that previously had structuredContent WHEN setBackgroundJobFailed called THEN structuredContent is cleared', () => {
+      const job = createBackgroundJob('claude');
+
+      setBackgroundJobCompleted(job.id, {
+        resultText: 'previous result',
+        structuredContent: { response: 'previous result', attribution: { provider: 'test' } },
+      });
+
+      const result = setBackgroundJobFailed(job.id, 'now failed');
+
+      expect(result?.structuredContent).toBeUndefined();
     });
 
     it('GIVEN a running job WHEN setBackgroundJobFailed called THEN updatedAt is updated', () => {
@@ -268,11 +297,27 @@ describe('background-job-store', () => {
     it('GIVEN a completed job WHEN getBackgroundJob called THEN returns record with resultText', () => {
       const job = createBackgroundJob('claude');
 
-      setBackgroundJobCompleted(job.id, 'final output');
+      setBackgroundJobCompleted(job.id, { resultText: 'final output' });
 
       const result = getBackgroundJob(job.id);
 
       expect(result?.resultText).toBe('final output');
+    });
+
+    it('GIVEN a completed job with structuredContent WHEN getBackgroundJob called THEN returns record with structuredContent', () => {
+      const job = createBackgroundJob('claude');
+
+      setBackgroundJobCompleted(job.id, {
+        resultText: 'final output',
+        structuredContent: { response: 'final output', attribution: { provider: 'test' } },
+      });
+
+      const result = getBackgroundJob(job.id);
+
+      expect(result?.structuredContent).toStrictEqual({
+        response: 'final output',
+        attribution: { provider: 'test' },
+      });
     });
 
     it('GIVEN a failed job WHEN getBackgroundJob called THEN returns record with error', () => {
@@ -341,7 +386,7 @@ describe('background-job-store', () => {
       const job = createBackgroundJob('claude');
       const longText = 'x'.repeat(MAX_RESULT_TEXT_LENGTH + 100);
 
-      setBackgroundJobCompleted(job.id, longText);
+      setBackgroundJobCompleted(job.id, { resultText: longText });
 
       const result = getBackgroundJob(job.id);
 
@@ -352,7 +397,7 @@ describe('background-job-store', () => {
       const job = createBackgroundJob('claude');
       const shortText = 'hello world';
 
-      setBackgroundJobCompleted(job.id, shortText);
+      setBackgroundJobCompleted(job.id, { resultText: shortText });
 
       const result = getBackgroundJob(job.id);
 
