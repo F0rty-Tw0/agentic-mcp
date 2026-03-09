@@ -9,7 +9,6 @@ import {
   FLAG_SANDBOX,
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
-  askToolStructuredContentSchema,
   isLeveledFlag,
 } from '../../ask/common';
 import { getAskCommand, getFlag } from '../../ask/utils';
@@ -151,7 +150,6 @@ export const buildAskToolDefinition = (providerName: string, config: ProviderCon
       `Get an answer from ${providerName}. Returns the answer as text content and opt-in structured metadata ` +
       `for attribution, session mode, and parsed provider payloads.`,
     inputSchema: buildAskInputSchema(config, askCmd),
-    outputSchema: askToolStructuredContentSchema,
     annotations: { destructiveHint: true, openWorldHint: true },
   };
 

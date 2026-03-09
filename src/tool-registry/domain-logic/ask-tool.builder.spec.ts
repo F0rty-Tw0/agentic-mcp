@@ -72,22 +72,11 @@ describe('buildAskToolDefinition', () => {
       expect(result.description).toContain('opt-in structured metadata');
     });
 
-    it('GIVEN ask tool definition WHEN inspecting outputSchema THEN response metadata parses successfully', () => {
+    it('GIVEN ask tool definition WHEN inspecting output schema THEN it is omitted for opt-in structured responses', () => {
       const config = createConfig({});
       const result = buildAskToolDefinition('test', config);
 
-      const parsed = result.outputSchema?.safeParse({
-        response: 'ok',
-        attribution: {
-          provider: 'test',
-          executionTimeMs: 1,
-          outputBytes: 1,
-          truncated: false,
-          outputFormat: 'json',
-        },
-      });
-
-      expect(parsed?.success).toBe(true);
+      expect(result).not.toHaveProperty('outputSchema');
     });
   });
 
