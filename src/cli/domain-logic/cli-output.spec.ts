@@ -39,6 +39,23 @@ describe('extractResultText', () => {
 
     expect(result).toBe('hello\nworld');
   });
+  it('GIVEN structuredContent WHEN extracted THEN appends formatted JSON after text content', () => {
+    const result = extractResultText({
+      content: [{ type: 'text', text: 'hello' }],
+      structuredContent: { response: 'hello', attribution: { provider: 'test' } },
+    });
+
+    expect(result).toBe('hello\n{\n  "response": "hello",\n  "attribution": {\n    "provider": "test"\n  }\n}');
+  });
+
+  it('GIVEN no text content and structuredContent WHEN extracted THEN returns formatted JSON', () => {
+    const result = extractResultText({
+      content: [{ type: 'image', data: '...', mimeType: 'image/png' }],
+      structuredContent: { response: 'hello' },
+    });
+
+    expect(result).toBe('{\n  "response": "hello"\n}');
+  });
 });
 
 describe('printResult', () => {
@@ -74,6 +91,17 @@ describe('printResult', () => {
 
     expect(stderrSpy).toHaveBeenCalledWith('oops\n');
     expect(stdoutSpy).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN successful result with structuredContent WHEN printed THEN writes text and formatted JSON to stdout', () => {
+    printResult({
+      content: [{ type: 'text', text: 'hello' }],
+      structuredContent: { response: 'hello', attribution: { provider: 'test' } },
+    });
+
+    expect(stdoutSpy).toHaveBeenCalledWith(
+      'hello\n{\n  "response": "hello",\n  "attribution": {\n    "provider": "test"\n  }\n}\n'
+    );
   });
 
   it('GIVEN error result WHEN printed THEN sets exitCode to 1', () => {
