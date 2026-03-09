@@ -116,6 +116,10 @@ describe('main', () => {
     });
 
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--config'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--context'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--job-id'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--stream-live'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('sessions_<provider>'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--version'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--help'));
     expect(mocks.createServer).not.toHaveBeenCalled();
