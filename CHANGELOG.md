@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-03-09
+
 - Add in-process CLI tool execution so CLI subcommands call the matching MCP tools directly
 - Add live CLI progress rendering for `ask_<provider> --stream-live`
 - Improve typed CLI subcommand handling and argument parsing for shared ask/ask_all options and async status checks
@@ -47,9 +49,12 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
+[0.1.6]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.5...vv0.1.6
 [0.1.5]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.4...vv0.1.5
 [0.1.4]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...vv0.1.4
 [0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...vv0.1.3
 [0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.1...vv0.1.2
 [0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/vv0.1.1
 [Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.5...HEAD
+
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.6...HEAD
