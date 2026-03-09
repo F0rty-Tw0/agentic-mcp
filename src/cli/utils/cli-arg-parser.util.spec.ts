@@ -91,7 +91,6 @@ describe('parseAskArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt', include_structured: true });
   });
 
-
   it('GIVEN empty args WHEN parsed THEN returns empty object', () => {
     const result = parseAskArgs([]);
 
@@ -150,7 +149,6 @@ describe('parseAskAllArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt' });
     expect(result).not.toHaveProperty('include_structured');
   });
-
 
   it('GIVEN empty args WHEN parsed THEN returns empty prompt string', () => {
     const result = parseAskAllArgs([]);
