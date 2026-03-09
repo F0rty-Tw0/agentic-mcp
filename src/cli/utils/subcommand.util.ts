@@ -11,26 +11,28 @@ const hasProviderSuffix = (arg: string, prefix: ProviderSubcommandPrefix): boole
   return result;
 };
 
-export const parseSubcommand = (arg: CliSubcommand): CliSubcommand | undefined => {
-  if (GLOBAL_SUBCOMMANDS.has(arg)) {
-    const result = arg;
+export const parseSubcommand = (arg: string): CliSubcommand | undefined => {
+  const cliCommand = arg as CliSubcommand;
+
+  if (GLOBAL_SUBCOMMANDS.has(cliCommand)) {
+    const result = cliCommand;
 
     return result;
   }
 
   for (const prefix of PROVIDER_SUBCOMMAND_PREFIXES) {
-    if (hasProviderSuffix(arg, prefix)) {
-      const result = arg;
+    if (hasProviderSuffix(cliCommand, prefix)) {
+      const result = cliCommand;
 
       return result;
     }
   }
 
-  return undefined;
+  return;
 };
 
-export const isCliSubcommand = (arg: CliSubcommand): boolean => {
-  const subCommand = parseSubcommand(arg);
+export const isCliSubcommand = (arg: string): boolean => {
+  const subCommand = parseSubcommand(arg as CliSubcommand);
   const result = subCommand !== undefined;
 
   return result;

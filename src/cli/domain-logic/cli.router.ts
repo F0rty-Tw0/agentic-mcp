@@ -52,7 +52,7 @@ const buildCallCliToolInput = (
 };
 
 export const runCli = async (
-  subcommand: CliSubcommand,
+  subcommand: string,
   remainingArgs: readonly string[],
   configPath?: string
 ): Promise<void> => {
