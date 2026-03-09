@@ -12,10 +12,11 @@ type ParseState = {
   context?: string;
   sessionId?: string;
   streamLive?: boolean;
-  mode?: 'async';
-  action?: 'status';
+  mode?: 'async' | string;
+  action?: 'status' | string;
   jobId?: string;
   files: string[];
+  [key: string]: string | boolean | string[] | undefined;
 };
 
 const VALUE_FLAGS: Readonly<Record<string, keyof ParseState>> = {
@@ -34,7 +35,7 @@ const parseValueFlag = (state: ParseState, flag: string, value: string): boolean
 
   if (!key) return false;
 
-  (state as unknown as Record<string, string>)[key] = value;
+  state[key] = value;
 
   return true;
 };
@@ -72,20 +73,19 @@ const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | und
 
 const tokenizeArgs = (args: readonly string[]): ParseState => {
   const state: ParseState = { files: [] };
-  let i = 0;
 
-  while (i < args.length) {
-    const arg = args[i];
-    const nextArg = args[i + 1];
+  for (let i = 0; i < args.length; ) {
+    const arg = args[i] as string;
+    const nextArg = args[i + 1] as string;
 
-    if (parseValueFlag(state, arg as string, nextArg as string)) {
+    if (parseValueFlag(state, arg, nextArg)) {
       i += 2;
       continue;
     }
 
-    const skip = parseSpecialFlags(state, arg as string, nextArg);
+    const skip = parseSpecialFlags(state, arg, nextArg);
 
-    if (skip > 0) {
+    if (skip) {
       i += skip;
       continue;
     }
@@ -129,7 +129,7 @@ const buildAskToolArgs = (state: ParseState): AskToolArgs => {
     result.files = state.files;
   }
 
-  return result as AskToolArgs;
+  return result;
 };
 
 export const parseAskArgs = (args: readonly string[]): AskToolArgs => {
@@ -143,29 +143,29 @@ export const parseAskAllArgs = (args: readonly string[]): AskAllToolArgs => {
   const askArgs = parseAskArgs(args);
 
   let providers: readonly string[] | undefined;
-  let i = 0;
 
-  while (i < args.length) {
+  for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
     if (arg === '--providers') {
       const csv = args[i + 1];
 
       providers = csv ? csv.split(',') : undefined;
-      i += 2;
-      continue;
+      i += 1; // skip the value after '--providers'
     }
-
-    i += 1;
   }
-
+  const providersArgs = providers ? { providers } : {};
+  const modelArgs = askArgs.model ? { model: askArgs.model } : {};
+  const contextArgs = askArgs.context ? { context: askArgs.context } : {};
+  const workingDirectoryArgs = askArgs.working_directory ? { working_directory: askArgs.working_directory } : {};
+  const systemPromptArgs = askArgs.system_prompt ? { system_prompt: askArgs.system_prompt } : {};
   const result: AskAllToolArgs = {
     prompt: askArgs.prompt ?? '',
-    ...(providers !== undefined && { providers }),
-    ...(askArgs.model !== undefined && { model: askArgs.model }),
-    ...(askArgs.context !== undefined && { context: askArgs.context }),
-    ...(askArgs.working_directory !== undefined && { working_directory: askArgs.working_directory }),
-    ...(askArgs.system_prompt !== undefined && { system_prompt: askArgs.system_prompt }),
+    ...providersArgs,
+    ...modelArgs,
+    ...contextArgs,
+    ...workingDirectoryArgs,
+    ...systemPromptArgs,
   };
 
   return result;
