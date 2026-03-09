@@ -19,33 +19,30 @@ describe('appendSessionMetadata', () => {
     expect(result).toBe(response);
   });
 
-  it('GIVEN sessionMode "tier1-prepend" WHEN appendSessionMetadata called THEN appends metadata content', () => {
-    const response = createCallToolResult({ content: [{ type: 'text', text: 'hello' }] });
+  it('GIVEN structuredContent exists WHEN appendSessionMetadata called THEN merges sessionMode into structuredContent', () => {
+    const response = createCallToolResult({
+      content: [{ type: 'text', text: 'hello' }],
+      structuredContent: { response: 'hello', attribution: { provider: 'test' } },
+    });
     const mode: SessionMode = 'tier1-prepend';
 
     const result = appendSessionMetadata(response, mode);
 
-    expect(result.content).toHaveLength(2);
-    const last = result.content.at(-1);
-
-    expect(last).toStrictEqual({
-      type: 'text',
-      text: JSON.stringify({ sessionMode: 'tier1-prepend' }, null, 2),
+    expect(result.content).toHaveLength(1);
+    expect(result.structuredContent).toStrictEqual({
+      response: 'hello',
+      attribution: { provider: 'test', sessionMode: 'tier1-prepend' },
+      sessionMode: 'tier1-prepend',
     });
   });
 
-  it('GIVEN sessionMode "tier2-native" WHEN appendSessionMetadata called THEN appends metadata content', () => {
+  it('GIVEN structuredContent is absent WHEN appendSessionMetadata called THEN returns response unchanged', () => {
     const response = createCallToolResult({ content: [{ type: 'text', text: 'hello' }] });
     const mode: SessionMode = 'tier2-native';
 
     const result = appendSessionMetadata(response, mode);
 
-    expect(result.content).toHaveLength(2);
-    const last = result.content.at(-1);
-
-    expect(last).toStrictEqual({
-      type: 'text',
-      text: JSON.stringify({ sessionMode: 'tier2-native' }, null, 2),
-    });
+    expect(result).toBe(response);
+    expect(result.structuredContent).toBeUndefined();
   });
 });
