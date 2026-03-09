@@ -4,7 +4,7 @@ import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
 import type { ResolvedProviderEntry } from '../../shared';
 import type { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
-import type { AskToolArgs, SessionMode } from '../common';
+import type { AskToolArgs, AskToolStructuredContent, SessionMode } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
 
 type Env = Readonly<Record<string, string>>;
@@ -22,6 +22,37 @@ export type SuccessResponseInput = Readonly<{
   summary: ReturnType<typeof buildExecutionSummary>;
   sessionMode: SessionMode;
 }>;
+
+type BuildStructuredContentInput = Readonly<{
+  responseText: string;
+  attribution: ReturnType<typeof buildAttribution>;
+  sessionMode: SessionMode;
+  includeStructured?: boolean;
+  parsed?: unknown;
+}>;
+
+const buildStructuredContent = (
+  buildStructuredContentInput: BuildStructuredContentInput
+): AskToolStructuredContent | undefined => {
+  const { responseText, attribution, sessionMode, includeStructured, parsed } = buildStructuredContentInput;
+
+  if (!includeStructured) return;
+
+  const structuredContent: AskToolStructuredContent = {
+    response: responseText,
+    attribution,
+  };
+
+  if (parsed !== undefined) {
+    structuredContent.parsed = parsed;
+  }
+
+  if (sessionMode !== 'none') {
+    structuredContent.sessionMode = sessionMode;
+  }
+
+  return structuredContent;
+};
 
 export const buildSuccessfulResponse = async (successResponseInput: SuccessResponseInput): Promise<CallToolResult> => {
   const {
@@ -61,11 +92,16 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
     sessionMode,
   };
   const attribution = buildAttribution(buildAttributionInput);
+  const responseText = buildCappedOutput(parsedOutput.text) || '(no output)';
+  const structuredContent = buildStructuredContent({
+    responseText,
+    attribution,
+    sessionMode,
+    includeStructured: args.include_structured,
+    parsed: parsedOutput.metadata?.parsed,
+  });
+  const content: CallToolResult['content'] = [{ type: 'text', text: responseText }];
+  const callToolResult: CallToolResult = structuredContent ? { content, structuredContent } : { content };
 
-  const content: CallToolResult['content'] = [
-    { type: 'text', text: buildCappedOutput(parsedOutput.text) || '(no output)' },
-    { type: 'text', text: JSON.stringify(attribution, null, 2) },
-  ];
-
-  return { content };
+  return callToolResult;
 };

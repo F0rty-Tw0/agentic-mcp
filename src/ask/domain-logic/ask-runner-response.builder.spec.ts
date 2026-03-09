@@ -62,24 +62,25 @@ const buildInput = (overrides?: Partial<SuccessResponseInput>): SuccessResponseI
 
 describe('buildSuccessfulResponse', () => {
   describe('success path (no model hint)', () => {
-    it('GIVEN normal output WHEN building THEN returns content with parsed text and attribution', async () => {
+    it('GIVEN include_structured is omitted WHEN building THEN returns only surfaced response text', async () => {
       const input = buildInput({ stdout: 'provider output' });
 
       const result = await buildSuccessfulResponse(input);
 
       expect(result.isError).toBeUndefined();
-      expect(result.content).toHaveLength(2);
+      expect(result.content).toHaveLength(1);
       expect(result.content[0]).toStrictEqual({ type: 'text', text: 'provider output' });
+      expect(result.structuredContent).toBeUndefined();
     });
 
-    it('GIVEN normal output WHEN building THEN second content item is JSON attribution', async () => {
-      const input = buildInput();
+    it('GIVEN include_structured is true WHEN building THEN returns response metadata in structuredContent', async () => {
+      const input = buildInput({ args: { prompt: 'test prompt', include_structured: true } });
 
       const result = await buildSuccessfulResponse(input);
 
-      expect(result.content[1]).toStrictEqual({
-        type: 'text',
-        text: JSON.stringify({ provider: 'test-provider' }, null, 2),
+      expect(result.structuredContent).toStrictEqual({
+        response: 'hello world',
+        attribution: { provider: 'test-provider' },
       });
     });
 
