@@ -1,100 +1,109 @@
 import { describe, expect, it } from 'vitest';
 
 import { isCliSubcommand, parseSubcommand } from './subcommand.util';
+import type { CliSubcommand } from '../common';
 
 describe('parseSubcommand', () => {
-  describe('ask commands', () => {
-    it('GIVEN ask_claude WHEN parsed THEN returns ask type with providerName claude', () => {
-      const result = parseSubcommand('ask_claude');
+  it('GIVEN ask_claude WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('ask_claude');
 
-      expect(result).toStrictEqual({ type: 'ask', providerName: 'claude' });
-    });
-
-    it('GIVEN ask_codex WHEN parsed THEN returns ask type with providerName codex', () => {
-      const result = parseSubcommand('ask_codex');
-
-      expect(result).toStrictEqual({ type: 'ask', providerName: 'codex' });
-    });
-
-    it('GIVEN ask_all WHEN parsed THEN returns ask_all type (NOT ask with provider "all")', () => {
-      const result = parseSubcommand('ask_all');
-
-      expect(result).toStrictEqual({ type: 'ask_all' });
-    });
-
-    it('GIVEN ask_ with empty provider WHEN parsed THEN returns undefined', () => {
-      const result = parseSubcommand('ask_');
-
-      expect(result).toBeUndefined();
-    });
+    expect(result).toBe('ask_claude');
   });
 
-  describe('ping commands', () => {
-    it('GIVEN ping_gemini WHEN parsed THEN returns ping type with providerName gemini', () => {
-      const result = parseSubcommand('ping_gemini');
+  it('GIVEN ask_all WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('ask_all');
 
-      expect(result).toStrictEqual({ type: 'ping', providerName: 'gemini' });
-    });
-
-    it('GIVEN ping_ with empty provider WHEN parsed THEN returns undefined', () => {
-      const result = parseSubcommand('ping_');
-
-      expect(result).toBeUndefined();
-    });
+    expect(result).toBe('ask_all');
   });
 
-  describe('help commands', () => {
-    it('GIVEN help_copilot WHEN parsed THEN returns help type with providerName copilot', () => {
-      const result = parseSubcommand('help_copilot');
+  it('GIVEN ping_gemini WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('ping_gemini');
 
-      expect(result).toStrictEqual({ type: 'help', providerName: 'copilot' });
-    });
+    expect(result).toBe('ping_gemini');
   });
 
-  describe('global commands', () => {
-    it('GIVEN list_providers WHEN parsed THEN returns list_providers type', () => {
-      const result = parseSubcommand('list_providers');
+  it('GIVEN help_copilot WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('help_copilot');
 
-      expect(result).toStrictEqual({ type: 'list_providers' });
-    });
-
-    it('GIVEN provider_metrics WHEN parsed THEN returns provider_metrics type', () => {
-      const result = parseSubcommand('provider_metrics');
-
-      expect(result).toStrictEqual({ type: 'provider_metrics' });
-    });
+    expect(result).toBe('help_copilot');
   });
 
-  describe('unknown commands', () => {
-    it('GIVEN unknown string WHEN parsed THEN returns undefined', () => {
-      const result = parseSubcommand('unknown');
+  it('GIVEN sessions_claude WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('sessions_claude');
 
-      expect(result).toBeUndefined();
-    });
+    expect(result).toBe('sessions_claude');
+  });
+
+  it('GIVEN list_providers WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('list_providers');
+
+    expect(result).toBe('list_providers');
+  });
+
+  it('GIVEN provider_metrics WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('provider_metrics');
+
+    expect(result).toBe('provider_metrics');
+  });
+
+  it('GIVEN ask_ with an empty provider WHEN parsed THEN it returns undefined', () => {
+    const result = parseSubcommand('ask_');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('GIVEN ping_ with an empty provider WHEN parsed THEN it returns undefined', () => {
+    const result = parseSubcommand('ping_');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('GIVEN help_ with an empty provider WHEN parsed THEN it returns undefined', () => {
+    const result = parseSubcommand('help_');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('GIVEN sessions_ with an empty provider WHEN parsed THEN it returns undefined', () => {
+    const result = parseSubcommand('sessions_');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('GIVEN an unknown string WHEN parsed THEN it returns undefined', () => {
+    const result = parseSubcommand('unknown' as CliSubcommand);
+
+    expect(result).toBeUndefined();
   });
 });
 
 describe('isCliSubcommand', () => {
-  it('GIVEN ask_claude WHEN checked THEN returns true', () => {
+  it('GIVEN ask_claude WHEN checked THEN it returns true', () => {
     const result = isCliSubcommand('ask_claude');
 
     expect(result).toBe(true);
   });
 
-  it('GIVEN unknown WHEN checked THEN returns false', () => {
-    const result = isCliSubcommand('unknown');
+  it('GIVEN sessions_claude WHEN checked THEN it returns true', () => {
+    const result = isCliSubcommand('sessions_claude');
+
+    expect(result).toBe(true);
+  });
+
+  it('GIVEN unknown WHEN checked THEN it returns false', () => {
+    const result = isCliSubcommand('unknown' as CliSubcommand);
 
     expect(result).toBe(false);
   });
 
-  it('GIVEN setup WHEN checked THEN returns false', () => {
-    const result = isCliSubcommand('setup');
+  it('GIVEN setup WHEN checked THEN it returns false', () => {
+    const result = isCliSubcommand('setup' as CliSubcommand);
 
     expect(result).toBe(false);
   });
 
-  it('GIVEN --version WHEN checked THEN returns false', () => {
-    const result = isCliSubcommand('--version');
+  it('GIVEN --version WHEN checked THEN it returns false', () => {
+    const result = isCliSubcommand('--version' as CliSubcommand);
 
     expect(result).toBe(false);
   });

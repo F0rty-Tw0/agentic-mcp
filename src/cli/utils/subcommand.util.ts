@@ -1,58 +1,35 @@
-import type { ParsedCliCommand } from '../common';
+import type { CliSubcommand } from '../common';
 
-export const parseSubcommand = (arg: string): ParsedCliCommand | undefined => {
-  if (arg === 'ask_all') {
-    const result: ParsedCliCommand = { type: 'ask_all' };
+const GLOBAL_SUBCOMMANDS = new Set<CliSubcommand>(['ask_all', 'list_providers', 'provider_metrics']);
+const PROVIDER_SUBCOMMAND_PREFIXES = ['ask_', 'ping_', 'help_', 'sessions_'] as const;
 
-    return result;
-  }
+type ProviderSubcommandPrefix = (typeof PROVIDER_SUBCOMMAND_PREFIXES)[number];
 
-  if (arg === 'list_providers') {
-    const result: ParsedCliCommand = { type: 'list_providers' };
+const hasProviderSuffix = (arg: string, prefix: ProviderSubcommandPrefix): boolean => {
+  const result = arg.startsWith(prefix) && arg.length > prefix.length;
 
-    return result;
-  }
+  return result;
+};
 
-  if (arg === 'provider_metrics') {
-    const result: ParsedCliCommand = { type: 'provider_metrics' };
-
-    return result;
-  }
-
-  if (arg.startsWith('ask_')) {
-    const providerName = arg.slice('ask_'.length);
-
-    if (!providerName) return;
-
-    const result: ParsedCliCommand = { type: 'ask', providerName };
+export const parseSubcommand = (arg: CliSubcommand): CliSubcommand | undefined => {
+  if (GLOBAL_SUBCOMMANDS.has(arg)) {
+    const result = arg;
 
     return result;
   }
 
-  if (arg.startsWith('ping_')) {
-    const providerName = arg.slice('ping_'.length);
+  for (const prefix of PROVIDER_SUBCOMMAND_PREFIXES) {
+    if (hasProviderSuffix(arg, prefix)) {
+      const result = arg;
 
-    if (!providerName) return undefined;
-
-    const result: ParsedCliCommand = { type: 'ping', providerName };
-
-    return result;
-  }
-
-  if (arg.startsWith('help_')) {
-    const providerName = arg.slice('help_'.length);
-
-    if (!providerName) return;
-
-    const result: ParsedCliCommand = { type: 'help', providerName };
-
-    return result;
+      return result;
+    }
   }
 
   return undefined;
 };
 
-export const isCliSubcommand = (arg: string): boolean => {
+export const isCliSubcommand = (arg: CliSubcommand): boolean => {
   const subCommand = parseSubcommand(arg);
   const result = subCommand !== undefined;
 
