@@ -10,6 +10,7 @@ export type AskToolArgs = Readonly<{
   working_directory?: string;
   files?: readonly string[];
   stream_live?: boolean;
+  include_structured?: boolean;
   job_id?: string;
   auto_mode?: string | boolean;
   sandbox?: string | boolean;
