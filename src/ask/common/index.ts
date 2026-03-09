@@ -21,4 +21,8 @@ export { isLeveledFlag } from './tool-args.types';
 
 export type { ProviderAttribution } from './attribution.types';
 
+export { askToolStructuredContentSchema, providerAttributionSchema } from './ask-tool-result.schema';
+
+export type { AskToolStructuredContent } from './ask-tool-result.schema';
+
 export type { ProgressNotification, ProgressNotificationParams } from './progress-notification.type';
