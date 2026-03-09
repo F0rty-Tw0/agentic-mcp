@@ -1,5 +1,5 @@
 import type { ResolvedProviderEntry } from '../../shared';
-import { MODEL_REGEX, executeCommand, fetchAvailableModels, selectClosestAvailableModel } from '../../shared';
+import { executeCommand, fetchAvailableModels, selectClosestAvailableModel } from '../../shared';
 import type { AskToolArgs } from '../common';
 
 type ExecutionEnv = Readonly<Record<string, string>>;
@@ -10,19 +10,13 @@ type ResolveRequestedModelInput = Readonly<{
   env: ExecutionEnv;
 }>;
 
-const shouldResolveClosestModel = (model: string): boolean => {
-  const needsNormalization = !MODEL_REGEX.test(model);
-
-  return needsNormalization;
-};
-
 export const resolveRequestedModel = async (
   resolveRequestedModelInput: ResolveRequestedModelInput
 ): Promise<AskToolArgs> => {
   const { context, args, env } = resolveRequestedModelInput;
   const requestedModel = args.model;
 
-  if (!requestedModel || !shouldResolveClosestModel(requestedModel)) return args;
+  if (!requestedModel) return args;
 
   const availableModels = await fetchAvailableModels(context, env, executeCommand);
 
