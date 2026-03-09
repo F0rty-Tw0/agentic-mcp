@@ -9,10 +9,10 @@ import { NO_PROVIDERS_WARNING, SERVER_NAME } from '../common';
 import { toRequestIdString } from '../utils';
 
 export const createServer = async (options?: ConfigPathOptions): Promise<McpServer> => {
-  const config = await loadConfig(options);
+  const configOptions = options?.configPath ? { configPath: options.configPath } : undefined;
+  const config = await loadConfig(configOptions);
 
-  warnDangerousFlags(config);
-
+  warnDangerousFlags(config, options?.providerNames);
   const resolvedProviders: ResolvedProviderEntry[] = [];
   const allProviders: ResolvedProvider[] = [];
 
