@@ -337,6 +337,14 @@ describe('selectClosestAvailableModel', () => {
     expect(result).toBe('openai/gpt-5.4');
   });
 
+  it('GIVEN ambiguous equally close candidates WHEN selecting THEN returns undefined', () => {
+    const availableModels = 'openai/gpt-5.4-mini\nopenai/gpt-5.4-nano';
+
+    const result = selectClosestAvailableModel('openai/gpt-5.4', availableModels);
+
+    expect(result).toBeUndefined();
+  });
+
   it('GIVEN no meaningful overlap WHEN selecting THEN returns undefined', () => {
     const availableModels = 'google/gemini-2.5-pro\nclaude-sonnet-4.6';
 

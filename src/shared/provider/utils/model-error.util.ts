@@ -141,17 +141,24 @@ export const selectClosestAvailableModel = (requestedModel: string, availableMod
 
   let bestModel: string | undefined;
   let bestScore = 0;
+  let hasTie = false;
 
   for (const model of models) {
     const candidateScore = scoreModelCandidate(requestedModel, model);
 
-    if (candidateScore <= bestScore) continue;
+    if (candidateScore > bestScore) {
+      bestScore = candidateScore;
+      bestModel = model;
+      hasTie = false;
+      continue;
+    }
 
-    bestScore = candidateScore;
-    bestModel = model;
+    if (candidateScore === bestScore && candidateScore > 0) {
+      hasTie = true;
+    }
   }
 
-  if (bestScore < 12) return;
+  if (bestScore < 12 || hasTie) return;
 
   return bestModel;
 };
