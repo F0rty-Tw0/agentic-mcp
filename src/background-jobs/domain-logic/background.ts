@@ -23,6 +23,7 @@ export const buildJobStatusResponse = (jobId: string): CallToolResult => {
     return callToolResult;
   }
   const resultText = record.resultText ? { result: record.resultText } : {};
+  const structuredContent = record.structuredContent ? { structuredContent: record.structuredContent } : {};
   const errorText = record.error ? { error: record.error } : {};
 
   const payload: BackgroundJobStatusPayload = {
@@ -30,6 +31,7 @@ export const buildJobStatusResponse = (jobId: string): CallToolResult => {
     state: record.state,
     updated_at: record.updatedAt,
     ...resultText,
+    ...structuredContent,
     ...errorText,
   };
 
@@ -55,7 +57,10 @@ export const startBackgroundInvocation = async (jobId: string, run: RunInvocatio
       return;
     }
 
-    setBackgroundJobCompleted(jobId, extractTextContent(response));
+    setBackgroundJobCompleted(jobId, {
+      resultText: extractTextContent(response),
+      structuredContent: response.structuredContent as Readonly<Record<string, unknown>> | undefined,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : DEFAULT_FAILURE_MESSAGE;
 

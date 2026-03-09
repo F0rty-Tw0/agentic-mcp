@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildJobStatusResponse, startBackgroundInvocation } from './background';
 import type { BackgroundJobRecord } from '../common';
 
-type StatusPayload = Readonly<Record<string, string>>;
+type StatusPayload = Readonly<Record<string, unknown>>;
 
 const mocks = vi.hoisted(() => ({
   getBackgroundJob: vi.fn(),
@@ -77,6 +77,27 @@ describe('buildJobStatusResponse', () => {
     expect(payload.state).toBe('completed');
     expect(payload.result).toBe('the final answer');
     expect(payload.updated_at).toBe('2024-01-02T00:00:00.000Z');
+    expect(payload.structuredContent).toBeUndefined();
+  });
+
+  it('GIVEN existing completed job with structuredContent WHEN buildJobStatusResponse called THEN returns JSON with structuredContent', () => {
+    const record = buildBackgroundJobRecord({
+      id: 'job-structured',
+      state: 'completed',
+      updatedAt: '2024-01-02T00:00:00.000Z',
+      resultText: 'the final answer',
+      structuredContent: { response: 'the final answer', attribution: { provider: 'test' } },
+    });
+
+    mocks.getBackgroundJob.mockReturnValue(record);
+
+    const result = buildJobStatusResponse('job-structured');
+    const payload = extractPayloadFromTextContent(result);
+
+    expect(payload.structuredContent).toStrictEqual({
+      response: 'the final answer',
+      attribution: { provider: 'test' },
+    });
   });
 
   it('GIVEN existing failed job WHEN buildJobStatusResponse called THEN returns JSON with state, error', () => {
@@ -135,8 +156,25 @@ describe('startBackgroundInvocation', () => {
     await vi.waitFor(() => expect(mocks.setBackgroundJobCompleted).toHaveBeenCalled());
 
     expect(mocks.setBackgroundJobRunning).toHaveBeenCalledWith('job-1');
-    expect(mocks.setBackgroundJobCompleted).toHaveBeenCalledWith('job-1', 'success output');
+    expect(mocks.setBackgroundJobCompleted).toHaveBeenCalledWith('job-1', { resultText: 'success output' });
     expect(mocks.setBackgroundJobFailed).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN successful invocation with structuredContent WHEN startBackgroundInvocation called THEN persists structuredContent', async () => {
+    const successResult = buildCallToolResult({
+      content: [{ type: 'text', text: 'success output' }],
+      structuredContent: { response: 'success output', attribution: { provider: 'test' } },
+    });
+    const run = vi.fn().mockResolvedValue(successResult);
+
+    void startBackgroundInvocation('job-structured', run);
+
+    await vi.waitFor(() => expect(mocks.setBackgroundJobCompleted).toHaveBeenCalled());
+
+    expect(mocks.setBackgroundJobCompleted).toHaveBeenCalledWith('job-structured', {
+      resultText: 'success output',
+      structuredContent: { response: 'success output', attribution: { provider: 'test' } },
+    });
   });
 
   it('GIVEN error response from invocation WHEN startBackgroundInvocation called THEN sets job running then failed with extracted text', async () => {
