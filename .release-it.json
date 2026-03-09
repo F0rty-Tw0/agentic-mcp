@@ -26,14 +26,14 @@
   "plugins": {
     "@release-it/keep-a-changelog": {
       "filename": "CHANGELOG.md",
-      "head": "Unreleased",
+      "head": "HEAD",
       "addUnreleased": true,
       "addVersionUrl": true,
       "versionUrlFormats": {
         "repositoryUrl": "https://github.com/F0rty-Tw0/agentic-mcp",
-        "unreleasedUrl": "{repositoryUrl}/compare/v{tagName}...HEAD",
-        "versionUrl": "{repositoryUrl}/compare/v{previousTag}...v{tagName}",
-        "firstVersionUrl": "{repositoryUrl}/releases/tag/v{tagName}"
+        "unreleasedUrl": "{repositoryUrl}/compare/{tagName}...{head}",
+        "versionUrl": "{repositoryUrl}/compare/{previousTag}...{tagName}",
+        "firstVersionUrl": "{repositoryUrl}/releases/tag/{tagName}"
       }
     }
   }

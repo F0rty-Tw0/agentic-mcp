@@ -52,9 +52,10 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[0.1.6]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.5...vv0.1.6
-[0.1.5]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.4...vv0.1.5
-[0.1.4]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.3...vv0.1.4
-[0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.2...vv0.1.3
-[0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/vv0.1.1...vv0.1.2
-[0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/vv0.1.1
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/v0.1.1
