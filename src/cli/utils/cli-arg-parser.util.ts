@@ -11,6 +11,7 @@ type ParseState = {
   maxBudget?: string;
   context?: string;
   sessionId?: string;
+  streamLive?: boolean;
   mode?: 'async';
   action?: 'status';
   jobId?: string;
@@ -49,6 +50,12 @@ const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | und
 
   if (arg === '--async') {
     state.mode = 'async';
+
+    return 1;
+  }
+
+  if (arg === '--stream-live') {
+    state.streamLive = true;
 
     return 1;
   }
@@ -103,6 +110,7 @@ const STATE_TO_ARG_MAP: readonly (readonly [keyof ParseState, string])[] = [
   ['maxBudget', 'max_budget'],
   ['context', 'context'],
   ['sessionId', 'session_id'],
+  ['streamLive', 'stream_live'],
   ['mode', 'mode'],
   ['action', 'action'],
   ['jobId', 'job_id'],

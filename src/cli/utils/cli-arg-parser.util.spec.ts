@@ -79,6 +79,12 @@ describe('parseAskArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt' });
   });
 
+  it('GIVEN --stream-live flag WHEN parsed THEN it maps to stream_live', () => {
+    const result = parseAskArgs(['prompt', '--stream-live']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', stream_live: true });
+  });
+
   it('GIVEN empty args WHEN parsed THEN returns empty object', () => {
     const result = parseAskArgs([]);
 
@@ -122,6 +128,13 @@ describe('parseAskAllArgs', () => {
     const result = parseAskAllArgs(['prompt', '--system-prompt', 'be concise']);
 
     expect(result).toStrictEqual({ prompt: 'prompt', system_prompt: 'be concise' });
+  });
+
+  it('GIVEN --stream-live flag WHEN ask_all args are parsed THEN it is ignored because ask_all is non-streaming', () => {
+    const result = parseAskAllArgs(['prompt', '--stream-live']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt' });
+    expect(result).not.toHaveProperty('stream_live');
   });
 
   it('GIVEN empty args WHEN parsed THEN returns empty prompt string', () => {
