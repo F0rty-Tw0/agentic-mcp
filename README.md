@@ -68,7 +68,7 @@ Common flags:
 
 ## CLI Usage
 
-In addition to running as an MCP server, agentic-mcp can be invoked directly from the command line:
+In addition to running as an MCP server, agentic-mcp can be invoked directly from the command line. Every CLI subcommand calls the matching MCP tool name through the same in-process MCP server contract, so CLI and MCP share argument names, error handling, and final results.
 
 ```bash
 npx agentic-mcp <command> [options]
@@ -82,42 +82,51 @@ agentic-mcp <command> [options]
 
 ### Commands
 
-| Command                   | Description                                      |
-| ------------------------- | ------------------------------------------------ |
-| `ask_<provider> <prompt>` | Query a provider (e.g. `ask_claude "explain X"`) |
-| `ask_all <prompt>`        | Query all providers in parallel                  |
-| `ping_<provider>`         | Check if a provider is available                 |
-| `help_<provider>`         | Show provider CLI help output                    |
-| `list_providers`          | List all configured providers                    |
-| `provider_metrics`        | Show call statistics                             |
+| Command                        | Description                                      |
+| ------------------------------ | ------------------------------------------------ |
+| `ask_<provider> <prompt>`      | Query a provider (e.g. `ask_claude "explain X"`) |
+| `ask_all <prompt>`             | Query all providers in parallel                  |
+| `ping_<provider>`              | Check if a provider is available                 |
+| `help_<provider>`              | Show provider CLI help output                    |
+| `sessions_<provider>`          | List known ask sessions for a provider           |
+| `list_providers`               | List all configured providers                    |
+| `provider_metrics`             | Show call statistics                             |
 
 ### Options
 
-| Option                   | Description                             |
-| ------------------------ | --------------------------------------- |
-| `--config <path>`        | Path to providers config file           |
-| `--model <name>`         | Model to use (ask commands)             |
-| `--working-dir <path>`   | Working directory for the provider      |
-| `--system-prompt <text>` | System prompt                           |
-| `--auto-mode <value>`    | Auto-mode flag value                    |
-| `--effort <value>`       | Effort level                            |
-| `--max-budget <value>`   | Max budget                              |
-| `--file <path>`          | File to include (repeatable)            |
-| `--providers <list>`     | Comma-separated provider list (ask_all) |
-| `--async`                | Run asynchronously                      |
-| `--session-id <id>`      | Session ID for multi-turn               |
+| Option                   | Description                                        |
+| ------------------------ | -------------------------------------------------- |
+| `--config <path>`        | Path to providers config file                      |
+| `--model <name>`         | Model to use (ask commands)                        |
+| `--working-dir <path>`   | Working directory for the provider                 |
+| `--system-prompt <text>` | System prompt                                      |
+| `--auto-mode <value>`    | Auto-mode flag value                               |
+| `--effort <value>`       | Effort level                                       |
+| `--max-budget <value>`   | Max budget                                         |
+| `--context <text>`       | Additional prompt context                          |
+| `--file <path>`          | File to include (repeatable)                       |
+| `--stream-live`          | Stream live progress for `ask_<provider>` commands |
+| `--providers <list>`     | Comma-separated provider list (`ask_all`)          |
+| `--async`                | Run asynchronously                                 |
+| `--job-id <id>`          | Job ID for async status checks                     |
+| `--session-id <id>`      | Session ID for multi-turn                          |
 
 ### Examples
 
 ```bash
 agentic-mcp ask_claude "what is TypeScript?"
+agentic-mcp ask_claude "show progress" --stream-live
+agentic-mcp ask_claude "summarize this" --context "Focus on risks"
+agentic-mcp ask_claude "fix this bug" --async
+agentic-mcp ask_claude --job-id job-123
+agentic-mcp sessions_claude
 agentic-mcp ask_codex "fix this bug" --model o4-mini
 agentic-mcp ask_all "explain MCP" --providers claude,gemini
 agentic-mcp list_providers
 agentic-mcp ping_claude
 ```
 
-CLI mode uses the same config resolution as MCP mode (see [Configuration](#configuration)).
+CLI mode uses the same config resolution and MCP execution contract as server mode (see [Configuration](#configuration)).
 
 ## What Can You Do?
 
@@ -226,7 +235,7 @@ Supported optional flags: `model`, `working_directory`, `files`, `auto_mode`, `s
 
 ### Streaming
 
-Enable live streaming with `stream_live: true` in ask tool calls. Responses stream via MCP progress notifications.
+Enable live streaming with `stream_live: true` in MCP `ask_*` tool calls or `--stream-live` in CLI `ask_<provider>` commands. Responses stream through MCP progress notifications in both modes.
 
 ### Async Mode
 
