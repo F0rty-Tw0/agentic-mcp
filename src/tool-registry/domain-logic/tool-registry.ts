@@ -25,6 +25,7 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
   const askCOnfig = {
     description: askDef.description,
     inputSchema: askDef.inputSchema,
+    outputSchema: askDef.outputSchema,
     annotations: askDef.annotations,
   };
 
