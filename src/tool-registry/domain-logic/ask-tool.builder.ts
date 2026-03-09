@@ -9,6 +9,7 @@ import {
   FLAG_SANDBOX,
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
+  askToolStructuredContentSchema,
   isLeveledFlag,
 } from '../../ask/common';
 import { getAskCommand, getFlag } from '../../ask/utils';
@@ -73,6 +74,10 @@ const addStreamingAndAsyncFields = (schema: MutableAskInputSchema): void => {
     .describe('Execution mode: sync waits for completion; async returns a job_id for polling (default: sync)');
 
   schema.stream_live = z.boolean().optional().describe('Emit live output chunks through progress notifications');
+  schema.include_structured = z
+    .boolean()
+    .optional()
+    .describe('Opt in to structured metadata on the result object in addition to surfaced text content');
   schema.job_id = z.string().optional().describe('Job identifier used with action=status to poll async ask progress');
 };
 
@@ -142,8 +147,11 @@ export const buildAskToolDefinition = (providerName: string, config: ProviderCon
 
   const definition: ToolDefinition = {
     name: `ask_${providerName}`,
-    description: `Get an answer from ${providerName}. Returns the response with provider attribution (model, timing, format).`,
+    description:
+      `Get an answer from ${providerName}. Returns the answer as text content and opt-in structured metadata ` +
+      `for attribution, session mode, and parsed provider payloads.`,
     inputSchema: buildAskInputSchema(config, askCmd),
+    outputSchema: askToolStructuredContentSchema,
     annotations: { destructiveHint: true, openWorldHint: true },
   };
 

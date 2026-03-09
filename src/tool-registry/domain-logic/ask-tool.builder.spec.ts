@@ -56,12 +56,38 @@ describe('buildAskToolDefinition', () => {
       expect(result.inputSchema?.stream_live?.parse(true)).toBe(true);
     });
 
-    it('GIVEN ask tool definition WHEN inspecting description THEN it describes outcome and attribution', () => {
+    it('GIVEN any provider config WHEN building tool definition THEN include_structured boolean field is present', () => {
+      const config = createConfig({});
+      const result = buildAskToolDefinition('test', config);
+
+      expect(result.inputSchema).toHaveProperty('include_structured');
+      expect(result.inputSchema?.include_structured?.parse(true)).toBe(true);
+    });
+
+    it('GIVEN ask tool definition WHEN inspecting description THEN it describes concise text plus opt-in structured metadata', () => {
       const config = createConfig({});
       const result = buildAskToolDefinition('test', config);
 
       expect(result.description).toContain('answer');
-      expect(result.description).toContain('attribution');
+      expect(result.description).toContain('opt-in structured metadata');
+    });
+
+    it('GIVEN ask tool definition WHEN inspecting outputSchema THEN response metadata parses successfully', () => {
+      const config = createConfig({});
+      const result = buildAskToolDefinition('test', config);
+
+      const parsed = result.outputSchema?.safeParse({
+        response: 'ok',
+        attribution: {
+          provider: 'test',
+          executionTimeMs: 1,
+          outputBytes: 1,
+          truncated: false,
+          outputFormat: 'json',
+        },
+      });
+
+      expect(parsed?.success).toBe(true);
     });
   });
 
