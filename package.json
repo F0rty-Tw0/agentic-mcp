@@ -13,7 +13,7 @@
     "url": "https://github.com/F0rty-Tw0/agentic-mcp/issues"
   },
   "type": "module",
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.32.0",
   "bin": {
     "agentic-mcp": "dist/index.js"
   },
