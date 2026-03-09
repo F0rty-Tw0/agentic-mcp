@@ -12,7 +12,10 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
   const configOptions = options?.configPath ? { configPath: options.configPath } : undefined;
   const config = await loadConfig(configOptions);
 
-  warnDangerousFlags(config, options?.providerNames);
+  if (options?.warnDangerousFlags) {
+    warnDangerousFlags(config, options.providerNames);
+  }
+
   const resolvedProviders: ResolvedProviderEntry[] = [];
   const allProviders: ResolvedProvider[] = [];
 
