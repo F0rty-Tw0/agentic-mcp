@@ -158,12 +158,12 @@ describe('registerAllTools', () => {
       expect(metadata.annotations).toStrictEqual({ destructiveHint: true, openWorldHint: true });
     });
 
-    it('GIVEN ask tool WHEN registered THEN exposes outputSchema for structured metadata', () => {
+    it('GIVEN ask tool WHEN registered THEN it omits outputSchema to allow default text-only responses', () => {
       register([makeProvider('claude')]);
 
       const metadata = getMetadata(server, 'ask_claude') as { outputSchema?: unknown };
 
-      expect(metadata.outputSchema).toBeDefined();
+      expect(metadata.outputSchema).toBeUndefined();
     });
 
     it('GIVEN ping tool WHEN registered THEN has readOnly and idempotent hints', () => {
