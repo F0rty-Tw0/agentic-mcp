@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Broaden model correction to validate explicit model inputs against provider-reported available models before execution
+- Fix hyphenated and shorthand model resolution for LLM-generated inputs while avoiding ambiguous tied rewrites
+
 ## [0.1.6] - 2026-03-09
 
 - Add in-process CLI tool execution so CLI subcommands call the matching MCP tools directly
