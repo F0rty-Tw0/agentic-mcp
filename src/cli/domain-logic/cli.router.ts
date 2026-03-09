@@ -1,17 +1,16 @@
 import process from 'node:process';
 
 import { printResult } from './cli-output';
+import type { AskToolArgs } from '../../ask';
+import type { AskAllToolArgs } from '../../ask-all';
+import type { CliSubcommand } from '../common';
 import { parseAskAllArgs, parseAskArgs } from '../utils/cli-arg-parser.util';
 import { renderCliProgress } from '../utils/cli-progress-renderer.util';
 import { callCliTool } from '../utils/in-process-mcp-client.util';
 import type { CallCliToolInput } from '../utils/in-process-mcp-client.util';
 import { parseSubcommand } from '../utils/subcommand.util';
-import type { CliSubcommand } from '../utils/subcommand.util';
 
-const buildToolArgs = (
-  subcommand: CliSubcommand,
-  remainingArgs: readonly string[]
-): Readonly<Record<string, unknown>> => {
+const buildToolArgs = (subcommand: CliSubcommand, remainingArgs: readonly string[]): AskToolArgs | AskAllToolArgs => {
   if (subcommand === 'ask_all') {
     const result = parseAskAllArgs(remainingArgs);
 
@@ -24,16 +23,15 @@ const buildToolArgs = (
     return result;
   }
 
-  const result: Readonly<Record<string, unknown>> = {};
-
-  return result;
+  return {};
 };
+
 const buildCallCliToolInput = (
   subcommand: CliSubcommand,
-  args: Readonly<Record<string, unknown>>,
+  args: AskToolArgs | AskAllToolArgs,
   configPath?: string
 ): CallCliToolInput => {
-  if (args.stream_live === true) {
+  if ('stream_live' in args && args.stream_live === true) {
     const result: CallCliToolInput = {
       toolName: subcommand,
       args,
@@ -54,7 +52,7 @@ const buildCallCliToolInput = (
 };
 
 export const runCli = async (
-  subcommand: string,
+  subcommand: CliSubcommand,
   remainingArgs: readonly string[],
   configPath?: string
 ): Promise<void> => {

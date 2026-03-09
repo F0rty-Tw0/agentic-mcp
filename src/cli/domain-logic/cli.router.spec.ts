@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runCli } from './cli.router';
 import { ASK_STREAM_EVENT_SCHEMA } from '../../streaming/common';
+import type { CliSubcommand } from '../common';
 import type { CallCliToolInput } from '../utils/in-process-mcp-client.util';
 
 const mocks = vi.hoisted(() => ({
@@ -124,7 +125,7 @@ describe('runCli', () => {
   });
 
   it('GIVEN an unknown command WHEN run THEN it writes an error to stderr and sets exitCode to 1', async () => {
-    await runCli('unknown_cmd', []);
+    await runCli('unknown_cmd' as CliSubcommand, []);
 
     expect(mocks.callCliTool).not.toHaveBeenCalled();
     expect(stderrSpy).toHaveBeenCalledWith('Unknown command: unknown_cmd\n');
