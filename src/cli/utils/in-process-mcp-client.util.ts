@@ -28,9 +28,20 @@ const buildRequestOptions = (
   return result;
 };
 
+const resolveProviderNames = (toolName: string): readonly string[] | undefined => {
+  const match = /^(?:ask|ping|help|sessions)_(.+)$/.exec(toolName);
+
+  if (!match) return;
+
+  if (toolName === 'ask_all') return;
+
+  return [match[1] as string];
+};
+
 export const callCliTool = async (input: CallCliToolInput): Promise<CallToolResult> => {
   const { args, configPath, onProgress, toolName } = input;
-  const server = await createServer({ configPath });
+  const providerNames = resolveProviderNames(toolName);
+  const server = await createServer({ configPath, providerNames });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'agentic-mcp-cli', version: APP_VERSION });
 

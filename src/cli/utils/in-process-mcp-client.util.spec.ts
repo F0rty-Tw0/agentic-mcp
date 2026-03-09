@@ -106,7 +106,10 @@ describe('callCliTool', () => {
       onProgress,
     });
 
-    expect(mocks.createServer).toHaveBeenCalledWith({ configPath: '/tmp/providers.json' });
+    expect(mocks.createServer).toHaveBeenCalledWith({
+      configPath: '/tmp/providers.json',
+      providerNames: ['claude'],
+    });
     expect(mocks.createLinkedPair).toHaveBeenCalledTimes(1);
     expect(mocks.serverConnect).toHaveBeenCalledWith(mocks.serverTransport);
     expect(mocks.clientConnect).toHaveBeenCalledWith(mocks.clientTransport);
@@ -118,6 +121,15 @@ describe('callCliTool', () => {
     expect(mocks.clientClose).toHaveBeenCalledTimes(1);
     expect(mocks.serverClose).toHaveBeenCalledTimes(1);
     expect(result).toStrictEqual(buildCallToolResult());
+  });
+
+  it('GIVEN provider-specific tool WHEN calling CLI tool THEN it scopes dangerous-flag warnings to that provider', async () => {
+    await callCliTool({
+      toolName: 'ask_claude',
+      args: { prompt: 'hello' },
+    });
+
+    expect(mocks.createServer).toHaveBeenCalledWith({ configPath: undefined, providerNames: ['claude'] });
   });
 
   it('GIVEN callTool throws WHEN calling a CLI tool THEN it still closes both client and server', async () => {
