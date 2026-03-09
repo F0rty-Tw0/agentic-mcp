@@ -37,6 +37,14 @@ const extractAgentMessageText = (value: unknown): string | undefined => {
   return typeof item.text === 'string' ? item.text : undefined;
 };
 
+const extractTopLevelResultText = (value: unknown): string | undefined => {
+  if (!isJsonRecord(value)) return;
+
+  if (value.type !== 'result') return;
+
+  return typeof value.result === 'string' ? value.result : undefined;
+};
+
 const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefined => {
   const lines = stdout
     .split(/\r?\n/)
@@ -78,8 +86,11 @@ const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefi
 const parseJson = (stdout: string): ParsedProviderOutput => {
   try {
     const parsed: unknown = JSON.parse(stdout);
+    const topLevelResultText = extractTopLevelResultText(parsed);
+    const parsedText = typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
+    const text = topLevelResultText ?? parsedText;
     const parsedProviderOutput: ParsedProviderOutput = {
-      text: typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2),
+      text,
       metadata: {
         outputFormatObserved: 'json',
         parsed,

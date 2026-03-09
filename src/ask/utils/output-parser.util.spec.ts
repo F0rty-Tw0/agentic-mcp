@@ -63,6 +63,28 @@ describe('parseProviderOutput', () => {
     expect(result.text).toBe('final answer');
   });
 
+  it('GIVEN claude result envelope JSON WHEN parsing THEN extracts result field text', () => {
+    const output = JSON.stringify({
+      type: 'result',
+      subtype: 'success',
+      is_error: false,
+      result: 'TypeScript is typed JavaScript.',
+      session_id: 'session-123',
+    });
+
+    const result = parseProviderOutput(output, 'json');
+
+    expect(result.metadata?.outputFormatObserved).toBe('json');
+    expect(result.text).toBe('TypeScript is typed JavaScript.');
+    expect(result.metadata?.parsed).toStrictEqual({
+      type: 'result',
+      subtype: 'success',
+      is_error: false,
+      result: 'TypeScript is typed JavaScript.',
+      session_id: 'session-123',
+    });
+  });
+
   it('GIVEN json output with mixed json events and ansi WHEN parsing THEN strips ansi and keeps structured content', () => {
     const output = '\u001b[32m{"type":"item.completed","item":{"type":"reasoning","text":"done"}}\u001b[39m';
 
