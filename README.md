@@ -82,15 +82,15 @@ agentic-mcp <command> [options]
 
 ### Commands
 
-| Command                        | Description                                      |
-| ------------------------------ | ------------------------------------------------ |
-| `ask_<provider> <prompt>`      | Query a provider (e.g. `ask_claude "explain X"`) |
-| `ask_all <prompt>`             | Query all providers in parallel                  |
-| `ping_<provider>`              | Check if a provider is available                 |
-| `help_<provider>`              | Show provider CLI help output                    |
-| `sessions_<provider>`          | List known ask sessions for a provider           |
-| `list_providers`               | List all configured providers                    |
-| `provider_metrics`             | Show call statistics                             |
+| Command                   | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `ask_<provider> <prompt>` | Query a provider (e.g. `ask_claude "explain X"`) |
+| `ask_all <prompt>`        | Query all providers in parallel                  |
+| `ping_<provider>`         | Check if a provider is available                 |
+| `help_<provider>`         | Show provider CLI help output                    |
+| `sessions_<provider>`     | List known ask sessions for a provider           |
+| `list_providers`          | List all configured providers                    |
+| `provider_metrics`        | Show call statistics                             |
 
 ### Options
 
