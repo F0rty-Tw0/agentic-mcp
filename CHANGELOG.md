@@ -4,6 +4,9 @@
 
 - Broaden model correction to validate explicit model inputs against provider-reported available models before execution
 - Fix hyphenated and shorthand model resolution for LLM-generated inputs while avoiding ambiguous tied rewrites
+- Extract top-level `result` text from JSON provider responses while preserving parsed payload metadata
+- Surface opt-in structured content in CLI output and async job status responses
+- Limit in-process CLI tool execution to the requested provider instead of loading every provider
 
 ## [0.1.6] - 2026-03-09
 
