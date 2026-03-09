@@ -8,10 +8,12 @@ type ToolAnnotations = Readonly<{
 }>;
 
 type ToolInputSchema = Readonly<Record<string, z.ZodType>>;
+type ToolOutputSchema = z.ZodType<Readonly<Record<string, unknown>>>;
 
 export type ToolDefinition = Readonly<{
   name: string;
   description: string;
   inputSchema?: ToolInputSchema;
+  outputSchema?: ToolOutputSchema;
   annotations: ToolAnnotations;
 }>;
