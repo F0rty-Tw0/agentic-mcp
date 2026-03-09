@@ -85,6 +85,13 @@ describe('parseAskArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt', stream_live: true });
   });
 
+  it('GIVEN --include-structured flag WHEN parsed THEN it maps to include_structured', () => {
+    const result = parseAskArgs(['prompt', '--include-structured']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', include_structured: true });
+  });
+
+
   it('GIVEN empty args WHEN parsed THEN returns empty object', () => {
     const result = parseAskArgs([]);
 
@@ -136,6 +143,14 @@ describe('parseAskAllArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt' });
     expect(result).not.toHaveProperty('stream_live');
   });
+
+  it('GIVEN --include-structured flag WHEN ask_all args are parsed THEN it is ignored', () => {
+    const result = parseAskAllArgs(['prompt', '--include-structured']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt' });
+    expect(result).not.toHaveProperty('include_structured');
+  });
+
 
   it('GIVEN empty args WHEN parsed THEN returns empty prompt string', () => {
     const result = parseAskAllArgs([]);

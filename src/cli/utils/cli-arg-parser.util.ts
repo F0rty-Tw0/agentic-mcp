@@ -12,6 +12,7 @@ type ParseState = {
   context?: string;
   sessionId?: string;
   streamLive?: boolean;
+  includeStructured?: boolean;
   mode?: 'async';
   action?: 'status';
   jobId?: string;
@@ -57,6 +58,12 @@ const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | und
 
   if (arg === '--stream-live') {
     state.streamLive = true;
+
+    return 1;
+  }
+
+  if (arg === '--include-structured') {
+    state.includeStructured = true;
 
     return 1;
   }
@@ -111,6 +118,7 @@ const STATE_TO_ARG_MAP: readonly (readonly [keyof ParseState, string])[] = [
   ['context', 'context'],
   ['sessionId', 'session_id'],
   ['streamLive', 'stream_live'],
+  ['includeStructured', 'include_structured'],
   ['mode', 'mode'],
   ['action', 'action'],
   ['jobId', 'job_id'],
