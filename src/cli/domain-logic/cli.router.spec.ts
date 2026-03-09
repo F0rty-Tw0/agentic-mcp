@@ -1,48 +1,40 @@
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runCli } from './cli.router';
+import { ASK_STREAM_EVENT_SCHEMA } from '../../streaming/common';
+import type { CallCliToolInput } from '../utils/in-process-mcp-client.util';
 
-vi.mock('../../ask', () => ({
-  handleAsk: vi.fn(async () => Promise.resolve({ content: [{ type: 'text', text: 'ok' }] })),
+const mocks = vi.hoisted(() => ({
+  callCliTool: vi.fn<(input: CallCliToolInput) => Promise<CallToolResult>>(),
 }));
 
-vi.mock('../../ask-all', () => ({
-  handleAskAll: vi.fn(async () => Promise.resolve({ content: [{ type: 'text', text: 'ok' }] })),
+vi.mock('../utils/in-process-mcp-client.util', () => ({
+  callCliTool: mocks.callCliTool,
 }));
 
-vi.mock('../../config/loader', () => ({
-  warnDangerousFlags: vi.fn(),
-  loadConfig: vi.fn(async () =>
-    Promise.resolve({
-      providers: {
-        claude: {
-          enabled: true,
-          command: 'claude',
-          description: 'test',
-          timeout: 1000,
-          env: {},
-          outputFormat: 'text',
-          commands: { ask: { args: ['-p'], trailingArgs: [], flags: {} } },
-          input: { method: 'flag' },
-        },
-      },
-    })
-  ),
-}));
+const buildSuccessResult = (): CallToolResult => ({
+  content: [{ type: 'text', text: 'ok' }],
+});
 
-vi.mock('../../provider-metrics', () => ({
-  handleProviderMetrics: vi.fn(() => ({ content: [{ type: 'text', text: 'ok' }] })),
-}));
+const buildErrorResult = (): CallToolResult => ({
+  content: [{ type: 'text', text: 'boom' }],
+  isError: true,
+});
 
-vi.mock('../../shared', () => ({
-  resolveCliBinary: vi.fn(async () => Promise.resolve('/usr/bin/claude')),
-}));
+const buildLiveChunkMessage = (): string => {
+  const result = JSON.stringify({
+    schema: ASK_STREAM_EVENT_SCHEMA,
+    type: 'chunk',
+    streamId: 'stream-1',
+    sequence: 1,
+    timestamp: '2026-03-08T00:00:00.000Z',
+    channel: 'stdout',
+    chunk: 'live',
+  });
 
-vi.mock('../../simple-tools', () => ({
-  handleHelp: vi.fn(async () => Promise.resolve({ content: [{ type: 'text', text: 'ok' }] })),
-  handleListProviders: vi.fn(() => ({ content: [{ type: 'text', text: 'ok' }] })),
-  handlePing: vi.fn(async () => Promise.resolve({ content: [{ type: 'text', text: 'ok' }] })),
-}));
+  return result;
+};
 
 describe('runCli', () => {
   let stdoutSpy: ReturnType<typeof vi.spyOn>;
@@ -52,6 +44,8 @@ describe('runCli', () => {
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     process.exitCode = undefined;
+    mocks.callCliTool.mockReset();
+    mocks.callCliTool.mockResolvedValue(buildSuccessResult());
   });
 
   afterEach(() => {
@@ -59,77 +53,90 @@ describe('runCli', () => {
     process.exitCode = undefined;
   });
 
-  it('GIVEN ask_claude WHEN run THEN calls handleAsk with resolved provider and parsed args', async () => {
-    const { handleAsk } = await import('../../ask');
-
+  it('GIVEN ask_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ask_claude', ['hello']);
 
-    expect(handleAsk).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'claude', binaryPath: '/usr/bin/claude' }),
-      expect.objectContaining({ prompt: 'hello' })
-    );
+    expect(mocks.callCliTool).toHaveBeenCalledWith({
+      toolName: 'ask_claude',
+      args: { prompt: 'hello' },
+      configPath: undefined,
+    });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
   });
 
-  it('GIVEN ask_all WHEN run THEN calls handleAskAll with resolved providers', async () => {
-    const { handleAskAll } = await import('../../ask-all');
-
+  it('GIVEN ask_all WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ask_all', ['hello']);
 
-    expect(handleAskAll).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ name: 'claude' })]),
-      expect.objectContaining({ prompt: 'hello' })
-    );
+    expect(mocks.callCliTool).toHaveBeenCalledWith({
+      toolName: 'ask_all',
+      args: { prompt: 'hello' },
+      configPath: undefined,
+    });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
   });
 
-  it('GIVEN ping_claude WHEN run THEN calls handlePing with resolved provider', async () => {
-    const { handlePing } = await import('../../simple-tools');
-
+  it('GIVEN ping_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ping_claude', []);
 
-    expect(handlePing).toHaveBeenCalledWith(expect.objectContaining({ name: 'claude' }));
+    expect(mocks.callCliTool).toHaveBeenCalledWith({
+      toolName: 'ping_claude',
+      args: {},
+      configPath: undefined,
+    });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
   });
 
-  it('GIVEN help_claude WHEN run THEN calls handleHelp with resolved provider', async () => {
-    const { handleHelp } = await import('../../simple-tools');
+  it('GIVEN sessions_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
+    await runCli('sessions_claude', []);
 
-    await runCli('help_claude', []);
-
-    expect(handleHelp).toHaveBeenCalledWith(expect.objectContaining({ name: 'claude' }));
+    expect(mocks.callCliTool).toHaveBeenCalledWith({
+      toolName: 'sessions_claude',
+      args: {},
+      configPath: undefined,
+    });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
   });
 
-  it('GIVEN list_providers WHEN run THEN calls handleListProviders', async () => {
-    const { handleListProviders } = await import('../../simple-tools');
+  it('GIVEN ask_claude with --stream-live WHEN run THEN it forwards stream_live and renders live progress', async () => {
+    mocks.callCliTool.mockImplementationOnce(async (input) => {
+      input.onProgress?.({
+        progress: 1,
+        message: buildLiveChunkMessage(),
+      });
 
-    await runCli('list_providers', []);
+      const result = await Promise.resolve(buildSuccessResult());
 
-    expect(handleListProviders).toHaveBeenCalled();
-    expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
+      return result;
+    });
+
+    await runCli('ask_claude', ['hello', '--stream-live']);
+
+    const callCliToolInput = mocks.callCliTool.mock.calls[0]?.[0];
+
+    expect(callCliToolInput).toMatchObject({
+      toolName: 'ask_claude',
+      args: { prompt: 'hello', stream_live: true },
+      configPath: undefined,
+    });
+    expect(typeof callCliToolInput?.onProgress).toBe('function');
+    expect(stdoutSpy).toHaveBeenNthCalledWith(1, 'live');
+    expect(stdoutSpy).toHaveBeenNthCalledWith(2, 'ok\n');
   });
 
-  it('GIVEN provider_metrics WHEN run THEN calls handleProviderMetrics', async () => {
-    const { handleProviderMetrics } = await import('../../provider-metrics');
-
-    await runCli('provider_metrics', []);
-
-    expect(handleProviderMetrics).toHaveBeenCalled();
-    expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
-  });
-
-  it('GIVEN unknown_cmd WHEN run THEN writes error to stderr and sets exitCode to 1', async () => {
+  it('GIVEN an unknown command WHEN run THEN it writes an error to stderr and sets exitCode to 1', async () => {
     await runCli('unknown_cmd', []);
 
+    expect(mocks.callCliTool).not.toHaveBeenCalled();
     expect(stderrSpy).toHaveBeenCalledWith('Unknown command: unknown_cmd\n');
     expect(process.exitCode).toBe(1);
   });
 
-  it('GIVEN ask_nonexistent WHEN run THEN writes provider not found error to stderr', async () => {
-    await runCli('ask_nonexistent', ['hello']);
+  it('GIVEN the MCP helper returns an error result WHEN run THEN it writes to stderr and sets exitCode to 1', async () => {
+    mocks.callCliTool.mockResolvedValueOnce(buildErrorResult());
 
-    expect(stderrSpy).toHaveBeenCalledWith('Provider not found or not available: nonexistent\n');
+    await runCli('provider_metrics', []);
+
+    expect(stderrSpy).toHaveBeenCalledWith('boom\n');
     expect(process.exitCode).toBe(1);
   });
 });

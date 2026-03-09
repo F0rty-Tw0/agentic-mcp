@@ -9,14 +9,16 @@
  */
 
 import { execFile } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 
-const BINARY_PATH = 'dist/index.cjs';
+const BINARY_PATH = 'dist/index.js';
 const TIMEOUT_MS = 10_000;
 const ASK_TIMEOUT_MS = 30_000;
 
@@ -45,6 +47,51 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
   }
 
   return undefined;
+};
+
+const STREAMED_STDERR_MARKER = 'STREAMED-STDERR-MARKER';
+const FINAL_STDOUT_MARKER = 'FINAL-STDOUT-MARKER';
+
+const createStreamingFixture = async (): Promise<Readonly<{ configPath: string; tempDir: string }>> => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'cli-stream-fixture-'));
+  const scriptPath = path.join(tempDir, 'stream-provider.js');
+  const configPath = path.join(tempDir, 'providers.json');
+  const script = [
+    `process.stderr.write('${STREAMED_STDERR_MARKER}');`,
+    `process.stdout.write('${FINAL_STDOUT_MARKER}');`,
+  ].join('\n');
+  const config = {
+    configVersion: 1,
+    providers: {
+      fixture: {
+        enabled: true,
+        description: 'Streaming fixture provider',
+        command: process.execPath,
+        timeout: 10_000,
+        env: {},
+        outputFormat: 'text',
+        commands: {
+          ask: {
+            args: [scriptPath],
+          },
+        },
+        input: {
+          method: 'positional',
+        },
+      },
+    },
+  };
+
+  await writeFile(scriptPath, script, 'utf8');
+  await writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
+
+  const result = { configPath, tempDir };
+
+  return result;
+};
+
+const removeTempDir = async (tempDir: string): Promise<void> => {
+  await rm(tempDir, { recursive: true, force: true });
 };
 
 describe('integration: CLI router', () => {
@@ -140,22 +187,33 @@ describe('integration: CLI router', () => {
     );
   });
 
+  it(
+    'GIVEN a controlled streaming provider WHEN calling ask with --stream-live via CLI THEN streamed stderr is observable separately from the final result',
+    async () => {
+      if (!binaryExists) return;
+
+      const { configPath, tempDir } = await createStreamingFixture();
+
+      try {
+        const result = await execFileAsync(process.execPath, [
+          BINARY_PATH,
+          'ask_fixture',
+          'ignored prompt',
+          '--stream-live',
+          '--config',
+          configPath,
+        ]);
+
+        expect(result.stderr).toContain(STREAMED_STDERR_MARKER);
+        expect(result.stdout).toContain(FINAL_STDOUT_MARKER);
+      } finally {
+        await removeTempDir(tempDir);
+      }
+    },
+    ASK_TIMEOUT_MS
+  );
+
   describe('error handling', () => {
-    it(
-      'GIVEN an unknown command WHEN the binary is spawned THEN it exits with non-zero code and stderr contains "Unknown command"',
-      async () => {
-        if (!binaryExists) return;
-
-        const error = (await execFileAsync(process.execPath, [BINARY_PATH, 'unknown_cmd']).catch(
-          (err: unknown) => err
-        )) as { code: number; stderr: string };
-
-        expect(error.code).not.toBe(0);
-        expect(error.stderr).toContain('Unknown command');
-      },
-      TIMEOUT_MS
-    );
-
     it(
       'GIVEN a non-existent provider WHEN calling ask via CLI THEN it exits with non-zero code and stderr contains "not found"',
       async () => {
