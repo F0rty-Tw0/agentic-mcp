@@ -12,8 +12,8 @@ type ParseState = {
   context?: string;
   sessionId?: string;
   streamLive?: boolean;
-  mode?: 'async' | string;
-  action?: 'status' | string;
+  mode?: 'async';
+  action?: 'status';
   jobId?: string;
   files: string[];
   [key: string]: string | boolean | string[] | undefined;
