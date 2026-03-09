@@ -38,18 +38,14 @@ const buildStructuredContent = (
 
   if (!includeStructured) return;
 
+  const parsedContent = parsed !== undefined ? { parsed } : {};
+  const sessionModeContent = sessionMode !== 'none' ? { sessionMode } : {};
   const structuredContent: AskToolStructuredContent = {
     response: responseText,
     attribution,
+    ...parsedContent,
+    ...sessionModeContent,
   };
-
-  if (parsed !== undefined) {
-    structuredContent.parsed = parsed;
-  }
-
-  if (sessionMode !== 'none') {
-    structuredContent.sessionMode = sessionMode;
-  }
 
   return structuredContent;
 };
