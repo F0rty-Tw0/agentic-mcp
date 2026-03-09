@@ -109,6 +109,7 @@ describe('callCliTool', () => {
     expect(mocks.createServer).toHaveBeenCalledWith({
       configPath: '/tmp/providers.json',
       providerNames: ['claude'],
+      warnDangerousFlags: true,
     });
     expect(mocks.createLinkedPair).toHaveBeenCalledTimes(1);
     expect(mocks.serverConnect).toHaveBeenCalledWith(mocks.serverTransport);
@@ -123,13 +124,43 @@ describe('callCliTool', () => {
     expect(result).toStrictEqual(buildCallToolResult());
   });
 
-  it('GIVEN provider-specific tool WHEN calling CLI tool THEN it scopes dangerous-flag warnings to that provider', async () => {
+  it('GIVEN provider-specific ask tool WHEN calling CLI tool THEN it scopes dangerous-flag warnings to that provider', async () => {
     await callCliTool({
-      toolName: 'ask_claude',
+      toolName: 'ask_copilot',
       args: { prompt: 'hello' },
     });
 
-    expect(mocks.createServer).toHaveBeenCalledWith({ configPath: undefined, providerNames: ['claude'] });
+    expect(mocks.createServer).toHaveBeenCalledWith({
+      configPath: undefined,
+      providerNames: ['copilot'],
+      warnDangerousFlags: true,
+    });
+  });
+
+  it('GIVEN ask_all WHEN calling CLI tool THEN it enables dangerous-flag warnings without provider scoping', async () => {
+    await callCliTool({
+      toolName: 'ask_all',
+      args: { prompt: 'hello' },
+    });
+
+    expect(mocks.createServer).toHaveBeenCalledWith({
+      configPath: undefined,
+      providerNames: undefined,
+      warnDangerousFlags: true,
+    });
+  });
+
+  it('GIVEN non-ask provider tool WHEN calling CLI tool THEN it does not enable dangerous-flag warnings', async () => {
+    await callCliTool({
+      toolName: 'help_copilot',
+      args: {},
+    });
+
+    expect(mocks.createServer).toHaveBeenCalledWith({
+      configPath: undefined,
+      providerNames: ['copilot'],
+      warnDangerousFlags: false,
+    });
   });
 
   it('GIVEN callTool throws WHEN calling a CLI tool THEN it still closes both client and server', async () => {

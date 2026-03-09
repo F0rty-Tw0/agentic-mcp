@@ -38,10 +38,17 @@ const resolveProviderNames = (toolName: string): readonly string[] | undefined =
   return [match[1] as string];
 };
 
+const shouldWarnDangerousFlags = (toolName: string): boolean => {
+  const result = toolName === 'ask_all' || toolName.startsWith('ask_');
+
+  return result;
+};
+
 export const callCliTool = async (input: CallCliToolInput): Promise<CallToolResult> => {
   const { args, configPath, onProgress, toolName } = input;
   const providerNames = resolveProviderNames(toolName);
-  const server = await createServer({ configPath, providerNames });
+  const warnDangerousFlags = shouldWarnDangerousFlags(toolName);
+  const server = await createServer({ configPath, providerNames, warnDangerousFlags });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'agentic-mcp-cli', version: APP_VERSION });
 
