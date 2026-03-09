@@ -43,7 +43,7 @@
 - Add GitHub Actions release workflow (manual dispatch)
 - Lock down package exports to CLI-only usage
 
-## [0.1.0] — Initial release
+## [0.1.0] - 2026-03-01
 
 - Multi-model AI gateway exposing CLI AI tools as MCP servers
 - Providers: Claude, Codex, Copilot, Gemini, OpenCode
@@ -62,3 +62,4 @@
 [0.1.3]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/v0.1.1
+[0.1.0]: https://github.com/F0rty-Tw0/agentic-mcp/releases/tag/v0.1.0
