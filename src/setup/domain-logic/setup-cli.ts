@@ -132,9 +132,7 @@ export const runSetup = async (
 
   dependencies.stdoutWrite(output);
 
-  if (parsedArgs.client !== 'claude-code') {
-    return;
-  }
+  if (parsedArgs.client !== 'claude-code') return;
 
   const skillResult = await installSkill({ homeDirectory: dependencies.homeDirectory });
 
