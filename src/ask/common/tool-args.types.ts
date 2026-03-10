@@ -1,4 +1,4 @@
-import type { FlagValue } from '../../shared';
+import type { FlagValue, OutputFormat } from '../../shared';
 
 export type AskToolArgs = Readonly<{
   action?: 'run' | 'status';
@@ -22,6 +22,7 @@ export type AskToolArgs = Readonly<{
 export type BuiltArgs = Readonly<{
   args: readonly string[];
   stdinInput?: string;
+  outputFormat: OutputFormat;
 }>;
 
 type LeveledFlag = { flag: string; values: string[] };
