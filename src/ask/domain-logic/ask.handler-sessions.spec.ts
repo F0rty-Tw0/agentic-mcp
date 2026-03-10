@@ -30,6 +30,12 @@ vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
   }),
 }));
 
+vi.mock('../../provider-metrics', () => ({
+  recordCall: vi.fn(async () => {
+    await Promise.resolve();
+  }),
+}));
+
 vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
   stripAnsi: vi.fn((input: string) => input),
@@ -61,6 +67,60 @@ const readTextContent = (result: CallToolResult): string => {
   if (content?.type !== 'text') return '';
 
   return content.text;
+};
+
+const readAsyncJobPayload = (result: CallToolResult): AsyncJobPayload => {
+  const payload = JSON.parse(readTextContent(result)) as AsyncJobPayload;
+
+  return payload;
+};
+
+const readAsyncJobState = (payload: AsyncJobPayload): string | undefined => {
+  const state = payload.state;
+
+  if (typeof state !== 'string') return undefined;
+
+  return state;
+};
+
+const TERMINAL_ASYNC_JOB_STATES = new Set(['completed', 'failed']);
+const ASYNC_JOB_POLL_DELAY_MS = 10;
+const ASYNC_JOB_MAX_POLL_ATTEMPTS = 20;
+
+const isTerminalAsyncJobState = (state: string | undefined): boolean => {
+  const result = state !== undefined && TERMINAL_ASYNC_JOB_STATES.has(state);
+
+  return result;
+};
+
+const delay = async (durationMs: number): Promise<void> => {
+  await new Promise<void>((resolve) => setTimeout(resolve, durationMs));
+};
+
+const fetchAsyncJobStatus = async (
+  context: ReturnType<typeof createAskContext>,
+  jobId: string
+): Promise<AsyncJobPayload> => {
+  const statusResult = await handleAsk(context, { action: 'status', job_id: jobId });
+  const statusPayload = readAsyncJobPayload(statusResult);
+
+  return statusPayload;
+};
+
+const pollAsyncJobStatus = async (
+  context: ReturnType<typeof createAskContext>,
+  jobId: string
+): Promise<AsyncJobPayload> => {
+  for (let attempt = 0; attempt < ASYNC_JOB_MAX_POLL_ATTEMPTS; attempt++) {
+    const statusPayload = await fetchAsyncJobStatus(context, jobId);
+    const state = readAsyncJobState(statusPayload);
+
+    if (isTerminalAsyncJobState(state)) return statusPayload;
+
+    await delay(ASYNC_JOB_POLL_DELAY_MS);
+  }
+
+  throw new Error(`Async job did not reach a terminal state within ${ASYNC_JOB_MAX_POLL_ATTEMPTS} attempts.`);
 };
 
 describe('handleAsk', () => {
@@ -217,17 +277,14 @@ describe('handleAsk', () => {
       });
 
       const startResult = await handleAsk(context, { prompt: 'x', mode: 'async' });
-      const startPayload = JSON.parse(readTextContent(startResult)) as AsyncJobPayload;
+      const startPayload = readAsyncJobPayload(startResult);
       const jobId = startPayload.job_id as string | undefined;
 
       expect(jobId).toBeDefined();
 
       if (!jobId) throw new Error('job_id should be present');
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      const statusResult = await handleAsk(context, { action: 'status', job_id: jobId });
-      const statusPayload = JSON.parse(readTextContent(statusResult)) as AsyncJobPayload;
+      const statusPayload = await pollAsyncJobStatus(context, jobId);
 
       expect(statusPayload.state).toBe('completed');
       expect(statusPayload.result).toBe('completed output');
@@ -244,17 +301,14 @@ describe('handleAsk', () => {
       });
 
       const startResult = await handleAsk(context, { prompt: 'x', mode: 'async', include_structured: true });
-      const startPayload = JSON.parse(readTextContent(startResult)) as AsyncJobPayload;
+      const startPayload = readAsyncJobPayload(startResult);
       const jobId = startPayload.job_id as string | undefined;
 
       expect(jobId).toBeDefined();
 
       if (!jobId) throw new Error('job_id should be present');
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      const statusResult = await handleAsk(context, { action: 'status', job_id: jobId });
-      const statusPayload = JSON.parse(readTextContent(statusResult)) as AsyncJobPayload;
+      const statusPayload = await pollAsyncJobStatus(context, jobId);
 
       expect(statusPayload.state).toBe('completed');
       expect(statusPayload.structuredContent).toMatchObject({

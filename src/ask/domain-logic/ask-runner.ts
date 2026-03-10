@@ -35,7 +35,7 @@ const handleFailedExecution = async (
   const error = await buildCommandFailure(context, args, env, result);
 
   streamNotifier.emitError(error.message, summary);
-  recordCall(context.name, result.executionTimeMs, false);
+  await recordCall(context.name, result.executionTimeMs, false);
   const wasCancelled = extra?.signal?.aborted ?? false;
 
   return buildFailureExecution(error.toMcpResponse(), wasCancelled);
@@ -84,7 +84,7 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
   };
   const response = await buildSuccessfulResponse(successResponseInput);
 
-  recordCall(context.name, result.executionTimeMs, !response.isError);
+  await recordCall(context.name, result.executionTimeMs, !response.isError);
 
   return buildExecution(response, result.stdout, outputFormat, context);
 };
@@ -104,7 +104,7 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     streamNotifier.emitError(errorMessage);
-    recordCall(context.name, 0, false);
+    await recordCall(context.name, 0, false);
 
     if (error instanceof CommandExecutionError) return buildFailureExecution(error.toMcpResponse(), false);
 
