@@ -4,6 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { callCliTool } from './in-process-mcp-client.util';
 import type { ConfigPathOptions } from '../../shared';
 
+type MockTool = Readonly<{
+  name: string;
+  inputSchema?: Readonly<{ properties?: Readonly<Record<string, unknown>> }>;
+}>;
+
+type MockListToolsResult = Readonly<{
+  tools: readonly MockTool[];
+}>;
+
 type MockServer = Readonly<{
   connect: (transport: unknown) => Promise<void>;
   close: () => Promise<void>;
@@ -17,6 +26,7 @@ const mocks = vi.hoisted(() => {
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
   const clientConnect = vi.fn<(transport: unknown) => Promise<void>>();
   const clientCallTool = vi.fn();
+  const clientListTools = vi.fn<() => Promise<MockListToolsResult>>();
   const clientClose = vi.fn<() => Promise<void>>();
   const clientCtor = vi.fn();
 
@@ -26,6 +36,7 @@ const mocks = vi.hoisted(() => {
   ): {
     connect: typeof clientConnect;
     callTool: typeof clientCallTool;
+    listTools: typeof clientListTools;
     close: typeof clientClose;
   } {
     mocks.clientCtor(clientInfo);
@@ -33,6 +44,7 @@ const mocks = vi.hoisted(() => {
     return {
       connect: mocks.clientConnect,
       callTool: mocks.clientCallTool,
+      listTools: mocks.clientListTools,
       close: mocks.clientClose,
     };
   }
@@ -46,6 +58,7 @@ const mocks = vi.hoisted(() => {
     clientClose,
     clientConnect,
     clientCtor,
+    clientListTools,
     clientTransport,
     createLinkedPair,
     createServer,
@@ -73,6 +86,22 @@ const buildCallToolResult = (): CallToolResult => ({
   content: [{ type: 'text', text: 'done' }],
 });
 
+const buildTool = (name: string, properties: readonly string[] = []): MockTool => {
+  const schemaProperties = Object.fromEntries(properties.map((property) => [property, {}]));
+  const result: MockTool = {
+    name,
+    inputSchema: { properties: schemaProperties },
+  };
+
+  return result;
+};
+
+const buildListToolsResult = (tools: readonly MockTool[] = []): MockListToolsResult => {
+  const result: MockListToolsResult = { tools };
+
+  return result;
+};
+
 describe('callCliTool', () => {
   beforeEach(() => {
     mocks.serverConnect.mockReset();
@@ -88,6 +117,16 @@ describe('callCliTool', () => {
     mocks.clientConnect.mockResolvedValue(undefined);
     mocks.clientCallTool.mockReset();
     mocks.clientCallTool.mockResolvedValue(buildCallToolResult());
+    mocks.clientListTools.mockReset();
+    mocks.clientListTools.mockResolvedValue(
+      buildListToolsResult([
+        buildTool('ask_claude', ['prompt']),
+        buildTool('ask_copilot', ['prompt']),
+        buildTool('ask_all', ['prompt']),
+        buildTool('help_copilot'),
+        buildTool('ping_claude'),
+      ])
+    );
     mocks.clientClose.mockReset();
     mocks.clientClose.mockResolvedValue(undefined);
     mocks.clientClass.mockClear();
@@ -122,6 +161,20 @@ describe('callCliTool', () => {
     expect(mocks.clientClose).toHaveBeenCalledTimes(1);
     expect(mocks.serverClose).toHaveBeenCalledTimes(1);
     expect(result).toStrictEqual(buildCallToolResult());
+  });
+
+  it('GIVEN unsupported ask args WHEN calling CLI tool THEN it rejects before invoking the MCP tool', async () => {
+    mocks.clientListTools.mockResolvedValueOnce(buildListToolsResult([buildTool('ask_claude', ['prompt'])]));
+
+    const callCliToolPromise = callCliTool({
+      toolName: 'ask_claude',
+      args: { prompt: 'hello', files: ['src/cli/domain-logic/cli.router.ts'] },
+    });
+
+    await expect(callCliToolPromise).rejects.toThrow('Argument "--file" is not supported by ask_claude');
+    expect(mocks.clientCallTool).not.toHaveBeenCalled();
+    expect(mocks.clientClose).toHaveBeenCalledTimes(1);
+    expect(mocks.serverClose).toHaveBeenCalledTimes(1);
   });
 
   it('GIVEN provider-specific ask tool WHEN calling CLI tool THEN it scopes dangerous-flag warnings to that provider', async () => {

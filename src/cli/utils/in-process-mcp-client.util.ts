@@ -5,7 +5,7 @@ import type { CallToolResult, Progress } from '@modelcontextprotocol/sdk/types.j
 import type { AskToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
 import { createServer } from '../../server';
-import { APP_VERSION } from '../../shared';
+import { APP_VERSION, ValidationError } from '../../shared';
 
 export type CallCliToolInput = Readonly<{
   toolName: string;
@@ -13,6 +13,58 @@ export type CallCliToolInput = Readonly<{
   configPath?: string;
   onProgress?: (progress: Progress) => void;
 }>;
+
+type ToolSchemaProperties = Readonly<Record<string, unknown>>;
+
+type ListedTool = Readonly<{
+  name: string;
+  inputSchema?: Readonly<{ properties?: ToolSchemaProperties }>;
+}>;
+
+const CLI_ARG_LABELS: Readonly<Record<string, string>> = {
+  files: '--file',
+  working_directory: '--working-dir',
+};
+
+const formatCliArgLabel = (argName: string): string => {
+  const result = CLI_ARG_LABELS[argName] ?? argName;
+
+  return result;
+};
+
+const resolveToolProperties = async (client: Client, toolName: string): Promise<ToolSchemaProperties> => {
+  const { tools } = await client.listTools();
+  const listedTools = tools as readonly ListedTool[];
+  const tool = listedTools.find((candidate) => candidate.name === toolName);
+
+  if (!tool) {
+    throw new ValidationError(`CLI tool "${toolName}" is not registered`);
+  }
+
+  const result = tool.inputSchema?.properties ?? {};
+
+  return result;
+};
+
+const validateSupportedArgs = async (client: Client, input: CallCliToolInput): Promise<void> => {
+  const { args, toolName } = input;
+  const argNames = Object.keys(args);
+
+  if (!argNames.length) return;
+
+  const toolProperties = await resolveToolProperties(client, toolName);
+  const unsupportedArgLabels = argNames
+    .filter((argName) => !(argName in toolProperties))
+    .map((argName) => formatCliArgLabel(argName));
+
+  if (!unsupportedArgLabels.length) return;
+
+  const joinedLabels = unsupportedArgLabels.map((label) => `"${label}"`).join(', ');
+  const noun = unsupportedArgLabels.length === 1 ? 'Argument' : 'Arguments';
+  const verb = unsupportedArgLabels.length === 1 ? 'is' : 'are';
+
+  throw new ValidationError(`${noun} ${joinedLabels} ${verb} not supported by ${toolName}`);
+};
 
 const buildRequestOptions = (
   onProgress: CallCliToolInput['onProgress']
@@ -55,6 +107,8 @@ export const callCliTool = async (input: CallCliToolInput): Promise<CallToolResu
   try {
     await server.connect(serverTransport);
     await client.connect(clientTransport);
+
+    await validateSupportedArgs(client, input);
 
     const requestOptions = buildRequestOptions(onProgress);
     const result = await client.callTool({ name: toolName, arguments: args }, undefined, requestOptions);
