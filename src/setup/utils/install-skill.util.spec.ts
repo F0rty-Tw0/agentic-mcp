@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { installSkill } from './install-skill';
+import { installSkill } from './install-skill.util';
 import { SKILL_CONTENT } from '../common/skill-content';
 
 const createDeps = (overrides?: Record<string, unknown>): Record<string, unknown> => {
