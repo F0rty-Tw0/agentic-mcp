@@ -88,12 +88,10 @@ export const registerAllTools = (
     async (args): Promise<CallToolResult> => handleAskAll(resolvedProviders, args as AskAllToolArgs)
   );
 
-  // Always register the provider_metrics tool
   const metricsDef = buildProviderMetricsToolDefinition();
   const metricsConfig = { description: metricsDef.description, annotations: metricsDef.annotations };
 
-  server.registerTool(metricsDef.name, metricsConfig, (): CallToolResult => handleProviderMetrics());
-
+  server.registerTool(metricsDef.name, metricsConfig, async (): Promise<CallToolResult> => handleProviderMetrics());
   // Always register the meta tool
   const listDef = buildListProvidersDefinition();
 

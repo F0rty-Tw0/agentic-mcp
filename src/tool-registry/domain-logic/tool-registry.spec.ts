@@ -385,13 +385,13 @@ describe('registerAllTools', () => {
       expect(metadata.annotations).toStrictEqual({ readOnlyHint: true, idempotentHint: true });
     });
 
-    it('GIVEN provider_metrics handler WHEN invoked THEN delegates to handleProviderMetrics', () => {
-      vi.mocked(handleProviderMetrics).mockReturnValue(SUCCESS_RESULT);
+    it('GIVEN provider_metrics handler WHEN invoked THEN delegates to handleProviderMetrics', async () => {
+      vi.mocked(handleProviderMetrics).mockResolvedValue(SUCCESS_RESULT);
 
       register();
 
       const handler = getHandler(server, 'provider_metrics');
-      const result = handler();
+      const result = await handler();
 
       expect(handleProviderMetrics).toHaveBeenCalledOnce();
       expect(result).toBe(SUCCESS_RESULT);
