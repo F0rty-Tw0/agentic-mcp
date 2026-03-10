@@ -27,6 +27,10 @@
             "systemPrompt": "--system-prompt",
             "workingDir": "--add-dir",
             "file": null
+          },
+          "streaming": {
+            "trailingArgs": ["--verbose", "--output-format", "stream-json"],
+            "outputFormat": "stream-json"
           }
         },
         "sessions": {

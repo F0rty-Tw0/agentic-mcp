@@ -22,10 +22,18 @@ const leveledFlagSchema = z.object({
 
 const flagValueSchema = z.union([z.string(), z.array(z.string()).min(1), leveledFlagSchema, z.null(), z.undefined()]);
 
+const outputFormatSchema: z.ZodType<OutputFormat> = z.enum(['json', 'stream-json', 'text']);
+
+const streamingCommandSchema = z.object({
+  trailingArgs: z.array(z.string()).optional(),
+  outputFormat: outputFormatSchema.optional(),
+});
+
 const commandDefSchema = z.object({
   args: z.array(z.string()).optional(),
   trailingArgs: z.array(z.string()).optional(),
   flags: z.record(z.string(), flagValueSchema).optional(),
+  streaming: streamingCommandSchema.optional(),
 });
 
 const commandsSchema = z.record(z.string(), commandDefSchema).refine((commands) => 'ask' in commands, {
@@ -35,8 +43,6 @@ const commandsSchema = z.record(z.string(), commandDefSchema).refine((commands) 
 const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),
 });
-
-const outputFormatSchema: z.ZodType<OutputFormat> = z.enum(['json', 'stream-json', 'text']);
 
 const providerConfigSchema = z.object({
   enabled: z.boolean(),

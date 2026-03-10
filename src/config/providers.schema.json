@@ -94,6 +94,22 @@
             "$ref": "#/$defs/flagValue"
           },
           "description": "Named dynamic flags. Keys are semantic capability names (e.g. \"model\", \"autoMode\", \"sandbox\"), values define how to map them to CLI arguments. Open map — any key is allowed."
+        },
+        "streaming": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional live-streaming overrides for this command. Applied only when the caller requests streaming output.",
+          "properties": {
+            "trailingArgs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Static trailing arguments used only for live streaming. Example: [\"--verbose\", \"--output-format\", \"stream-json\"]."
+            },
+            "outputFormat": {
+              "enum": ["json", "stream-json", "text"],
+              "description": "Output format produced when the streaming override is active."
+            }
+          }
         }
       }
     },
