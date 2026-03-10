@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAskCommand, getFlag } from './command-def.util';
+import { getAskCommand, getFlag, resolveAskCommand } from './command-def.util';
 import type { CommandDef, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
 import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR } from '../common';
@@ -81,6 +81,46 @@ describe('getAskCommand', () => {
     delete config.commands.ask;
 
     expect(() => getAskCommand(config)).toThrow(/ask/);
+  });
+});
+
+describe('resolveAskCommand', () => {
+  it('GIVEN non-streaming ask config WHEN streamLive is false THEN returns default trailing args and output format', () => {
+    const config = makeProviderConfig({
+      outputFormat: 'json',
+      commands: {
+        ask: {
+          args: ['-p'],
+          trailingArgs: ['--output-format', 'json'],
+        },
+      },
+    });
+
+    const result = resolveAskCommand(config, false);
+
+    expect(result.command).toStrictEqual(config.commands.ask);
+    expect(result.outputFormat).toBe('json');
+  });
+
+  it('GIVEN ask streaming overrides WHEN streamLive is true THEN returns streaming trailing args and output format', () => {
+    const config = makeProviderConfig({
+      outputFormat: 'json',
+      commands: {
+        ask: {
+          args: ['-p'],
+          trailingArgs: ['--output-format', 'json'],
+          streaming: {
+            trailingArgs: ['--verbose', '--output-format', 'stream-json'],
+            outputFormat: 'stream-json',
+          },
+        },
+      },
+    });
+
+    const result = resolveAskCommand(config, true);
+
+    expect(result.command.trailingArgs).toStrictEqual(['--verbose', '--output-format', 'stream-json']);
+    expect(result.outputFormat).toBe('stream-json');
   });
 });
 

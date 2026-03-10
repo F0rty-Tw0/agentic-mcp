@@ -1,5 +1,10 @@
-import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
+import type { CommandDef, FlagValue, OutputFormat, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
+
+export type ResolvedAskCommand = Readonly<{
+  command: CommandDef;
+  outputFormat: OutputFormat;
+}>;
 
 export const getAskCommand = (config: ProviderConfig): CommandDef => {
   const { ask } = config.commands;
@@ -7,6 +12,16 @@ export const getAskCommand = (config: ProviderConfig): CommandDef => {
   if (!ask) throw new ValidationError('Provider config missing required "ask" command');
 
   return ask;
+};
+
+export const resolveAskCommand = (config: ProviderConfig, streamLive = false): ResolvedAskCommand => {
+  const ask = getAskCommand(config);
+  const streaming = streamLive ? ask.streaming : undefined;
+  const command: CommandDef = streaming ? { ...ask, trailingArgs: streaming.trailingArgs ?? ask.trailingArgs } : ask;
+  const outputFormat = streaming?.outputFormat ?? config.outputFormat;
+  const result: ResolvedAskCommand = { command, outputFormat };
+
+  return result;
 };
 
 export const getFlag = (cmd: CommandDef, key: string): FlagValue => {
