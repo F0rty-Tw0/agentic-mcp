@@ -72,12 +72,10 @@ describe('provider-metrics-store', () => {
       recordCall('codex', 200, false);
 
       const summary = getProviderMetrics();
+      const providers = summary.providers.map((provider) => provider.provider);
 
       expect(summary.providers).toHaveLength(2);
       expect(summary.totalCalls).toBe(2);
-
-      const providers = summary.providers.map((p) => p.provider);
-
       expect(providers).toContain('claude');
       expect(providers).toContain('codex');
     });
@@ -118,6 +116,21 @@ describe('provider-metrics-store', () => {
       const summary = getProviderMetrics();
 
       expect(summary.totalCalls).toBeLessThanOrEqual(MAX_METRIC_RECORDS);
+    });
+
+    it('GIVEN pruning removes the only record for a provider WHEN recorded THEN that provider is removed from the summary', () => {
+      recordCall('oldest', 10, true);
+
+      for (let i = 0; i < MAX_METRIC_RECORDS; i++) {
+        recordCall('newest', 10, true);
+      }
+
+      const summary = getProviderMetrics();
+      const providers = summary.providers.map((provider) => provider.provider);
+
+      expect(summary.totalCalls).toBe(MAX_METRIC_RECORDS);
+      expect(providers).not.toContain('oldest');
+      expect(providers).toContain('newest');
     });
   });
 });
