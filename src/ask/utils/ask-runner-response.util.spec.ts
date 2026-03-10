@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildExecution, buildFailureExecution } from './ask-runner-response.util';
 import type { ResolvedProviderEntry } from '../../shared';
 import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
+import type { AskExecution } from '../common';
 
 vi.mock('../../session', () => ({
   extractNativeSessionId: vi.fn((_name: string, stdout: string) => {
@@ -40,7 +41,7 @@ const buildExecutionWithContext = (
   response: CallToolResult,
   stdout: string,
   context: ResolvedProviderEntry = stubContext()
-): ReturnType<typeof buildExecution> => {
+): AskExecution => {
   const result = buildExecution(response, stdout, context.config.outputFormat, context);
 
   return result;

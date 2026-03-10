@@ -4,14 +4,11 @@ import { recordCall } from '../../provider-metrics';
 import type { ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
 import { CommandExecutionError, startHeartbeat, toMcpError, unregisterActiveRequest } from '../../shared';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
-import type { AskStreamExecutionSummary } from '../../streaming';
+import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
 import { noop } from '../common';
-import type { AskToolArgs } from '../common';
+import type { AskExecution, AskToolArgs } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils';
 import { runCommandExecution } from './ask-command-execution';
-import type { AskExecution } from '../utils/ask-runner-response.util';
-
-export type { AskExecution } from '../utils/ask-runner-response.util';
 
 type RunInvocationInput = Readonly<{
   context: ResolvedProviderEntry;
@@ -25,7 +22,7 @@ type ExecuteInput = Readonly<{
   args: AskToolArgs;
   extra?: ProgressContext;
   tier2SessionId?: string;
-  streamNotifier: ReturnType<typeof createStreamNotifier>;
+  streamNotifier: StreamNotifier;
 }>;
 
 const handleFailedExecution = async (

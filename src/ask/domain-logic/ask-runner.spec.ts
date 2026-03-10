@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ResolvedProviderEntry } from '../../shared';
 import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
+import type { AskExecution } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
 
 vi.mock('../../session', () => ({
@@ -40,7 +41,7 @@ const buildExecutionWithContext = (
   response: CallToolResult,
   stdout: string,
   context: ResolvedProviderEntry = stubContext()
-): ReturnType<typeof buildExecution> => {
+): AskExecution => {
   const result = buildExecution(response, stdout, context.config.outputFormat, context);
 
   return result;

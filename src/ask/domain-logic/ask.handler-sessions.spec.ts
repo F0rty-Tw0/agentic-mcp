@@ -1,3 +1,4 @@
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
@@ -54,7 +55,7 @@ const createProgressContext = (notifications: ProgressNotification[]): ProgressC
 const parseEvents = (notifications: readonly ProgressNotification[]): AskStreamEvent[] =>
   notifications.map((notification) => JSON.parse(notification.params.message) as AskStreamEvent);
 
-const readTextContent = (result: Awaited<ReturnType<typeof handleAsk>>): string => {
+const readTextContent = (result: CallToolResult): string => {
   const content = result.content[0];
 
   if (content?.type !== 'text') return '';

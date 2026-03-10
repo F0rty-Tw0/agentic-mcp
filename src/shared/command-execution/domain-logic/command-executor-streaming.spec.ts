@@ -1,3 +1,5 @@
+import type { ChildProcess } from 'node:child_process';
+
 import crossSpawn from 'cross-spawn';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,7 +9,7 @@ import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 
-type CrossSpawnResult = ReturnType<typeof crossSpawn>;
+type CrossSpawnResult = ChildProcess;
 
 const baseOptions = { ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true };
 

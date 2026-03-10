@@ -28,6 +28,9 @@
 - Each feature lives in its own top-level `src/` directory (e.g., `ask/`, `streaming/`, `session/`).
 - Standard subdirectories: `domain-logic/` (business logic, handlers), `common/` (types, constants, stubs), `utils/` (pure helper functions).
 - Not every module needs all three — only create subdirs that have content.
+- **Shared module types live in `common/`** — if a type is used from multiple files in the same module, move it to `common/` and import it from that module's `common` barrel.
+- **Cross-module shared types live in `src/shared/common/`** — only move a type there when multiple top-level modules truly depend on it.
+- **No type forwarding through `domain-logic/` or `utils/`** — do not re-export types from those layers just to make them reachable elsewhere. Move the type to `common/` instead.
 - Test stubs live in `common/stubs/` with their own barrel `index.ts`.
 
 ## Testing
@@ -61,6 +64,8 @@ No production code before a failing test. Red -> Green -> Refactor. If you wrote
 - **Guard-first** — early returns over nested blocks.
 - **`Readonly<>`** — wrap type aliases by default. Also wrap nested `Record<>` fields.
 - **Named variables before use** — `const result: Type = { ... }; return result;` instead of returning literals directly. Same for push: `const item: Type = { ... }; list.push(item);` — never inline objects into `push()`, `return`, or function arguments.
+- **Name stable contracts explicitly** — do not use `ReturnType<typeof someFunction>` for reusable domain, transport, or test-contract types. Export a named type from the owning `common/` module and import it directly.
+- **Prefer real library/domain types over derived function types** — use `CallToolResult`, `ExecutionResult`, `ChildProcess`, `MockInstance`, etc. instead of reverse-engineering them with `ReturnType`.
 - **Null checks for config values** — use `value == null`, not `!value` (preserves falsy-but-valid values like `""` or `0`).
 - **Custom error classes** — throw `ValidationError` or `CommandExecutionError`, never bare `Error`.
 - **No magic numbers** — extract to constants in `src/shared/`.

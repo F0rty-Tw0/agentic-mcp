@@ -12,7 +12,7 @@ type GetActiveRequestMock = SyncViFn<[requestId: string], ActiveRequest | undefi
 type UnregisterActiveRequestMock = SyncViFn<[requestId: string], void>;
 
 type RegisterAllToolsMock = SyncViFn<[server: unknown, resolvedProviders: unknown[], allProviders: unknown[]], void>;
-
+type SetNotificationHandler = Server['setNotificationHandler'];
 const mocks = vi.hoisted(() => {
   const loadConfig = vi.fn<LoadConfigMock>();
   const killProcess = vi.fn<KillProcessMock>();
@@ -64,9 +64,9 @@ const createServerAndCaptureHandler = async (): Promise<NotificationHandler> => 
   const originalSetHandler = Server.prototype.setNotificationHandler;
 
   vi.spyOn(Server.prototype, 'setNotificationHandler').mockImplementation(function (
-    this: InstanceType<typeof Server>,
-    schema: Parameters<typeof originalSetHandler>[0],
-    handler: Parameters<typeof originalSetHandler>[1]
+    this: Server,
+    schema: Parameters<SetNotificationHandler>[0],
+    handler: Parameters<SetNotificationHandler>[1]
   ) {
     originalSetHandler.call(this, schema, handler);
     capturedHandler = handler as NotificationHandler;

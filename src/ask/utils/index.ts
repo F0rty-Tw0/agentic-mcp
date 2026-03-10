@@ -10,8 +10,6 @@ export { parseProviderOutput } from './output-parser.util';
 
 export type { ProviderLiveOutputAdapter } from './provider-live-output.util';
 
-export type { AskExecution } from './ask-runner-response.util';
-
 export { buildExecution, buildFailureExecution } from './ask-runner-response.util';
 
 export { createProviderLiveOutputAdapter } from './provider-live-output.util';

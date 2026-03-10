@@ -1,6 +1,7 @@
 import crossSpawn from 'cross-spawn';
 
 import { setupIdleTimeout } from './command-idle-timeout.util';
+import type { IdleTimeoutHandle } from './command-idle-timeout.util';
 import { attachStreamCollector } from './command-stream-collector.util';
 import { createAbortSubscription, setupTimeout } from './command-timeout.util';
 import { createSemaphore } from './semaphore';
@@ -36,7 +37,7 @@ const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionRe
 };
 
 const wrapChunkCallback = (
-  idleTimeout: ReturnType<typeof setupIdleTimeout>,
+  idleTimeout: IdleTimeoutHandle,
   callback?: (chunk: string) => void
 ): ((chunk: string) => void) => {
   return (chunk: string): void => {

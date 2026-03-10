@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildAttribution } from './attribution.builder';
-import type { ProviderAttribution } from '../common/attribution.types';
+import type { ProviderAttribution } from '../common';
 
 describe('buildAttribution', () => {
   const BASE_RESULT = {

@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 type EventHandler = (...args: unknown[]) => void;
 
@@ -30,7 +31,7 @@ const emit = (emitter: EventEmitter, event: string, ...args: unknown[]): void =>
   }
 };
 
-type MockFn = ReturnType<typeof vi.fn>;
+type MockFn = Mock;
 
 export type ControllableChild = Readonly<{
   child: ChildProcessLike;

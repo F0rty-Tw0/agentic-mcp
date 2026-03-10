@@ -9,6 +9,8 @@ type MockServer = Readonly<{
   connect: (transport: unknown) => Promise<void>;
 }>;
 
+type ExitFn = (code?: string | number | null) => never;
+
 const mocks = vi.hoisted(() => {
   const transportInstance = {
     transport: 'stdio',
@@ -91,7 +93,7 @@ describe('main', () => {
     process.argv = ['node', '', '--version'];
 
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as ExitFn);
 
     await entry();
 
@@ -107,7 +109,7 @@ describe('main', () => {
     process.argv = ['node', '', '--help'];
 
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as typeof process.exit);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as ExitFn);
 
     await entry();
 

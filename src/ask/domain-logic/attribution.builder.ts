@@ -1,6 +1,6 @@
 import type { SessionMode } from '../../session';
 import type { ExecutionResult, OutputFormat } from '../../shared';
-import type { ProviderAttribution } from '../common/attribution.types';
+import type { ProviderAttribution } from '../common';
 
 type AttributionMetadata = Readonly<{
   outputFormatObserved: OutputFormat;

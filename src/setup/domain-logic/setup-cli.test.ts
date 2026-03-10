@@ -13,22 +13,23 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { DetectedProvider } from '../common';
 import { runSetup } from './setup-cli';
 
 let tempDir: string;
 let stdoutOutput: string;
 let stderrOutput: string;
 
-const stubProviders = [{ name: 'claude', available: true, binaryPath: '/usr/bin/claude' }] as const;
+const stubProviders: readonly DetectedProvider[] = [{ name: 'claude', available: true, binaryPath: '/usr/bin/claude' }];
 
 const commonDeps = (): {
-  detectInstalledProviders: () => Promise<typeof stubProviders>;
+  detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;
   stdoutWrite: (text: string) => void;
   stderrWrite: (text: string) => void;
   homeDirectory: string;
   isInteractive: boolean;
 } => ({
-  detectInstalledProviders: async (): Promise<typeof stubProviders> => {
+  detectInstalledProviders: async (): Promise<readonly DetectedProvider[]> => {
     const result = await Promise.resolve(stubProviders);
 
     return result;

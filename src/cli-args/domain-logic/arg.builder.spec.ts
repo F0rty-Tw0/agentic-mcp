@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder';
+import type { ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
 import { createCliArgsConfig as createConfig } from '../common/stubs';
 
@@ -216,7 +217,7 @@ describe('buildArgArray', () => {
         trailingArgs: ['--output-format', 'json'],
       });
 
-      const streamingConfig = {
+      const streamingConfig: ProviderConfig = {
         ...config,
         commands: {
           ask: {
@@ -227,7 +228,7 @@ describe('buildArgArray', () => {
             },
           },
         },
-      } as typeof config;
+      };
 
       const result = buildArgArray(streamingConfig, { prompt: 'test', stream_live: true });
 

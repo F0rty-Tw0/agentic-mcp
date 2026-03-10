@@ -1,5 +1,6 @@
 import type { CallToolResult, Progress } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import { callCliTool } from './in-process-mcp-client.util';
 import type { ConfigPathOptions } from '../../shared';
@@ -18,34 +19,48 @@ type MockServer = Readonly<{
   close: () => Promise<void>;
 }>;
 
-const mocks = vi.hoisted(() => {
+type MockClient = Readonly<{
+  connect: Mock<(transport: unknown) => Promise<void>>;
+  callTool: Mock<(request: unknown, options?: unknown) => Promise<CallToolResult>>;
+  listTools: Mock<() => Promise<MockListToolsResult>>;
+  close: Mock<() => Promise<void>>;
+}>;
+
+type MockState = Readonly<{
+  clientCallTool: Mock<(request: unknown, options?: unknown) => Promise<CallToolResult>>;
+  clientClass: Mock<(clientInfo: unknown) => MockClient>;
+  clientClose: Mock<() => Promise<void>>;
+  clientConnect: Mock<(transport: unknown) => Promise<void>>;
+  clientCtor: Mock<(clientInfo: unknown) => void>;
+  clientListTools: Mock<() => Promise<MockListToolsResult>>;
+  clientTransport: Readonly<{ side: string }>;
+  createLinkedPair: Mock<() => readonly [unknown, unknown]>;
+  createServer: Mock<(options?: ConfigPathOptions) => Promise<MockServer>>;
+  serverClose: Mock<() => Promise<void>>;
+  serverConnect: Mock<(transport: unknown) => Promise<void>>;
+  serverTransport: Readonly<{ side: string }>;
+}>;
+
+const mocks: MockState = vi.hoisted(() => {
   const clientTransport = { side: 'client' };
   const serverTransport = { side: 'server' };
   const serverConnect = vi.fn<(transport: unknown) => Promise<void>>();
   const serverClose = vi.fn<() => Promise<void>>();
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
   const clientConnect = vi.fn<(transport: unknown) => Promise<void>>();
-  const clientCallTool = vi.fn();
+  const clientCallTool = vi.fn<(request: unknown, options?: unknown) => Promise<CallToolResult>>();
   const clientListTools = vi.fn<() => Promise<MockListToolsResult>>();
   const clientClose = vi.fn<() => Promise<void>>();
-  const clientCtor = vi.fn();
+  const clientCtor = vi.fn<(clientInfo: unknown) => void>();
 
-  function mockClient(
-    this: unknown,
-    clientInfo: unknown
-  ): {
-    connect: typeof clientConnect;
-    callTool: typeof clientCallTool;
-    listTools: typeof clientListTools;
-    close: typeof clientClose;
-  } {
-    mocks.clientCtor(clientInfo);
+  function mockClient(this: unknown, clientInfo: unknown): MockClient {
+    clientCtor(clientInfo);
 
     return {
-      connect: mocks.clientConnect,
-      callTool: mocks.clientCallTool,
-      listTools: mocks.clientListTools,
-      close: mocks.clientClose,
+      connect: clientConnect,
+      callTool: clientCallTool,
+      listTools: clientListTools,
+      close: clientClose,
     };
   }
 

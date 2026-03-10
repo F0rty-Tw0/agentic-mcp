@@ -1,14 +1,17 @@
+import type { ChildProcess } from 'node:child_process';
+
 import crossSpawn from 'cross-spawn';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
+import type { ExecutionResult } from '../common';
 import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 
 vi.mock('cross-spawn', () => ({ default: vi.fn() }));
 vi.mock('../utils/platform.util', () => ({ killProcess: vi.fn().mockResolvedValue(true) }));
 
-type CrossSpawnResult = ReturnType<typeof crossSpawn>;
+type CrossSpawnResult = ChildProcess;
 
 const baseOptions = { ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: false };
 
@@ -40,7 +43,7 @@ describe('executeCommand semaphore concurrency', () => {
       return resolvedChild?.child as unknown as CrossSpawnResult;
     });
 
-    const runCommand = async (): Promise<Awaited<ReturnType<typeof executeCommand>>> => executeCommand(baseOptions);
+    const runCommand = async (): Promise<ExecutionResult> => executeCommand(baseOptions);
     const promises = Array.from({ length: 6 }, runCommand);
 
     await drainMicrotasks();

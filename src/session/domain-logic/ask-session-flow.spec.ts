@@ -3,8 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 import type { SessionFlowState } from './ask-session-flow';
-import type { AskToolArgs } from '../../ask/common';
-import type { AskExecution } from '../../ask/domain-logic/ask-runner';
+import type { AskExecution, AskToolArgs } from '../../ask/common';
 import type { ResolvedProviderEntry } from '../../shared';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());

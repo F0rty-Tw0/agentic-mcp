@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import {
   buildModelHint,
@@ -138,7 +139,7 @@ describe('fetchAvailableModels', () => {
   };
 
   const mockEnv: MinimalEnv = TEST_MINIMAL_ENV_STUB;
-  let mockExecuteCommand: ReturnType<typeof vi.fn<(options: ExecuteCommandOptions) => Promise<ExecutionResult>>>;
+  let mockExecuteCommand: Mock<(options: ExecuteCommandOptions) => Promise<ExecutionResult>>;
 
   beforeEach(() => {
     mockExecuteCommand = vi.fn<(options: ExecuteCommandOptions) => Promise<ExecutionResult>>();

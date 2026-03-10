@@ -4,8 +4,8 @@ import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
 import type { SessionMode } from '../../session';
 import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
-import type { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
-import type { AskToolArgs, AskToolStructuredContent } from '../common';
+import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
+import type { AskToolArgs, AskToolStructuredContent, ProviderAttribution } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
 
 type Env = Readonly<Record<string, string>>;
@@ -20,14 +20,14 @@ export type SuccessResponseInput = Readonly<{
   truncated: boolean;
   stdoutBytes: number;
   outputFormat: OutputFormat;
-  streamNotifier: ReturnType<typeof createStreamNotifier>;
-  summary: ReturnType<typeof buildExecutionSummary>;
+  streamNotifier: StreamNotifier;
+  summary: AskStreamExecutionSummary;
   sessionMode: SessionMode;
 }>;
 
 type BuildStructuredContentInput = Readonly<{
   responseText: string;
-  attribution: ReturnType<typeof buildAttribution>;
+  attribution: ProviderAttribution;
   sessionMode: SessionMode;
   includeStructured?: boolean;
   parsed?: unknown;

@@ -1,17 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { extractNativeSessionId } from '../../session';
-import type { SessionMode } from '../../session';
 import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
 import { stripAnsi } from '../../shared';
-
-export type AskExecution = Readonly<{
-  response: CallToolResult;
-  sessionMode: SessionMode;
-  responseText: string;
-  nativeSessionId?: string;
-  wasCancelled: boolean;
-}>;
+import type { AskExecution } from '../common';
 
 export const buildFailureExecution = (response: CallToolResult, wasCancelled: boolean): AskExecution => ({
   response,
