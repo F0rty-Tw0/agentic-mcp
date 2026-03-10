@@ -39,6 +39,7 @@
 - Integration tests: `.test.ts`, separate vitest config.
 - Test naming: `GIVEN X WHEN Y THEN Z` (all three keywords uppercase).
 - `vi.mock()` always with factory function. `vi.mocked()` for typed access. `vi.hoisted()` for shared mock refs.
+- **No top-level `await import()` in tests** — prefer static imports. When mocks require late module evaluation, load the module from a named async helper or a `beforeAll`, never via module-scope `const { foo } = await import('./foo')`.
 - No `it.each` / `describe.each` — write explicit individual `it()` calls.
 - Factory functions for test data: `create*`/`build*`/`make*` with `overrides: Partial<T> = {}`.
 - **Complete stubs** — test stubs must include ALL required properties of the type they represent. Never pass partial objects where full types are expected; use factory functions with defaults for every field.
