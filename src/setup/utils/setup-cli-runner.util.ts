@@ -106,10 +106,9 @@ export const runMinimalSetup = async (input: SetupCliFlowInput): Promise<void> =
   const { parsedArgs, dependencies, detectedProviders } = input;
   const client = resolveSuggestedClient(parsedArgs.client);
   const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
-  const output =
-    parsedArgs.output === 'json'
-      ? formatJsonMinimalSetupOutput({ client, detectedProviders, skillResult })
-      : formatHumanMinimalSetupOutput({ client, detectedProviders, skillResult });
+  const jsonMinimalSetupOutput = formatJsonMinimalSetupOutput({ client, detectedProviders, skillResult });
+  const humanMinimalSetupOutput = formatHumanMinimalSetupOutput({ client, detectedProviders, skillResult });
+  const output = parsedArgs.output === 'json' ? jsonMinimalSetupOutput : humanMinimalSetupOutput;
 
   dependencies.stdoutWrite(output);
 };
@@ -141,9 +140,7 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
 
   dependencies.stdoutWrite(output);
 
-  if (parsedArgs.client !== 'claude-code') {
-    return;
-  }
+  if (parsedArgs.client !== 'claude-code') return;
 
   const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
 
