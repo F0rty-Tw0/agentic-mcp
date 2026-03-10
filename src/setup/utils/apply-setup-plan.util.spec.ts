@@ -1,9 +1,34 @@
 import path from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { applySetupPlan } from './apply-setup-plan.util';
-import type { SetupFs, SetupPlan } from '../common';
+import type { SetupApplyResult, SetupFileStat, SetupFs, SetupPlan } from '../common';
+
+const nodeFsMocks = vi.hoisted(() => ({
+  mkdir: vi.fn<(targetPath: string, options: { recursive: boolean }) => Promise<void>>().mockResolvedValue(undefined),
+  readFile: vi.fn<(targetPath: string, encoding: 'utf8') => Promise<string>>().mockResolvedValue(''),
+  rename: vi.fn<(sourcePath: string, destinationPath: string) => Promise<void>>().mockResolvedValue(undefined),
+  writeFile: vi
+    .fn<(targetPath: string, content: string, encoding: 'utf8') => Promise<void>>()
+    .mockResolvedValue(undefined),
+  copyFile: vi
+    .fn<(sourcePath: string, destinationPath: string, mode?: number) => Promise<void>>()
+    .mockResolvedValue(undefined),
+  stat: vi.fn<(targetPath: string) => Promise<SetupFileStat>>().mockResolvedValue({
+    isFile: () => true,
+  }),
+}));
+
+vi.mock('node:fs/promises', () => ({
+  mkdir: nodeFsMocks.mkdir,
+  readFile: nodeFsMocks.readFile,
+  rename: nodeFsMocks.rename,
+  writeFile: nodeFsMocks.writeFile,
+  copyFile: nodeFsMocks.copyFile,
+  stat: nodeFsMocks.stat,
+}));
+
+let applySetupPlan: (plan: SetupPlan, fs?: SetupFs) => Promise<SetupApplyResult>;
 
 const VALID_WRITTEN_CONFIG = '{"mcpServers":{"agentic-mcp":{"command":"npx","args":["-y","agentic-mcp"]}}}';
 
@@ -34,6 +59,33 @@ const createFsMocks = (): SetupFs => ({
 });
 
 describe('applySetupPlan', () => {
+  beforeAll(async () => {
+    const applySetupPlanModule = await import('./apply-setup-plan.util');
+
+    applySetupPlan = applySetupPlanModule.applySetupPlan;
+  });
+
+  beforeEach(() => {
+    nodeFsMocks.mkdir.mockReset();
+    nodeFsMocks.readFile.mockReset();
+    nodeFsMocks.rename.mockReset();
+    nodeFsMocks.writeFile.mockReset();
+    nodeFsMocks.copyFile.mockReset();
+    nodeFsMocks.stat.mockReset();
+
+    nodeFsMocks.mkdir.mockResolvedValue(undefined);
+    nodeFsMocks.readFile.mockResolvedValue('');
+    nodeFsMocks.rename.mockResolvedValue(undefined);
+    nodeFsMocks.writeFile.mockResolvedValue(undefined);
+    nodeFsMocks.copyFile.mockResolvedValue(undefined);
+    nodeFsMocks.stat.mockResolvedValue({
+      isFile: () => true,
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   it('GIVEN existing target and backup policy if-exists WHEN applying THEN creates backup', async () => {
     const fs = createFsMocks();
 
@@ -184,5 +236,42 @@ describe('applySetupPlan', () => {
 
     expect(result.status).toBe('verification-failed');
     expect(result.reason).toBe('Written config must include mcpServers["agentic-mcp"].');
+  });
+  it('GIVEN JSON parse throws non-Error during verification WHEN applying THEN returns fallback invalid-json reason', async () => {
+    const fs = createFsMocks();
+
+    vi.spyOn(fs, 'readFile').mockResolvedValueOnce('not used because parse is mocked');
+    vi.spyOn(JSON, 'parse').mockImplementation(() => {
+      const nonError = 'bad json' as unknown as Error;
+
+      throw nonError;
+    });
+
+    const result = await applySetupPlan(createPlan(), fs);
+
+    expect(result.status).toBe('verification-failed');
+    expect(result.reason).toBe('Invalid JSON in written file');
+  });
+
+  it('GIVEN default fs dependencies WHEN applying THEN uses node fs wrappers for backup write rename and verification', async () => {
+    const plan = createPlan();
+
+    nodeFsMocks.readFile.mockResolvedValueOnce(VALID_WRITTEN_CONFIG);
+
+    const result = await applySetupPlan(plan);
+    const targetPath = plan.targetPath ?? '';
+
+    expect(targetPath).toBe(path.join('/home/dev', '.claude/claude_desktop_config.json'));
+    expect(nodeFsMocks.mkdir).toHaveBeenCalledWith(path.dirname(targetPath), { recursive: true });
+    expect(nodeFsMocks.stat).toHaveBeenCalledWith(targetPath);
+    expect(nodeFsMocks.copyFile).toHaveBeenCalledWith(targetPath, `${targetPath}.bak`, expect.any(Number));
+    expect(nodeFsMocks.writeFile).toHaveBeenCalledWith(`${targetPath}.tmp`, plan.configText, 'utf8');
+    expect(nodeFsMocks.rename).toHaveBeenCalledWith(`${targetPath}.tmp`, targetPath);
+    expect(nodeFsMocks.readFile).toHaveBeenCalledWith(targetPath, 'utf8');
+    expect(result).toStrictEqual({
+      status: 'written',
+      path: plan.targetPath,
+      backupPath: `${plan.targetPath}.bak`,
+    });
   });
 });
