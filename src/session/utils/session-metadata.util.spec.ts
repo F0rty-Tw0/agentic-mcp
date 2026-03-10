@@ -1,8 +1,8 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { describe, expect, it } from 'vitest';
 
+import type { SessionMode } from '../common';
 import { appendSessionMetadata } from './session-metadata.util';
-import type { SessionMode } from '../../common';
 
 const createCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => ({
   content: [{ type: 'text', text: 'response text' }],

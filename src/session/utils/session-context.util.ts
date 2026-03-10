@@ -17,5 +17,7 @@ export const buildSessionPrompt = ({ sessionTurnsText, userContext, prompt }: Bu
 
   parts.push(`Current request:\n${prompt}`);
 
-  return parts.join('\n\n');
+  const result = parts.join('\n\n');
+
+  return result;
 };

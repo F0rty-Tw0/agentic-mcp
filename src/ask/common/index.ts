@@ -15,8 +15,6 @@ export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const';
 
 export type { AskToolArgs, BuiltArgs } from './tool-args.types';
 
-export type { SessionMode } from './session-mode.type';
-
 export { isLeveledFlag } from './tool-args.types';
 
 export type { ProviderAttribution } from './attribution.types';
