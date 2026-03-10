@@ -216,6 +216,20 @@ describe('callCliTool', () => {
     });
   });
 
+  it('GIVEN an unknown provider tool WHEN calling a CLI tool THEN it reports the provider as not found', async () => {
+    mocks.clientListTools.mockResolvedValueOnce(buildListToolsResult([buildTool('ask_claude', ['prompt'])]));
+
+    const callCliToolPromise = callCliTool({
+      toolName: 'ask_nonexistent',
+      args: { prompt: 'hello' },
+    });
+
+    await expect(callCliToolPromise).rejects.toThrow('Provider "nonexistent" not found');
+    expect(mocks.clientCallTool).not.toHaveBeenCalled();
+    expect(mocks.clientClose).toHaveBeenCalledTimes(1);
+    expect(mocks.serverClose).toHaveBeenCalledTimes(1);
+  });
+
   it('GIVEN callTool throws WHEN calling a CLI tool THEN it still closes both client and server', async () => {
     mocks.clientCallTool.mockRejectedValueOnce(new Error('boom'));
 

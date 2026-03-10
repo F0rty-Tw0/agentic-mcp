@@ -32,13 +32,33 @@ const formatCliArgLabel = (argName: string): string => {
   return result;
 };
 
+const resolveProviderNames = (toolName: string): readonly string[] | undefined => {
+  const match = /^(?:ask|ping|help|sessions)_(.+)$/.exec(toolName);
+
+  if (!match) return;
+
+  if (toolName === 'ask_all') return;
+
+  return [match[1] as string];
+};
+
+const buildUnknownToolErrorMessage = (toolName: string): string => {
+  const providerNames = resolveProviderNames(toolName);
+
+  if (providerNames?.length === 1) {
+    return `Provider "${providerNames[0]}" not found`;
+  }
+
+  return `CLI tool "${toolName}" is not registered`;
+};
+
 const resolveToolProperties = async (client: Client, toolName: string): Promise<ToolSchemaProperties> => {
   const { tools } = await client.listTools();
   const listedTools = tools as readonly ListedTool[];
   const tool = listedTools.find((candidate) => candidate.name === toolName);
 
   if (!tool) {
-    throw new ValidationError(`CLI tool "${toolName}" is not registered`);
+    throw new ValidationError(buildUnknownToolErrorMessage(toolName));
   }
 
   const result = tool.inputSchema?.properties ?? {};
@@ -78,16 +98,6 @@ const buildRequestOptions = (
   };
 
   return result;
-};
-
-const resolveProviderNames = (toolName: string): readonly string[] | undefined => {
-  const match = /^(?:ask|ping|help|sessions)_(.+)$/.exec(toolName);
-
-  if (!match) return;
-
-  if (toolName === 'ask_all') return;
-
-  return [match[1] as string];
 };
 
 const shouldWarnDangerousFlags = (toolName: string): boolean => {
