@@ -9,7 +9,7 @@ import {
   FLAG_WORKING_DIR,
 } from '../../ask/common';
 import type { AskToolArgs, BuiltArgs } from '../../ask/common';
-import { getAskCommand, getFlag } from '../../ask/utils';
+import { getFlag, resolveAskCommand } from '../../ask/utils';
 import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
 
@@ -96,29 +96,25 @@ export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): BuiltA
 
   if (!args.prompt) throw new ValidationError('Missing required "prompt" argument');
 
-  const askCmd = getAskCommand(config);
+  const { command: askCmd, outputFormat } = resolveAskCommand(config, args.stream_live === true);
 
-  // Pre-prompt args (subcommand for positional input, flag prefix for flag input)
   if (askCmd.args?.length) {
     cliArgs.push(...askCmd.args);
   }
 
-  // Prompt delivery based on input method
   if (config.input.method === 'stdin') {
     stdinInput = args.prompt;
   } else {
     cliArgs.push(args.prompt);
   }
 
-  // Append all optional flag-based args
   appendOptionalFlags(cliArgs, askCmd, args);
 
-  // Trailing args (output format flags, etc.)
   if (askCmd.trailingArgs?.length) {
     cliArgs.push(...askCmd.trailingArgs);
   }
 
-  const builtArgs: BuiltArgs = { args: cliArgs, stdinInput };
+  const builtArgs: BuiltArgs = { args: cliArgs, stdinInput, outputFormat };
 
   return builtArgs;
 };

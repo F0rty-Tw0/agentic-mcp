@@ -211,6 +211,30 @@ describe('buildArgArray', () => {
       expect(outputIdx).toBeGreaterThan(modelIdx);
     });
 
+    it('GIVEN streaming command overrides WHEN stream_live is true THEN it uses the streaming trailing args and output format', () => {
+      const config = createConfig({
+        trailingArgs: ['--output-format', 'json'],
+      });
+
+      const streamingConfig = {
+        ...config,
+        commands: {
+          ask: {
+            ...config.commands.ask,
+            streaming: {
+              trailingArgs: ['--verbose', '--output-format', 'stream-json'],
+              outputFormat: 'stream-json',
+            },
+          },
+        },
+      } as typeof config;
+
+      const result = buildArgArray(streamingConfig, { prompt: 'test', stream_live: true });
+
+      expect(result.args).toStrictEqual(['run', 'test', '--verbose', '--output-format', 'stream-json']);
+      expect(result.outputFormat).toBe('stream-json');
+    });
+
     it('GIVEN no trailing args WHEN building args THEN only command args and flags present', () => {
       const config = createConfig({ args: ['run'] });
 
