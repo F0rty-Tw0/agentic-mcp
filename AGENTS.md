@@ -8,6 +8,7 @@
 - **No extensions on relative imports** — use `'./foo'`, never `'./foo.ts'` or `'./foo.js'`. Package imports keep their original extension.
 - **`node:` prefix mandatory** — always `import from 'node:fs/promises'`, never bare `'fs/promises'`.
 - **`import type` for type-only imports** — enforced by `verbatimModuleSyntax`. You will forget this.
+- **No `import type * as` namespace imports** — import the specific types directly. If a type is reused across files in one top-level module, move it into that module's `common/` folder and import it from there. Do not reach for `typeof import('./foo')` or module-wide type namespaces when a direct type import would tell the truth.
 - **`catch (error: unknown)`** — never `any`, never bare `Error`.
 - **`toStrictEqual` over `toEqual`** — always. Use `toBe` for primitives.
 - **No `eslint-disable` comments** — fix the code instead. Refactor to reduce complexity, extract helpers, restructure loops.
@@ -28,7 +29,7 @@
 - Each feature lives in its own top-level `src/` directory (e.g., `ask/`, `streaming/`, `session/`).
 - Standard subdirectories: `domain-logic/` (business logic, handlers), `common/` (types, constants, stubs), `utils/` (pure helper functions).
 - Not every module needs all three — only create subdirs that have content.
-- **Shared module types live in `common/`** — if a type is used from multiple files in the same module, move it to `common/` and import it from that module's `common` barrel.
+- **Shared module types live in `common/`** — if a type is used from multiple files in the same module, move it to `common/` and import it from that module's `common` barrel. Prefer direct named imports over local module-type wrappers.
 - **Cross-module shared types live in `src/shared/common/`** — only move a type there when multiple top-level modules truly depend on it.
 - **No type forwarding through `domain-logic/` or `utils/`** — do not re-export types from those layers just to make them reachable elsewhere. Move the type to `common/` instead.
 - Test stubs live in `common/stubs/` with their own barrel `index.ts`.
@@ -39,8 +40,8 @@
 - Integration tests: `.test.ts`, separate vitest config.
 - Test naming: `GIVEN X WHEN Y THEN Z` (all three keywords uppercase).
 - `vi.mock()` always with factory function. `vi.mocked()` for typed access. `vi.hoisted()` for shared mock refs.
-- **No dynamic `import()` in tests for local modules** — prefer static imports. If you need to prove persisted or cross-invocation behavior, verify files on disk or spawn a child process; do not use `await import('./foo')` helpers to simulate reloads.
-- **No top-level `await import()` in tests** — prefer static imports. When mocks require late module evaluation, load the module from a named async helper or a `beforeAll`, never via module-scope `const { foo } = await import('./foo')`.
+- **No dynamic `import()` of local modules in tests** — prefer static imports. Never write `const module = await import('./foo')`, whether it sits at top level, inside `beforeAll`, or inside a helper after `vi.resetModules()`. Use `vi.hoisted()`, `vi.mock()`, and `vi.spyOn()` to control collaborators. If you need to prove persisted or cross-invocation behavior, verify files on disk or spawn a child process.
+- **No top-level `await import()` in tests** — keep imports static. A helper that wraps `await import('./foo')` is still the same anti-pattern; fix the test shape instead of hiding the import behind indirection.
 - No `it.each` / `describe.each` — write explicit individual `it()` calls.
 - Factory functions for test data: `create*`/`build*`/`make*` with `overrides: Partial<T> = {}`.
 - **Complete stubs** — test stubs must include ALL required properties of the type they represent. Never pass partial objects where full types are expected; use factory functions with defaults for every field.
