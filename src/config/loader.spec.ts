@@ -179,4 +179,74 @@ describe('loadConfig', () => {
 
     expect(stderrSpy).not.toHaveBeenCalled();
   });
+  it('GIVEN win32 without APPDATA WHEN loading without explicit or env path THEN bundled config is used', async () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32');
+    vi.stubEnv('AGENTIC_MCP_CONFIG', '');
+    vi.stubEnv('APPDATA', '');
+
+    const loaded = await loadConfig();
+
+    expect(loaded.providers.claude).toBeDefined();
+  });
+
+  it('GIVEN autoMode is not an array WHEN calling warnDangerousFlags THEN it skips warning output', () => {
+    const config = buildConfig('safe', {
+      commands: {
+        ask: {
+          args: ['run'],
+          flags: {
+            autoMode: '--full-auto',
+          },
+        },
+      },
+    });
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    warnDangerousFlags(config, ['safe']);
+
+    expect(stderrSpy).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN non-win platform without explicit or env path WHEN loading THEN user-local path uses homedir', async () => {
+    const homeDir = await createTempDir();
+    const userLocalDir = path.join(homeDir, '.config', 'agentic-mcp');
+
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('linux');
+    vi.spyOn(os, 'homedir').mockReturnValue(homeDir);
+    vi.stubEnv('AGENTIC_MCP_CONFIG', '');
+
+    await fs.mkdir(userLocalDir, { recursive: true });
+    await writeConfig(userLocalDir, 'providers.json', buildConfig('user-local-linux'));
+
+    const loaded = await loadConfig();
+
+    expect(loaded.providers['user-local-linux']).toBeDefined();
+  });
+
+  it('GIVEN provider lacks ask command or only has safe auto-mode flags WHEN warning THEN nothing is written', () => {
+    const config: ProvidersFile = {
+      configVersion: 1,
+      providers: {
+        missingAsk: {
+          ...buildProvider(),
+          commands: {},
+        } as ProvidersFile['providers'][string],
+        safeArray: buildProvider({
+          commands: {
+            ask: {
+              args: ['run'],
+              flags: {
+                autoMode: ['--safe-flag'],
+              },
+            },
+          },
+        }),
+      },
+    };
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    warnDangerousFlags(config);
+
+    expect(stderrSpy).not.toHaveBeenCalled();
+  });
 });
