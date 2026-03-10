@@ -12,9 +12,9 @@ describe('handleProviderMetrics', () => {
     vi.clearAllMocks();
   });
 
-  it('GIVEN a provider metrics summary WHEN called THEN returns it as JSON text content', () => {
+  it('GIVEN a provider metrics summary WHEN called THEN returns it as JSON text content', async () => {
     const fakeSummary = {
-      sessionStartedAt: '2026-01-01T00:00:00.000Z',
+      collectedSince: '2026-01-01T00:00:00.000Z',
       totalCalls: 3,
       providers: [
         {
@@ -29,9 +29,9 @@ describe('handleProviderMetrics', () => {
       ],
     };
 
-    vi.mocked(getProviderMetrics).mockReturnValue(fakeSummary);
+    vi.mocked(getProviderMetrics).mockResolvedValue(fakeSummary);
 
-    const result = handleProviderMetrics();
+    const result = await handleProviderMetrics();
 
     expect(result.isError).toBeUndefined();
     expect(result.content).toHaveLength(1);
@@ -41,14 +41,14 @@ describe('handleProviderMetrics', () => {
     });
   });
 
-  it('GIVEN provider metrics summary WHEN called THEN delegates to getProviderMetrics', () => {
-    vi.mocked(getProviderMetrics).mockReturnValue({
-      sessionStartedAt: '2026-01-01T00:00:00.000Z',
+  it('GIVEN provider metrics summary WHEN called THEN delegates to getProviderMetrics', async () => {
+    vi.mocked(getProviderMetrics).mockResolvedValue({
+      collectedSince: '2026-01-01T00:00:00.000Z',
       totalCalls: 0,
       providers: [],
     });
 
-    handleProviderMetrics();
+    await handleProviderMetrics();
 
     expect(getProviderMetrics).toHaveBeenCalledOnce();
   });
@@ -61,11 +61,11 @@ describe('buildProviderMetricsToolDefinition', () => {
     expect(def.name).toBe('provider_metrics');
   });
 
-  it('GIVEN no arguments WHEN called THEN description mentions provider and session', () => {
+  it('GIVEN no arguments WHEN called THEN description mentions provider and overall usage', () => {
     const def = buildProviderMetricsToolDefinition();
 
     expect(def.description).toContain('provider');
-    expect(def.description.length).toBeGreaterThan(10);
+    expect(def.description).toContain('overall');
   });
 
   it('GIVEN no arguments WHEN called THEN has readOnly and idempotent annotations', () => {
