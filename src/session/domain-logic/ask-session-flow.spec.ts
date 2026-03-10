@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 import type { SessionFlowState } from './ask-session-flow';
-import type { ResolvedProviderEntry } from '../../../shared';
-import type { AskToolArgs } from '../../common';
-import type { AskExecution } from '../../domain-logic/ask-runner';
+import type { AskToolArgs } from '../../ask/common';
+import type { AskExecution } from '../../ask/domain-logic/ask-runner';
+import type { ResolvedProviderEntry } from '../../shared';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
 const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
@@ -18,7 +18,7 @@ const mockSessionStore = vi.hoisted(() => ({
   getPrependContext: mockGetPrependContext,
 }));
 
-vi.mock('../../domain-logic/ask-runner', () => ({
+vi.mock('../../ask/domain-logic/ask-runner', () => ({
   runAskInvocation: mockRunAskInvocation,
 }));
 
@@ -26,7 +26,7 @@ vi.mock('../utils/session-context.util', () => ({
   buildSessionPrompt: mockBuildSessionPrompt,
 }));
 
-vi.mock('../../../session', () => Object.fromEntries([['SESSION_STORE', mockSessionStore]]));
+vi.mock('../data-access', () => Object.fromEntries([['SESSION_STORE', mockSessionStore]]));
 
 const createCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => ({
   content: [{ type: 'text', text: 'response text' }],

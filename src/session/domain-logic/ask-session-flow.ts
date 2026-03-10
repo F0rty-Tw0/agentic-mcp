@@ -1,9 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { SESSION_STORE } from '../../../session';
-import type { ProgressContext, ResolvedProviderEntry } from '../../../shared';
-import type { AskToolArgs, SessionMode } from '../../common';
-import { runAskInvocation } from '../../domain-logic/ask-runner';
+import type { AskToolArgs } from '../../ask/common';
+import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
+import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import type { SessionMode } from '../common';
+import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
 
 export type SessionFlowState = Readonly<{
@@ -28,44 +29,50 @@ type SessionExecutionInput = Readonly<{
   state: SessionFlowState;
 }>;
 
+const runSessionExecution = async (
+  context: ResolvedProviderEntry,
+  args: AskToolArgs,
+  extra: ProgressContext | undefined,
+  state: SessionFlowState
+): Promise<SessionFlowResult> => {
+  const execution = await runAskInvocation({
+    context,
+    args: { ...args, prompt: state.prompt },
+    extra,
+    tier2SessionId: state.nativeSessionId,
+  });
+  const result: SessionFlowResult = { ...execution, sessionMode: state.mode };
+
+  return result;
+};
+
 export const executeSessionFlow = async ({
   context,
   args,
   extra,
   state,
 }: SessionExecutionInput): Promise<SessionFlowResult> => {
-  const runOnce = async (currentState: SessionFlowState): Promise<SessionFlowResult> => {
-    const execution = await runAskInvocation({
-      context,
-      args: { ...args, prompt: currentState.prompt },
-      extra,
-      tier2SessionId: currentState.nativeSessionId,
-    });
-
-    return { ...execution, sessionMode: currentState.mode };
-  };
-
-  const firstExecution = await runOnce(state);
+  const firstExecution = await runSessionExecution(context, args, extra, state);
 
   if (!firstExecution.response.isError || state.mode !== 'tier2-native') {
-    return {
-      response: firstExecution.response,
-      responseText: firstExecution.responseText,
-      nativeSessionId: firstExecution.nativeSessionId,
-      sessionMode: firstExecution.sessionMode,
-      wasCancelled: firstExecution.wasCancelled,
-    };
+    return firstExecution;
   }
 
-  const fallbackExecution = await runOnce({ ...state, mode: 'tier2-fallback-to-tier1', nativeSessionId: undefined });
-
-  return {
+  const fallbackState: SessionFlowState = {
+    ...state,
+    mode: 'tier2-fallback-to-tier1',
+    nativeSessionId: undefined,
+  };
+  const fallbackExecution = await runSessionExecution(context, args, extra, fallbackState);
+  const result: SessionFlowResult = {
     response: fallbackExecution.response,
     responseText: fallbackExecution.responseText,
     nativeSessionId: fallbackExecution.nativeSessionId,
     sessionMode: 'tier2-fallback-to-tier1',
     wasCancelled: fallbackExecution.wasCancelled,
   };
+
+  return result;
 };
 
 export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskToolArgs): SessionFlowState => {
@@ -76,15 +83,17 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
   const existingNativeSessionId = SESSION_STORE.getNativeSessionId(context.name, sessionId);
 
   if (existingNativeSessionId) {
-    return {
+    const result: SessionFlowState = {
       sessionId,
       prompt: args.prompt as string,
       nativeSessionId: existingNativeSessionId,
       mode: 'tier2-native',
     };
+
+    return result;
   }
 
-  return {
+  const result: SessionFlowState = {
     sessionId,
     prompt: buildSessionPrompt({
       sessionTurnsText: SESSION_STORE.getPrependContext(context.name, sessionId),
@@ -93,4 +102,6 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
     }),
     mode: 'tier1-prepend',
   };
+
+  return result;
 };
