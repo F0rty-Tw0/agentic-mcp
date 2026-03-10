@@ -109,6 +109,13 @@ const parseJson = (stdout: string): ParsedProviderOutput => {
   }
 };
 
+const extractNdjsonResultText = (parsedLines: readonly unknown[]): string | undefined => {
+  const resultTexts = parsedLines.map((parsedLine) => extractTopLevelResultText(parsedLine)).filter(isDefined);
+  const latestResult = resultTexts.at(-1);
+
+  return latestResult;
+};
+
 const parseNdjson = (stdout: string): ParsedProviderOutput => {
   const lines = stdout
     .split(/\r?\n/)
@@ -133,8 +140,9 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
     }
   }
 
+  const parsedText = extractNdjsonResultText(parsedLines) ?? JSON.stringify(parsedLines, null, 2);
   const parsedProviderOutput: ParsedProviderOutput = {
-    text: JSON.stringify(parsedLines, null, 2),
+    text: parsedText,
     metadata: {
       outputFormatObserved: 'stream-json',
       parsed: parsedLines,

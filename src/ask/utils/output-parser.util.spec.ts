@@ -33,6 +33,19 @@ describe('parseProviderOutput', () => {
     expect(result.text).toContain('"b": 2');
   });
 
+  it('GIVEN claude stream-json output WHEN parsing THEN extracts final result text instead of dumping every event', () => {
+    const output = [
+      '{"type":"assistant","message":{"role":"assistant","content":[{"type":"thinking","thinking":"planning"}]}}',
+      '{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Exploring repo..."}]}}',
+      '{"type":"result","subtype":"success","is_error":false,"result":"final answer","session_id":"session-123"}',
+    ].join('\n');
+
+    const result = parseProviderOutput(output, 'stream-json');
+
+    expect(result.metadata?.outputFormatObserved).toBe('stream-json');
+    expect(result.text).toBe('final answer');
+  });
+
   it('GIVEN empty NDJSON WHEN parsing THEN returns empty text without metadata', () => {
     const result = parseProviderOutput('  \n\n  ', 'stream-json');
 
