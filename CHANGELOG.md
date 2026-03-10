@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-03-10
+
 - Persist provider metrics across separate CLI invocations in a durable per-user store instead of process-local memory
 - Resolve metrics storage to OS-native state paths by default and allow overriding the file location with `AGENTIC_MCP_METRICS_PATH`
 - Split provider-metrics persistence into smaller data-access subfeatures for path resolution, parsing, locking, file I/O, and summary building
@@ -69,7 +71,8 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.8...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.9...HEAD
+[0.1.9]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.5...v0.1.6
