@@ -54,6 +54,7 @@ const buildInput = (overrides?: Partial<SuccessResponseInput>): SuccessResponseI
   executionTimeMs: 1500,
   truncated: false,
   stdoutBytes: 100,
+  outputFormat: 'json',
   streamNotifier: stubStreamNotifier(),
   summary: stubSummary(),
   sessionMode: 'none',
@@ -158,7 +159,7 @@ describe('buildSuccessfulResponse', () => {
   describe('delegation to dependencies', () => {
     it('GIVEN stdout and outputFormat WHEN building THEN calls parseProviderOutput with stdout and outputFormat', async () => {
       const context = stubContext({ config: { ...TEST_PROVIDER_CONFIG_STUB, outputFormat: 'stream-json' } });
-      const input = buildInput({ stdout: 'raw data', context });
+      const input = buildInput({ stdout: 'raw data', context, outputFormat: 'stream-json' });
 
       await buildSuccessfulResponse(input);
 

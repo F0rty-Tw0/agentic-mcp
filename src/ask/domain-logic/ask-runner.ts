@@ -1,24 +1,15 @@
 import { buildCommandFailure, buildExecutionEnv, resolveModelFallback } from './ask-command';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
-import { buildArgArray } from '../../cli-args';
 import { recordCall } from '../../provider-metrics';
 import type { ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
-import {
-  CommandExecutionError,
-  executeCommand,
-  registerActiveRequest,
-  startHeartbeat,
-  toMcpError,
-  unregisterActiveRequest,
-} from '../../shared';
+import { CommandExecutionError, startHeartbeat, toMcpError, unregisterActiveRequest } from '../../shared';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
 import type { AskStreamExecutionSummary } from '../../streaming';
 import { noop } from '../common';
 import type { AskToolArgs } from '../common';
-import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
+import { buildExecution, buildFailureExecution } from '../utils';
+import { runCommandExecution } from './ask-command-execution';
 import type { AskExecution } from '../utils/ask-runner-response.util';
-import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
-import { resolveRequestedModel } from '../utils/resolve-requested-model.util';
 
 export type { AskExecution } from '../utils/ask-runner-response.util';
 
@@ -37,20 +28,6 @@ type ExecuteInput = Readonly<{
   streamNotifier: ReturnType<typeof createStreamNotifier>;
 }>;
 
-const resolveRequestId = (extra?: ProgressContext): string | undefined =>
-  extra?.requestId ? String(extra.requestId) : undefined;
-
-const buildCliArgs = (
-  config: ResolvedProviderEntry['config'],
-  baseCliArgs: readonly string[],
-  tier2SessionId?: string
-): string[] => {
-  const tier2SessionArgs = tier2SessionId ? buildNativeSessionArgs(config, tier2SessionId) : [];
-  const cliArgs = [...baseCliArgs, ...tier2SessionArgs];
-
-  return cliArgs;
-};
-
 const handleFailedExecution = async (
   executeInput: ExecuteInput,
   result: ExecutionResult,
@@ -67,38 +44,9 @@ const handleFailedExecution = async (
   return buildFailureExecution(error.toMcpResponse(), wasCancelled);
 };
 
-const runExecution = async (executeInput: ExecuteInput): Promise<{ result: ExecutionResult }> => {
-  const { context, args, extra, tier2SessionId, streamNotifier } = executeInput;
-  const env = buildExecutionEnv(context);
-  const remappedArgs = await resolveRequestedModel({ context, args, env });
-  const resolved = validateAndResolveArgs(remappedArgs, context.name);
-  const { args: baseCliArgs, stdinInput } = buildArgArray(context.config, resolved);
-  const requestId = resolveRequestId(extra);
-  const cliArgs = buildCliArgs(context.config, baseCliArgs, tier2SessionId);
-
-  streamNotifier.emitStart();
-
-  const onSpawned = requestId ? (pid: number): void => registerActiveRequest(requestId, pid) : undefined;
-  const commandOptions = {
-    context,
-    resolved,
-    cliArgs,
-    stdinInput,
-    env,
-    onStdoutChunk: streamNotifier.onStdoutChunk,
-    onStderrChunk: streamNotifier.onStderrChunk,
-    signal: extra?.signal,
-    onSpawned,
-  };
-  const buildOptions = buildCommandOptions(commandOptions);
-  const result = await executeCommand(buildOptions);
-
-  return { result };
-};
-
 const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = false): Promise<AskExecution> => {
   const { context, args, streamNotifier } = executeInput;
-  const { result } = await runExecution(executeInput);
+  const { result, outputFormat } = await runCommandExecution(executeInput);
   const summary = buildExecutionSummary(result);
 
   if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
@@ -132,18 +80,16 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
     executionTimeMs: result.executionTimeMs,
     truncated: result.truncated,
     stdoutBytes: result.stdoutBytes,
+    outputFormat,
     streamNotifier,
     summary,
     sessionMode: 'none' as const,
   };
-
   const response = await buildSuccessfulResponse(successResponseInput);
 
   recordCall(context.name, result.executionTimeMs, !response.isError);
 
-  const execution = buildExecution(response, result.stdout, context);
-
-  return execution;
+  return buildExecution(response, result.stdout, outputFormat, context);
 };
 
 export const runAskInvocation = async (runInvocationInput: RunInvocationInput): Promise<AskExecution> => {

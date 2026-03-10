@@ -2,7 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
-import type { ResolvedProviderEntry } from '../../shared';
+import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
 import type { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
 import type { AskToolArgs, AskToolStructuredContent, SessionMode } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
@@ -18,6 +18,7 @@ export type SuccessResponseInput = Readonly<{
   executionTimeMs: number;
   truncated: boolean;
   stdoutBytes: number;
+  outputFormat: OutputFormat;
   streamNotifier: ReturnType<typeof createStreamNotifier>;
   summary: ReturnType<typeof buildExecutionSummary>;
   sessionMode: SessionMode;
@@ -60,11 +61,12 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
     executionTimeMs,
     truncated,
     stdoutBytes,
+    outputFormat,
     streamNotifier,
     summary,
     sessionMode,
   } = successResponseInput;
-  const parsedOutput = parseProviderOutput(stdout, context.config.outputFormat);
+  const parsedOutput = parseProviderOutput(stdout, outputFormat);
   const modelHint = await resolveModelHint({ context, args, stdout: parsedOutput.text, stderr, env });
 
   if (modelHint) {
@@ -83,7 +85,7 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
     provider: context.name,
     model: args.model,
     result: { executionTimeMs, truncated, stdoutBytes },
-    outputFormat: context.config.outputFormat,
+    outputFormat,
     metadata: parsedOutput.metadata,
     sessionMode,
   };

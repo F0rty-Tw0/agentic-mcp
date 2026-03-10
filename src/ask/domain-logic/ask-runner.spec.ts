@@ -36,6 +36,16 @@ const stubContext = (overrides?: Partial<ResolvedProviderEntry>): ResolvedProvid
   ...overrides,
 });
 
+const buildExecutionWithContext = (
+  response: CallToolResult,
+  stdout: string,
+  context: ResolvedProviderEntry = stubContext()
+): ReturnType<typeof buildExecution> => {
+  const result = buildExecution(response, stdout, context.config.outputFormat, context);
+
+  return result;
+};
+
 describe('buildFailureExecution', () => {
   it('GIVEN a response and wasCancelled=false WHEN building THEN returns failure with sessionMode none', () => {
     const response = textResponse('error');
@@ -71,7 +81,7 @@ describe('buildExecution', () => {
   it('GIVEN text content WHEN building THEN extracts text into responseText', () => {
     const response = textResponse('hello world');
 
-    const result = buildExecution(response, '', stubContext());
+    const result = buildExecutionWithContext(response, '');
 
     expect(result.responseText).toBe('hello world');
   });
@@ -79,7 +89,7 @@ describe('buildExecution', () => {
   it('GIVEN non-text content WHEN building THEN responseText is empty', () => {
     const response = imageResponse();
 
-    const result = buildExecution(response, '', stubContext());
+    const result = buildExecutionWithContext(response, '');
 
     expect(result.responseText).toBe('');
   });
@@ -87,7 +97,7 @@ describe('buildExecution', () => {
   it('GIVEN empty content array WHEN building THEN responseText is empty', () => {
     const response = emptyResponse();
 
-    const result = buildExecution(response, '', stubContext());
+    const result = buildExecutionWithContext(response, '');
 
     expect(result.responseText).toBe('');
   });
@@ -95,7 +105,7 @@ describe('buildExecution', () => {
   it('GIVEN stdout with session id WHEN building THEN extracts nativeSessionId', () => {
     const response = textResponse('ok');
 
-    const result = buildExecution(response, 'session-abc123', stubContext());
+    const result = buildExecutionWithContext(response, 'session-abc123');
 
     expect(result.nativeSessionId).toBe('abc123');
   });
@@ -103,7 +113,7 @@ describe('buildExecution', () => {
   it('GIVEN stdout without session id WHEN building THEN nativeSessionId is undefined', () => {
     const response = textResponse('ok');
 
-    const result = buildExecution(response, 'no-match-here', stubContext());
+    const result = buildExecutionWithContext(response, 'no-match-here');
 
     expect(result.nativeSessionId).toBeUndefined();
   });
@@ -111,7 +121,7 @@ describe('buildExecution', () => {
   it('GIVEN any inputs WHEN building THEN wasCancelled is always false', () => {
     const response = textResponse('ok');
 
-    const result = buildExecution(response, '', stubContext());
+    const result = buildExecutionWithContext(response, '');
 
     expect(result.wasCancelled).toBe(false);
   });
@@ -119,7 +129,7 @@ describe('buildExecution', () => {
   it('GIVEN any inputs WHEN building THEN sessionMode is always none', () => {
     const response = textResponse('ok');
 
-    const result = buildExecution(response, '', stubContext());
+    const result = buildExecutionWithContext(response, '');
 
     expect(result.sessionMode).toBe('none');
   });
@@ -127,7 +137,7 @@ describe('buildExecution', () => {
   it('GIVEN a response WHEN building THEN preserves the original response object', () => {
     const response = textResponse('preserved');
 
-    const result = buildExecution(response, '', stubContext());
+    const result = buildExecutionWithContext(response, '');
 
     expect(result.response).toBe(response);
   });
