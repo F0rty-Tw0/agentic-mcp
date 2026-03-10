@@ -1,9 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { extractNativeSessionId } from '../../session';
+import type { SessionMode } from '../../session';
 import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
 import { stripAnsi } from '../../shared';
-import type { SessionMode } from '../common';
 
 export type AskExecution = Readonly<{
   response: CallToolResult;

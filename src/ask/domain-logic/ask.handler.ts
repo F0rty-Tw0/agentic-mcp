@@ -3,10 +3,9 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { runAskInvocation } from './ask-runner';
 import { createBackgroundJob } from '../../background-jobs/data-access';
 import { buildJobStatusResponse, startBackgroundInvocation } from '../../background-jobs/domain-logic';
-import { SESSION_STORE } from '../../session';
+import { SESSION_STORE, appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../../session';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
 import type { AskToolArgs } from '../common';
-import { appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../session';
 
 const runAskInvocationResponse = async (
   context: ResolvedProviderEntry,

@@ -2,9 +2,10 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
+import type { SessionMode } from '../../session';
 import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
 import type { buildExecutionSummary, createStreamNotifier } from '../../streaming/domain-logic';
-import type { AskToolArgs, AskToolStructuredContent, SessionMode } from '../common';
+import type { AskToolArgs, AskToolStructuredContent } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
 
 type Env = Readonly<Record<string, string>>;

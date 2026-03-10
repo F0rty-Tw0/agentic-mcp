@@ -5,9 +5,9 @@ import type { MockInstance } from 'vitest';
 
 import { registerAllTools } from './tool-registry';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
-import { handleSessions } from '../../ask/session';
 import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
+import { handleSessions } from '../../session';
 import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import { handleHelp, handleListProviders, handlePing } from '../../simple-tools';
 import {
@@ -20,7 +20,8 @@ import {
 
 vi.mock('../../provider-metrics');
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
-vi.mock('../../ask/session', () => ({ handleSessions: vi.fn() }));
+vi.mock('../../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
+vi.mock('../../session', () => ({ handleSessions: vi.fn() }));
 vi.mock('../../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
 vi.mock('../../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
 vi.mock('../../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
