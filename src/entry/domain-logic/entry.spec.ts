@@ -120,6 +120,8 @@ describe('main', () => {
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--job-id'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--stream-live'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('sessions_<provider>'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('init'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--minimal'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--version'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--help'));
     expect(mocks.createServer).not.toHaveBeenCalled();
@@ -155,6 +157,17 @@ describe('main', () => {
     await entry();
 
     expect(mocks.runSetup).toHaveBeenCalledWith(['--client', 'claude']);
+    expect(mocks.createServer).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN "init" as first arg WHEN main() is called THEN it calls runSetup with --minimal prepended and does not start the server', async () => {
+    process.argv = ['node', '', 'init', '--client', 'cursor'];
+
+    mocks.runSetup.mockResolvedValue(undefined);
+
+    await entry();
+
+    expect(mocks.runSetup).toHaveBeenCalledWith(['--minimal', '--client', 'cursor']);
     expect(mocks.createServer).not.toHaveBeenCalled();
   });
 

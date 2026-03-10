@@ -13,14 +13,20 @@ Multi-model AI gateway that wraps any agentic CLI tool as an [MCP](https://model
 ## 30-Second Setup
 
 ```bash
-npx agentic-mcp setup --client claude-code
+npx agentic-mcp init
+```
+
+Equivalent explicit minimal command:
+
+```bash
+npx agentic-mcp setup --minimal
 ```
 
 Or install globally:
 
 ```bash
 npm install -g agentic-mcp
-agentic-mcp setup --client claude-code
+agentic-mcp init
 ```
 
 Supported clients: Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
@@ -60,6 +66,7 @@ Requirements:
 
 Common flags:
 
+- `--minimal` — install the skill and print suggested MCP setup without writing client config
 - `--dry-run` — show plan without writing
 - `--output json` — machine-readable result
 - `--mode merge|overwrite` — choose update strategy (`overwrite` is explicit/destructive)

@@ -16,6 +16,7 @@ describe('parseSetupArgs', () => {
       mode: 'merge',
       pathOverride: undefined,
       backup: 'if-exists',
+      minimal: false,
     });
     expect(stderrWrite).not.toHaveBeenCalled();
   });
@@ -37,6 +38,7 @@ describe('parseSetupArgs', () => {
         'always',
         '--dry-run',
         '--yes',
+        '--minimal',
       ],
       stderrWrite,
     });
@@ -49,6 +51,7 @@ describe('parseSetupArgs', () => {
       mode: 'overwrite',
       pathOverride: '/tmp/custom.json',
       backup: 'always',
+      minimal: true,
     });
     expect(stderrWrite).not.toHaveBeenCalled();
   });
@@ -69,6 +72,7 @@ describe('parseSetupArgs', () => {
       mode: 'merge',
       pathOverride: undefined,
       backup: 'if-exists',
+      minimal: false,
     });
     expect(stderrWrite).toHaveBeenCalledWith('Warning: unknown client "unknown-client", using "generic"\n');
     expect(stderrWrite).toHaveBeenCalledWith('Warning: unknown output mode "xml", using "human"\n');
@@ -92,6 +96,7 @@ describe('parseSetupArgs', () => {
       mode: 'merge',
       pathOverride: undefined,
       backup: 'if-exists',
+      minimal: false,
     });
     expect(stderrWrite).toHaveBeenCalledWith('Warning: unknown client "--yes", using "generic"\n');
   });

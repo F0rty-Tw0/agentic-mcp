@@ -1,6 +1,6 @@
 # setup
 
-MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects installed provider CLIs and writes MCP client configuration files.
+MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects installed provider CLIs and writes MCP client configuration files. The `agentic-mcp init` alias runs the same module in minimal mode, installing the bundled skill and printing suggested next steps before any client config is written.
 
 ## What It Does
 
@@ -9,7 +9,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Supports multiple MCP clients: Claude Code, VS Code, Cursor, Windsurf, and a generic JSON format
 - Merges the generated entry into existing config files, preserving other servers
 - Creates `.bak` backup files before modifying existing configs
-- Supports `--dry-run` to preview changes without writing, and `--yes` for non-interactive mode
+- Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 
 ## Structure
 

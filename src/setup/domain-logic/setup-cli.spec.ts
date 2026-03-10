@@ -118,6 +118,38 @@ describe('runSetup', () => {
     expect(applySetupPlan).toHaveBeenCalledTimes(1);
   });
 
+  it('GIVEN --minimal WHEN running setup THEN it installs the skill and skips config writes', async () => {
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+    const buildSetupPlan = vi.fn(() => createPlan());
+    const generateClientConfigEntry = vi.fn(() => TEST_SERVER_ENTRY);
+    const installSkill = vi.fn().mockResolvedValue({
+      status: 'installed',
+      skillPath: '/home/dev/.claude/skills/using-agentic-mcp/SKILL.md',
+    });
+    const stdoutWrite = vi.fn<(message: string) => void>();
+
+    await runSetup(
+      ['--minimal'],
+      createDependencies({
+        applySetupPlan,
+        buildSetupPlan,
+        generateClientConfigEntry,
+        installSkill,
+        stdoutWrite,
+      })
+    );
+
+    const output = stdoutWrite.mock.calls.map((call) => call[0]).join('');
+
+    expect(buildSetupPlan).not.toHaveBeenCalled();
+    expect(generateClientConfigEntry).not.toHaveBeenCalled();
+    expect(applySetupPlan).not.toHaveBeenCalled();
+    expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
+    expect(output).toContain('agentic-mcp init');
+    expect(output).toContain('Skill installed: /home/dev/.claude/skills/using-agentic-mcp/SKILL.md');
+    expect(output).toContain('npx agentic-mcp setup --client claude-code --yes');
+  });
+
   it('GIVEN interactive terminal without --yes WHEN user declines prompt THEN aborts without writing', async () => {
     const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
     const stdoutWrite = vi.fn<(message: string) => void>();

@@ -121,6 +121,19 @@ describe('integration: non-interactive safety gate', () => {
   });
 });
 
+describe('integration: minimal setup', () => {
+  it('GIVEN --minimal WHEN runSetup runs THEN it installs the skill without writing config files', async () => {
+    await runSetup(['--minimal'], commonDeps());
+
+    const skillPath = path.join(tempDir, '.claude', 'skills', 'using-agentic-mcp', 'SKILL.md');
+    const skillContent = await readFile(skillPath, 'utf8');
+
+    expect(skillContent).toContain('name: using-agentic-mcp');
+    expect(stdoutOutput).toContain('agentic-mcp init');
+    expect(stdoutOutput).toContain('npx agentic-mcp setup --client claude-code --yes');
+  });
+});
+
 describe('integration: dry run', () => {
   it('GIVEN --dry-run WHEN runSetup runs THEN no file is written but output is produced', async () => {
     const targetPath = path.join(tempDir, 'dry-run.json');

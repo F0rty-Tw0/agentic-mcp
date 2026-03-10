@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add `agentic-mcp init` as a minimal onboarding alias for `setup --minimal`, installing the bundled skill before any MCP client config is written
+- Add `--minimal` setup output and guidance so users see suggested next-step commands after skill-first installation
+
 ## [0.1.7] - 2026-03-09
 
 - Broaden model correction to validate explicit model inputs against provider-reported available models before execution

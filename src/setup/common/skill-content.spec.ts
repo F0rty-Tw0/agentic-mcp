@@ -6,6 +6,7 @@ describe('SKILL_CONTENT', () => {
   it('GIVEN installed skill WHEN documenting command coverage THEN it includes setup and all supported command families', () => {
     const requiredCommands = [
       'agentic-mcp setup',
+      'agentic-mcp init',
       '`list_providers`',
       '`ping_<provider>`',
       '`help_<provider>`',
@@ -46,6 +47,7 @@ describe('SKILL_CONTENT', () => {
       '--job-id <id>',
       '--session-id <id>',
       '--model <name>',
+      '--minimal',
     ];
 
     for (const expectedFlag of expectedFlags) {

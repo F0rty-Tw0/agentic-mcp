@@ -16,6 +16,7 @@ export type ParsedSetupArgs = Readonly<{
   mode: SetupMode;
   pathOverride?: string;
   backup: SetupBackupPolicy;
+  minimal: boolean;
 }>;
 
 type ParseSetupArgsInput = Readonly<{
@@ -33,6 +34,7 @@ type MutableParsedSetupArgs = {
   mode: SetupMode;
   pathOverride?: string;
   backup: SetupBackupPolicy;
+  minimal: boolean;
 };
 
 const isSupportedClient = (value: string): value is SupportedClient => {
@@ -135,6 +137,12 @@ const consumeBooleanFlag = (arg: string, parsed: MutableParsedSetupArgs): boolea
     return true;
   }
 
+  if (arg === '--minimal') {
+    parsed.minimal = true;
+
+    return true;
+  }
+
   return false;
 };
 
@@ -151,6 +159,7 @@ export const parseSetupArgs = ({ args, stderrWrite }: ParseSetupArgsInput): Pars
     mode: DEFAULT_MODE,
     pathOverride: undefined,
     backup: DEFAULT_BACKUP,
+    minimal: false,
   };
 
   for (let i = 0; i < args.length; i++) {

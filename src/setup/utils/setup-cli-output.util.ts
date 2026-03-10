@@ -1,6 +1,18 @@
 import type { SkillInstallResult } from './install-skill.util';
 import type { ParsedSetupArgs } from './setup-cli-args.util';
-import type { DetectedProvider, SetupApplyResult, SetupPlan } from '../common';
+import type { DetectedProvider, SetupApplyResult, SetupPlan, SupportedClient } from '../common';
+
+type MinimalSetupOutputInput = Readonly<{
+  client: SupportedClient;
+  detectedProviders: readonly DetectedProvider[];
+  skillResult: SkillInstallResult;
+}>;
+
+const buildMinimalNextSteps = (client: SupportedClient): readonly string[] => {
+  const nextSteps = [`npx agentic-mcp setup --client ${client} --yes`, 'npx agentic-mcp list_providers'] as const;
+
+  return nextSteps;
+};
 
 export const formatProviderSummary = (detectedProviders: readonly DetectedProvider[]): string => {
   const lines = detectedProviders.map((provider) => {
@@ -82,14 +94,6 @@ export const formatHumanSetupOutput = (
   return `${lines.join('\n')}\n`;
 };
 
-export const isNonInteractiveWriteBlocked = (
-  args: ParsedSetupArgs,
-  plan: SetupPlan,
-  isInteractive: boolean
-): boolean => {
-  return !isInteractive && !args.yes && plan.writeIntent === 'write';
-};
-
 export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
   switch (skillResult.status) {
     case 'installed':
@@ -101,4 +105,46 @@ export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
     default:
       return '';
   }
+};
+
+export const formatJsonMinimalSetupOutput = (input: MinimalSetupOutputInput): string => {
+  const nextSteps = buildMinimalNextSteps(input.client);
+  const payload = {
+    mode: 'minimal',
+    client: input.client,
+    providers: input.detectedProviders,
+    skillResult: input.skillResult,
+    nextSteps,
+  };
+
+  return `${JSON.stringify(payload, null, 2)}\n`;
+};
+
+export const formatHumanMinimalSetupOutput = (input: MinimalSetupOutputInput): string => {
+  const nextSteps = buildMinimalNextSteps(input.client);
+  const lines = [
+    'agentic-mcp init',
+    'Mode: minimal',
+    `Suggested client: ${input.client}`,
+    '',
+    'Detected providers:',
+    formatProviderSummary(input.detectedProviders),
+    '',
+    formatSkillOutput(input.skillResult).trimEnd(),
+    '',
+    'Next steps:',
+    ...nextSteps.map((nextStep) => `  ${nextStep}`),
+    '',
+  ];
+  const output = lines.join('\n');
+
+  return `${output}\n`;
+};
+
+export const isNonInteractiveWriteBlocked = (
+  args: ParsedSetupArgs,
+  plan: SetupPlan,
+  isInteractive: boolean
+): boolean => {
+  return !isInteractive && !args.yes && plan.writeIntent === 'write';
 };

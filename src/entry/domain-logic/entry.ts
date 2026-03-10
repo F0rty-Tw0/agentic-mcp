@@ -30,6 +30,10 @@ export const entry = async (): Promise<void> => {
     return runSetup(args.slice(1));
   }
 
+  if (firstArg === 'init') {
+    return runSetup(['--minimal', ...args.slice(1)]);
+  }
+
   if (firstArg && isCliSubcommand(firstArg)) {
     const configPath = parseConfigPath(process.argv);
 

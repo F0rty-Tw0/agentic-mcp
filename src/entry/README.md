@@ -7,6 +7,7 @@ CLI entry point — the first code that runs when the `agentic-mcp` binary is ex
 - `--version` — prints the application version (from `APP_VERSION` build constant) and exits
 - `--help` — prints usage information and exits
 - `setup` subcommand — delegates to the setup CLI for configuring MCP clients
+- `init` subcommand — delegates to the setup CLI in minimal mode for skill installation and suggested MCP setup
 - Default — starts the MCP server on stdio transport for normal operation
 
 ## Structure

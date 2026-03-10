@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ParsedSetupArgs } from './setup-cli-args.util';
 import {
+  formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
+  formatJsonMinimalSetupOutput,
   formatJsonSetupOutput,
   formatProviderSummary,
   formatSkillOutput,
@@ -20,6 +22,7 @@ const createArgs = (overrides: Partial<ParsedSetupArgs> = {}): ParsedSetupArgs =
     mode: 'merge',
     pathOverride: undefined,
     backup: 'if-exists',
+    minimal: false,
     ...overrides,
   };
 
@@ -138,6 +141,45 @@ describe('setup-cli-output utilities', () => {
     expect(output).toContain('Warnings:');
     expect(output).toContain('Result: verification-failed');
     expect(output).toContain('Reason: Written config must include mcpServers');
+  });
+
+  it('GIVEN minimal setup inputs WHEN formatting human output THEN it includes skill status and next steps', () => {
+    const output = formatHumanMinimalSetupOutput({
+      client: 'claude-code',
+      detectedProviders: [createProvider({ name: 'claude' })],
+      skillResult: {
+        status: 'installed',
+        skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
+      },
+    });
+
+    expect(output).toContain('agentic-mcp init');
+    expect(output).toContain('Detected providers:');
+    expect(output).toContain('Skill installed: /home/.claude/skills/using-agentic-mcp/SKILL.md');
+    expect(output).toContain('npx agentic-mcp setup --client claude-code --yes');
+  });
+
+  it('GIVEN minimal setup inputs WHEN formatting json output THEN it returns parseable next steps', () => {
+    const output = formatJsonMinimalSetupOutput({
+      client: 'cursor',
+      detectedProviders: [createProvider({ name: 'claude' })],
+      skillResult: {
+        status: 'already-exists',
+        skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
+      },
+    });
+
+    const parsed = JSON.parse(output) as {
+      mode: string;
+      client: string;
+      nextSteps: readonly string[];
+      skillResult: { status: string };
+    };
+
+    expect(parsed.mode).toBe('minimal');
+    expect(parsed.client).toBe('cursor');
+    expect(parsed.skillResult.status).toBe('already-exists');
+    expect(parsed.nextSteps).toContain('npx agentic-mcp setup --client cursor --yes');
   });
 
   it('GIVEN non-interactive write without --yes WHEN checking block THEN returns true', () => {

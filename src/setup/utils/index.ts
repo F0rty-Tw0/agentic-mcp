@@ -6,10 +6,14 @@ export { buildMergedClientConfig } from './merge-client-config.util';
 
 export { buildSetupPlan } from './plan-setup.util';
 
+export { runConfiguredSetup, runMinimalSetup } from './setup-cli-runner.util';
+
 export { parseSetupArgs } from './setup-cli-args.util';
 
 export {
+  formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
+  formatJsonMinimalSetupOutput,
   formatJsonSetupOutput,
   formatProviderSummary,
   formatSkillOutput,
@@ -18,5 +22,7 @@ export {
 } from './setup-cli-output.util';
 
 export type { ParsedSetupArgs, SetupOutputMode } from './setup-cli-args.util';
+
+export type { SetupCliDependencies } from './setup-cli-runner.util';
 
 export type { SkillInstallDependencies, SkillInstallResult } from './install-skill.util';
