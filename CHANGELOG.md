@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-03-09
+
 - Broaden model correction to validate explicit model inputs against provider-reported available models before execution
 - Fix hyphenated and shorthand model resolution for LLM-generated inputs while avoiding ambiguous tied rewrites
 - Extract top-level `result` text from JSON provider responses while preserving parsed payload metadata
@@ -55,7 +57,8 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.3...v0.1.4
