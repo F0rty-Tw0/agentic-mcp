@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildMergedClientConfig } from './merge-client-config.util';
 
 describe('buildMergedClientConfig', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   it('GIVEN no existing config WHEN merging THEN returns created status with agentic entry only', () => {
     const result = buildMergedClientConfig({
       existingConfigText: undefined,
@@ -145,5 +148,67 @@ describe('buildMergedClientConfig', () => {
         },
       },
     });
+  });
+  it('GIVEN existing mcpServers is not an object WHEN merging THEN replaces it with the agentic server entry', () => {
+    const result = buildMergedClientConfig({
+      existingConfigText: JSON.stringify({
+        version: 1,
+        mcpServers: ['invalid-shape'],
+      }),
+      agenticServerEntry: {
+        command: 'npx',
+        args: ['-y', 'agentic-mcp'],
+      },
+    });
+
+    expect(result.status).toBe('merged');
+    expect(result.mergedConfig).toStrictEqual({
+      version: 1,
+      mcpServers: {
+        'agentic-mcp': {
+          command: 'npx',
+          args: ['-y', 'agentic-mcp'],
+        },
+      },
+    });
+  });
+
+  it('GIVEN parsed JSON is not an object WHEN merging THEN creates a config with only the agentic server entry', () => {
+    const result = buildMergedClientConfig({
+      existingConfigText: JSON.stringify(['not-an-object']),
+      agenticServerEntry: {
+        command: 'npx',
+        args: ['-y', 'agentic-mcp'],
+      },
+    });
+
+    expect(result.status).toBe('merged');
+    expect(result.mergedConfig).toStrictEqual({
+      mcpServers: {
+        'agentic-mcp': {
+          command: 'npx',
+          args: ['-y', 'agentic-mcp'],
+        },
+      },
+    });
+  });
+
+  it('GIVEN JSON parse throws a non-Error value WHEN merging THEN returns invalid-json with the fallback reason', () => {
+    vi.spyOn(JSON, 'parse').mockImplementation(() => {
+      const nonError = 'bad parse' as unknown as Error;
+
+      throw nonError;
+    });
+
+    const result = buildMergedClientConfig({
+      existingConfigText: '{ still bad json',
+      agenticServerEntry: {
+        command: 'npx',
+        args: ['-y', 'agentic-mcp'],
+      },
+    });
+
+    expect(result.status).toBe('invalid-json');
+    expect(result.reason).toBe('Invalid JSON');
   });
 });
