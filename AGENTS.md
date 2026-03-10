@@ -39,6 +39,7 @@
 - Integration tests: `.test.ts`, separate vitest config.
 - Test naming: `GIVEN X WHEN Y THEN Z` (all three keywords uppercase).
 - `vi.mock()` always with factory function. `vi.mocked()` for typed access. `vi.hoisted()` for shared mock refs.
+- **No dynamic `import()` in tests for local modules** — prefer static imports. If you need to prove persisted or cross-invocation behavior, verify files on disk or spawn a child process; do not use `await import('./foo')` helpers to simulate reloads.
 - **No top-level `await import()` in tests** — prefer static imports. When mocks require late module evaluation, load the module from a named async helper or a `beforeAll`, never via module-scope `const { foo } = await import('./foo')`.
 - No `it.each` / `describe.each` — write explicit individual `it()` calls.
 - Factory functions for test data: `create*`/`build*`/`make*` with `overrides: Partial<T> = {}`.

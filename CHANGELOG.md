@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Persist provider metrics across separate CLI invocations in a durable per-user store instead of process-local memory
+- Resolve metrics storage to OS-native state paths by default and allow overriding the file location with `AGENTIC_MCP_METRICS_PATH`
+- Split provider-metrics persistence into smaller data-access subfeatures for path resolution, parsing, locking, file I/O, and summary building
+- Serialize concurrent metrics writes with a filesystem lock and unique temp files to prevent corrupted JSON, dropped updates, and rename races under parallel execution
+- Recover from invalid persisted metrics during append so stale corrupted files are overwritten instead of spamming repeated warnings
+- Harden async ask session polling tests to wait for terminal background-job states instead of relying on a fixed sleep
+
 ## [0.1.8] - 2026-03-10
 
 - Add `agentic-mcp init` as a minimal onboarding alias for `setup --minimal`, installing the bundled skill before any MCP client config is written
