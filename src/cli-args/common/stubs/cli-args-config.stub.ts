@@ -8,6 +8,7 @@ type AskCommandConfig = Readonly<{
   args: string[];
   trailingArgs?: string[];
   flags: AskFlagMap;
+  streaming?: ProviderConfig['commands']['ask']['streaming'];
 }>;
 
 const DEFAULT_CONFIG_OPTIONS: AskCommandConfig = {
@@ -17,12 +18,13 @@ const DEFAULT_CONFIG_OPTIONS: AskCommandConfig = {
 };
 
 export const createCliArgsConfig = (overrides: Partial<AskCommandConfig> = {}): ProviderConfig => {
-  const { method, args, trailingArgs, flags } = { ...DEFAULT_CONFIG_OPTIONS, ...overrides };
+  const { method, args, trailingArgs, flags, streaming } = { ...DEFAULT_CONFIG_OPTIONS, ...overrides };
+  const askCommand = streaming ? { args, trailingArgs, flags, streaming } : { args, trailingArgs, flags };
 
   return {
     ...ASK_PROVIDER_CONFIG_STUB,
     commands: {
-      ask: { args, trailingArgs, flags },
+      ask: askCommand,
     },
     input: { method },
   };
