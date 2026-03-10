@@ -101,12 +101,12 @@ If you are using MCP mode, restart your client after setup and confirm that tool
 
 ## Supported MCP clients
 
-| Client | Setup command | Default config path |
-| --- | --- | --- |
-| Claude Code | `npx agentic-mcp setup --client claude-code --yes` | `~/.claude/claude_desktop_config.json` |
-| Cursor | `npx agentic-mcp setup --client cursor --yes` | `~/.cursor/mcp.json` |
-| Windsurf | `npx agentic-mcp setup --client windsurf --yes` | `~/.codeium/windsurf/mcp_config.json` |
-| Generic JSON | `npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes` | user-supplied |
+| Client       | Setup command                                                           | Default config path                    |
+| ------------ | ----------------------------------------------------------------------- | -------------------------------------- |
+| Claude Code  | `npx agentic-mcp setup --client claude-code --yes`                      | `~/.claude/claude_desktop_config.json` |
+| Cursor       | `npx agentic-mcp setup --client cursor --yes`                           | `~/.cursor/mcp.json`                   |
+| Windsurf     | `npx agentic-mcp setup --client windsurf --yes`                         | `~/.codeium/windsurf/mcp_config.json`  |
+| Generic JSON | `npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes` | user-supplied                          |
 
 Setup uses merge mode by default, preserves existing MCP servers, creates backups when appropriate, and verifies writes after updating the file.
 
@@ -147,13 +147,13 @@ npx agentic-mcp provider_metrics
 
 These provider definitions ship with the project. Whether they are actually usable on your machine still depends on the underlying CLI binary being installed and authenticated.
 
-| Provider | Binary | Included by default |
-| --- | --- | --- |
-| Claude | `claude` | Yes |
-| Codex | `codex` | Yes |
-| Copilot | `copilot` | Yes |
-| Gemini | `gemini` | Yes |
-| OpenCode | `opencode` | Yes |
+| Provider | Binary     | Included by default |
+| -------- | ---------- | ------------------- |
+| Claude   | `claude`   | Yes                 |
+| Codex    | `codex`    | Yes                 |
+| Copilot  | `copilot`  | Yes                 |
+| Gemini   | `gemini`   | Yes                 |
+| OpenCode | `opencode` | Yes                 |
 
 Provider definitions live in `src/config/providers.json`.
 
@@ -177,16 +177,16 @@ npx agentic-mcp <command> [options]
 
 Core commands:
 
-| Command | What it does |
-| --- | --- |
-| `ask_<provider> <prompt>` | Query one provider |
-| `ask_all <prompt>` | Query several providers in parallel |
-| `ping_<provider>` | Check whether a provider is available |
-| `help_<provider>` | Show the provider CLI help output |
-| `sessions_<provider>` | List known sessions for that provider |
-| `list_providers` | Show configured providers and availability |
-| `provider_metrics` | Show provider usage stats |
-| `setup` | Configure an MCP client |
+| Command                   | What it does                               |
+| ------------------------- | ------------------------------------------ |
+| `ask_<provider> <prompt>` | Query one provider                         |
+| `ask_all <prompt>`        | Query several providers in parallel        |
+| `ping_<provider>`         | Check whether a provider is available      |
+| `help_<provider>`         | Show the provider CLI help output          |
+| `sessions_<provider>`     | List known sessions for that provider      |
+| `list_providers`          | Show configured providers and availability |
+| `provider_metrics`        | Show provider usage stats                  |
+| `setup`                   | Configure an MCP client                    |
 
 Run `npx agentic-mcp --help` for the full CLI reference.
 
