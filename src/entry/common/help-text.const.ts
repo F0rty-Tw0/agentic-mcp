@@ -8,7 +8,7 @@ export const HELP_TEXT = [
   '  help_<provider>           Show provider CLI help output',
   '  sessions_<provider>       List known ask sessions for a provider',
   '  list_providers            List all configured providers',
-  '  provider_metrics          Show call statistics',
+  '  provider_metrics          Show overall call statistics',
   '  setup                     Configure MCP client integration',
   '  init                      Install the skill and suggest MCP setup',
   '',
