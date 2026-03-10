@@ -1,319 +1,224 @@
 # agentic-mcp
 
-> Query Claude, Codex, Gemini, Copilot, and OpenCode from one interface.
+> One MCP server and CLI wrapper for local AI agent CLIs.
 
 [![CI](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Live-brightgreen.svg)](#status)
 
-Multi-model AI gateway that wraps any agentic CLI tool as an [MCP](https://modelcontextprotocol.io/) server. Add a new AI provider by editing a JSON file — no code changes, no rebuilds.
+`agentic-mcp` gives you one integration surface for multiple local AI CLIs such as Claude, Codex, Copilot, Gemini, and OpenCode.
 
-> **Requires Node.js >= 22**
+Use it in two ways:
 
-## 30-Second Setup
+- As an MCP server for clients like Claude Code, Cursor, and Windsurf
+- As a direct CLI for asking providers, checking availability, and comparing responses
+
+The point is simple: set up provider CLIs once, then use a consistent command and tool surface instead of wiring each provider separately.
+
+## Why people use it
+
+- One command surface across multiple AI CLIs
+- One MCP server entry instead of per-provider client wiring
+- Direct CLI and MCP mode share the same provider definitions and behavior
+- New providers can be added declaratively in config instead of writing provider-specific code
+
+## How it works
+
+1. You install and authenticate one or more provider CLIs locally.
+2. `agentic-mcp` exposes a uniform MCP and CLI interface on top of them.
+3. Your MCP client or terminal calls `agentic-mcp`, which invokes the underlying provider CLI with the right arguments.
+
+## Before you start
+
+You need:
+
+- Node.js 22 or newer
+- At least one supported provider CLI installed locally and already authenticated
+- An MCP client only if you want editor or agent integration; direct CLI usage works without one
+
+Supported provider binaries:
+
+- `claude`
+- `codex`
+- `copilot`
+- `gemini`
+- `opencode`
+
+If those binaries are missing or not logged in, setup may succeed but provider calls will still fail. That is the most common source of confusion on first run.
+
+## Quickstart
+
+### 1. Run minimal onboarding
 
 ```bash
 npx agentic-mcp init
 ```
 
-Equivalent explicit minimal command:
+`init` is a safe onboarding alias for `setup --minimal`.
+
+It does two things:
+
+- installs the bundled `using-agentic-mcp` skill
+- prints the next client-specific setup command
+
+It does not write MCP client configuration yet.
+
+### 2. Configure your MCP client
+
+Pick the client you actually use:
 
 ```bash
-npx agentic-mcp setup --minimal
+npx agentic-mcp setup --client claude-code --yes
+npx agentic-mcp setup --client cursor --yes
+npx agentic-mcp setup --client windsurf --yes
 ```
 
-Or install globally:
+For another MCP client, generate a generic JSON entry and choose the target file yourself:
 
 ```bash
-npm install -g agentic-mcp
-agentic-mcp init
+npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes
 ```
 
-Supported clients: Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
+If you want to preview changes before writing, add `--dry-run`.
 
-## AI Discoverability
+### 3. Verify that your providers are usable
 
-Want agents to reliably find and use the right tools? See https://github.com/F0rty-Tw0/agentic-mcp/blob/master/MCP-SKILLS-DISCOVERABILITY.md for copy-paste prompts, skill instructions, and MCP/CLI discovery workflow.
-
-Repository skill package: https://github.com/F0rty-Tw0/agentic-mcp/blob/master/skills/using-agentic-mcp/SKILL.md
-
-### Paste This to Your AI Agent
-
-```text
-Set up agentic-mcp for me end-to-end.
-
-Requirements:
-1) If your environment supports skills, load the equivalent "using skills" guidance first (for example skills-using or /using-skills).
-2) Run setup for Claude Code:
-   npx agentic-mcp setup --client claude-code --yes
-3) Verify installation by calling these MCP tools in order:
-   - list_providers
-   - ping_claude
-   - help_claude
-4) If setup fails, diagnose and fix, then rerun verification.
-5) Report final status with what was configured and which providers are available.
-6) Ask if any other providers should be set up too; if yes, configure and verify them the same way.
+```bash
+npx agentic-mcp list_providers
+npx agentic-mcp ping_claude
 ```
 
-### Safe Setup Defaults
+Replace `claude` with the provider you actually installed.
 
-`agentic-mcp setup` is now safe by default:
+A healthy setup should show your providers in `list_providers` and report `available` for `ping_<provider>`.
 
-- Default mode is merge (`--mode merge`)
-- Existing configs are preserved and only `mcpServers["agentic-mcp"]` is updated
-- Writes use backup + atomic replace + read-back verification
-- Non-interactive writes require `--yes`
+### 4. Try a real command
 
-Common flags:
+```bash
+npx agentic-mcp ask_claude "Explain MCP in one paragraph"
+```
 
-- `--minimal` — install the skill and print suggested MCP setup without writing client config
-- `--dry-run` — show plan without writing
-- `--output json` — machine-readable result
-- `--mode merge|overwrite` — choose update strategy (`overwrite` is explicit/destructive)
-- `--path <file>` — target a specific config file
-- `--backup if-exists|always|never` — backup policy before writes
+If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, and `ask_<provider>` appear.
 
-## CLI Usage
+## Supported MCP clients
 
-In addition to running as an MCP server, agentic-mcp can be invoked directly from the command line. Every CLI subcommand calls the matching MCP tool name through the same in-process MCP server contract, so CLI and MCP share argument names, error handling, and final results.
+| Client | Setup command | Default config path |
+| --- | --- | --- |
+| Claude Code | `npx agentic-mcp setup --client claude-code --yes` | `~/.claude/claude_desktop_config.json` |
+| Cursor | `npx agentic-mcp setup --client cursor --yes` | `~/.cursor/mcp.json` |
+| Windsurf | `npx agentic-mcp setup --client windsurf --yes` | `~/.codeium/windsurf/mcp_config.json` |
+| Generic JSON | `npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes` | user-supplied |
+
+Setup uses merge mode by default, preserves existing MCP servers, creates backups when appropriate, and verifies writes after updating the file.
+
+For Claude tooling, the setup target name is `claude-code`, but the config file it updates is `~/.claude/claude_desktop_config.json`. That filename comes from the client-side config convention, not from this package.
+
+## Common workflows
+
+### Use it as a direct CLI
+
+You do not need an MCP client to use `agentic-mcp`.
+
+```bash
+npx agentic-mcp ask_claude "What changed in TypeScript 5.9?"
+npx agentic-mcp ask_codex "Suggest a refactor for this function"
+npx agentic-mcp sessions_claude
+```
+
+When run without a subcommand, `agentic-mcp` starts as an MCP stdio server.
+
+### Compare providers on the same prompt
+
+```bash
+npx agentic-mcp ask_all "Summarize this API design" --providers claude,codex,gemini
+```
+
+Use this when you want side-by-side answers without hand-running the same prompt several times.
+
+### Check what is available on this machine
+
+```bash
+npx agentic-mcp list_providers
+npx agentic-mcp ping_claude
+npx agentic-mcp help_claude
+npx agentic-mcp provider_metrics
+```
+
+## Built-in provider support
+
+These provider definitions ship with the project. Whether they are actually usable on your machine still depends on the underlying CLI binary being installed and authenticated.
+
+| Provider | Binary | Included by default |
+| --- | --- | --- |
+| Claude | `claude` | Yes |
+| Codex | `codex` | Yes |
+| Copilot | `copilot` | Yes |
+| Gemini | `gemini` | Yes |
+| OpenCode | `opencode` | Yes |
+
+Provider definitions live in `src/config/providers.json`.
+
+## Useful setup flags
+
+`agentic-mcp setup` supports a few flags that matter often:
+
+- `--minimal` - install the skill and print suggested next steps without writing client config
+- `--dry-run` - preview the planned change without writing files
+- `--yes` - allow non-interactive writes
+- `--mode merge|overwrite` - choose how an existing config file is updated
+- `--path <file>` - target a specific config file
+- `--backup if-exists|always|never` - control backup behavior
+- `--output json` - machine-readable setup output
+
+## Command overview
 
 ```bash
 npx agentic-mcp <command> [options]
 ```
 
-Or if installed globally:
+Core commands:
 
-```bash
-agentic-mcp <command> [options]
-```
+| Command | What it does |
+| --- | --- |
+| `ask_<provider> <prompt>` | Query one provider |
+| `ask_all <prompt>` | Query several providers in parallel |
+| `ping_<provider>` | Check whether a provider is available |
+| `help_<provider>` | Show the provider CLI help output |
+| `sessions_<provider>` | List known sessions for that provider |
+| `list_providers` | Show configured providers and availability |
+| `provider_metrics` | Show provider usage stats |
+| `setup` | Configure an MCP client |
 
-### Commands
+Run `npx agentic-mcp --help` for the full CLI reference.
 
-| Command                   | Description                                      |
-| ------------------------- | ------------------------------------------------ |
-| `ask_<provider> <prompt>` | Query a provider (e.g. `ask_claude "explain X"`) |
-| `ask_all <prompt>`        | Query all providers in parallel                  |
-| `ping_<provider>`         | Check if a provider is available                 |
-| `help_<provider>`         | Show provider CLI help output                    |
-| `sessions_<provider>`     | List known ask sessions for a provider           |
-| `list_providers`          | List all configured providers                    |
-| `provider_metrics`        | Show call statistics                             |
+## AI agent setup and discoverability
 
-### Options
+If you want another AI agent to discover and use this project reliably:
 
-| Option                   | Description                                        |
-| ------------------------ | -------------------------------------------------- |
-| `--config <path>`        | Path to providers config file                      |
-| `--model <name>`         | Model to use (ask commands)                        |
-| `--working-dir <path>`   | Working directory for the provider                 |
-| `--system-prompt <text>` | System prompt                                      |
-| `--auto-mode <value>`    | Auto-mode flag value                               |
-| `--effort <value>`       | Effort level                                       |
-| `--max-budget <value>`   | Max budget                                         |
-| `--context <text>`       | Additional prompt context                          |
-| `--file <path>`          | File to include (repeatable)                       |
-| `--stream-live`          | Stream live progress for `ask_<provider>` commands |
-| `--providers <list>`     | Comma-separated provider list (`ask_all`)          |
-| `--async`                | Run asynchronously                                 |
-| `--job-id <id>`          | Job ID for async status checks                     |
-| `--session-id <id>`      | Session ID for multi-turn                          |
+- Read the discoverability guide: [MCP-SKILLS-DISCOVERABILITY.md](./MCP-SKILLS-DISCOVERABILITY.md)
+- Use the bundled skill: [skills/using-agentic-mcp/SKILL.md](./skills/using-agentic-mcp/SKILL.md)
 
-### Examples
-
-```bash
-agentic-mcp ask_claude "what is TypeScript?"
-agentic-mcp ask_claude "show progress" --stream-live
-agentic-mcp ask_claude "summarize this" --context "Focus on risks"
-agentic-mcp ask_claude "fix this bug" --async
-agentic-mcp ask_claude --job-id job-123
-agentic-mcp sessions_claude
-agentic-mcp ask_codex "fix this bug" --model o4-mini
-agentic-mcp ask_all "explain MCP" --providers claude,gemini
-agentic-mcp list_providers
-agentic-mcp ping_claude
-```
-
-CLI mode uses the same config resolution and MCP execution contract as server mode (see [Configuration](#configuration)).
-
-## What Can You Do?
-
-### Get an answer
-
-Ask any provider directly:
-
-- `ask_claude` — Get an answer from Claude
-- `ask_codex` — Get an answer from Codex
-- `ask_gemini` — Get an answer from Gemini
-- `ask_copilot` — Get an answer from Copilot
-- `ask_opencode` — Get an answer from OpenCode
-
-### Compare providers
-
-Send the same prompt to multiple providers simultaneously:
-
-- `ask_all` — Query all available providers at once and compare responses side-by-side
-
-### Track your usage
-
-See per-provider call counts, response times, and success rates:
-
-- `provider_metrics` — View session statistics (call counts, response times, success rates)
-
-### Explore
-
-- `list_providers` — See which AI models are available
-- `ping_*` — Check if a provider is ready
-- `help_*` — See what a provider can do
-
-### Manage sessions
-
-Track multi-turn conversations with providers that support it:
-
-- `sessions_*` — List known ask sessions for a provider
-
-## Providers
-
-| Provider | CLI Tool   | Status        |
-| -------- | ---------- | ------------- |
-| Claude   | `claude`   | ✅ Configured |
-| Codex    | `codex`    | ✅ Configured |
-| Copilot  | `copilot`  | ✅ Configured |
-| Gemini   | `gemini`   | ✅ Configured |
-| OpenCode | `opencode` | ✅ Configured |
-
-Adding a new provider? Just edit `providers.json` — no code changes needed.
-
-<details>
-<summary>Configuration</summary>
-
-### Config Sources (highest priority first)
-
-1. `--config` CLI flag
-2. `AGENTIC_MCP_CONFIG` environment variable
-3. `~/.config/agentic-mcp/providers.json` (user-local)
-4. Bundled `providers.json` (default)
-
-### Provider Config Structure
-
-Each provider is defined in `providers.json` with:
-
-- CLI binary name and resolution
-- Command definitions (ask, ping, help)
-- Flag mappings for model selection, context, files, etc.
-- Output format (`json`, `stream-json`, or `text`)
-
-See `providers.json` for examples.
-
-</details>
-
-<details>
-<summary>CLI Argument Builder</summary>
-
-The `cli-args` module translates abstract MCP tool arguments into the concrete `string[]` needed to spawn each provider's CLI process. It uses the provider's declarative config to determine argument ordering, prompt delivery, and flag resolution — no per-provider code required.
-
-**Argument ordering:**
-
-```
-[command args] → [prompt] → [optional flags] → [trailing args]
-```
-
-**Prompt delivery** is determined by `config.input.method`:
-
-| Method       | Behavior                                   |
-| ------------ | ------------------------------------------ |
-| `positional` | Prompt appended as a positional argument   |
-| `flag`       | Prompt follows the flag prefix from `args` |
-| `stdin`      | Prompt sent via stdin, not in args         |
-
-**Flag types** in `providers.json`:
-
-| Shape         | Example config                                         | Output                       |
-| ------------- | ------------------------------------------------------ | ---------------------------- |
-| `string`      | `"--model"`                                            | `["--model", "gpt-4"]`       |
-| `string[]`    | `["--full-auto"]`                                      | `["--full-auto"]`            |
-| `LeveledFlag` | `{ flag: "--sandbox", values: ["read-only", "full"] }` | `["--sandbox", "read-only"]` |
-
-Supported optional flags: `model`, `working_directory`, `files`, `auto_mode`, `sandbox`, `effort`, `max_budget`, `system_prompt`. Flags missing from the provider config are silently skipped.
-
-</details>
-
-<details>
-<summary>Advanced Features</summary>
-
-### Streaming
-
-Enable live streaming with `stream_live: true` in MCP `ask_*` tool calls or `--stream-live` in CLI `ask_<provider>` commands. Responses stream through MCP progress notifications in both modes.
-
-### Async Mode
-
-For long-running queries, use `mode: "async"` to get a job ID, then poll with `action: "status"`.
-
-### Sessions
-
-Some providers support persistent sessions via `session_id` for multi-turn conversations.
-
-</details>
-
-<details>
-<summary>Security Model</summary>
-
-- All CLI commands use `spawn()` with array args — no shell injection
-- Child process environments are isolated (minimal base env)
-- Binary paths resolved and pinned at startup
-- Output size-limited to prevent memory exhaustion
-- Zod validation on all inputs
-
-</details>
-
-<details>
-<summary>Adding a Provider</summary>
-
-1. Add an entry to `providers.json`
-2. Restart the server
-
-That's it. No code changes needed. See existing entries for the config shape.
-
-</details>
-
-<details>
-<summary>Project Structure</summary>
-
-```
-src/
-├── ask/              # Per-provider ask handler (command, execution, response, sessions)
-├── ask-all/          # Fan-out queries to all providers in parallel
-├── cli/              # CLI router for direct command-line invocation
-├── background-jobs/  # Async job queue for long-running asks
-├── cli-args/         # Declarative config → CLI argument builder
-├── config/           # Provider config loader (multi-source resolution)
-├── entry/            # CLI entry point (--version, --help, setup, server)
-├── provider-metrics/ # Per-provider call counts, timing, success rates
-├── server/           # MCP server factory
-├── session/          # Session store with locking for multi-turn conversations
-├── setup/            # `agentic-mcp setup` CLI for configuring MCP clients
-├── shared/           # Cross-cutting concerns
-│   ├── command-execution/  # Process spawning, semaphore, output collection
-│   ├── mcp-protocol/       # MCP types, heartbeat, error formatting
-│   ├── provider/           # Provider config types, env resolver, model errors
-│   └── validation/         # Request registry, Zod utilities
-├── simple-tools/     # ping, help, list_providers handlers
-├── streaming/        # Live output via MCP progress notifications
-├── tool-registry/    # MCP tool registration from provider config
-└── types/            # Ambient TypeScript declarations
-```
-
-</details>
+That material is useful once the basic setup above works. It is not required for a normal first run.
 
 ## Development
 
 ```bash
-pnpm install          # install dependencies
-pnpm run dev          # run in dev mode
-pnpm run build        # build for production
-pnpm run test         # run tests
-pnpm run typecheck    # type-check
-pnpm run lint         # lint
+pnpm install
+pnpm run dev
+pnpm run build
+pnpm run test
+pnpm run typecheck
+pnpm run lint
 ```
+
+If you want to inspect the MCP server manually:
+
+```bash
+pnpm run inspect
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
