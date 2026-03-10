@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { extractNativeSessionId } from '../../session';
-import type { ResolvedProviderEntry } from '../../shared';
+import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
 import { stripAnsi } from '../../shared';
 import type { SessionMode } from '../common';
 
@@ -23,6 +23,7 @@ export const buildFailureExecution = (response: CallToolResult, wasCancelled: bo
 export const buildExecution = (
   response: CallToolResult,
   stdout: string,
+  outputFormat: OutputFormat,
   context: ResolvedProviderEntry
 ): AskExecution => {
   const firstContent = response.content[0];
@@ -31,7 +32,7 @@ export const buildExecution = (
     response,
     sessionMode: 'none',
     responseText: firstContent?.type === 'text' ? firstContent.text : '',
-    nativeSessionId: extractNativeSessionId(context.name, stripAnsi(stdout), context.config.outputFormat),
+    nativeSessionId: extractNativeSessionId(context.name, stripAnsi(stdout), outputFormat),
     wasCancelled: false,
   };
 };
