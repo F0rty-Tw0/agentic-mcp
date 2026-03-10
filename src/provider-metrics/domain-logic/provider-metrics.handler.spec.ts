@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from './provider-metrics.handler';
 import { getProviderMetrics } from '../data-access/provider-metrics-store';
@@ -10,6 +10,10 @@ vi.mock('../data-access/provider-metrics-store', () => ({
 describe('handleProviderMetrics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('GIVEN a provider metrics summary WHEN called THEN returns it as JSON text content', async () => {
@@ -52,31 +56,42 @@ describe('handleProviderMetrics', () => {
 
     expect(getProviderMetrics).toHaveBeenCalledOnce();
   });
+
+  it('GIVEN provider metrics retrieval failure WHEN called THEN returns an MCP error response', async () => {
+    vi.mocked(getProviderMetrics).mockRejectedValue(new Error('metrics unavailable'));
+
+    const result = await handleProviderMetrics();
+
+    expect(result).toStrictEqual({
+      isError: true,
+      content: [{ type: 'text', text: 'Error: metrics unavailable' }],
+    });
+  });
 });
 
 describe('buildProviderMetricsToolDefinition', () => {
   it('GIVEN no arguments WHEN called THEN returns name "provider_metrics"', () => {
-    const def = buildProviderMetricsToolDefinition();
+    const toolDefinition = buildProviderMetricsToolDefinition();
 
-    expect(def.name).toBe('provider_metrics');
+    expect(toolDefinition.name).toBe('provider_metrics');
   });
 
   it('GIVEN no arguments WHEN called THEN description mentions provider and overall usage', () => {
-    const def = buildProviderMetricsToolDefinition();
+    const toolDefinition = buildProviderMetricsToolDefinition();
 
-    expect(def.description).toContain('provider');
-    expect(def.description).toContain('overall');
+    expect(toolDefinition.description).toContain('provider');
+    expect(toolDefinition.description).toContain('overall');
   });
 
   it('GIVEN no arguments WHEN called THEN has readOnly and idempotent annotations', () => {
-    const def = buildProviderMetricsToolDefinition();
+    const toolDefinition = buildProviderMetricsToolDefinition();
 
-    expect(def.annotations).toStrictEqual({ readOnlyHint: true, idempotentHint: true });
+    expect(toolDefinition.annotations).toStrictEqual({ readOnlyHint: true, idempotentHint: true });
   });
 
   it('GIVEN no arguments WHEN called THEN inputSchema is undefined', () => {
-    const def = buildProviderMetricsToolDefinition();
+    const toolDefinition = buildProviderMetricsToolDefinition();
 
-    expect(def.inputSchema).toBeUndefined();
+    expect(toolDefinition.inputSchema).toBeUndefined();
   });
 });
