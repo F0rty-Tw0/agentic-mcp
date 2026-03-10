@@ -166,22 +166,26 @@ describe('integration: CLI router', () => {
     );
 
     it(
-      'GIVEN an available provider WHEN calling ask via CLI THEN stdout contains a response and exit code is 0',
+      'GIVEN a controlled provider WHEN calling ask via CLI THEN stdout contains the provider response and exit code is 0',
       async () => {
         if (!binaryExists) return;
 
-        const provider = await findAvailableProvider();
+        const { configPath, tempDir } = await createStreamingFixture();
 
-        if (!provider) return;
+        try {
+          const result = await execFileAsync(process.execPath, [
+            BINARY_PATH,
+            'ask_fixture',
+            'ignored prompt',
+            '--config',
+            configPath,
+          ]);
+          const stdout = result.stdout;
 
-        const result = await execFileAsync(process.execPath, [
-          BINARY_PATH,
-          `ask_${provider}`,
-          'reply with just the word hello',
-        ]);
-        const stdout = result.stdout;
-
-        expect(stdout.length).toBeGreaterThan(0);
+          expect(stdout).toContain(FINAL_STDOUT_MARKER);
+        } finally {
+          await removeTempDir(tempDir);
+        }
       },
       ASK_TIMEOUT_MS
     );
