@@ -1,3 +1,4 @@
+import type { SkillInstallResult } from './install-skill.util';
 import type { ParsedSetupArgs } from './setup-cli-args.util';
 import type { DetectedProvider, SetupApplyResult, SetupPlan } from '../common';
 
@@ -87,4 +88,17 @@ export const isNonInteractiveWriteBlocked = (
   isInteractive: boolean
 ): boolean => {
   return !isInteractive && !args.yes && plan.writeIntent === 'write';
+};
+
+export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
+  switch (skillResult.status) {
+    case 'installed':
+      return `Skill installed: ${skillResult.skillPath}\n`;
+    case 'already-exists':
+      return `Skill already up to date: ${skillResult.skillPath}\n`;
+    case 'error':
+      return `Skill install failed: ${skillResult.reason ?? 'unknown error'}\n`;
+    default:
+      return '';
+  }
 };

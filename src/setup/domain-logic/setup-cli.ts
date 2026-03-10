@@ -18,6 +18,8 @@ import {
   buildSetupPlan,
   formatHumanSetupOutput,
   formatJsonSetupOutput,
+  formatSkillOutput,
+  installSkill,
   isNonInteractiveWriteBlocked,
   parseSetupArgs,
   readExistingConfigText,
@@ -129,4 +131,12 @@ export const runSetup = async (
       : formatHumanSetupOutput(parsedArgs, plan, result, detectedProviders);
 
   dependencies.stdoutWrite(output);
+
+  if (parsedArgs.client !== 'claude-code') {
+    return;
+  }
+
+  const skillResult = await installSkill({ homeDirectory: dependencies.homeDirectory });
+
+  dependencies.stdoutWrite(formatSkillOutput(skillResult));
 };

@@ -5,6 +5,7 @@ import {
   formatHumanSetupOutput,
   formatJsonSetupOutput,
   formatProviderSummary,
+  formatSkillOutput,
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
@@ -153,5 +154,35 @@ describe('setup-cli-output utilities', () => {
     const result = isNonInteractiveWriteBlocked(createArgs({ yes: true }), createPlan({ writeIntent: 'write' }), false);
 
     expect(result).toBe(false);
+  });
+
+  it('GIVEN installed status WHEN formatting skill output THEN includes skill path', () => {
+    const output = formatSkillOutput({
+      status: 'installed',
+      skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
+    });
+
+    expect(output).toContain('Skill installed:');
+    expect(output).toContain('/home/.claude/skills/using-agentic-mcp/SKILL.md');
+  });
+
+  it('GIVEN already-exists status WHEN formatting skill output THEN includes up to date message', () => {
+    const output = formatSkillOutput({
+      status: 'already-exists',
+      skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
+    });
+
+    expect(output).toContain('Skill already up to date:');
+  });
+
+  it('GIVEN error status WHEN formatting skill output THEN includes reason', () => {
+    const output = formatSkillOutput({
+      status: 'error',
+      skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
+      reason: 'EACCES: permission denied',
+    });
+
+    expect(output).toContain('Skill install failed:');
+    expect(output).toContain('EACCES: permission denied');
   });
 });
