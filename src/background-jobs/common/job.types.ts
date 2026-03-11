@@ -1,6 +1,11 @@
 type BackgroundJobState = 'pending' | 'running' | 'completed' | 'failed';
 type BackgroundJobStructuredContent = Readonly<Record<string, unknown>>;
 
+export type BackgroundJobCompletionInput = Readonly<{
+  resultText: string;
+  structuredContent?: BackgroundJobStructuredContent;
+}>;
+
 export type BackgroundJobRecord = Readonly<{
   id: string;
   provider: string;

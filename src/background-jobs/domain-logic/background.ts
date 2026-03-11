@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { BackgroundJobStatusPayload } from '../common';
+import type { BackgroundJobCompletionInput, BackgroundJobStatusPayload } from '../common';
 import {
   getBackgroundJob,
   setBackgroundJobCompleted,
@@ -57,10 +57,12 @@ export const startBackgroundInvocation = async (jobId: string, run: RunInvocatio
       return;
     }
 
-    setBackgroundJobCompleted(jobId, {
+    const backgroundJobCompletionInput: BackgroundJobCompletionInput = {
       resultText: extractTextContent(response),
       structuredContent: response.structuredContent as Readonly<Record<string, unknown>> | undefined,
-    });
+    };
+
+    setBackgroundJobCompleted(jobId, backgroundJobCompletionInput);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : DEFAULT_FAILURE_MESSAGE;
 

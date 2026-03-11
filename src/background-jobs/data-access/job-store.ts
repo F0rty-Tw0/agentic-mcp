@@ -2,16 +2,11 @@ import { randomUUID } from 'node:crypto';
 
 import { nowIso } from '../../shared';
 import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS, MAX_RESULT_TEXT_LENGTH } from '../common';
-import type { BackgroundJobRecord } from '../common';
+import type { BackgroundJobCompletionInput, BackgroundJobRecord } from '../common';
 
 type BackgroundJobStoreEntry = Readonly<{
   createdAtMs: number;
   record: BackgroundJobRecord;
-}>;
-
-type SetBackgroundJobCompletedInput = Readonly<{
-  resultText: string;
-  structuredContent?: Readonly<Record<string, unknown>>;
 }>;
 
 const backgroundJobStore = new Map<string, BackgroundJobStoreEntry>();
@@ -90,9 +85,9 @@ export const setBackgroundJobRunning = (id: string): BackgroundJobRecord | undef
 
 export const setBackgroundJobCompleted = (
   id: string,
-  setBackgroundJobCompletedInput: SetBackgroundJobCompletedInput
+  backgroundJobCompletionInput: BackgroundJobCompletionInput
 ): BackgroundJobRecord | undefined => {
-  const { resultText, structuredContent } = setBackgroundJobCompletedInput;
+  const { resultText, structuredContent } = backgroundJobCompletionInput;
 
   return updateJob(id, (existing) => ({
     ...existing,
