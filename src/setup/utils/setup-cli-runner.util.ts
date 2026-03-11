@@ -3,14 +3,12 @@ import path from 'node:path';
 import { CLIENT_CONFIG_PATHS } from '../common';
 import type {
   DetectedProvider,
-  McpServerEntry,
+  ParsedSetupArgs,
   SetupApplyResult,
+  SetupCliDependencies,
   SetupPlan,
-  SetupPlanInput,
   SupportedClient,
 } from '../common';
-import type { SkillInstallDependencies, SkillInstallResult } from './install-skill.util';
-import type { ParsedSetupArgs } from './setup-cli-args.util';
 import {
   formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
@@ -20,23 +18,6 @@ import {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
-
-export type SetupCliDependencies = Readonly<{
-  detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;
-  generateClientConfigEntry: (
-    client: SupportedClient,
-    detectedProviders: readonly DetectedProvider[]
-  ) => McpServerEntry;
-  buildSetupPlan: (input: SetupPlanInput) => SetupPlan;
-  applySetupPlan: (plan: SetupPlan) => Promise<SetupApplyResult>;
-  installSkill: (injectedDependencies?: Partial<SkillInstallDependencies>) => Promise<SkillInstallResult>;
-  homeDirectory: string;
-  stdoutWrite: (text: string) => void;
-  stderrWrite: (text: string) => void;
-  isInteractive: boolean;
-  promptConfirm: (question: string) => Promise<boolean>;
-  readConfigFile: (path: string) => Promise<string>;
-}>;
 
 type SetupCliFlowInput = Readonly<{
   parsedArgs: ParsedSetupArgs;

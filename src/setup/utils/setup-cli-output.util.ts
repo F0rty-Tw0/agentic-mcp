@@ -1,6 +1,11 @@
-import type { SkillInstallResult } from './install-skill.util';
-import type { ParsedSetupArgs } from './setup-cli-args.util';
-import type { DetectedProvider, SetupApplyResult, SetupPlan, SupportedClient } from '../common';
+import type {
+  DetectedProvider,
+  ParsedSetupArgs,
+  SetupApplyResult,
+  SetupPlan,
+  SkillInstallResult,
+  SupportedClient,
+} from '../common';
 
 type MinimalSetupOutputInput = Readonly<{
   client: SupportedClient;

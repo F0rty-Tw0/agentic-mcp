@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SkillInstallDependencies, SkillInstallResult } from './install-skill.util';
+import type { SkillInstallDependencies, SkillInstallResult } from '../common';
 import { SKILL_CONTENT } from '../common/skill-content';
 
 const mocks = vi.hoisted(() => ({

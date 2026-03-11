@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { McpServerEntry, SetupApplyResult, SetupPlan } from '../common';
-import type { SetupCliDependencies } from '../utils';
+import type { McpServerEntry, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
 const processMocks = vi.hoisted(() => {
   const stdoutWrite = vi.fn<(text: string | Uint8Array) => boolean>().mockReturnValue(true);

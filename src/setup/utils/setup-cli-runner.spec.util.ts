@@ -3,9 +3,14 @@ import path from 'node:path';
 import { vi } from 'vitest';
 import type { Mock } from 'vitest';
 
-import type { DetectedProvider, McpServerEntry, SetupApplyResult, SetupPlan } from '../common';
-import type { ParsedSetupArgs } from './setup-cli-args.util';
-import type { SetupCliDependencies } from './setup-cli-runner.util';
+import type {
+  DetectedProvider,
+  McpServerEntry,
+  ParsedSetupArgs,
+  SetupApplyResult,
+  SetupCliDependencies,
+  SetupPlan,
+} from '../common';
 
 export const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ParsedSetupArgs } from './setup-cli-args.util';
 import {
   formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
@@ -11,7 +10,7 @@ import {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
-import type { DetectedProvider, SetupApplyResult, SetupPlan } from '../common';
+import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan } from '../common';
 
 const createArgs = (overrides: Partial<ParsedSetupArgs> = {}): ParsedSetupArgs => {
   const args: ParsedSetupArgs = {

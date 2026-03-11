@@ -10,6 +10,8 @@ export type SetupWriteIntent = 'write' | 'skip' | 'manual';
 
 export type SetupMergeStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json';
 
+export type SetupOutputMode = 'human' | 'json';
+
 export type McpServerEntry = Readonly<{
   command: string;
   args: readonly string[];
@@ -70,6 +72,47 @@ export type SetupApplyResult = Readonly<{
   path?: string;
   backupPath?: string;
   reason?: string;
+}>;
+
+export type ParsedSetupArgs = Readonly<{
+  client: SupportedClient;
+  dryRun: boolean;
+  yes: boolean;
+  output: SetupOutputMode;
+  mode: SetupMode;
+  pathOverride?: string;
+  backup: SetupBackupPolicy;
+  minimal: boolean;
+}>;
+
+export type SkillInstallResult = Readonly<{
+  status: 'installed' | 'already-exists' | 'error';
+  skillPath: string;
+  reason?: string;
+}>;
+
+export type SkillInstallDependencies = Readonly<{
+  homeDirectory: string;
+  mkdir: (path: string, options: { recursive: boolean }) => Promise<void>;
+  writeFile: (path: string, content: string, encoding: 'utf8') => Promise<void>;
+  readFile: (path: string, encoding: 'utf8') => Promise<string>;
+}>;
+
+export type SetupCliDependencies = Readonly<{
+  detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;
+  generateClientConfigEntry: (
+    client: SupportedClient,
+    detectedProviders: readonly DetectedProvider[]
+  ) => McpServerEntry;
+  buildSetupPlan: (input: SetupPlanInput) => SetupPlan;
+  applySetupPlan: (plan: SetupPlan) => Promise<SetupApplyResult>;
+  installSkill: (injectedDependencies?: Partial<SkillInstallDependencies>) => Promise<SkillInstallResult>;
+  homeDirectory: string;
+  stdoutWrite: (text: string) => void;
+  stderrWrite: (text: string) => void;
+  isInteractive: boolean;
+  promptConfirm: (question: string) => Promise<boolean>;
+  readConfigFile: (path: string) => Promise<string>;
 }>;
 
 export type SetupResult = Readonly<{

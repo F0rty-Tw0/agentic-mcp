@@ -1,7 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { McpServerEntry, SetupApplyResult, SetupPlan } from '../common';
-import type { SetupCliDependencies } from '../utils';
+import type { McpServerEntry, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
 const mocks = vi.hoisted(() => {
   const close = vi.fn<() => void>();

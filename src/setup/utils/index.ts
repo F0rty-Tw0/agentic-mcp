@@ -20,9 +20,3 @@ export {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
-
-export type { ParsedSetupArgs, SetupOutputMode } from './setup-cli-args.util';
-
-export type { SetupCliDependencies } from './setup-cli-runner.util';
-
-export type { SkillInstallDependencies, SkillInstallResult } from './install-skill.util';

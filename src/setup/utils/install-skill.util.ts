@@ -2,20 +2,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
+import type { SkillInstallDependencies, SkillInstallResult } from '../common';
 import { SKILL_CONTENT } from '../common/skill-content';
-
-export type SkillInstallResult = Readonly<{
-  status: 'installed' | 'already-exists' | 'error';
-  skillPath: string;
-  reason?: string;
-}>;
-
-export type SkillInstallDependencies = Readonly<{
-  homeDirectory: string;
-  mkdir: (path: string, options: { recursive: boolean }) => Promise<void>;
-  writeFile: (path: string, content: string, encoding: 'utf8') => Promise<void>;
-  readFile: (path: string, encoding: 'utf8') => Promise<string>;
-}>;
 
 const defaultDependencies: SkillInstallDependencies = {
   homeDirectory: homedir(),
@@ -41,7 +29,7 @@ export const installSkill = async (
       return result;
     }
   } catch {
-    // File does not exist or is unreadable — proceed to install
+    /* empty */
   }
 
   try {

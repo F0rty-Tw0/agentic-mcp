@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
+import type { SetupCliDependencies } from '../common';
 import {
   applySetupPlan,
   buildSetupPlan,
@@ -11,7 +12,6 @@ import {
   runConfiguredSetup,
   runMinimalSetup,
 } from '../utils';
-import type { SetupCliDependencies } from '../utils';
 import { detectInstalledProviders } from './detect-providers';
 import { generateClientConfigEntry } from './generate-config';
 

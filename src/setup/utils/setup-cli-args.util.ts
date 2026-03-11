@@ -1,23 +1,10 @@
 import { SUPPORTED_CLIENTS } from '../common';
-import type { SetupBackupPolicy, SetupMode, SupportedClient } from '../common';
+import type { ParsedSetupArgs, SetupBackupPolicy, SetupMode, SetupOutputMode, SupportedClient } from '../common';
 
 const DEFAULT_CLIENT: SupportedClient = 'generic';
 const DEFAULT_OUTPUT: SetupOutputMode = 'human';
 const DEFAULT_MODE: SetupMode = 'merge';
 const DEFAULT_BACKUP: SetupBackupPolicy = 'if-exists';
-
-export type SetupOutputMode = 'human' | 'json';
-
-export type ParsedSetupArgs = Readonly<{
-  client: SupportedClient;
-  dryRun: boolean;
-  yes: boolean;
-  output: SetupOutputMode;
-  mode: SetupMode;
-  pathOverride?: string;
-  backup: SetupBackupPolicy;
-  minimal: boolean;
-}>;
 
 type ParseSetupArgsInput = Readonly<{
   args: readonly string[];
