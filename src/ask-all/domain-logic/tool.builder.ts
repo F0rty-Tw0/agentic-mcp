@@ -36,7 +36,7 @@ export const buildAskAllToolDefinition = (providerNames: readonly string[]): Too
   const definition: ToolDefinition = {
     name: ASK_ALL_TOOL_NAME,
     description:
-      `Send a prompt to all configured providers simultaneously and collect their responses. ` +
+      `Compare multiple providers on the same prompt through one command. ` +
       `Available providers: ${providerList}. ` +
       `Returns a structured result with each provider's response, success status, and timing.`,
     inputSchema,

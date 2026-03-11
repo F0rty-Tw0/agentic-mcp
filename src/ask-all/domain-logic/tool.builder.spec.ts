@@ -14,10 +14,11 @@ describe('buildAskAllToolDefinition', () => {
   });
 
   describe('description', () => {
-    it('GIVEN provider names WHEN called THEN description mentions ask_all', () => {
+    it('GIVEN provider names WHEN called THEN description leads with comparison value', () => {
       const def = buildAskAllToolDefinition(['claude', 'codex']);
 
-      expect(def.description.toLowerCase()).toContain('all');
+      expect(def.description).toContain('Compare');
+      expect(def.description).toContain('same prompt');
     });
 
     it('GIVEN provider names WHEN called THEN description mentions providers', () => {
