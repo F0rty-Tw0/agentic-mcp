@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Add `ask_all` aliases so `--provider` maps to `--providers` and `--models` maps to `--model`
+- Normalize comma-separated and space-separated `ask_all` provider lists before routing them
+- Restrict `ask_all --model` to one shared model value and require `--providers` for provider selection
+- Return provider-specific shared-model errors directly in `ask_all` instead of retrying without the requested model
+- Document the new `ask_all` flag handling and explicit-model behavior in the README and CLI guidance
+
 ## [0.1.9] - 2026-03-10
 
 - Persist provider metrics across separate CLI invocations in a durable per-user store instead of process-local memory

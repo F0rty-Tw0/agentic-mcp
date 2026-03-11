@@ -130,9 +130,29 @@ When run without a subcommand, `agentic-mcp` starts as an MCP stdio server.
 
 ```bash
 npx agentic-mcp ask_all "Summarize this API design" --providers claude,codex,gemini
+npx agentic-mcp ask_all "Compare providers" --providers gemini codex
+npx agentic-mcp ask_all "Use one shared model" --providers claude,gemini --model claude-sonnet-4
 ```
 
 Use this when you want side-by-side answers without hand-running the same prompt several times.
+
+#### ask_all flag semantics
+
+| Flag          | Meaning                                       | Accepted forms                                         | Notes                                                        |
+| ------------- | --------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| `--provider`  | Provider selector alias                       | `--provider gemini`, `--provider gemini codex`         | Normalized to `--providers`                                  |
+| `--providers` | Explicit provider selection                   | `--providers gemini,codex`, `--providers gemini codex` | Comma-separated and space-separated values are both accepted |
+| `--model`     | Shared model hint for every selected provider | `--model claude-sonnet-4`                              | Pass exactly one shared model value                          |
+| `--models`    | Shared model hint alias                       | `--models claude-sonnet-4`                             | Normalized to `--model` before parsing                       |
+
+#### ask_all flag combinations
+
+- `--providers` or `--provider` decides which providers run.
+- `--model` or `--models` decides which shared model hint is passed to those selected providers.
+- `--model` takes exactly one shared model value. Use `--providers` for provider selection.
+- If you combine `--providers` with `--model`, provider selection comes from `--providers` and the shared model comes from `--model`. Example: `--providers claude,gemini --model claude-sonnet-4`.
+- If a selected provider rejects the shared model as unavailable or unsupported, `ask_all` returns that provider error directly instead of falling back to a different model.
+- Unknown ask_all flags still fail fast with a validation error.
 
 ### Check what is available on this machine
 
