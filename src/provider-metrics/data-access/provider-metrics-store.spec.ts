@@ -321,6 +321,12 @@ describe('provider-metrics-store', () => {
       expect(stats?.lastCallAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
 
+    it('GIVEN metrics storage is configured WHEN queried THEN metricsFilePath matches the resolved file location', async () => {
+      const summary = await getProviderMetrics();
+
+      expect(summary.metricsFilePath).toBe(resolveMetricsFilePath(metricsHomeDir));
+    });
+
     it('GIVEN metrics tracking starts WHEN queried THEN collectedSince is a valid ISO string', async () => {
       const summary = await getProviderMetrics();
 

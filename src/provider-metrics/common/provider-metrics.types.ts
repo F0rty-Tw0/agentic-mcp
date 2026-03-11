@@ -17,6 +17,7 @@ export type ProviderStats = Readonly<{
 
 export type ProviderMetricsSummary = Readonly<{
   collectedSince: string;
+  metricsFilePath: string;
   totalCalls: number;
   providers: readonly ProviderStats[];
 }>;

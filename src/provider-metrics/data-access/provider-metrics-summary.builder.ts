@@ -80,10 +80,14 @@ const buildProviderStats = (records: readonly ProviderCallRecord[]): readonly Pr
   return providerStats;
 };
 
-export const buildProviderMetricsSummary = (providerMetricsFile: ProviderMetricsFile): ProviderMetricsSummary => {
+export const buildProviderMetricsSummary = (
+  providerMetricsFile: ProviderMetricsFile,
+  metricsFilePath: string
+): ProviderMetricsSummary => {
   const providers = buildProviderStats(providerMetricsFile.records);
   const providerMetricsSummary: ProviderMetricsSummary = {
     collectedSince: providerMetricsFile.collectedSince,
+    metricsFilePath,
     totalCalls: providerMetricsFile.records.length,
     providers,
   };

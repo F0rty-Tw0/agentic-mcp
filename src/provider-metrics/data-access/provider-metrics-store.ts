@@ -2,6 +2,7 @@ import process from 'node:process';
 
 import { nowIso } from '../../shared';
 import type { ProviderCallRecord, ProviderMetricsSummary } from '../common';
+import { resolveProviderMetricsFilePath } from './provider-metrics-file.path';
 import { appendProviderCallRecord, loadProviderMetricsFile } from './provider-metrics-file.store';
 import { buildProviderMetricsSummary } from './provider-metrics-summary.builder';
 
@@ -30,8 +31,9 @@ export const recordCall = async (provider: string, executionTimeMs: number, succ
 };
 
 export const getProviderMetrics = async (): Promise<ProviderMetricsSummary> => {
+  const metricsFilePath = resolveProviderMetricsFilePath();
   const providerMetricsFile = await loadProviderMetricsFile();
-  const providerMetricsSummary = buildProviderMetricsSummary(providerMetricsFile);
+  const providerMetricsSummary = buildProviderMetricsSummary(providerMetricsFile, metricsFilePath);
 
   return providerMetricsSummary;
 };

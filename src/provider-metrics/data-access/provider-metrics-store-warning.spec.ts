@@ -7,8 +7,12 @@ import type { ProviderCallRecord, ProviderMetricsFile, ProviderMetricsSummary } 
 
 type AppendProviderCallRecord = (record: ProviderCallRecord) => Promise<void>;
 type LoadProviderMetricsFile = () => Promise<ProviderMetricsFile>;
-type BuildProviderMetricsSummary = (providerMetricsFile: ProviderMetricsFile) => ProviderMetricsSummary;
+type BuildProviderMetricsSummary = (
+  providerMetricsFile: ProviderMetricsFile,
+  metricsFilePath: string
+) => ProviderMetricsSummary;
 type ResetProviderMetricsStoreForTests = () => Promise<void>;
+type ResolveProviderMetricsFilePath = () => string;
 type NowIso = () => string;
 
 const providerMetricsStoreMocks = vi.hoisted(() => ({
@@ -17,6 +21,7 @@ const providerMetricsStoreMocks = vi.hoisted(() => ({
   loadProviderMetricsFile: vi.fn<LoadProviderMetricsFile>(),
   buildProviderMetricsSummary: vi.fn<BuildProviderMetricsSummary>(),
   resetProviderMetricsStoreForTests: vi.fn<ResetProviderMetricsStoreForTests>(),
+  resolveProviderMetricsFilePath: vi.fn<ResolveProviderMetricsFilePath>(),
 }));
 
 vi.mock('../../shared', () => ({
@@ -27,6 +32,10 @@ vi.mock('./provider-metrics-file.store', () => ({
   appendProviderCallRecord: providerMetricsStoreMocks.appendProviderCallRecord,
   loadProviderMetricsFile: providerMetricsStoreMocks.loadProviderMetricsFile,
   resetProviderMetricsStoreForTests: providerMetricsStoreMocks.resetProviderMetricsStoreForTests,
+}));
+
+vi.mock('./provider-metrics-file.path', () => ({
+  resolveProviderMetricsFilePath: providerMetricsStoreMocks.resolveProviderMetricsFilePath,
 }));
 
 vi.mock('./provider-metrics-summary.builder', () => ({
@@ -53,9 +62,15 @@ const createProviderMetricsFile = (): ProviderMetricsFile => {
   return providerMetricsFile;
 };
 
-const createProviderMetricsSummary = (providerMetricsFile: ProviderMetricsFile): ProviderMetricsSummary => {
+const METRICS_FILE_PATH = '/tmp/provider-metrics.json';
+
+const createProviderMetricsSummary = (
+  providerMetricsFile: ProviderMetricsFile,
+  metricsFilePath: string
+): ProviderMetricsSummary => {
   const providerMetricsSummary: ProviderMetricsSummary = {
     collectedSince: providerMetricsFile.collectedSince,
+    metricsFilePath,
     totalCalls: 1,
     providers: [
       {
@@ -79,6 +94,7 @@ const resetProviderMetricsStoreMocks = (): void => {
   providerMetricsStoreMocks.loadProviderMetricsFile.mockReset();
   providerMetricsStoreMocks.buildProviderMetricsSummary.mockReset();
   providerMetricsStoreMocks.resetProviderMetricsStoreForTests.mockReset();
+  providerMetricsStoreMocks.resolveProviderMetricsFilePath.mockReset();
 };
 
 const configureDefaultMocks = (): void => {
@@ -91,8 +107,9 @@ const configureDefaultMocks = (): void => {
 
     return providerMetricsFile;
   });
-  providerMetricsStoreMocks.buildProviderMetricsSummary.mockImplementation((providerMetricsFile) => {
-    const providerMetricsSummary = createProviderMetricsSummary(providerMetricsFile);
+  providerMetricsStoreMocks.resolveProviderMetricsFilePath.mockReturnValue(METRICS_FILE_PATH);
+  providerMetricsStoreMocks.buildProviderMetricsSummary.mockImplementation((providerMetricsFile, metricsFilePath) => {
+    const providerMetricsSummary = createProviderMetricsSummary(providerMetricsFile, metricsFilePath);
 
     return providerMetricsSummary;
   });
@@ -149,17 +166,20 @@ describe('provider-metrics-store warning handling', () => {
 
   it('GIVEN a loaded metrics file WHEN querying metrics THEN delegates to the summary builder', async () => {
     const providerMetricsFile = createProviderMetricsFile();
-    const providerMetricsSummary = createProviderMetricsSummary(providerMetricsFile);
+    const providerMetricsSummary = createProviderMetricsSummary(providerMetricsFile, METRICS_FILE_PATH);
     const loadProviderMetricsFile = vi.fn<LoadProviderMetricsFile>(async () => {
       const loadedProviderMetricsFile = await Promise.resolve(providerMetricsFile);
 
       return loadedProviderMetricsFile;
     });
-    const buildProviderMetricsSummary = vi.fn<BuildProviderMetricsSummary>((loadedProviderMetricsFile) => {
-      expect(loadedProviderMetricsFile).toStrictEqual(providerMetricsFile);
+    const buildProviderMetricsSummary = vi.fn<BuildProviderMetricsSummary>(
+      (loadedProviderMetricsFile, metricsFilePath) => {
+        expect(loadedProviderMetricsFile).toStrictEqual(providerMetricsFile);
+        expect(metricsFilePath).toBe(METRICS_FILE_PATH);
 
-      return providerMetricsSummary;
-    });
+        return providerMetricsSummary;
+      }
+    );
 
     providerMetricsStoreMocks.loadProviderMetricsFile.mockImplementation(loadProviderMetricsFile);
     providerMetricsStoreMocks.buildProviderMetricsSummary.mockImplementation(buildProviderMetricsSummary);
@@ -167,6 +187,7 @@ describe('provider-metrics-store warning handling', () => {
     const result = await getProviderMetrics();
 
     expect(loadProviderMetricsFile).toHaveBeenCalledOnce();
+    expect(providerMetricsStoreMocks.resolveProviderMetricsFilePath).toHaveBeenCalledOnce();
     expect(buildProviderMetricsSummary).toHaveBeenCalledOnce();
     expect(result).toStrictEqual(providerMetricsSummary);
   });

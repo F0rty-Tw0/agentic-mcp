@@ -30,14 +30,17 @@ const createMetricsFile = (records: readonly ProviderCallRecord[]): ProviderMetr
   return providerMetricsFile;
 };
 
+const METRICS_FILE_PATH = '/tmp/provider-metrics.json';
+
 describe('buildProviderMetricsSummary', () => {
   it('GIVEN no records WHEN building the summary THEN returns zero calls and no providers', () => {
     const providerMetricsFile = createMetricsFile([]);
 
-    const result = buildProviderMetricsSummary(providerMetricsFile);
+    const result = buildProviderMetricsSummary(providerMetricsFile, METRICS_FILE_PATH);
 
     expect(result).toStrictEqual({
       collectedSince: '2026-01-01T00:00:00.000Z',
+      metricsFilePath: METRICS_FILE_PATH,
       totalCalls: 0,
       providers: [],
     });
@@ -65,10 +68,11 @@ describe('buildProviderMetricsSummary', () => {
       }),
     ]);
 
-    const result = buildProviderMetricsSummary(providerMetricsFile);
+    const result = buildProviderMetricsSummary(providerMetricsFile, METRICS_FILE_PATH);
 
     expect(result).toStrictEqual({
       collectedSince: '2026-01-01T00:00:00.000Z',
+      metricsFilePath: METRICS_FILE_PATH,
       totalCalls: 3,
       providers: [
         {
@@ -109,7 +113,7 @@ describe('buildProviderMetricsSummary', () => {
       }),
     ]);
 
-    const result = buildProviderMetricsSummary(providerMetricsFile);
+    const result = buildProviderMetricsSummary(providerMetricsFile, METRICS_FILE_PATH);
 
     expect(result.providers[0]).toStrictEqual({
       provider: 'gemini',

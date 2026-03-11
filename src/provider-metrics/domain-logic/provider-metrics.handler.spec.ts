@@ -19,6 +19,7 @@ describe('handleProviderMetrics', () => {
   it('GIVEN a provider metrics summary WHEN called THEN returns it as JSON text content', async () => {
     const fakeSummary = {
       collectedSince: '2026-01-01T00:00:00.000Z',
+      metricsFilePath: '/tmp/provider-metrics.json',
       totalCalls: 3,
       providers: [
         {
@@ -48,6 +49,7 @@ describe('handleProviderMetrics', () => {
   it('GIVEN provider metrics summary WHEN called THEN delegates to getProviderMetrics', async () => {
     vi.mocked(getProviderMetrics).mockResolvedValue({
       collectedSince: '2026-01-01T00:00:00.000Z',
+      metricsFilePath: '/tmp/provider-metrics.json',
       totalCalls: 0,
       providers: [],
     });
