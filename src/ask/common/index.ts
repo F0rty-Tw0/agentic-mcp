@@ -15,6 +15,13 @@ export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const';
 
 export type { AskExecution } from './ask-execution.type';
 
+export type {
+  ParsedProviderOutput,
+  ProviderLiveOutputAdapter,
+  ResolvedAskCommand,
+  SuccessResponseInput,
+} from './ask-runtime-contracts.type';
+
 export type { AskToolArgs, BuiltArgs } from './tool-args.types';
 
 export { isLeveledFlag } from './tool-args.types';

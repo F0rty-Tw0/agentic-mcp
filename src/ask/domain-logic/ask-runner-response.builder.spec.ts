@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { resolveModelHint } from './ask-command';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
-import type { SuccessResponseInput } from './ask-runner-response.builder';
 import { buildAttribution } from './attribution.builder';
 import type { ResolvedProviderEntry } from '../../shared';
 import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
+import type { SuccessResponseInput } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
 
 vi.mock('./ask-command', () => ({

@@ -1,11 +1,6 @@
 import type { OutputFormat } from '../../shared';
 import type { StreamNotifier } from '../../streaming';
-
-export type ProviderLiveOutputAdapter = Readonly<{
-  onStdoutChunk: (chunk: string) => void;
-  onStderrChunk: (chunk: string) => void;
-  flush: () => void;
-}>;
+import type { ProviderLiveOutputAdapter } from '../common';
 
 type CreateProviderLiveOutputAdapterInput = Readonly<{
   providerName: string;

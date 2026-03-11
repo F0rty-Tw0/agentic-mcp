@@ -3,27 +3,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
 import type { SessionMode } from '../../session';
-import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
-import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
-import type { AskToolArgs, AskToolStructuredContent, ProviderAttribution } from '../common';
+import type { AskToolStructuredContent, ProviderAttribution, SuccessResponseInput } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
-
-type Env = Readonly<Record<string, string>>;
-
-export type SuccessResponseInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  env: Env;
-  stdout: string;
-  stderr: string;
-  executionTimeMs: number;
-  truncated: boolean;
-  stdoutBytes: number;
-  outputFormat: OutputFormat;
-  streamNotifier: StreamNotifier;
-  summary: AskStreamExecutionSummary;
-  sessionMode: SessionMode;
-}>;
 
 type BuildStructuredContentInput = Readonly<{
   responseText: string;

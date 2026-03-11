@@ -1,10 +1,6 @@
-import type { CommandDef, FlagValue, OutputFormat, ProviderConfig } from '../../shared';
+import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
-
-export type ResolvedAskCommand = Readonly<{
-  command: CommandDef;
-  outputFormat: OutputFormat;
-}>;
+import type { ResolvedAskCommand } from '../common';
 
 export const getAskCommand = (config: ProviderConfig): CommandDef => {
   const { ask } = config.commands;

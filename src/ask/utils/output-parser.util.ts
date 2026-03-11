@@ -1,15 +1,6 @@
 import type { OutputFormat } from '../../shared';
 import { stripAnsi } from '../../shared';
-
-type ParsedMetadata = Readonly<{
-  outputFormatObserved: OutputFormat;
-  parsed?: unknown;
-}>;
-
-export type ParsedProviderOutput = Readonly<{
-  text: string;
-  metadata?: ParsedMetadata;
-}>;
+import type { ParsedProviderOutput } from '../common';
 
 type JsonRecord = Readonly<Record<string, unknown>>;
 
@@ -70,6 +61,12 @@ const extractParsedText = (value: unknown): string | undefined =>
   extractTopLevelResponseText(value) ??
   extractAgentMessageText(value) ??
   extractTopLevelTextEventText(value);
+
+const extractLatestParsedText = (parsedLines: readonly unknown[]): string | undefined => {
+  const parsedTexts = parsedLines.map((parsedLine) => extractParsedText(parsedLine)).filter(isDefined);
+
+  return parsedTexts.at(-1);
+};
 
 const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefined => {
   const lines = stdout
@@ -132,12 +129,6 @@ const parseJson = (stdout: string): ParsedProviderOutput => {
 
     return parsedProviderOutput;
   }
-};
-
-const extractLatestParsedText = (parsedLines: readonly unknown[]): string | undefined => {
-  const parsedTexts = parsedLines.map((parsedLine) => extractParsedText(parsedLine)).filter(isDefined);
-
-  return parsedTexts.at(-1);
 };
 
 const parseNdjson = (stdout: string): ParsedProviderOutput => {
