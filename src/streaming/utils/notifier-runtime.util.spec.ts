@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime.util';
-import type { NotifierState } from './notifier-runtime.util';
 import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers';
 import type { ProgressContext, ProgressToken } from '../../shared';
+import type { AskStreamDiagnostics, NotifierState } from '../common';
 import { STREAM_COALESCE_WINDOW_MS } from '../common';
-import type { AskStreamDiagnostics } from '../common';
 
 vi.mock('./notifier.helpers');
 

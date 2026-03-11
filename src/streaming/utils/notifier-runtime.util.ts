@@ -1,21 +1,7 @@
 import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers';
-import type { AskStreamEventPayload } from './notifier.helpers';
 import type { ProgressContext, ProgressToken } from '../../shared';
+import type { AskStreamChannel, AskStreamEventPayload, AskStreamExecutionSummary, NotifierState } from '../common';
 import { STREAM_COALESCE_WINDOW_MS } from '../common';
-import type { AskStreamChannel, AskStreamExecutionSummary } from '../common';
-
-export type NotifierState = {
-  streamId: string;
-  sequence: number;
-  emittedChunks: number;
-  droppedChunks: number;
-  coalescedChunks: number;
-  queuedStdout: string;
-  queuedStderr: string;
-  lastChunkAtMs: number;
-  stopped: boolean;
-  flushTimer?: NodeJS.Timeout;
-};
 
 type EmitterContext = Readonly<{
   extra: ProgressContext;

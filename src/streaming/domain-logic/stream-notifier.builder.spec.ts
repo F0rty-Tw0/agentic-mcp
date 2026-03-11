@@ -1,15 +1,14 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime.util';
-import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from './notifier.helpers';
-import type { StreamNotifier } from './notifier.helpers';
-import { createStreamNotifier } from './notifier.util';
+import { createStreamNotifier } from './stream-notifier.builder';
 import type { ProgressContext } from '../../shared';
 import { HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
+import type { StreamNotifier } from '../common';
+import { emitDone, emitError, emitSystemEvent, queueChunk } from '../utils/notifier-runtime.util';
+import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
 
-vi.mock('./notifier-runtime.util');
-vi.mock('./notifier.helpers');
+vi.mock('../utils/notifier-runtime.util');
+vi.mock('../utils/notifier.helpers');
 vi.mock('node:crypto', () => ({ randomUUID: (): string => 'test-uuid-1234' }));
 
 const noopNotifier: StreamNotifier = {
@@ -24,6 +23,7 @@ const noopNotifier: StreamNotifier = {
 
 const makeExtra = (): ProgressContext => ({
   sendNotification: vi.fn().mockResolvedValue(undefined),
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   _meta: { progressToken: 42 },
 });
 

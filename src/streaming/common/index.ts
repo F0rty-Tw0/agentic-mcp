@@ -4,8 +4,11 @@ export type {
   AskStreamChannel,
   AskStreamDiagnostics,
   AskStreamEvent,
+  AskStreamEventPayload,
   AskStreamEventType,
   AskStreamExecutionSummary,
+  NotifierState,
+  StreamNotifier,
 } from './stream-event.types';
 
 export {

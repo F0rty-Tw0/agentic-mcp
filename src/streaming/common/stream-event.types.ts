@@ -23,6 +23,47 @@ export type AskStreamDiagnostics = Readonly<{
   terminalEventGraceTimeoutMs: number;
 }>;
 
+export type AskStreamEventPayload =
+  | Readonly<{ type: 'start'; channel: 'system' }>
+  | Readonly<{ type: 'heartbeat'; channel: 'system' }>
+  | Readonly<{ type: 'chunk'; channel: AskStreamChannel; chunk: string }>
+  | Readonly<{
+      type: 'done';
+      channel: 'system';
+      summary: AskStreamExecutionSummary;
+      diagnostics: AskStreamDiagnostics;
+    }>
+  | Readonly<{
+      type: 'error';
+      channel: 'system';
+      error: string;
+      summary?: AskStreamExecutionSummary;
+      diagnostics: AskStreamDiagnostics;
+    }>;
+
+export type StreamNotifier = Readonly<{
+  onStdoutChunk: (chunk: string) => void;
+  onStderrChunk: (chunk: string) => void;
+  emitStart: () => void;
+  emitDone: (summary: AskStreamExecutionSummary) => void;
+  emitError: (error: string, summary?: AskStreamExecutionSummary) => void;
+  stop: () => void;
+  enabled: boolean;
+}>;
+
+export type NotifierState = {
+  streamId: string;
+  sequence: number;
+  emittedChunks: number;
+  droppedChunks: number;
+  coalescedChunks: number;
+  queuedStdout: string;
+  queuedStderr: string;
+  lastChunkAtMs: number;
+  stopped: boolean;
+  flushTimer?: NodeJS.Timeout;
+};
+
 type AskStreamEventBase = Readonly<{
   schema: typeof ASK_STREAM_EVENT_SCHEMA;
   type: AskStreamEventType;

@@ -1,17 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime.util';
-import type { NotifierState } from './notifier-runtime.util';
-import {
-  buildExecutionSummary,
-  createNoopStreamNotifier,
-  isStreamEnabled,
-  resolveProgressToken,
-} from './notifier.helpers';
-import type { StreamNotifier } from './notifier.helpers';
 import type { ProgressContext } from '../../shared';
 import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common';
-import type { AskStreamExecutionSummary } from '../common';
+import type { AskStreamExecutionSummary, NotifierState, StreamNotifier } from '../common';
+import { emitDone, emitError, emitSystemEvent, queueChunk } from '../utils/notifier-runtime.util';
+import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
 
 type StreamLiveArgs = Readonly<{ stream_live?: boolean }>;
 
@@ -74,5 +67,3 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
     enabled: true,
   };
 };
-
-export { buildExecutionSummary };

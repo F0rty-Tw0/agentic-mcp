@@ -1,34 +1,12 @@
 import type { ProgressContext, ProgressToken } from '../../shared';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
-import type { AskStreamChannel, AskStreamDiagnostics, AskStreamEvent, AskStreamExecutionSummary } from '../common';
-
-export type StreamNotifier = Readonly<{
-  onStdoutChunk: (chunk: string) => void;
-  onStderrChunk: (chunk: string) => void;
-  emitStart: () => void;
-  emitDone: (summary: AskStreamExecutionSummary) => void;
-  emitError: (error: string, summary?: AskStreamExecutionSummary) => void;
-  stop: () => void;
-  enabled: boolean;
-}>;
-
-export type AskStreamEventPayload =
-  | Readonly<{ type: 'start'; channel: 'system' }>
-  | Readonly<{ type: 'heartbeat'; channel: 'system' }>
-  | Readonly<{ type: 'chunk'; channel: AskStreamChannel; chunk: string }>
-  | Readonly<{
-      type: 'done';
-      channel: 'system';
-      summary: AskStreamExecutionSummary;
-      diagnostics: AskStreamDiagnostics;
-    }>
-  | Readonly<{
-      type: 'error';
-      channel: 'system';
-      error: string;
-      summary?: AskStreamExecutionSummary;
-      diagnostics: AskStreamDiagnostics;
-    }>;
+import type {
+  AskStreamDiagnostics,
+  AskStreamEvent,
+  AskStreamEventPayload,
+  AskStreamExecutionSummary,
+  StreamNotifier,
+} from '../common';
 
 type StreamEnabledInput = Readonly<{
   args: { stream_live?: boolean };
