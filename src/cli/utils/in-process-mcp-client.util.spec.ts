@@ -171,7 +171,7 @@ describe('callCliTool', () => {
     expect(mocks.clientCallTool).toHaveBeenCalledWith(
       { name: 'ask_claude', arguments: { prompt: 'hello' } },
       undefined,
-      { onprogress: onProgress, resetTimeoutOnProgress: true }
+      { onprogress: onProgress, resetTimeoutOnProgress: true, timeout: 1_800_000 }
     );
     expect(mocks.clientClose).toHaveBeenCalledTimes(1);
     expect(mocks.serverClose).toHaveBeenCalledTimes(1);

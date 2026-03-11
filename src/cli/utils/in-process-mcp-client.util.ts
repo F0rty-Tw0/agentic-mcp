@@ -3,7 +3,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { createServer } from '../../server';
-import { APP_VERSION, ValidationError } from '../../shared';
+import { APP_VERSION, DEFAULT_MCP_TOOL_TIMEOUT_MS, ValidationError } from '../../shared';
 import type { CallCliToolInput } from '../common';
 
 type ToolSchemaProperties = Readonly<Record<string, unknown>>;
@@ -80,13 +80,15 @@ const validateSupportedArgs = async (client: Client, input: CallCliToolInput): P
 
 const buildRequestOptions = (
   onProgress: CallCliToolInput['onProgress']
-): Readonly<{ onprogress: CallCliToolInput['onProgress']; resetTimeoutOnProgress: true }> => {
+): Readonly<{ onprogress: CallCliToolInput['onProgress']; resetTimeoutOnProgress: true; timeout: number }> => {
   const result: Readonly<{
     onprogress: CallCliToolInput['onProgress'];
     resetTimeoutOnProgress: true;
+    timeout: number;
   }> = {
     onprogress: onProgress,
     resetTimeoutOnProgress: true,
+    timeout: DEFAULT_MCP_TOOL_TIMEOUT_MS,
   };
 
   return result;
