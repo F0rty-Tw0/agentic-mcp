@@ -21,16 +21,19 @@
 - Constants: `SCREAMING_SNAKE_CASE`. Types: `PascalCase`. Functions: `camelCase`.
 - Barrel `index.ts` at four levels:
   - **Module root** (`ask/index.ts`): wildcard re-exports from subdirs (`export * from './common'`).
-  - **`domain-logic/`**: named re-exports only — this is the module's public API surface.
-  - **`common/`**, **`utils/`**, **`stubs/`**: named re-exports, no wildcards.
+  - **`domain-logic/`**: named re-exports only — this is the module's public API surface for executable behavior. Export functions/constants only; reusable types belong in `common/`.
+  - **`common/`**, **`utils/`**, **`stubs/`**: named re-exports, no wildcards. `utils/index.ts` exports functions only; never re-export types there.
 
 ## Module Structure
 
 - Each feature lives in its own top-level `src/` directory (e.g., `ask/`, `streaming/`, `session/`).
 - Standard subdirectories: `domain-logic/` (business logic, handlers), `common/` (types, constants, stubs), `utils/` (pure helper functions).
 - Not every module needs all three — only create subdirs that have content.
+- **`utils/` is a leaf layer** — pure helpers only. `utils/` MUST NOT import from `domain-logic/`. If a helper needs domain behavior, move the helper into `domain-logic/`. If it only needs a shared contract, move that contract into `common/`.
+- **No `utils` pattern inside `data-access/`** — keep persistence helpers inside `data-access/`, but name them for their storage role (`*.store.ts`, `*.schema.ts`, `*.path.ts`, `*.lock.ts`) instead of `*.util.ts` or nested `utils/`.
 - **Shared module types live in `common/`** — if a type is used from multiple files in the same module, move it to `common/` and import it from that module's `common` barrel. Prefer direct named imports over local module-type wrappers.
 - **Cross-module shared types live in `src/shared/common/`** — only move a type there when multiple top-level modules truly depend on it.
+- **No type ownership in `domain-logic/` or `utils/`** — exported types/interfaces used outside their declaring file must move to `common/`. Keep test-only helper types private whenever possible.
 - **No type forwarding through `domain-logic/` or `utils/`** — do not re-export types from those layers just to make them reachable elsewhere. Move the type to `common/` instead.
 - Test stubs live in `common/stubs/` with their own barrel `index.ts`.
 
