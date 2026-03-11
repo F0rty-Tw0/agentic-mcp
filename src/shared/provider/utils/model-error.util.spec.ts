@@ -29,6 +29,18 @@ describe('detectModelError', () => {
     expect(result).toBe(true);
   });
 
+  it('GIVEN stderr with model-not-supported text WHEN detecting THEN returns true', () => {
+    const result = detectModelError('', 'The "gemini" model is not supported when using Codex.');
+
+    expect(result).toBe(true);
+  });
+
+  it('GIVEN stderr with ModelNotFoundError text WHEN detecting THEN returns true', () => {
+    const result = detectModelError('', 'ModelNotFoundError: Requested entity was not found.');
+
+    expect(result).toBe(true);
+  });
+
   it('GIVEN output without model error text WHEN detecting THEN returns false', () => {
     const result = detectModelError('all good', '');
 

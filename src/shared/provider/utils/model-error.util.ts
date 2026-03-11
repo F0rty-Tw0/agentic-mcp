@@ -1,10 +1,11 @@
 import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution';
 import type { ResolvedProviderEntry } from '../common';
 
-const MODEL_ERROR_PATTERN = /model[_ ]not[_ ]found|model.*does not exist|unknown model|invalid model|no such model/i;
+const MODEL_ERROR_PATTERN =
+  /model[_ ]not[_ ]found|modelnotfounderror|model.*not found|model.*not supported|model.*does not exist|unknown model|invalid model|no such model/i;
 
 const MODEL_NAME_PATTERN =
-  /(?:model[_ ]not[_ ]found|unknown model|invalid model|no such model|model.*does not exist)[:\s]+["']?([^\s."',]+(?:\/[^\s."',]+)?)["']?/i;
+  /(?:model[_ ]not[_ ]found|modelnotfounderror|unknown model|invalid model|no such model|model.*does not exist)[:\s]+["']?([^\s."',]+(?:\/[^\s."',]+)?)["']?/i;
 
 const QUOTED_MODEL_PATTERN = /(?:model|invalid model|unknown model)\s+["']([^"']+)["']/i;
 
