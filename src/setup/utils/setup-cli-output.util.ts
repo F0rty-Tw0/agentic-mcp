@@ -1,33 +1,17 @@
-import type {
-  DetectedProvider,
-  ParsedSetupArgs,
-  SetupApplyResult,
-  SetupPlan,
-  SkillInstallResult,
-  SupportedClient,
-} from '../common';
+import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan } from '../common';
+import {
+  buildConfiguredSummary,
+  buildMinimalNextSteps,
+  buildMinimalSummary,
+  buildProviderBlock,
+} from './setup-cli-output-helpers.util';
+import type { MinimalSetupOutputInput } from './setup-cli-output-helpers.util';
 
-type MinimalSetupOutputInput = Readonly<{
-  client: SupportedClient;
-  detectedProviders: readonly DetectedProvider[];
-  skillResult: SkillInstallResult;
-}>;
-
-const buildMinimalNextSteps = (client: SupportedClient): readonly string[] => {
-  const nextSteps = [`npx agentic-mcp setup --client ${client} --yes`, 'npx agentic-mcp list_providers'] as const;
-
-  return nextSteps;
+const buildSection = (title: string, values: readonly string[]): readonly string[] => {
+  return [title, ...values.map((value) => `  - ${value}`)];
 };
 
-export const formatProviderSummary = (detectedProviders: readonly DetectedProvider[]): string => {
-  const lines = detectedProviders.map((provider) => {
-    const status = provider.available ? `✓ ${provider.binaryPath}` : '✗ not found';
-
-    return `  ${provider.name}: ${status}`;
-  });
-
-  return lines.join('\n');
-};
+export { formatProviderSummary, formatSkillOutput } from './setup-cli-output-helpers.util';
 
 export const readExistingConfigText = async (
   targetPath: string | undefined,
@@ -50,6 +34,7 @@ export const formatJsonSetupOutput = (
   result: SetupApplyResult,
   detectedProviders: readonly DetectedProvider[]
 ): string => {
+  const summary = buildConfiguredSummary(args, result, detectedProviders);
   const payload = {
     client: args.client,
     mode: args.mode,
@@ -61,6 +46,7 @@ export const formatJsonSetupOutput = (
     warnings: plan.warnings,
     providers: detectedProviders,
     result,
+    summary,
   };
 
   return `${JSON.stringify(payload, null, 2)}\n`;
@@ -72,9 +58,7 @@ export const formatHumanSetupOutput = (
   result: SetupApplyResult,
   detectedProviders: readonly DetectedProvider[]
 ): string => {
-  const warningSection =
-    plan.warnings.length > 0 ? `\nWarnings:\n${plan.warnings.map((warning) => `  - ${warning}`).join('\n')}\n` : '';
-
+  const summary = buildConfiguredSummary(args, result, detectedProviders);
   const lines = [
     'agentic-mcp setup',
     `Client: ${args.client}`,
@@ -82,68 +66,62 @@ export const formatHumanSetupOutput = (
     `Backup: ${args.backup}`,
     `Dry-run: ${String(args.dryRun)}`,
     '',
+    ...buildSection('What was done:', summary.completedSteps),
+    '',
     'Detected providers:',
-    formatProviderSummary(detectedProviders),
+    buildProviderBlock(detectedProviders),
     '',
-    'Planned config:',
-    plan.configText.trimEnd(),
-    warningSection.trimEnd(),
+    ...buildSection('What remains unproven:', summary.unproven),
     '',
-    `Result: ${result.status}`,
-    result.path == null ? '' : `Path: ${result.path}`,
-    result.backupPath == null ? '' : `Backup: ${result.backupPath}`,
-    result.reason == null ? '' : `Reason: ${result.reason}`,
-    '',
-  ].filter((line) => line !== '');
+    summary.nextStep.kind === 'ask' ? 'Next command to prove real use:' : 'Next diagnostic step:',
+    `  ${summary.nextStep.command}`,
+  ];
+
+  if (plan.warnings.length > 0) {
+    lines.push('', 'Warnings:', ...plan.warnings.map((warning) => `  - ${warning}`));
+  }
 
   return `${lines.join('\n')}\n`;
 };
 
-export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
-  switch (skillResult.status) {
-    case 'installed':
-      return `Skill installed: ${skillResult.skillPath}\n`;
-    case 'already-exists':
-      return `Skill already up to date: ${skillResult.skillPath}\n`;
-    case 'error':
-      return `Skill install failed: ${skillResult.reason ?? 'unknown error'}\n`;
-    default:
-      return '';
-  }
-};
-
 export const formatJsonMinimalSetupOutput = (input: MinimalSetupOutputInput): string => {
-  const nextSteps = buildMinimalNextSteps(input.client);
+  const nextSteps = buildMinimalNextSteps(input);
+  const summary = buildMinimalSummary(input);
   const payload = {
     mode: 'minimal',
     client: input.client,
     providers: input.detectedProviders,
     skillResult: input.skillResult,
     nextSteps,
+    summary,
   };
 
   return `${JSON.stringify(payload, null, 2)}\n`;
 };
 
 export const formatHumanMinimalSetupOutput = (input: MinimalSetupOutputInput): string => {
-  const nextSteps = buildMinimalNextSteps(input.client);
+  const summary = buildMinimalSummary(input);
   const lines = [
     'agentic-mcp init',
     'Mode: minimal',
     `Suggested client: ${input.client}`,
     '',
+    ...buildSection('What was done:', summary.completedSteps),
+    '',
     'Detected providers:',
-    formatProviderSummary(input.detectedProviders),
+    buildProviderBlock(input.detectedProviders),
     '',
-    formatSkillOutput(input.skillResult).trimEnd(),
+    ...buildSection('What remains unproven:', summary.unproven),
     '',
-    'Next steps:',
-    ...nextSteps.map((nextStep) => `  ${nextStep}`),
-    '',
+    'Next step:',
+    `  ${summary.nextStep.command}`,
   ];
-  const output = lines.join('\n');
 
-  return `${output}\n`;
+  if (summary.firstAskCommand != null) {
+    lines.push('', 'First real-answer command after setup:', `  ${summary.firstAskCommand}`);
+  }
+
+  return `${lines.join('\n')}\n`;
 };
 
 export const isNonInteractiveWriteBlocked = (

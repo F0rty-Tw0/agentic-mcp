@@ -20,14 +20,25 @@ type MinimalJsonOutput = Readonly<{
     status: string;
     skillPath: string;
   }>;
+  summary: Readonly<{
+    nextStep: Readonly<{
+      command: string;
+      kind: string;
+      purpose: string;
+    }>;
+    firstAskCommand?: string;
+    unproven: readonly string[];
+  }>;
 }>;
+
+const FIRST_ASK_COMMAND = 'npx agentic-mcp ask_claude "Reply with OK and your provider name."';
 
 describe('runMinimalSetup', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('GIVEN generic client with human output WHEN running minimal setup THEN suggests claude-code and prints human output', async () => {
+  it('GIVEN generic client with human output WHEN running minimal setup THEN surfaces setup and first-answer next steps', async () => {
     const stdoutWrite = vi.fn<(text: string) => void>();
     const installSkill = vi.fn().mockResolvedValue({
       status: 'installed',
@@ -46,10 +57,14 @@ describe('runMinimalSetup', () => {
     expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
     expect(output).toContain('Mode: minimal');
     expect(output).toContain('Suggested client: claude-code');
+    expect(output).toContain('What remains unproven:');
+    expect(output).toContain('Next step:');
     expect(output).toContain('npx agentic-mcp setup --client claude-code --yes');
+    expect(output).toContain('First real-answer command after setup:');
+    expect(output).toContain(FIRST_ASK_COMMAND);
   });
 
-  it('GIVEN non-generic client with json output WHEN running minimal setup THEN prints json output for that client', async () => {
+  it('GIVEN non-generic client with json output WHEN running minimal setup THEN prints automation-friendly truthfulness fields', async () => {
     const stdoutWrite = vi.fn<(text: string) => void>();
     const installSkill = vi.fn().mockResolvedValue({
       status: 'already-exists',
@@ -66,15 +81,17 @@ describe('runMinimalSetup', () => {
     const output = readStdoutCallOutput(stdoutWrite, 0);
     const parsed = JSON.parse(output) as MinimalJsonOutput;
 
-    expect(parsed).toStrictEqual({
-      client: 'cursor',
-      mode: 'minimal',
-      nextSteps: ['npx agentic-mcp setup --client cursor --yes', 'npx agentic-mcp list_providers'],
-      providers: TEST_PROVIDERS,
-      skillResult: {
-        status: 'already-exists',
-        skillPath: DEFAULT_SKILL_PATH,
-      },
+    expect(parsed.client).toBe('cursor');
+    expect(parsed.mode).toBe('minimal');
+    expect(parsed.providers).toStrictEqual(TEST_PROVIDERS);
+    expect(parsed.skillResult).toStrictEqual({
+      status: 'already-exists',
+      skillPath: DEFAULT_SKILL_PATH,
     });
+    expect(parsed.nextSteps).toContain('npx agentic-mcp setup --client cursor --yes');
+    expect(parsed.summary.nextStep.kind).toBe('setup');
+    expect(parsed.summary.nextStep.command).toBe('npx agentic-mcp setup --client cursor --yes');
+    expect(parsed.summary.firstAskCommand).toBe(FIRST_ASK_COMMAND);
+    expect(parsed.summary.unproven).toContain('MCP client configuration has not been written yet.');
   });
 });

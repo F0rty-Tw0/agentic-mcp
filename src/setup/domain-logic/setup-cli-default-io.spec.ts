@@ -128,8 +128,8 @@ describe('runSetup default process-backed io', () => {
 
     const stdoutOutput = processMocks.stdoutWrite.mock.calls.map((call) => String(call[0])).join('');
 
-    expect(stdoutOutput).toContain('agentic-mcp setup');
-    expect(stdoutOutput).toContain('Result: written');
+    expect(stdoutOutput).toContain('What was done:');
+    expect(stdoutOutput).toContain('Setup result: written.');
     expect(applySetupPlan).toHaveBeenCalledTimes(1);
   });
 });

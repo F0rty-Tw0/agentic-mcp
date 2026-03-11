@@ -27,10 +27,21 @@ type ConfiguredJsonOutput = Readonly<{
     path?: string;
     status: string;
   }>;
+  summary: Readonly<{
+    completedSteps: readonly string[];
+    nextStep: Readonly<{
+      command: string;
+      kind: string;
+      purpose: string;
+    }>;
+    unproven: readonly string[];
+  }>;
   targetPath?: string;
   warnings: readonly string[];
   writeIntent: string;
 }>;
+
+const FIRST_ASK_COMMAND = 'npx agentic-mcp ask_claude "Reply with OK and your provider name."';
 
 describe('runConfiguredSetup', () => {
   afterEach(() => {
@@ -78,7 +89,7 @@ describe('runConfiguredSetup', () => {
     expect(applySetupPlan).not.toHaveBeenCalled();
   });
 
-  it('GIVEN interactive write without yes and confirmed prompt WHEN running configured setup THEN applies and prints human output without skill install for non-claude clients', async () => {
+  it('GIVEN interactive write without yes and confirmed prompt WHEN running configured setup THEN prints truthful human output without skill install for non-claude clients', async () => {
     const existingConfigText = '{"mcpServers":{"existing":{"command":"node","args":["server.js"]}}}';
     const stdoutWrite = vi.fn<(text: string) => void>();
     const promptConfirm = vi.fn().mockResolvedValue(true);
@@ -127,12 +138,14 @@ describe('runConfiguredSetup', () => {
 
     expect(output).toContain('agentic-mcp setup');
     expect(output).toContain('Client: cursor');
-    expect(output).toContain('Result: written');
-    expect(output).toContain('Backup: /tmp/override.json.bak');
+    expect(output).toContain('What was done:');
+    expect(output).toContain('What remains unproven:');
+    expect(output).toContain('Next command to prove real use:');
+    expect(output).toContain(FIRST_ASK_COMMAND);
     expect(output).toContain('Warnings:');
   });
 
-  it('GIVEN claude-code client with json output WHEN running configured setup THEN prints json output and skill output', async () => {
+  it('GIVEN claude-code client with json output WHEN running configured setup THEN prints json output with truthful summary and skill output', async () => {
     const stdoutWrite = vi.fn<(text: string) => void>();
     const installSkill = vi.fn().mockResolvedValue({
       status: 'error',
@@ -152,21 +165,22 @@ describe('runConfiguredSetup', () => {
     const skillOutput = readStdoutCallOutput(stdoutWrite, 1);
     const parsed = JSON.parse(configuredOutput) as ConfiguredJsonOutput;
 
-    expect(parsed).toStrictEqual({
-      backup: 'if-exists',
-      client: 'claude-code',
-      dryRun: false,
-      mergeStatusPreview: 'merged',
-      mode: 'merge',
-      providers: TEST_PROVIDERS,
-      result: {
-        path: DEFAULT_CLAUDE_PATH,
-        status: 'written',
-      },
-      targetPath: DEFAULT_CLAUDE_PATH,
-      warnings: [],
-      writeIntent: 'write',
+    expect(parsed.backup).toBe('if-exists');
+    expect(parsed.client).toBe('claude-code');
+    expect(parsed.dryRun).toBe(false);
+    expect(parsed.mergeStatusPreview).toBe('merged');
+    expect(parsed.mode).toBe('merge');
+    expect(parsed.providers).toStrictEqual(TEST_PROVIDERS);
+    expect(parsed.result).toStrictEqual({
+      path: DEFAULT_CLAUDE_PATH,
+      status: 'written',
     });
+    expect(parsed.summary.nextStep.kind).toBe('ask');
+    expect(parsed.summary.nextStep.command).toBe(FIRST_ASK_COMMAND);
+    expect(parsed.summary.unproven).toContain('A real provider response through agentic-mcp has not been proven yet.');
+    expect(parsed.targetPath).toBe(DEFAULT_CLAUDE_PATH);
+    expect(parsed.warnings).toStrictEqual([]);
+    expect(parsed.writeIntent).toBe('write');
     expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
     expect(skillOutput).toBe('Skill install failed: permission denied\n');
   });

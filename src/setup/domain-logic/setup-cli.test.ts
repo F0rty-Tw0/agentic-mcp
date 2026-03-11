@@ -55,7 +55,7 @@ afterEach(async () => {
 });
 
 describe('integration: setup fresh write', () => {
-  it('GIVEN --yes and --path WHEN runSetup runs THEN a valid config file is created with agentic-mcp entry', async () => {
+  it('GIVEN --yes and --path WHEN runSetup runs THEN it writes config and points to the first real-use command', async () => {
     const targetPath = path.join(tempDir, 'config.json');
 
     await runSetup(['--client', 'generic', '--yes', '--path', targetPath], commonDeps());
@@ -66,6 +66,8 @@ describe('integration: setup fresh write', () => {
 
     expect(mcpServers).toBeDefined();
     expect(mcpServers['agentic-mcp']).toBeDefined();
+    expect(stdoutOutput).toContain('Next command to prove real use:');
+    expect(stdoutOutput).toContain('npx agentic-mcp ask_claude "Reply with OK and your provider name."');
   });
 });
 
@@ -123,7 +125,7 @@ describe('integration: non-interactive safety gate', () => {
 });
 
 describe('integration: minimal setup', () => {
-  it('GIVEN --minimal WHEN runSetup runs THEN it installs the skill without writing config files', async () => {
+  it('GIVEN --minimal WHEN runSetup runs THEN it installs the skill and surfaces the first real-answer command after setup', async () => {
     await runSetup(['--minimal'], commonDeps());
 
     const skillPath = path.join(tempDir, '.claude', 'skills', 'using-agentic-mcp', 'SKILL.md');
@@ -131,7 +133,10 @@ describe('integration: minimal setup', () => {
 
     expect(skillContent).toContain('name: using-agentic-mcp');
     expect(stdoutOutput).toContain('agentic-mcp init');
+    expect(stdoutOutput).toContain('What remains unproven:');
     expect(stdoutOutput).toContain('npx agentic-mcp setup --client claude-code --yes');
+    expect(stdoutOutput).toContain('First real-answer command after setup:');
+    expect(stdoutOutput).toContain('npx agentic-mcp ask_claude "Reply with OK and your provider name."');
   });
 });
 

@@ -12,6 +12,36 @@ import {
 } from './setup-cli-output.util';
 import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan } from '../common';
 
+const FIRST_ASK_COMMAND = 'npx agentic-mcp ask_claude "Reply with OK and your provider name."';
+
+type OutputSummary = Readonly<{
+  completedSteps: readonly string[];
+  unproven: readonly string[];
+  nextStep: Readonly<{
+    command: string;
+    kind: string;
+    purpose: string;
+  }>;
+  firstAskCommand?: string;
+}>;
+
+type ConfiguredJsonOutput = Readonly<{
+  backup: string;
+  client: string;
+  providers: readonly { name: string }[];
+  result: Readonly<{ backupPath?: string }>;
+  summary: OutputSummary;
+  warnings: readonly string[];
+}>;
+
+type MinimalJsonOutput = Readonly<{
+  client: string;
+  mode: string;
+  nextSteps: readonly string[];
+  skillResult: Readonly<{ status: string }>;
+  summary: OutputSummary;
+}>;
+
 const createArgs = (overrides: Partial<ParsedSetupArgs> = {}): ParsedSetupArgs => {
   const args: ParsedSetupArgs = {
     client: 'claude-code',
@@ -97,7 +127,7 @@ describe('setup-cli-output utilities', () => {
     expect(result).toBeUndefined();
   });
 
-  it('GIVEN setup args plan and result WHEN formatting json output THEN returns parseable contract', () => {
+  it('GIVEN setup args plan and result WHEN formatting json output THEN returns parseable truthful summary fields', () => {
     const output = formatJsonSetupOutput(
       createArgs({ output: 'json', backup: 'always' }),
       createPlan({ warnings: ['warn-1'] }),
@@ -105,27 +135,22 @@ describe('setup-cli-output utilities', () => {
       [createProvider({ name: 'claude' })]
     );
 
-    const parsed = JSON.parse(output) as {
-      client: string;
-      backup: string;
-      warnings: readonly string[];
-      result: { backupPath?: string };
-      providers: readonly { name: string }[];
-    };
+    const parsed = JSON.parse(output) as ConfiguredJsonOutput;
 
     expect(parsed.client).toBe('claude-code');
     expect(parsed.backup).toBe('always');
     expect(parsed.warnings).toStrictEqual(['warn-1']);
     expect(parsed.result.backupPath).toBe('/tmp/mcp.json.bak');
     expect(parsed.providers[0]?.name).toBe('claude');
+    expect(parsed.summary.nextStep.command).toBe(FIRST_ASK_COMMAND);
+    expect(parsed.summary.nextStep.kind).toBe('ask');
+    expect(parsed.summary.unproven).toContain('Provider authentication has not been proven yet.');
   });
 
-  it('GIVEN setup args plan and result WHEN formatting human output THEN includes key sections and warnings', () => {
+  it('GIVEN setup args plan and result WHEN formatting human output THEN includes truthful sections and the first ask command', () => {
     const output = formatHumanSetupOutput(
       createArgs({ mode: 'overwrite', dryRun: true }),
-      createPlan({
-        warnings: ['Overwrite mode replaces existing config content.'],
-      }),
+      createPlan({ warnings: ['Overwrite mode replaces existing config content.'] }),
       createApplyResult({
         status: 'verification-failed',
         reason: 'Written config must include mcpServers',
@@ -134,15 +159,24 @@ describe('setup-cli-output utilities', () => {
     );
 
     expect(output).toContain('agentic-mcp setup');
-    expect(output).toContain('Mode: overwrite');
-    expect(output).toContain('Dry-run: true');
+    expect(output).toContain('What was done:');
     expect(output).toContain('Detected providers:');
+    expect(output).toContain('What remains unproven:');
+    expect(output).toContain('Next command to prove real use:');
+    expect(output).toContain(FIRST_ASK_COMMAND);
     expect(output).toContain('Warnings:');
-    expect(output).toContain('Result: verification-failed');
     expect(output).toContain('Reason: Written config must include mcpServers');
   });
 
-  it('GIVEN minimal setup inputs WHEN formatting human output THEN it includes skill status and next steps', () => {
+  it('GIVEN no detected providers WHEN formatting human output THEN it points to the next diagnostic step', () => {
+    const output = formatHumanSetupOutput(createArgs(), createPlan(), createApplyResult(), []);
+
+    expect(output).toContain('Next diagnostic step:');
+    expect(output).toContain('npx agentic-mcp list_providers');
+    expect(output).toContain('No provider CLI is currently detected.');
+  });
+
+  it('GIVEN minimal setup inputs WHEN formatting human output THEN it includes unproven work and the first real-answer command', () => {
     const output = formatHumanMinimalSetupOutput({
       client: 'claude-code',
       detectedProviders: [createProvider({ name: 'claude' })],
@@ -153,12 +187,15 @@ describe('setup-cli-output utilities', () => {
     });
 
     expect(output).toContain('agentic-mcp init');
-    expect(output).toContain('Detected providers:');
-    expect(output).toContain('Skill installed: /home/.claude/skills/using-agentic-mcp/SKILL.md');
+    expect(output).toContain('What was done:');
+    expect(output).toContain('What remains unproven:');
+    expect(output).toContain('Next step:');
     expect(output).toContain('npx agentic-mcp setup --client claude-code --yes');
+    expect(output).toContain('First real-answer command after setup:');
+    expect(output).toContain(FIRST_ASK_COMMAND);
   });
 
-  it('GIVEN minimal setup inputs WHEN formatting json output THEN it returns parseable next steps', () => {
+  it('GIVEN minimal setup inputs WHEN formatting json output THEN it returns parseable truthful guidance fields', () => {
     const output = formatJsonMinimalSetupOutput({
       client: 'cursor',
       detectedProviders: [createProvider({ name: 'claude' })],
@@ -168,17 +205,14 @@ describe('setup-cli-output utilities', () => {
       },
     });
 
-    const parsed = JSON.parse(output) as {
-      mode: string;
-      client: string;
-      nextSteps: readonly string[];
-      skillResult: { status: string };
-    };
+    const parsed = JSON.parse(output) as MinimalJsonOutput;
 
     expect(parsed.mode).toBe('minimal');
     expect(parsed.client).toBe('cursor');
     expect(parsed.skillResult.status).toBe('already-exists');
     expect(parsed.nextSteps).toContain('npx agentic-mcp setup --client cursor --yes');
+    expect(parsed.summary.nextStep.command).toBe('npx agentic-mcp setup --client cursor --yes');
+    expect(parsed.summary.firstAskCommand).toBe(FIRST_ASK_COMMAND);
   });
 
   it('GIVEN non-interactive write without --yes WHEN checking block THEN returns true', () => {

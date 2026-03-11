@@ -204,8 +204,8 @@ describe('runSetup', () => {
 
     const output = stdoutWrite.mock.calls.map((call) => call[0]).join('');
 
-    expect(output).toContain('agentic-mcp setup');
-    expect(output).toContain('Result: written');
+    expect(output).toContain('What was done:');
+    expect(output).toContain('Setup result: written.');
   });
 
   it('GIVEN generic client without --path WHEN running setup THEN existingConfigText is undefined', async () => {
@@ -324,8 +324,8 @@ describe('runSetup', () => {
       .map((call) => (typeof call[0] === 'string' ? call[0] : Buffer.from(call[0]).toString('utf8')))
       .join('');
 
-    expect(writtenText).toContain('agentic-mcp setup');
-    expect(writtenText).toContain('Result: written');
+    expect(writtenText).toContain('What was done:');
+    expect(writtenText).toContain('Setup result: written.');
 
     stdoutWriteSpy.mockRestore();
   });
