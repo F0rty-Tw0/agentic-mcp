@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-03-11
+
 - Add `ask_all` aliases so `--provider` maps to `--providers` and `--models` maps to `--model`
 - Normalize comma-separated and space-separated `ask_all` provider lists before routing them
 - Restrict `ask_all --model` to one shared model value and require `--providers` for provider selection
@@ -77,7 +79,8 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.10...HEAD
+[0.1.10]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.6...v0.1.7
