@@ -1,21 +1,12 @@
 import type { SessionRecord, SessionTurn } from '../common/session-store.type';
 
-type SessionStoreEntrySnapshot = Readonly<{
-  id: string;
-  provider: string;
-  turns: readonly SessionTurn[];
-  createdAt: string;
-  lastAccessedAt: string;
-  nativeSessionId?: string;
-}>;
-
 export const toSessionKey = (provider: string, id: string): string => {
   const result = `${provider}:${id}`;
 
   return result;
 };
 
-export const cloneRecord = (entry: SessionStoreEntrySnapshot): SessionRecord => {
+export const cloneRecord = (entry: SessionRecord): SessionRecord => {
   const result: SessionRecord = {
     id: entry.id,
     provider: entry.provider,

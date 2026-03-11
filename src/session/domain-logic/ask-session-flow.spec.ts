@@ -2,7 +2,6 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
-import type { SessionFlowState } from './ask-session-flow';
 import type { AskExecution, AskToolArgs } from '../../ask/common';
 import type { ResolvedProviderEntry } from '../../shared';
 
@@ -65,6 +64,13 @@ const createAskToolArgs = (overrides: Partial<AskToolArgs> = {}): AskToolArgs =>
   session_id: 'session-abc',
   ...overrides,
 });
+
+type SessionFlowState = Readonly<{
+  sessionId: string;
+  prompt: string;
+  nativeSessionId?: string;
+  mode: 'tier1-prepend' | 'tier2-native' | 'tier2-fallback-to-tier1';
+}>;
 
 const createSessionFlowState = (overrides: Partial<SessionFlowState> = {}): SessionFlowState => ({
   sessionId: 'session-abc',

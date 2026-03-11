@@ -7,14 +7,14 @@ import type { SessionMode } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
 
-export type SessionFlowState = Readonly<{
+type SessionFlowState = Readonly<{
   sessionId: string;
   prompt: string;
   nativeSessionId?: string;
   mode: SessionMode;
 }>;
 
-export type SessionFlowResult = Readonly<{
+type SessionFlowResult = Readonly<{
   response: CallToolResult;
   responseText: string;
   nativeSessionId?: string;
