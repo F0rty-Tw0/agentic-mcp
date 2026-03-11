@@ -56,6 +56,10 @@
 
 No production code before a failing test. Red -> Green -> Refactor. If you wrote implementation first, delete it and start from a failing test.
 
+## Final Verification
+
+- **Default final validation is `pnpm run ci`** — before claiming non-trivial work is complete, run the full CI script unless the user explicitly requests a narrower verification scope.
+
 ## Size & Complexity Limits
 
 - **Max 50 lines per function** — extract helpers when approaching the limit. Applies to source and test helpers alike.
