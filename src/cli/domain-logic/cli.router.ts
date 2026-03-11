@@ -3,6 +3,7 @@ import process from 'node:process';
 import { printResult } from './cli-output';
 import type { AskToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
+import { ValidationError } from '../../shared';
 import type { CallCliToolInput, CliSubcommand } from '../common';
 import { parseAskAllArgs, parseAskArgs } from '../utils/cli-arg-parser.util';
 import { renderCliProgress } from '../utils/cli-progress-renderer.util';
@@ -50,6 +51,11 @@ const buildCallCliToolInput = (
   return result;
 };
 
+const writeValidationError = (error: ValidationError): void => {
+  process.stderr.write(`Validation error: ${error.message}\n`);
+  process.exitCode = 1;
+};
+
 export const runCli = async (
   subcommand: string,
   remainingArgs: readonly string[],
@@ -64,9 +70,19 @@ export const runCli = async (
     return;
   }
 
-  const args = buildToolArgs(parsedSubcommand, remainingArgs);
-  const callCliToolInput = buildCallCliToolInput(parsedSubcommand, args, configPath);
-  const result = await callCliTool(callCliToolInput);
+  try {
+    const args = buildToolArgs(parsedSubcommand, remainingArgs);
+    const callCliToolInput = buildCallCliToolInput(parsedSubcommand, args, configPath);
+    const result = await callCliTool(callCliToolInput);
 
-  printResult(result);
+    printResult(result);
+  } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      writeValidationError(error);
+
+      return;
+    }
+
+    throw error;
+  }
 };

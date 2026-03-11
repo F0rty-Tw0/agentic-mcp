@@ -76,6 +76,26 @@ describe('runCli', () => {
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
   });
 
+  it('GIVEN ask_all with --models alias WHEN run THEN it normalizes the value and calls the MCP helper', async () => {
+    await runCli('ask_all', ['hello', '--models', 'claude-sonnet-4']);
+
+    expect(mocks.callCliTool).toHaveBeenCalledWith({
+      toolName: 'ask_all',
+      args: { prompt: 'hello', model: 'claude-sonnet-4' },
+      configPath: undefined,
+    });
+  });
+
+  it('GIVEN ask_all with unsupported flag WHEN run THEN it writes an error to stderr and does not call the MCP helper', async () => {
+    await runCli('ask_all', ['hello', '--unknown', 'gemini']);
+
+    expect(mocks.callCliTool).not.toHaveBeenCalled();
+    expect(stderrSpy).toHaveBeenCalledWith(
+      'Validation error: Unknown flag "--unknown" for ask_all. Use --providers or --model for supported ask_all options.\n'
+    );
+    expect(process.exitCode).toBe(1);
+  });
+
   it('GIVEN ping_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ping_claude', []);
 
