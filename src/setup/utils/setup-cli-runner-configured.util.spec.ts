@@ -13,7 +13,7 @@ import {
   createSetupPlan,
   readStdoutCallOutput,
   readStdoutOutput,
-} from './setup-cli-runner.spec.util';
+} from './setup-cli-runner.spec.helper';
 import { runConfiguredSetup } from './setup-cli-runner.util';
 
 type ConfiguredJsonOutput = Readonly<{

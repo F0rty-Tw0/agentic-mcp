@@ -8,7 +8,7 @@ import {
   createSetupCliDependencies,
   readStdoutCallOutput,
   readStdoutOutput,
-} from './setup-cli-runner.spec.util';
+} from './setup-cli-runner.spec.helper';
 import { runMinimalSetup } from './setup-cli-runner.util';
 
 type MinimalJsonOutput = Readonly<{
