@@ -35,10 +35,14 @@ beforeAll(async () => {
   }
 });
 
+const isSuccessfulPingText = (text: string): boolean => {
+  return text.includes('binary detected') || text.includes('version check succeeded');
+};
+
 const isProviderAvailable = async (provider: string): Promise<boolean> => {
   const result = await execFileAsync(process.execPath, [BINARY_PATH, `ping_${provider}`]).catch(() => undefined);
 
-  return result?.stdout.includes('available') === true;
+  return !result ? false : isSuccessfulPingText(result.stdout);
 };
 
 const findAvailableProvider = async (): Promise<string | undefined> => {
@@ -132,7 +136,7 @@ describe('integration: CLI router', () => {
 
   describe('provider commands', () => {
     it(
-      'GIVEN an available provider WHEN calling ping via CLI THEN stdout contains "available" and exit code is 0',
+      'GIVEN an available provider WHEN calling ping via CLI THEN stdout contains limited-proof wording and exit code is 0',
       async () => {
         if (!binaryExists) return;
 
@@ -143,7 +147,8 @@ describe('integration: CLI router', () => {
         const result = await execFileAsync(process.execPath, [BINARY_PATH, `ping_${provider}`]);
         const stdout = result.stdout;
 
-        expect(stdout).toContain('available');
+        expect(stdout).toContain(provider);
+        expect(isSuccessfulPingText(stdout)).toBe(true);
       },
       TIMEOUT_MS
     );

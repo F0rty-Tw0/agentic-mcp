@@ -14,20 +14,20 @@ const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProv
 
 describe('handleListProviders', () => {
   describe('provider status labels', () => {
-    it('GIVEN available provider WHEN listing THEN shows "available" status', () => {
+    it('GIVEN detected provider WHEN listing THEN shows "binary detected" status', () => {
       const providers = [createProvider({ available: true, enabled: true })];
 
       const result = handleListProviders(providers);
 
-      expect((result.content[0] as McpPlainTextContent).text).toContain('[available]');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('[binary detected]');
     });
 
-    it('GIVEN enabled but unavailable provider WHEN listing THEN shows "not found" status', () => {
+    it('GIVEN enabled but missing provider WHEN listing THEN shows "binary missing" status', () => {
       const providers = [createProvider({ enabled: true, available: false, binaryPath: undefined })];
 
       const result = handleListProviders(providers);
 
-      expect((result.content[0] as McpPlainTextContent).text).toContain('[not found]');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('[binary missing]');
     });
 
     it('GIVEN disabled provider WHEN listing THEN shows "disabled" status', () => {
@@ -40,7 +40,7 @@ describe('handleListProviders', () => {
   });
 
   describe('output formatting', () => {
-    it('GIVEN single provider WHEN listing THEN returns formatted line with name and description', () => {
+    it('GIVEN one detected provider WHEN listing THEN adds the next proof step', () => {
       const providers = [createProvider({ name: 'claude', description: 'Anthropic Claude' })];
 
       const result = handleListProviders(providers);
@@ -49,13 +49,16 @@ describe('handleListProviders', () => {
         content: [
           {
             type: 'text',
-            text: 'Configured providers:\n- claude: Anthropic Claude [available]',
+            text:
+              'Configured providers:\n' +
+              '- claude: Anthropic Claude [binary detected]\n' +
+              'Next: run ask_claude to prove authentication and a real response.',
           },
         ],
       });
     });
 
-    it('GIVEN multiple providers WHEN listing THEN returns one line per provider', () => {
+    it('GIVEN mixed providers WHEN listing THEN shows truthful labels and one next step', () => {
       const providers = [
         createProvider({ name: 'claude', description: 'Anthropic Claude' }),
         createProvider({ name: 'codex', description: 'OpenAI Codex', enabled: true, available: false }),
@@ -68,17 +71,25 @@ describe('handleListProviders', () => {
 
       expect(text).toBe(
         'Configured providers:\n' +
-          '- claude: Anthropic Claude [available]\n' +
-          '- codex: OpenAI Codex [not found]\n' +
-          '- gemini: Google Gemini [disabled]'
+          '- claude: Anthropic Claude [binary detected]\n' +
+          '- codex: OpenAI Codex [binary missing]\n' +
+          '- gemini: Google Gemini [disabled]\n' +
+          'Next: run ask_claude to prove authentication and a real response.'
       );
     });
 
-    it('GIVEN empty providers array WHEN listing THEN returns header only', () => {
+    it('GIVEN no detected providers WHEN listing THEN explains the next recovery step', () => {
       const result = handleListProviders([]);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'Configured providers:\n' }],
+        content: [
+          {
+            type: 'text',
+            text:
+              'Configured providers:\n' +
+              'Next: install and authenticate a supported provider CLI, then rerun list_providers.',
+          },
+        ],
       });
     });
   });

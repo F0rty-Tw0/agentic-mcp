@@ -24,7 +24,29 @@ vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   stripAnsi: vi.fn((input: string) => input),
 }));
 
-// Real toMcpError — no mock (validates real error mapping)
+type VersionCheckFailure = Readonly<{
+  exitCode: number | null;
+  signal: NodeJS.Signals | null;
+  timedOut: boolean;
+}>;
+
+const createAskProofMessage = (providerName: string): string => {
+  return `Run ask_${providerName} to prove authentication and a real response.`;
+};
+
+const createBinaryDetectedText = (providerName: string): string => {
+  return `${providerName}: binary detected at /usr/bin/test-cli. This only proves the CLI is installed. ${createAskProofMessage(providerName)}`;
+};
+
+const createVersionSucceededText = (providerName: string, version: string): string => {
+  return `${providerName}: version check succeeded (version: ${version}). This does not prove authentication or a successful ask. ${createAskProofMessage(providerName)}`;
+};
+
+const createVersionFailedText = (providerName: string, input: VersionCheckFailure): string => {
+  const { exitCode, signal, timedOut } = input;
+
+  return `${providerName}: version check failed (exit ${exitCode}, signal: ${signal}, timedOut: ${String(timedOut)}). Fix the CLI, then rerun ping_${providerName} before ask_${providerName}.`;
+};
 
 describe('handlePing', () => {
   beforeEach(() => {
@@ -37,13 +59,13 @@ describe('handlePing', () => {
   });
 
   describe('no versionCheck configured', () => {
-    it('GIVEN provider without versionCheck WHEN handling ping THEN returns available with binary path', async () => {
+    it('GIVEN provider without versionCheck WHEN handling ping THEN returns binary-detected guidance', async () => {
       const context = createSimpleToolsContext();
 
       const result = await handlePing(context);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (binary: /usr/bin/test-cli)' }],
+        content: [{ type: 'text', text: createBinaryDetectedText('test') }],
       });
     });
 
@@ -57,13 +79,13 @@ describe('handlePing', () => {
   });
 
   describe('successful version check', () => {
-    it('GIVEN provider with versionCheck WHEN command succeeds THEN returns version output', async () => {
+    it('GIVEN provider with versionCheck WHEN command succeeds THEN returns scope-limited success wording', async () => {
       const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       const result = await handlePing(context);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (version: v1.0.0)' }],
+        content: [{ type: 'text', text: createVersionSucceededText('test', 'v1.0.0') }],
       });
     });
 
@@ -91,12 +113,11 @@ describe('handlePing', () => {
 
       expect(buildMinimalEnv).toHaveBeenCalledWith({
         apiKey: 'secret',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
+        ['MCP_TOOL_TIMEOUT']: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
     });
 
-    it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN handling ping THEN injects default timeout env', async () => {
+    it('GIVEN named provider without MCP_TOOL_TIMEOUT WHEN handling ping THEN keeps the provider-specific ask step', async () => {
       const context: ResolvedProviderEntry = {
         ...createSimpleToolsContext({
           versionCheck: { flag: '--version' },
@@ -105,13 +126,13 @@ describe('handlePing', () => {
         name: 'gemini',
       };
 
-      await handlePing(context);
+      const result = await handlePing(context);
 
       expect(buildMinimalEnv).toHaveBeenCalledWith({
         apiKey: 'secret',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
+        ['MCP_TOOL_TIMEOUT']: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Run ask_gemini');
     });
 
     it('GIVEN output with ANSI codes WHEN handling ping THEN strips ANSI from output', async () => {
@@ -123,7 +144,7 @@ describe('handlePing', () => {
 
       expect(stripAnsi).toHaveBeenCalledWith('v1.0.0');
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (version: v2.0.0)' }],
+        content: [{ type: 'text', text: createVersionSucceededText('test', 'v2.0.0') }],
       });
     });
 
@@ -139,7 +160,7 @@ describe('handlePing', () => {
       const result = await handlePing(context);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (version: v1.0.0)' }],
+        content: [{ type: 'text', text: createVersionSucceededText('test', 'v1.0.0') }],
       });
     });
   });
@@ -159,7 +180,7 @@ describe('handlePing', () => {
       const result = await handlePing(context);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (version: 3.2.1)' }],
+        content: [{ type: 'text', text: createVersionSucceededText('test', '3.2.1') }],
       });
     });
 
@@ -177,7 +198,7 @@ describe('handlePing', () => {
       const result = await handlePing(context);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (version: no match here)' }],
+        content: [{ type: 'text', text: createVersionSucceededText('test', 'no match here') }],
       });
     });
 
@@ -193,13 +214,13 @@ describe('handlePing', () => {
       const result = await handlePing(context);
 
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'test: available (version: test-cli 4.5.6)' }],
+        content: [{ type: 'text', text: createVersionSucceededText('test', 'test-cli 4.5.6') }],
       });
     });
   });
 
   describe('command failure', () => {
-    it('GIVEN command times out WHEN handling ping THEN returns not responding', async () => {
+    it('GIVEN command times out WHEN handling ping THEN returns truthful failure guidance', async () => {
       const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -217,13 +238,13 @@ describe('handlePing', () => {
         content: [
           {
             type: 'text',
-            text: 'test: not responding (exit null, signal: SIGTERM, timedOut: true)',
+            text: createVersionFailedText('test', { exitCode: null, signal: 'SIGTERM', timedOut: true }),
           },
         ],
       });
     });
 
-    it('GIVEN command exits non-zero WHEN handling ping THEN returns not responding', async () => {
+    it('GIVEN command exits non-zero WHEN handling ping THEN returns truthful failure guidance', async () => {
       const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -240,13 +261,13 @@ describe('handlePing', () => {
         content: [
           {
             type: 'text',
-            text: 'test: not responding (exit 1, signal: null, timedOut: false)',
+            text: createVersionFailedText('test', { exitCode: 1, signal: null, timedOut: false }),
           },
         ],
       });
     });
 
-    it('GIVEN command killed by signal WHEN handling ping THEN returns not responding', async () => {
+    it('GIVEN command killed by signal WHEN handling ping THEN returns truthful failure guidance', async () => {
       const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -262,7 +283,7 @@ describe('handlePing', () => {
         content: [
           {
             type: 'text',
-            text: 'test: not responding (exit null, signal: SIGKILL, timedOut: false)',
+            text: createVersionFailedText('test', { exitCode: null, signal: 'SIGKILL', timedOut: false }),
           },
         ],
       });

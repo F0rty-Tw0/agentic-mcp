@@ -217,12 +217,12 @@ describe('registerAllTools', () => {
       expect(metadata.description).toContain('claude');
     });
 
-    it('GIVEN list_providers WHEN registered THEN description mentions AI models', () => {
+    it('GIVEN list_providers WHEN registered THEN description mentions configured provider status', () => {
       register();
 
       const metadata = getMetadata(server, 'list_providers');
 
-      expect(metadata.description).toContain('AI models');
+      expect(metadata.description).toContain('configured providers');
     });
   });
 

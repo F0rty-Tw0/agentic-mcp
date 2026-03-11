@@ -1,9 +1,11 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProviderEntry } from '../../shared';
 import { buildMinimalEnv, executeCommand, resolveProviderEnv, stripAnsi, toMcpError } from '../../shared';
+import type { ExecutionResult, ResolvedProviderEntry } from '../../shared';
 
 const PING_TIMEOUT_MS = 30_000;
+
+type PingFailureResult = Pick<ExecutionResult, 'exitCode' | 'signal' | 'timedOut'>;
 
 const createPingResponse = (text: string): CallToolResult => {
   const pingResponse: CallToolResult = {
@@ -16,6 +18,22 @@ const createPingResponse = (text: string): CallToolResult => {
   };
 
   return pingResponse;
+};
+
+const createAskProofMessage = (providerName: string): string => {
+  return `Run ask_${providerName} to prove authentication and a real response.`;
+};
+
+const createBinaryDetectedText = (context: ResolvedProviderEntry): string => {
+  return `${context.name}: binary detected at ${context.binaryPath}. This only proves the CLI is installed. ${createAskProofMessage(context.name)}`;
+};
+
+const createVersionSucceededText = (context: ResolvedProviderEntry, version: string): string => {
+  return `${context.name}: version check succeeded (version: ${version}). This does not prove authentication or a successful ask. ${createAskProofMessage(context.name)}`;
+};
+
+const createVersionFailedText = (context: ResolvedProviderEntry, result: PingFailureResult): string => {
+  return `${context.name}: version check failed (exit ${result.exitCode}, signal: ${result.signal}, timedOut: ${String(result.timedOut)}). Fix the CLI, then rerun ping_${context.name} before ask_${context.name}.`;
 };
 
 const resolveVersion = (output: string, pattern?: string): string => {
@@ -31,7 +49,7 @@ const resolveVersion = (output: string, pattern?: string): string => {
 export const handlePing = async (context: ResolvedProviderEntry): Promise<CallToolResult> => {
   try {
     if (!context.config.versionCheck) {
-      return createPingResponse(`${context.name}: available (binary: ${context.binaryPath})`);
+      return createPingResponse(createBinaryDetectedText(context));
     }
 
     const providerEnv = resolveProviderEnv(context);
@@ -45,16 +63,14 @@ export const handlePing = async (context: ResolvedProviderEntry): Promise<CallTo
     });
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
-      return createPingResponse(
-        `${context.name}: not responding (exit ${result.exitCode}, signal: ${result.signal}, timedOut: ${String(result.timedOut)})`
-      );
+      return createPingResponse(createVersionFailedText(context, result));
     }
 
     const output = stripAnsi(result.stdout).trim();
     const version = resolveVersion(output, context.config.versionCheck.pattern);
 
-    return createPingResponse(`${context.name}: available (version: ${version})`);
-  } catch (error) {
+    return createPingResponse(createVersionSucceededText(context, version));
+  } catch (error: unknown) {
     return toMcpError(error);
   }
 };

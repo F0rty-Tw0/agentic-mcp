@@ -4,7 +4,7 @@ MCP server factory — creates and configures the Model Context Protocol server 
 
 ## What It Does
 
-- Loads provider configuration and resolves which CLI binaries are available on the system
+- Loads provider configuration and resolves which CLI binaries are detected on the system
 - Creates an `McpServer` instance with the application name and version
 - Registers all MCP tools (per-provider ask/ping/help/sessions + global ask_all/list_providers/provider_metrics)
 - Handles MCP `CancelledNotification` by killing the associated child process
@@ -31,15 +31,15 @@ Run with: `pnpm run test:integration`
 
 Exercises the full MCP server wiring end-to-end using `InMemoryTransport` (no network, no Docker). A real server and client are connected in `beforeAll` and torn down in `afterAll`.
 
-| Test                                   | What It Verifies                                                                               | Expected Output                                        |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Tool listing includes `list_providers` | The global `list_providers` tool is registered                                                 | `toolNames` contains `"list_providers"`                |
-| Per-provider tool completeness         | Every `ask_<provider>` tool has a matching `ping_<provider>` and `help_<provider>`             | All provider triples are present                       |
-| Every tool has a description           | No tool is registered without a description string                                             | `tool.description` is truthy for all tools             |
-| Ping returns availability              | Calling `ping_<provider>` for an available provider returns a message containing `"available"` | Response text contains provider name and `"available"` |
-| Help returns non-empty text            | Calling `help_<provider>` returns meaningful help content                                      | Response text length > 0                               |
-| list_providers returns provider status | Calling `list_providers` returns text mentioning at least one known provider                   | Text matches provider name pattern                     |
-| list_providers shows status labels     | Each provider in the output has a status label                                                 | Text matches `available\|not found\|disabled`          |
+| Test                                   | What It Verifies                                                                                          | Expected Output                                                                              |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Tool listing includes `list_providers` | The global `list_providers` tool is registered                                                            | `toolNames` contains `"list_providers"`                                                      |
+| Per-provider tool completeness         | Every `ask_<provider>` tool has a matching `ping_<provider>` and `help_<provider>`                        | All provider triples are present                                                             |
+| Every tool has a description           | No tool is registered without a description string                                                        | `tool.description` is truthy for all tools                                                   |
+| Ping returns limited proof scope       | Calling `ping_<provider>` for a detected provider returns wording that stays explicit about limited proof | Response text contains the provider name plus `binary detected` or `version check succeeded` |
+| Help returns non-empty text            | Calling `help_<provider>` returns meaningful help content                                                 | Response text length > 0                                                                     |
+| list_providers returns provider status | Calling `list_providers` returns text mentioning at least one known provider                              | Text matches provider name pattern                                                           |
+| list_providers shows truthful labels   | Each provider in the output has a truthful status label                                                   | Text matches `binary detected\|binary missing\|disabled`                                     |
 
 ### `create-server-schema.test.ts`
 

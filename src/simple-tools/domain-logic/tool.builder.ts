@@ -3,7 +3,7 @@ import type { ToolDefinition } from '../../shared';
 export const buildPingToolDefinition = (providerName: string): ToolDefinition => {
   const definition: ToolDefinition = {
     name: `ping_${providerName}`,
-    description: `Check if ${providerName} is ready to answer`,
+    description: `Check limited proof for ${providerName} (binary detection or version check)`,
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
@@ -25,7 +25,7 @@ export const buildHelpToolDefinition = (providerName: string): ToolDefinition =>
 export const buildListProvidersDefinition = (): ToolDefinition => {
   const definition: ToolDefinition = {
     name: 'list_providers',
-    description: 'See which AI models are available and their status',
+    description: 'See configured providers with detected status and next steps',
     inputSchema: {},
     annotations: { readOnlyHint: true, idempotentHint: true },
   };

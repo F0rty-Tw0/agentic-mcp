@@ -9,9 +9,10 @@ describe('buildPingToolDefinition', () => {
     expect(result.name).toBe('ping_claude');
   });
 
-  it('GIVEN a provider name WHEN building ping tool THEN description includes provider name', () => {
+  it('GIVEN a provider name WHEN building ping tool THEN description explains limited proof', () => {
     const result = buildPingToolDefinition('codex');
 
+    expect(result.description).toContain('limited proof');
     expect(result.description).toContain('codex');
   });
 
@@ -61,10 +62,11 @@ describe('buildListProvidersDefinition', () => {
     expect(result.name).toBe('list_providers');
   });
 
-  it('GIVEN no arguments WHEN building list_providers tool THEN description mentions AI models', () => {
+  it('GIVEN no arguments WHEN building list_providers tool THEN description explains configured provider status', () => {
     const result = buildListProvidersDefinition();
 
-    expect(result.description).toContain('AI models');
+    expect(result.description).toContain('configured providers');
+    expect(result.description).toContain('detected');
   });
 
   it('GIVEN no arguments WHEN building list_providers tool THEN inputSchema is empty', () => {

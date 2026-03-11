@@ -70,10 +70,10 @@ describe('integration: tool listing', () => {
   });
 });
 
-/**
- * Extracts the first available provider name from the tool listing.
- * Returns `undefined` when no provider CLIs are installed locally.
- */
+const isSuccessfulPingText = (text: string): boolean => {
+  return text.includes('binary detected') || text.includes('version check succeeded');
+};
+
 const findAvailableProvider = async (): Promise<string | undefined> => {
   const { tools } = await client.listTools();
   const pingTools = tools.filter((tool) => tool.name.startsWith('ping_'));
@@ -82,7 +82,7 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
     const result = (await client.callTool({ name: tool.name })) as CallToolResult;
     const text = (result.content[0] as McpTextContent).text;
 
-    if (text.includes('available')) {
+    if (isSuccessfulPingText(text)) {
       return tool.name.replace('ping_', '');
     }
   }
@@ -91,7 +91,7 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
 };
 
 describe('integration: ping', () => {
-  it('GIVEN an available provider WHEN calling ping THEN it returns an availability message', async () => {
+  it('GIVEN an available provider WHEN calling ping THEN it returns limited-proof guidance', async () => {
     const provider = await findAvailableProvider();
 
     if (!provider) return; // no CLIs installed — nothing to assert
@@ -105,7 +105,8 @@ describe('integration: ping', () => {
     const text = (result.content[0] as McpTextContent).text;
 
     expect(text).toContain(provider);
-    expect(text).toContain('available');
+    expect(text).toMatch(/binary detected|version check succeeded/);
+    expect(text).toContain(`Run ask_${provider}`);
   });
 });
 
@@ -141,12 +142,12 @@ describe('integration: list_providers', () => {
     expect(text).toMatch(/claude|codex|copilot|gemini|opencode/);
   });
 
-  it('GIVEN a running server WHEN calling list_providers THEN each provider shows a status label', async () => {
+  it('GIVEN a running server WHEN calling list_providers THEN each provider shows a truthful status label', async () => {
     const result = (await client.callTool({ name: 'list_providers' })) as CallToolResult;
 
     const text = (result.content[0] as McpTextContent).text;
 
-    // Status labels from meta-handler: "available", "not found", or "disabled"
-    expect(text).toMatch(/available|not found|disabled/);
+    expect(text).toMatch(/binary detected|binary missing|disabled/);
+    expect(text).toMatch(/Next: run ask_|Next: install and authenticate/);
   });
 });
