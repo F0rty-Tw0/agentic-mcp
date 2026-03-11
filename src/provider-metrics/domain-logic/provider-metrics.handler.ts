@@ -23,7 +23,7 @@ export const handleProviderMetrics = async (): Promise<CallToolResult> => {
 export const buildProviderMetricsToolDefinition = (): ToolDefinition => {
   const toolDefinition: ToolDefinition = {
     name: 'provider_metrics',
-    description: 'See how many times each AI provider was called overall, with response times and success rates',
+    description: 'See which providers you actually used, how often they succeeded, and how long they took',
     annotations: { readOnlyHint: true, idempotentHint: true },
   };
 

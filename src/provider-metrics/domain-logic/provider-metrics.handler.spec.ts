@@ -78,11 +78,12 @@ describe('buildProviderMetricsToolDefinition', () => {
     expect(toolDefinition.name).toBe('provider_metrics');
   });
 
-  it('GIVEN no arguments WHEN called THEN description mentions provider and overall usage', () => {
+  it('GIVEN no arguments WHEN called THEN description explains real usage feedback', () => {
     const toolDefinition = buildProviderMetricsToolDefinition();
 
-    expect(toolDefinition.description).toContain('provider');
-    expect(toolDefinition.description).toContain('overall');
+    expect(toolDefinition.description).toContain('actually used');
+    expect(toolDefinition.description).toContain('succeeded');
+    expect(toolDefinition.description).toContain('took');
   });
 
   it('GIVEN no arguments WHEN called THEN has readOnly and idempotent annotations', () => {
