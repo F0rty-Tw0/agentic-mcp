@@ -11,6 +11,7 @@ import {
   resolveProviderEnv,
 } from '../../shared';
 import type { AskToolArgs } from '../common';
+import { parseProviderOutput } from '../utils';
 
 type ExecutionEnv = Readonly<Record<string, string>>;
 
@@ -21,6 +22,16 @@ type ModelHintContext = Readonly<{
   stderr: string;
   env: ExecutionEnv;
 }>;
+
+const buildFailureOutput = (context: ResolvedProviderEntry, result: ExecutionResult): string | undefined => {
+  if (!result.stdout.length) return;
+
+  const parsedOutput = parseProviderOutput(result.stdout, context.config.outputFormat);
+
+  if (!parsedOutput.text.trim().length || parsedOutput.text === result.stderr) return;
+
+  return parsedOutput.text;
+};
 
 export const buildExecutionEnv = (context: ResolvedProviderEntry): ExecutionEnv => {
   const providerEnv = resolveProviderEnv(context);
@@ -67,6 +78,7 @@ export const buildCommandFailure = async (
     signal: result.signal,
     timedOut: result.timedOut,
     stderr: result.stderr,
+    output: buildFailureOutput(context, result),
   };
   const modelHintContext: ModelHintContext = { context, args, stdout: result.stdout, stderr: result.stderr, env };
   const suffix = await resolveModelHint(modelHintContext);

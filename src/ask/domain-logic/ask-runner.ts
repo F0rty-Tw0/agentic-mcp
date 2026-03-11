@@ -33,12 +33,14 @@ const handleFailedExecution = async (
   const { context, args, extra, streamNotifier } = executeInput;
   const env = buildExecutionEnv(context);
   const error = await buildCommandFailure(context, args, env, result);
+  const errorResponse = error.toMcpResponse();
+  const [firstContent] = errorResponse.content;
 
-  streamNotifier.emitError(error.message, summary);
+  streamNotifier.emitError(firstContent?.type === 'text' ? firstContent.text : error.message, summary);
   await recordCall(context.name, result.executionTimeMs, false);
   const wasCancelled = extra?.signal?.aborted ?? false;
 
-  return buildFailureExecution(error.toMcpResponse(), wasCancelled);
+  return buildFailureExecution(errorResponse, wasCancelled);
 };
 
 const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = false): Promise<AskExecution> => {
@@ -102,13 +104,13 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
     return await executeAndBuildResponse(executeInput);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorResponse = error instanceof CommandExecutionError ? error.toMcpResponse() : toMcpError(error);
+    const [firstContent] = errorResponse.content;
 
-    streamNotifier.emitError(errorMessage);
+    streamNotifier.emitError(firstContent?.type === 'text' ? firstContent.text : errorMessage);
     await recordCall(context.name, 0, false);
 
-    if (error instanceof CommandExecutionError) return buildFailureExecution(error.toMcpResponse(), false);
-
-    return buildFailureExecution(toMcpError(error), false);
+    return buildFailureExecution(errorResponse, false);
   } finally {
     if (requestId) unregisterActiveRequest(requestId);
     stopHeartbeat();

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   validateFiles: vi.fn(),
   modelRegex: /^[a-zA-Z0-9][a-zA-Z0-9._:\-/]{0,127}$/,
   buildMinimalEnv: vi.fn(),
+  stripAnsi: vi.fn((input: string) => input),
   resolveProviderEnv: vi.fn(),
   detectModelError: vi.fn(),
   extractAttemptedModel: vi.fn(),
@@ -34,6 +35,7 @@ vi.mock('../../shared/validation/utils/validation.util', () => ({
 
 vi.mock('../../shared/command-execution/utils/platform.util', () => ({
   buildMinimalEnv: mocks.buildMinimalEnv,
+  stripAnsi: mocks.stripAnsi,
 }));
 
 vi.mock('../../shared/provider/utils/model-error.util', () => ({

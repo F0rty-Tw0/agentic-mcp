@@ -66,6 +66,17 @@ describe('CommandExecutionError.toMcpResponse', () => {
     expect(result.content[0]?.text).toContain(`Stderr: ${exactStderr}`);
   });
 
+  it('GIVEN error with parsed stdout output WHEN toMcpResponse called THEN includes output section', () => {
+    const error = new CommandExecutionError('command failed', {
+      exitCode: 1,
+      output: 'Please run claude login to authenticate.',
+    });
+
+    const result = error.toMcpResponse();
+
+    expect(result.content[0]?.text).toContain('Output: Please run claude login to authenticate.');
+  });
+
   it('GIVEN error with no stderr WHEN toMcpResponse called THEN does not include Stderr section', () => {
     const error = new CommandExecutionError('command failed', { exitCode: 1 });
 

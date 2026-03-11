@@ -6,13 +6,25 @@ export type CommandExecutionErrorDetails = Readonly<{
   signal?: string | null;
   timedOut?: boolean;
   stderr?: string;
+  output?: string;
 }>;
+
+const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
+  const detailBytes = Buffer.byteLength(text, 'utf8');
+
+  if (detailBytes <= MAX_ERROR_STDERR_BYTES) return text;
+
+  const cappedDetail = Buffer.from(text, 'utf8').subarray(0, MAX_ERROR_STDERR_BYTES).toString('utf8');
+
+  return `${cappedDetail}\n[${channel} truncated]`;
+};
 
 export class CommandExecutionError extends Error {
   public readonly exitCode?: number | null;
   public readonly signal?: string | null;
   public readonly timedOut?: boolean;
   public readonly stderr?: string;
+  public readonly output?: string;
 
   public constructor(message: string, details: CommandExecutionErrorDetails, options?: ErrorOptions) {
     super(message, options);
@@ -21,6 +33,7 @@ export class CommandExecutionError extends Error {
     this.signal = details.signal;
     this.timedOut = details.timedOut;
     this.stderr = details.stderr;
+    this.output = details.output;
   }
 
   public toMcpResponse(): McpErrorResponse {
@@ -35,13 +48,11 @@ export class CommandExecutionError extends Error {
     }
 
     if (this.stderr?.length) {
-      const stderrBytes = Buffer.byteLength(this.stderr, 'utf8');
-      const stderrText =
-        stderrBytes > MAX_ERROR_STDERR_BYTES
-          ? `${Buffer.from(this.stderr, 'utf8').subarray(0, MAX_ERROR_STDERR_BYTES).toString('utf8')}\n[stderr truncated]`
-          : this.stderr;
+      parts.push(`Stderr: ${capErrorDetail(this.stderr, 'stderr')}`);
+    }
 
-      parts.push(`Stderr: ${stderrText}`);
+    if (this.output?.length && this.output !== this.stderr) {
+      parts.push(`Output: ${capErrorDetail(this.output, 'output')}`);
     }
 
     const mcpErrorResponse: McpErrorResponse = {

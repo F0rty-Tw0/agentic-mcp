@@ -178,6 +178,32 @@ describe('handleAsk – errors', () => {
       expect(result.isError).toBe(true);
       expect((result.content[0] as McpPlainTextContent).text).toContain('fatal: unknown flag');
     });
+
+    it('GIVEN non-zero Claude result envelope in stdout WHEN handling ask THEN includes parsed provider error text', async () => {
+      const context = createAskContext({ outputFormat: 'json' });
+
+      vi.mocked(executeCommand).mockResolvedValue({
+        ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
+        stdout: JSON.stringify({
+          type: 'result',
+          subtype: 'error_max_turns',
+          is_error: true,
+          result: 'Please run claude login to authenticate.',
+          session_id: 'session-123',
+        }),
+        stdoutBytes: 135,
+        stderr: '',
+        exitCode: 1,
+        stderrBytes: 0,
+        executionTimeMs: 50,
+      });
+
+      const result = await handleAsk(context, { prompt: 'test prompt' });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Please run claude login to authenticate.');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Exit code: 1');
+    });
   });
 
   describe('model error branching', () => {
