@@ -1,0 +1,66 @@
+# Compare two providers on the same prompt
+
+Use this path when the value is in the contrast: quality, latency, or failure behavior across providers.
+
+## Prerequisites
+
+- Node.js 22 or newer
+- Two supported provider CLIs installed locally
+- Both CLIs authenticated
+- Both providers visible as `binary detected` in `list_providers`
+
+## Steps
+
+### 1. Confirm both providers are detected
+
+```bash
+npx agentic-mcp list_providers
+```
+
+Expected output shape:
+
+- both target providers appear as `binary detected`
+- the output does not claim readiness without a real ask
+
+What success means: both binaries are present and selectable.
+
+### 2. Prove each provider can answer on its own
+
+```bash
+npx agentic-mcp ask_claude "Reply with one sentence about why consistency matters."
+npx agentic-mcp ask_codex "Reply with one sentence about why consistency matters."
+```
+
+Replace the provider names with the pair you actually installed.
+
+What success means: each provider can complete a real single-provider ask before you compare them together.
+
+### 3. Run the side-by-side comparison
+
+```bash
+npx agentic-mcp ask_all "Reply with one sentence about why consistency matters." --providers claude,codex
+```
+
+Expected output shape:
+
+- one structured result containing both providers
+- per-provider success or failure data
+- response text grouped by provider
+
+What success means: you can compare providers through one interface without bespoke glue scripts.
+
+## When not to use `ask_all`
+
+Do not use it for routine single-provider work. `ask_all` costs more, produces more output, and is only worth it when comparison itself is the goal.
+
+## Most likely blocker
+
+### One provider works alone, but `ask_all` shows a failure for the other
+
+Interpretation: the second provider is still misconfigured, unauthenticated, or using a shared model it cannot satisfy.
+
+Next move:
+
+1. Retry that provider with `ask_<provider>` by itself.
+2. Fix the provider-specific issue.
+3. Rerun `ask_all` only after both single-provider asks work.

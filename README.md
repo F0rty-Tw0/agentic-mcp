@@ -1,31 +1,38 @@
 # agentic-mcp
 
-> One MCP server and CLI wrapper for local AI agent CLIs.
+> Use any installed AI CLI from one MCP server or one terminal command.
 
 [![CI](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-`agentic-mcp` gives you one integration surface for multiple local AI CLIs such as Claude, Codex, Copilot, Gemini, and OpenCode.
+`agentic-mcp` helps you get a real answer from the provider you already installed, compare multiple local providers on the same prompt, and configure one MCP client entry instead of wiring each provider separately.
 
-Use it in two ways:
+## Who this is for
 
-- As an MCP server for clients like Claude Code, Cursor, and Windsurf
-- As a direct CLI for asking providers, checking availability, and comparing responses
+- Terminal-only developers who want a working answer fast
+- MCP client users who want one setup path for Claude Code, Cursor, or Windsurf
+- Tool and agent builders who want one surface for provider discovery, asks, and comparison
 
-The point is simple: set up provider CLIs once, then use a consistent command and tool surface instead of wiring each provider separately.
+## Start here by goal
+
+- [I want my first real answer from the terminal](./docs/getting-started/terminal-first-success.md)
+- [I want Claude Code to reach multiple local providers through one setup](./docs/getting-started/claude-code-multi-provider.md)
+- [I want to compare two providers on the same prompt](./docs/getting-started/compare-two-providers.md)
+
+MCP is how editor and agent clients reach the same workflow. It is the delivery mechanism, not the reason to use the project.
 
 ## Why people use it
 
-- One command surface across multiple AI CLIs
-- One MCP server entry instead of per-provider client wiring
-- Direct CLI and MCP mode share the same provider definitions and behavior
-- New providers can be added declaratively in config instead of writing provider-specific code
+- Get a real answer from the CLI you already installed without learning a provider-specific wrapper.
+- Compare providers on the same prompt without bespoke glue scripts.
+- Configure one MCP client entry instead of maintaining separate per-provider integrations.
+- Keep direct CLI and MCP usage aligned so the same workflow works in both places.
 
 ## How it works
 
 1. You install and authenticate one or more provider CLIs locally.
-2. `agentic-mcp` exposes a uniform MCP and CLI interface on top of them.
-3. Your MCP client or terminal calls `agentic-mcp`, which invokes the underlying provider CLI with the right arguments.
+2. `agentic-mcp` gives you one command and tool surface across those providers.
+3. Your terminal or MCP client calls `agentic-mcp`, which forwards the request to the underlying provider CLI with the right arguments.
 
 ## Before you start
 
@@ -53,18 +60,23 @@ If those binaries are missing or not logged in, setup may succeed but provider c
 npx agentic-mcp init
 ```
 
-`init` is a safe onboarding alias for `setup --minimal`.
+`init` is a safe onboarding alias for `setup --minimal`. It installs the bundled `using-agentic-mcp` skill, detects provider binaries, and tells you what is still unproven.
 
-It does two things:
+What this step proves:
 
-- installs the bundled `using-agentic-mcp` skill
-- prints the next client-specific setup command
+- `agentic-mcp` is installed and can run locally
+- the bundled skill is available for agent workflows
+- which provider binaries are detected on this machine
 
-It does not write MCP client configuration yet.
+What this step does not prove:
 
-### 2. Configure your MCP client
+- MCP client config is written
+- provider authentication works
+- a real prompt can complete through a provider
 
-Pick the client you actually use:
+### 2. Configure your MCP client or stay in the terminal
+
+If you want MCP tools inside Claude Code, Cursor, or Windsurf, write the client config entry now:
 
 ```bash
 npx agentic-mcp setup --client claude-code --yes
@@ -78,26 +90,81 @@ For another MCP client, generate a generic JSON entry and choose the target file
 npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes
 ```
 
-If you want to preview changes before writing, add `--dry-run`.
+If you want to preview changes before writing, add `--dry-run`. If you only care about terminal usage, you can skip MCP client setup and continue to the next step.
 
-### 3. Verify that your providers are usable
+What this step proves:
+
+- `agentic-mcp` can write or preview the MCP client entry
+- the setup output tells you what was configured, what was detected, and what remains unproven
+
+What this step does not prove:
+
+- provider authentication works
+- a real provider response can complete through `agentic-mcp`
+
+If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, and `ask_<provider>` appear.
+
+### 3. Discover what is detected
 
 ```bash
 npx agentic-mcp list_providers
+```
+
+What this step proves:
+
+- which providers are `binary detected`, `binary missing`, or `disabled`
+- which provider should be your first real-answer candidate
+
+What this step does not prove:
+
+- provider authentication works
+- a real prompt can complete through that provider
+
+### 4. Run a limited ping check
+
+```bash
 npx agentic-mcp ping_claude
 ```
 
 Replace `claude` with the provider you actually installed.
 
-A healthy setup should show your providers in `list_providers` and report `available` for `ping_<provider>`.
+What this step proves:
 
-### 4. Try a real command
+- the selected provider binary was detected
+- the version check works if that provider exposes one
+
+What this step does not prove:
+
+- provider authentication works
+- a real provider answer can complete
+
+### 5. Get your first real answer
 
 ```bash
-npx agentic-mcp ask_claude "Explain MCP in one paragraph"
+npx agentic-mcp ask_claude "Reply with OK and your provider name."
 ```
 
-If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, and `ask_<provider>` appear.
+What this step proves:
+
+- `agentic-mcp` can route a real prompt through the selected provider
+- your installed provider is usable for real work through this project
+
+Milestone: You have now successfully routed a real provider through `agentic-mcp`.
+
+### 6. Compare providers when two are usable
+
+```bash
+npx agentic-mcp ask_all "Reply with one sentence on why your answer is useful here." --providers claude,codex
+```
+
+Use this only when you want side-by-side comparison on the same prompt.
+
+What this step proves:
+
+- you can compare providers through one interface instead of hand-running the same prompt multiple times
+- `ask_all` is the product's comparison workflow, not just an advanced extra
+
+Milestone: You have now completed your first side-by-side provider comparison through `agentic-mcp`.
 
 ## Supported MCP clients
 
@@ -154,7 +221,7 @@ Use this when you want side-by-side answers without hand-running the same prompt
 - If a selected provider rejects the shared model as unavailable or unsupported, `ask_all` returns that provider error directly instead of falling back to a different model.
 - Unknown ask_all flags still fail fast with a validation error.
 
-### Check what is available on this machine
+### Check what is detected on this machine
 
 ```bash
 npx agentic-mcp list_providers
@@ -162,6 +229,8 @@ npx agentic-mcp ping_claude
 npx agentic-mcp help_claude
 npx agentic-mcp provider_metrics
 ```
+
+`provider_metrics` is the after-action view: it tells you which providers you actually used, how often they succeeded, and how long they took.
 
 ## Built-in provider support
 
@@ -197,25 +266,26 @@ npx agentic-mcp <command> [options]
 
 Core commands:
 
-| Command                   | What it does                               |
-| ------------------------- | ------------------------------------------ |
-| `ask_<provider> <prompt>` | Query one provider                         |
-| `ask_all <prompt>`        | Query several providers in parallel        |
-| `ping_<provider>`         | Check whether a provider is available      |
-| `help_<provider>`         | Show the provider CLI help output          |
-| `sessions_<provider>`     | List known sessions for that provider      |
-| `list_providers`          | Show configured providers and availability |
-| `provider_metrics`        | Show provider usage stats                  |
-| `setup`                   | Configure an MCP client                    |
+| Command                   | What it does                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `ask_<provider> <prompt>` | Query one provider                                                                       |
+| `ask_all <prompt>`        | Query several providers in parallel                                                      |
+| `ping_<provider>`         | Check limited provider proof                                                             |
+| `help_<provider>`         | Show the provider CLI help output                                                        |
+| `sessions_<provider>`     | List known sessions for that provider                                                    |
+| `list_providers`          | Show configured providers with detected status                                           |
+| `provider_metrics`        | Show which providers you actually used, how often they succeeded, and how long they took |
+| `setup`                   | Configure an MCP client                                                                  |
 
 Run `npx agentic-mcp --help` for the full CLI reference.
 
-## AI agent setup and discoverability
+## AI agent setup guides
 
 If you want another AI agent to discover and use this project reliably:
 
-- Read the discoverability guide: [MCP-SKILLS-DISCOVERABILITY.md](./MCP-SKILLS-DISCOVERABILITY.md)
+- Read the agent workflow guide: [MCP-SKILLS-DISCOVERABILITY.md](./MCP-SKILLS-DISCOVERABILITY.md)
 - Use the bundled skill: [skills/using-agentic-mcp/SKILL.md](./skills/using-agentic-mcp/SKILL.md)
+- Start from a goal-based path: [docs/getting-started](./docs/getting-started)
 
 That material is useful once the basic setup above works. It is not required for a normal first run.
 

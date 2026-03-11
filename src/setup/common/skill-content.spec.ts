@@ -23,8 +23,8 @@ describe('SKILL_CONTENT', () => {
 
   it('GIVEN installed skill WHEN describing command choice THEN it explains what to use and when', () => {
     const expectedGuidance = [
-      'Need to discover available providers',
-      'Need to confirm one provider is ready',
+      'Need to discover detected providers',
+      'Need limited proof for one provider',
       'Need to inspect provider-specific capabilities',
       'Need one provider to answer a task',
       'Need to compare providers on the same prompt',
