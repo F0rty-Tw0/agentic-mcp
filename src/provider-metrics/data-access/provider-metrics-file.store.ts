@@ -4,9 +4,9 @@ import path from 'node:path';
 
 import { ValidationError } from '../../shared';
 import type { ProviderCallRecord, ProviderMetricsFile } from '../common';
-import { acquireProviderMetricsFileLock } from './provider-metrics-lock.util';
-import { createEmptyProviderMetricsFile, parseProviderMetricsFile } from './provider-metrics-parser.util';
-import { resolveProviderMetricsFilePath } from './provider-metrics-path.util';
+import { acquireProviderMetricsFileLock } from './provider-metrics-file.lock';
+import { resolveProviderMetricsFilePath } from './provider-metrics-file.path';
+import { createEmptyProviderMetricsFile, parseProviderMetricsFile } from './provider-metrics-file.schema';
 import { MAX_METRIC_RECORDS } from '../common/provider-metrics.const';
 
 const TEMP_FILE_SUFFIX = '.tmp';

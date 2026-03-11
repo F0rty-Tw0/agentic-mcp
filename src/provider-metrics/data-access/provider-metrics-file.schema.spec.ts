@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createEmptyProviderMetricsFile, parseProviderMetricsFile } from './provider-metrics-parser.util';
+import { createEmptyProviderMetricsFile, parseProviderMetricsFile } from './provider-metrics-file.schema';
 import { ValidationError } from '../../shared';
 
 afterEach(() => {

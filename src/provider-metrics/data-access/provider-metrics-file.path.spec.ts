@@ -4,7 +4,7 @@ import process from 'node:process';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveProviderMetricsFilePath } from './provider-metrics-path.util';
+import { resolveProviderMetricsFilePath } from './provider-metrics-file.path';
 
 afterEach(() => {
   vi.restoreAllMocks();

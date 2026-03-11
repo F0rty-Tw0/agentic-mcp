@@ -2,7 +2,7 @@ import process from 'node:process';
 
 import { nowIso } from '../../shared';
 import type { ProviderCallRecord, ProviderMetricsSummary } from '../common';
-import { appendProviderCallRecord, loadProviderMetricsFile } from './provider-metrics-file.util';
+import { appendProviderCallRecord, loadProviderMetricsFile } from './provider-metrics-file.store';
 import { buildProviderMetricsSummary } from './provider-metrics-summary.builder';
 
 const buildWarningMessage = (error: unknown): string => {
@@ -36,4 +36,4 @@ export const getProviderMetrics = async (): Promise<ProviderMetricsSummary> => {
   return providerMetricsSummary;
 };
 
-export { resetProviderMetricsStoreForTests } from './provider-metrics-file.util';
+export { resetProviderMetricsStoreForTests } from './provider-metrics-file.store';

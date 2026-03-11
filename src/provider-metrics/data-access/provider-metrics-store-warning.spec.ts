@@ -23,7 +23,7 @@ vi.mock('../../shared', () => ({
   nowIso: providerMetricsStoreMocks.nowIso,
 }));
 
-vi.mock('./provider-metrics-file.util', () => ({
+vi.mock('./provider-metrics-file.store', () => ({
   appendProviderCallRecord: providerMetricsStoreMocks.appendProviderCallRecord,
   loadProviderMetricsFile: providerMetricsStoreMocks.loadProviderMetricsFile,
   resetProviderMetricsStoreForTests: providerMetricsStoreMocks.resetProviderMetricsStoreForTests,
