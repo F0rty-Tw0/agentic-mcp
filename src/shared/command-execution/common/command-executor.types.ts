@@ -4,6 +4,17 @@ export type StreamCollector = Readonly<{ output: () => string; bytes: () => numb
 
 type CommandEnv = Readonly<Record<string, string>>;
 
+type RetryOperation<T> = () => Promise<T> | T;
+
+export type IdleTimeoutHandle = Readonly<{ reset: () => void; clear: () => void }>;
+
+export type RetryWithExponentialBackoffInput<T> = Readonly<{
+  operation: RetryOperation<T>;
+  maxRetries: number;
+  initialDelayMs: number;
+  maxDelayMs: number;
+}>;
+
 export type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
   args: readonly string[];

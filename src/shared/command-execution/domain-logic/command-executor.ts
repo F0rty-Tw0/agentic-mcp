@@ -1,12 +1,11 @@
 import crossSpawn from 'cross-spawn';
 
-import { setupIdleTimeout } from './command-idle-timeout.util';
-import type { IdleTimeoutHandle } from './command-idle-timeout.util';
-import { attachStreamCollector } from './command-stream-collector.util';
-import { createAbortSubscription, setupTimeout } from './command-timeout.util';
 import { createSemaphore } from './semaphore';
-import type { ExecuteCommandOptions, ExecutionResult, StreamCollector } from '../common';
+import type { ExecuteCommandOptions, ExecutionResult, IdleTimeoutHandle, StreamCollector } from '../common';
 import { CommandExecutionError } from '../common/errors';
+import { setupIdleTimeout } from '../utils/command-idle-timeout.util';
+import { attachStreamCollector } from '../utils/command-stream-collector.util';
+import { createAbortSubscription, setupTimeout } from '../utils/command-timeout.util';
 
 type ResolveExecutionResultInput = Readonly<{
   stdout: StreamCollector;

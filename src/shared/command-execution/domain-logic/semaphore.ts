@@ -1,4 +1,4 @@
-export type Semaphore = Readonly<{ acquireSlot: () => Promise<void>; releaseSlot: () => void }>;
+type Semaphore = Readonly<{ acquireSlot: () => Promise<void>; releaseSlot: () => void }>;
 
 export const createSemaphore = (maxConcurrent: number): Semaphore => {
   let activeCount = 0;

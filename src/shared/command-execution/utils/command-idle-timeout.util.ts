@@ -1,6 +1,5 @@
-import { killProcess } from '../utils';
-
-export type IdleTimeoutHandle = Readonly<{ reset: () => void; clear: () => void }>;
+import type { IdleTimeoutHandle } from '../common';
+import { killProcess } from './platform.util';
 
 const NOOP_HANDLE: IdleTimeoutHandle = { reset: () => undefined, clear: () => undefined };
 

@@ -42,7 +42,7 @@ export const attachStreamCollector = (stream: Readable | null, onChunk?: StreamC
       try {
         onChunk(chunk.toString('utf-8'));
       } catch {
-        // callback errors are non-fatal for command lifecycle
+        /* empty */
       }
     }
   });

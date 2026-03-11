@@ -1,16 +1,8 @@
 import { ValidationError } from '../../validation/common';
+import type { RetryWithExponentialBackoffInput } from '../common';
 
 const MIN_ALLOWED_VALUE = 0;
 const BACKOFF_BASE = 2;
-
-type RetryOperation<T> = () => Promise<T> | T;
-
-export type RetryWithExponentialBackoffInput<T> = Readonly<{
-  operation: RetryOperation<T>;
-  maxRetries: number;
-  initialDelayMs: number;
-  maxDelayMs: number;
-}>;
 
 const sleep = async (delayMs: number): Promise<void> => {
   await new Promise<void>((resolve) => {

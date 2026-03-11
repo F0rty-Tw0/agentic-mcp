@@ -1,6 +1,8 @@
 export type {
   ExecuteCommandOptions,
   ExecutionResult,
+  IdleTimeoutHandle,
+  RetryWithExponentialBackoffInput,
   StreamChunkCallback,
   StreamCollector,
 } from './command-executor.types';
