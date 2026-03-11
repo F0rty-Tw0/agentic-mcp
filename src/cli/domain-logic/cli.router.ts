@@ -3,11 +3,10 @@ import process from 'node:process';
 import { printResult } from './cli-output';
 import type { AskToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
-import type { CliSubcommand } from '../common';
+import type { CallCliToolInput, CliSubcommand } from '../common';
 import { parseAskAllArgs, parseAskArgs } from '../utils/cli-arg-parser.util';
 import { renderCliProgress } from '../utils/cli-progress-renderer.util';
 import { callCliTool } from '../utils/in-process-mcp-client.util';
-import type { CallCliToolInput } from '../utils/in-process-mcp-client.util';
 import { parseSubcommand } from '../utils/subcommand.util';
 
 const buildToolArgs = (subcommand: CliSubcommand, remainingArgs: readonly string[]): AskToolArgs | AskAllToolArgs => {

@@ -1,18 +1,10 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { CallToolResult, Progress } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { AskToolArgs } from '../../ask';
-import type { AskAllToolArgs } from '../../ask-all';
 import { createServer } from '../../server';
 import { APP_VERSION, ValidationError } from '../../shared';
-
-export type CallCliToolInput = Readonly<{
-  toolName: string;
-  args: AskToolArgs | AskAllToolArgs;
-  configPath?: string;
-  onProgress?: (progress: Progress) => void;
-}>;
+import type { CallCliToolInput } from '../common';
 
 type ToolSchemaProperties = Readonly<Record<string, unknown>>;
 

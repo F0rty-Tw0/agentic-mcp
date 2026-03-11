@@ -4,8 +4,7 @@ import type { MockInstance } from 'vitest';
 
 import { runCli } from './cli.router';
 import { ASK_STREAM_EVENT_SCHEMA } from '../../streaming/common';
-import type { CliSubcommand } from '../common';
-import type { CallCliToolInput } from '../utils/in-process-mcp-client.util';
+import type { CallCliToolInput, CliSubcommand } from '../common';
 
 const mocks = vi.hoisted(() => ({
   callCliTool: vi.fn<(input: CallCliToolInput) => Promise<CallToolResult>>(),
