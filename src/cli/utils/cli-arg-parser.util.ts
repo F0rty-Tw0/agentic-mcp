@@ -1,3 +1,4 @@
+import { buildAskAllToolArgs, normalizeAskAllArgs, validateAskAllFlags } from './ask-all-arg-parser.util';
 import type { AskToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
 
@@ -35,7 +36,6 @@ const parseValueFlag = (state: ParseState, flag: string, value: string): boolean
   const key = VALUE_FLAGS[flag];
 
   if (!key) return false;
-
   state[key] = value;
 
   return true;
@@ -89,7 +89,6 @@ const tokenizeArgs = (args: readonly string[]): ParseState => {
       i += 2;
       continue;
     }
-
     const skip = parseSpecialFlags(state, arg, nextArg);
 
     if (skip) {
@@ -100,7 +99,6 @@ const tokenizeArgs = (args: readonly string[]): ParseState => {
     if (arg && !arg.startsWith('--') && state.prompt === undefined) {
       state.prompt = arg;
     }
-
     i += 1;
   }
 
@@ -137,7 +135,7 @@ const buildAskToolArgs = (state: ParseState): AskToolArgs => {
     result.files = state.files;
   }
 
-  return result;
+  return result as AskToolArgs;
 };
 
 export const parseAskArgs = (args: readonly string[]): AskToolArgs => {
@@ -148,33 +146,11 @@ export const parseAskArgs = (args: readonly string[]): AskToolArgs => {
 };
 
 export const parseAskAllArgs = (args: readonly string[]): AskAllToolArgs => {
-  const askArgs = parseAskArgs(args);
+  const normalizedArgs = normalizeAskAllArgs(args);
 
-  let providers: readonly string[] | undefined;
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    if (arg === '--providers') {
-      const csv = args[i + 1];
-
-      providers = csv ? csv.split(',') : undefined;
-      i += 1; // skip the value after '--providers'
-    }
-  }
-  const providersArgs = providers ? { providers } : {};
-  const modelArgs = askArgs.model ? { model: askArgs.model } : {};
-  const contextArgs = askArgs.context ? { context: askArgs.context } : {};
-  const workingDirectoryArgs = askArgs.working_directory ? { working_directory: askArgs.working_directory } : {};
-  const systemPromptArgs = askArgs.system_prompt ? { system_prompt: askArgs.system_prompt } : {};
-  const result: AskAllToolArgs = {
-    prompt: askArgs.prompt ?? '',
-    ...providersArgs,
-    ...modelArgs,
-    ...contextArgs,
-    ...workingDirectoryArgs,
-    ...systemPromptArgs,
-  };
+  validateAskAllFlags(normalizedArgs);
+  const askArgs = parseAskArgs(normalizedArgs);
+  const result = buildAskAllToolArgs({ askArgs, normalizedArgs });
 
   return result;
 };

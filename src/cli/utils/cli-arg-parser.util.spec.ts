@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseAskAllArgs, parseAskArgs } from './cli-arg-parser.util';
+import { ValidationError } from '../../shared';
 
 describe('parseAskArgs', () => {
   it('GIVEN single positional arg WHEN parsed THEN returns prompt', () => {
@@ -105,6 +106,24 @@ describe('parseAskAllArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt', providers: ['claude', 'codex'] });
   });
 
+  it('GIVEN prompt and spaced --providers values WHEN parsed THEN returns all provider names', () => {
+    const result = parseAskAllArgs(['prompt', '--providers', 'claude', 'codex']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', providers: ['claude', 'codex'] });
+  });
+
+  it('GIVEN prompt and quoted space-separated --providers value WHEN parsed THEN returns all provider names', () => {
+    const result = parseAskAllArgs(['prompt', '--providers', 'claude gemini']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', providers: ['claude', 'gemini'] });
+  });
+
+  it('GIVEN prompt and --provider alias WHEN parsed THEN returns providers array', () => {
+    const result = parseAskAllArgs(['prompt', '--provider', 'claude', 'codex']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', providers: ['claude', 'codex'] });
+  });
+
   it('GIVEN prompt without --providers WHEN parsed THEN returns prompt with no providers field', () => {
     const result = parseAskAllArgs(['prompt']);
 
@@ -116,6 +135,40 @@ describe('parseAskAllArgs', () => {
     const result = parseAskAllArgs(['prompt', '--model', 'gpt-4']);
 
     expect(result).toStrictEqual({ prompt: 'prompt', model: 'gpt-4' });
+  });
+
+  it('GIVEN --models alias WHEN parsed THEN returns a model value', () => {
+    const result = parseAskAllArgs(['prompt', '--models', 'claude-sonnet-4']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', model: 'claude-sonnet-4' });
+  });
+
+  it('GIVEN quoted multi-word shared model WHEN parsed THEN it preserves spaces in the shared model', () => {
+    const result = parseAskAllArgs(['prompt', '--model', 'claude sonnet 4']);
+
+    expect(result).toStrictEqual({ prompt: 'prompt', model: 'claude sonnet 4' });
+  });
+
+  it('GIVEN multiple unquoted model values WHEN parsed THEN it throws ValidationError', () => {
+    const run = (): void => {
+      parseAskAllArgs(['prompt', '--model', 'gemini', 'codex']);
+    };
+
+    expect(run).toThrow(ValidationError);
+    expect(run).toThrow(
+      'ask_all accepts exactly one shared --model value. Use --providers for provider selection or quote the model name.'
+    );
+  });
+
+  it('GIVEN unknown ask_all flag WHEN parsed THEN throws ValidationError', () => {
+    const run = (): void => {
+      parseAskAllArgs(['prompt', '--unknown', 'gemini']);
+    };
+
+    expect(run).toThrow(ValidationError);
+    expect(run).toThrow(
+      'Unknown flag "--unknown" for ask_all. Use --providers or --model for supported ask_all options.'
+    );
   });
 
   it('GIVEN --context flag WHEN parsed THEN passes through context', () => {
