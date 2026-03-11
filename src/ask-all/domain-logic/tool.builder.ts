@@ -13,8 +13,15 @@ export const buildAskAllToolDefinition = (providerNames: readonly string[]): Too
     providers: z
       .array(z.string())
       .optional()
-      .describe(`Filter to specific providers. Available: ${providerList}. If omitted, all providers are queried.`),
-    model: z.string().optional().describe('Model to use for this request on each provider that supports it'),
+      .describe(
+        `Explicit provider selection. Available: ${providerList}. CLI aliases --provider/--providers both map here, and multi-values may be comma-separated or space-separated.`
+      ),
+    model: z
+      .string()
+      .optional()
+      .describe(
+        'Single shared model to use on each selected provider. CLI aliases --model/--models both map here. Use --providers for provider selection. If a selected provider rejects the shared model as unavailable or unsupported, ask_all returns that provider error instead of falling back to a different model.'
+      ),
     context: z.string().optional().describe('Optional user-supplied context to prepend before the current prompt'),
     working_directory: z
       .string()

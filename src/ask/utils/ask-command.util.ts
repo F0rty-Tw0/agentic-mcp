@@ -45,7 +45,7 @@ const resolveFilesArg = (files?: readonly string[], workingDir?: string): string
   return validateFiles(files, workingDir);
 };
 
-const resolveAskTimeoutMs = (providerTimeoutMs: number): number => {
+export const resolveAskTimeoutMs = (providerTimeoutMs: number): number => {
   const resolvedTimeoutMs = providerTimeoutMs || DEFAULT_MCP_TOOL_TIMEOUT_MS;
 
   return resolvedTimeoutMs;

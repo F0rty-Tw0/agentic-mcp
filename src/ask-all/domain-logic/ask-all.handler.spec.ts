@@ -1,17 +1,18 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAskAll } from './ask-all.handler';
+import { EXPLICIT_SHARED_MODEL, resolveExplicitModelResult } from './ask-all.handler.spec.helper';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
 import type { McpTextContent, ResolvedProviderEntry } from '../../shared';
 import type { AskAllResult, AskAllToolArgs } from '../common';
 
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
 
-const makeProvider = (name: string): ResolvedProviderEntry => ({
+const makeProvider = (name: string, config: Partial<ResolvedProviderEntry['config']> = {}): ResolvedProviderEntry => ({
   name,
   binaryPath: `/usr/bin/${name}`,
-  config: {} as ResolvedProviderEntry['config'],
+  config: config as ResolvedProviderEntry['config'],
 });
 
 const makeSuccessResult = (text: string): CallToolResult => ({
@@ -31,6 +32,10 @@ describe('handleAskAll', () => {
   let claude: ResolvedProviderEntry;
   let codex: ResolvedProviderEntry;
   let gemini: ResolvedProviderEntry;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,7 +63,7 @@ describe('handleAskAll', () => {
       await handleAskAll([claude, codex], args);
 
       expect(handleAsk).toHaveBeenCalledTimes(1);
-      expect(handleAsk).toHaveBeenCalledWith(claude, expect.anything());
+      expect(handleAsk).toHaveBeenCalledWith(claude, expect.anything(), expect.anything());
     });
 
     it('GIVEN providers filter with unknown name WHEN called THEN skips unknown providers', async () => {
@@ -69,6 +74,70 @@ describe('handleAskAll', () => {
       await handleAskAll([claude, codex], args);
 
       expect(handleAsk).toHaveBeenCalledTimes(1);
+    });
+
+    it('GIVEN provider-like text in the model field WHEN called THEN it keeps the shared model', async () => {
+      vi.mocked(handleAsk).mockResolvedValue(makeSuccessResult('ok'));
+
+      const args: AskAllToolArgs = { prompt: 'hello', model: 'gemini,codex' };
+
+      await handleAskAll([claude, codex, gemini], args);
+
+      expect(handleAsk).toHaveBeenCalledTimes(3);
+      expect(handleAsk).toHaveBeenCalledWith(
+        claude,
+        expect.objectContaining({ model: 'gemini,codex' }),
+        expect.anything()
+      );
+      expect(handleAsk).toHaveBeenCalledWith(
+        codex,
+        expect.objectContaining({ model: 'gemini,codex' }),
+        expect.anything()
+      );
+      expect(handleAsk).toHaveBeenCalledWith(
+        gemini,
+        expect.objectContaining({ model: 'gemini,codex' }),
+        expect.anything()
+      );
+    });
+
+    it('GIVEN whitespace-separated shared model text that is not provider names WHEN called THEN it keeps the shared model', async () => {
+      vi.mocked(handleAsk).mockResolvedValue(makeSuccessResult('ok'));
+
+      const args: AskAllToolArgs = { prompt: 'hello', model: 'claude sonnet 4' };
+
+      await handleAskAll([claude], args);
+
+      expect(handleAsk).toHaveBeenCalledWith(
+        claude,
+        expect.objectContaining({ model: 'claude sonnet 4' }),
+        expect.anything()
+      );
+    });
+
+    it('GIVEN explicit providers and provider-like model text WHEN called THEN providers stay explicit and model stays shared', async () => {
+      vi.mocked(handleAsk).mockResolvedValue(makeSuccessResult('ok'));
+
+      const args: AskAllToolArgs = {
+        prompt: 'hello',
+        providers: ['claude', 'codex'],
+        model: 'gemini,codex',
+      };
+
+      await handleAskAll([claude, codex, gemini], args);
+
+      expect(handleAsk).toHaveBeenCalledTimes(2);
+      expect(handleAsk).toHaveBeenCalledWith(
+        claude,
+        expect.objectContaining({ model: 'gemini,codex' }),
+        expect.anything()
+      );
+      expect(handleAsk).toHaveBeenCalledWith(
+        codex,
+        expect.objectContaining({ model: 'gemini,codex' }),
+        expect.anything()
+      );
+      expect(handleAsk).not.toHaveBeenCalledWith(gemini, expect.anything(), expect.anything());
     });
 
     it('GIVEN providers filter that matches nothing WHEN called THEN returns isError result', async () => {
@@ -147,6 +216,31 @@ describe('handleAskAll', () => {
       expect(parsed.results[1]?.error).toBe('network error');
     });
 
+    it('GIVEN a provider hangs WHEN called THEN it uses that provider ask timeout', async () => {
+      vi.useFakeTimers();
+
+      const slowGemini = makeProvider('gemini', { timeout: 30_000 });
+
+      vi.mocked(handleAsk).mockImplementation(async (provider) => {
+        if (provider.name === 'codex') return makeSuccessResult('ok');
+
+        if (provider.name === 'gemini') return new Promise<CallToolResult>(() => {});
+
+        throw new Error(`Unexpected call for ${provider.name}`);
+      });
+
+      const resultPromise = handleAskAll([codex, slowGemini], { prompt: 'hello' });
+
+      await vi.advanceTimersByTimeAsync(30_000);
+
+      const result = await resultPromise;
+      const parsed = parseResult(result);
+
+      expect(parsed.succeeded).toBe(1);
+      expect(parsed.failed).toBe(1);
+      expect(parsed.results[1]?.error).toContain('timed out after 30000ms');
+    });
+
     it('GIVEN providers succeed WHEN called THEN results contain response text', async () => {
       vi.mocked(handleAsk).mockResolvedValue(makeSuccessResult('the answer'));
 
@@ -210,7 +304,37 @@ describe('handleAskAll', () => {
 
       await handleAskAll([claude], args);
 
-      expect(handleAsk).toHaveBeenCalledWith(claude, expect.objectContaining({ model: 'gpt-4' }));
+      expect(handleAsk).toHaveBeenCalledWith(claude, expect.objectContaining({ model: 'gpt-4' }), expect.anything());
+    });
+
+    it('GIVEN explicit shared model fails for one provider WHEN called THEN it returns the provider model error without retrying', async () => {
+      vi.mocked(handleAsk).mockImplementation(async (provider, askArgs) => {
+        const result = await Promise.resolve(resolveExplicitModelResult(provider.name, askArgs.model));
+
+        return result;
+      });
+      const args: AskAllToolArgs = {
+        prompt: 'hello',
+        providers: ['codex', 'gemini'],
+        model: EXPLICIT_SHARED_MODEL,
+      };
+      const result = await handleAskAll([claude, codex, gemini], args);
+      const parsed = parseResult(result);
+
+      expect(parsed.succeeded).toBe(1);
+      expect(parsed.failed).toBe(1);
+      expect(handleAsk).toHaveBeenCalledTimes(2);
+      expect(handleAsk).toHaveBeenCalledWith(
+        gemini,
+        expect.objectContaining({ model: EXPLICIT_SHARED_MODEL }),
+        expect.anything()
+      );
+      expect(handleAsk).not.toHaveBeenCalledWith(
+        gemini,
+        expect.not.objectContaining({ model: EXPLICIT_SHARED_MODEL }),
+        expect.anything()
+      );
+      expect(parsed.results[1]?.error).toContain('ModelNotFoundError');
     });
 
     it('GIVEN context arg WHEN called THEN forwards context to handleAsk', async () => {
@@ -220,7 +344,11 @@ describe('handleAskAll', () => {
 
       await handleAskAll([claude], args);
 
-      expect(handleAsk).toHaveBeenCalledWith(claude, expect.objectContaining({ context: 'some context' }));
+      expect(handleAsk).toHaveBeenCalledWith(
+        claude,
+        expect.objectContaining({ context: 'some context' }),
+        expect.anything()
+      );
     });
 
     it('GIVEN working_directory arg WHEN called THEN forwards working_directory to handleAsk', async () => {
@@ -230,7 +358,11 @@ describe('handleAskAll', () => {
 
       await handleAskAll([claude], args);
 
-      expect(handleAsk).toHaveBeenCalledWith(claude, expect.objectContaining({ working_directory: '/some/dir' }));
+      expect(handleAsk).toHaveBeenCalledWith(
+        claude,
+        expect.objectContaining({ working_directory: '/some/dir' }),
+        expect.anything()
+      );
     });
 
     it('GIVEN system_prompt arg WHEN called THEN forwards system_prompt to handleAsk', async () => {
@@ -240,7 +372,11 @@ describe('handleAskAll', () => {
 
       await handleAskAll([claude], args);
 
-      expect(handleAsk).toHaveBeenCalledWith(claude, expect.objectContaining({ system_prompt: 'be concise' }));
+      expect(handleAsk).toHaveBeenCalledWith(
+        claude,
+        expect.objectContaining({ system_prompt: 'be concise' }),
+        expect.anything()
+      );
     });
 
     it('GIVEN three providers WHEN called THEN runs all in parallel via allSettled', async () => {
