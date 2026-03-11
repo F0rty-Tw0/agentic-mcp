@@ -45,6 +45,32 @@ const extractTopLevelResultText = (value: unknown): string | undefined => {
   return typeof value.result === 'string' ? value.result : undefined;
 };
 
+const extractTopLevelResponseText = (value: unknown): string | undefined => {
+  if (!isJsonRecord(value)) return;
+
+  return typeof value.response === 'string' ? value.response : undefined;
+};
+
+const extractTopLevelTextEventText = (value: unknown): string | undefined => {
+  if (!isJsonRecord(value)) return;
+
+  if (value.type !== 'text') return;
+
+  const part = value.part;
+
+  if (isJsonRecord(part) && typeof part.text === 'string') {
+    return part.text;
+  }
+
+  return typeof value.text === 'string' ? value.text : undefined;
+};
+
+const extractParsedText = (value: unknown): string | undefined =>
+  extractTopLevelResultText(value) ??
+  extractTopLevelResponseText(value) ??
+  extractAgentMessageText(value) ??
+  extractTopLevelTextEventText(value);
+
 const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefined => {
   const lines = stdout
     .split(/\r?\n/)
@@ -57,8 +83,7 @@ const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefi
 
   if (!parsedLines.length) return;
 
-  const agentMessages = parsedLines.map((parsedLine) => extractAgentMessageText(parsedLine)).filter(isDefined);
-  const latestMessage = agentMessages.at(-1);
+  const latestMessage = extractLatestParsedText(parsedLines);
 
   if (latestMessage != null) {
     const parsedProviderOutput: ParsedProviderOutput = {
@@ -86,9 +111,9 @@ const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefi
 const parseJson = (stdout: string): ParsedProviderOutput => {
   try {
     const parsed: unknown = JSON.parse(stdout);
-    const topLevelResultText = extractTopLevelResultText(parsed);
+    const extractedText = extractParsedText(parsed);
     const parsedText = typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
-    const text = topLevelResultText ?? parsedText;
+    const text = extractedText ?? parsedText;
     const parsedProviderOutput: ParsedProviderOutput = {
       text,
       metadata: {
@@ -109,11 +134,10 @@ const parseJson = (stdout: string): ParsedProviderOutput => {
   }
 };
 
-const extractNdjsonResultText = (parsedLines: readonly unknown[]): string | undefined => {
-  const resultTexts = parsedLines.map((parsedLine) => extractTopLevelResultText(parsedLine)).filter(isDefined);
-  const latestResult = resultTexts.at(-1);
+const extractLatestParsedText = (parsedLines: readonly unknown[]): string | undefined => {
+  const parsedTexts = parsedLines.map((parsedLine) => extractParsedText(parsedLine)).filter(isDefined);
 
-  return latestResult;
+  return parsedTexts.at(-1);
 };
 
 const parseNdjson = (stdout: string): ParsedProviderOutput => {
@@ -140,7 +164,7 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
     }
   }
 
-  const parsedText = extractNdjsonResultText(parsedLines) ?? JSON.stringify(parsedLines, null, 2);
+  const parsedText = extractLatestParsedText(parsedLines) ?? JSON.stringify(parsedLines, null, 2);
   const parsedProviderOutput: ParsedProviderOutput = {
     text: parsedText,
     metadata: {

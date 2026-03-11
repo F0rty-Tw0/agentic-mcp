@@ -98,6 +98,66 @@ describe('parseProviderOutput', () => {
     });
   });
 
+  it('GIVEN gemini json response envelope WHEN parsing THEN extracts top-level response text', () => {
+    const output = JSON.stringify({
+      session_id: 'gemini-session-123',
+      response: 'hi',
+      stats: {
+        models: {
+          'gemini-2.5-flash-lite': {
+            api: { totalRequests: 1 },
+          },
+        },
+      },
+    });
+
+    const result = parseProviderOutput(output, 'json');
+
+    expect(result.metadata?.outputFormatObserved).toBe('json');
+    expect(result.text).toBe('hi');
+    expect(result.metadata?.parsed).toStrictEqual({
+      session_id: 'gemini-session-123',
+      response: 'hi',
+      stats: {
+        models: {
+          'gemini-2.5-flash-lite': {
+            api: { totalRequests: 1 },
+          },
+        },
+      },
+    });
+  });
+
+  it('GIVEN opencode json event stream WHEN parsing THEN extracts latest text event text', () => {
+    const output = [
+      JSON.stringify({ type: 'step_start', sessionID: 'ses_123' }),
+      JSON.stringify({
+        type: 'text',
+        part: {
+          type: 'text',
+          text: 'alpha\nbeta\ngamma',
+        },
+      }),
+      JSON.stringify({ type: 'step_finish', sessionID: 'ses_123', reason: 'stop' }),
+    ].join('\n');
+
+    const result = parseProviderOutput(output, 'json');
+
+    expect(result.metadata?.outputFormatObserved).toBe('json');
+    expect(result.text).toBe('alpha\nbeta\ngamma');
+    expect(result.metadata?.parsed).toStrictEqual([
+      { type: 'step_start', sessionID: 'ses_123' },
+      {
+        type: 'text',
+        part: {
+          type: 'text',
+          text: 'alpha\nbeta\ngamma',
+        },
+      },
+      { type: 'step_finish', sessionID: 'ses_123', reason: 'stop' },
+    ]);
+  });
+
   it('GIVEN json output with mixed json events and ansi WHEN parsing THEN strips ansi and keeps structured content', () => {
     const output = '\u001b[32m{"type":"item.completed","item":{"type":"reasoning","text":"done"}}\u001b[39m';
 
