@@ -19,6 +19,7 @@ export type ProviderQueueOptions = Readonly<{
   providerName: string;
   maxConcurrency: number;
   queueTimeoutMs: number;
+  signal?: AbortSignal;
 }>;
 
 export type ExecuteCommandOptions = Readonly<{

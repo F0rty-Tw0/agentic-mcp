@@ -4,7 +4,7 @@ import crossSpawn from 'cross-spawn';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
-import { QueueTimeoutError } from '../common/errors';
+import { CommandExecutionError, QueueTimeoutError } from '../common/errors';
 import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
 import { createControllableChild } from '../common/test-utils';
 
@@ -60,5 +60,43 @@ describe('executeCommand provider queue', () => {
 
     first.emitClose(0, null);
     await firstPromise;
+  });
+  it('GIVEN a queued provider request WHEN its signal aborts before spawn THEN it rejects without starting the provider CLI', async () => {
+    const first = createControllableChild();
+    const second = createControllableChild();
+    const controller = new AbortController();
+
+    vi.mocked(crossSpawn)
+      .mockReturnValueOnce(first.child as unknown as CrossSpawnResult)
+      .mockReturnValueOnce(second.child as unknown as CrossSpawnResult);
+
+    const firstPromise = executeCommand({
+      ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
+      providerQueue: queueConfig,
+      bypassSemaphore: false,
+    });
+
+    await Promise.resolve();
+
+    const secondPromise = executeCommand({
+      ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
+      providerQueue: queueConfig,
+      bypassSemaphore: false,
+      signal: controller.signal,
+    });
+    const caughtSecondPromise = secondPromise.catch((value: unknown) => value);
+
+    controller.abort();
+    await Promise.resolve();
+
+    first.emitClose(0, null);
+    second.emitClose(0, null);
+
+    await firstPromise;
+
+    const error = await caughtSecondPromise;
+
+    expect(error).toBeInstanceOf(CommandExecutionError);
+    expect(crossSpawn).toHaveBeenCalledTimes(1);
   });
 });

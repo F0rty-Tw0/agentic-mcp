@@ -54,12 +54,17 @@ const wrapChunkCallback = (
 const resolveProviderQueueOptions = (options: ExecuteCommandOptions): ProviderQueueOptions => {
   const providerQueue = options.providerQueue;
 
-  if (providerQueue) return providerQueue;
+  if (providerQueue) {
+    const providerQueueOptions: ProviderQueueOptions = { ...providerQueue, signal: options.signal };
+
+    return providerQueueOptions;
+  }
 
   const fallbackProviderQueueOptions: ProviderQueueOptions = {
     providerName: options.binaryPath,
     maxConcurrency: GLOBAL_MAX_CONCURRENT_SPAWNS,
     queueTimeoutMs: DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS,
+    signal: options.signal,
   };
 
   return fallbackProviderQueueOptions;
