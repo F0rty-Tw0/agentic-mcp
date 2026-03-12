@@ -1,11 +1,11 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { buildReviewArgArray } from '../../cli-args';
-import type { ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
-import { executeCommand } from '../../shared';
+import type { ExecuteCommandOptions, ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
+import { executeCommand, registerActiveRequest, unregisterActiveRequest } from '../../shared';
 import { createStreamNotifier } from '../../streaming';
-import type { AskStreamExecutionSummary } from '../../streaming';
-import type { AskToolArgs, ReviewToolArgs } from '../common';
+import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
+import type { AskToolArgs, BuiltArgs, ReviewToolArgs } from '../common';
 import { buildCommandFailure, buildExecutionEnv } from './ask-command';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { buildCommandOptions } from '../utils/ask-command.util';
@@ -31,15 +31,56 @@ const buildResponseArgs = (args: ReviewToolArgs): AskToolArgs => {
   return responseArgs;
 };
 
-const handleFailedReview = async (
-  context: ResolvedProviderEntry,
-  args: AskToolArgs,
-  env: Readonly<Record<string, string>>,
-  result: ExecutionResult
-): Promise<CallToolResult> => {
-  const error = await buildCommandFailure(context, args, env, result);
+const resolveRequestId = (extra?: ProgressContext): string | undefined =>
+  extra?.requestId ? String(extra.requestId) : undefined;
 
-  return error.toMcpResponse();
+type BuildReviewCommandOptionsInput = Readonly<{
+  context: ResolvedProviderEntry;
+  responseArgs: AskToolArgs;
+  builtArgs: BuiltArgs;
+  env: Readonly<Record<string, string>>;
+  extra?: ProgressContext;
+  streamNotifier: StreamNotifier;
+  requestId?: string;
+}>;
+
+type HandleReviewFailureInput = Readonly<{
+  context: ResolvedProviderEntry;
+  responseArgs: AskToolArgs;
+  env: Readonly<Record<string, string>>;
+  result: ExecutionResult;
+  summary: AskStreamExecutionSummary;
+  streamNotifier: StreamNotifier;
+}>;
+
+const buildReviewCommandOptions = (input: BuildReviewCommandOptionsInput): ExecuteCommandOptions => {
+  const { context, responseArgs, builtArgs, env, extra, streamNotifier, requestId } = input;
+  const onSpawned = requestId ? (pid: number): void => registerActiveRequest(requestId, pid) : undefined;
+  const commandOptions = buildCommandOptions({
+    context,
+    resolved: responseArgs,
+    cliArgs: builtArgs.args,
+    stdinInput: builtArgs.stdinInput,
+    env,
+    onStdoutChunk: streamNotifier.onStdoutChunk,
+    onStderrChunk: streamNotifier.onStderrChunk,
+    signal: extra?.signal,
+    onSpawned,
+  });
+
+  return commandOptions;
+};
+
+const buildFailedReviewResponse = async (input: HandleReviewFailureInput): Promise<CallToolResult> => {
+  const { context, responseArgs, env, result, summary, streamNotifier } = input;
+  const error = await buildCommandFailure(context, responseArgs, env, result);
+  const failedReview = error.toMcpResponse();
+  const [firstContent] = failedReview.content;
+  const errorText = firstContent?.type === 'text' ? firstContent.text : 'Review failed';
+
+  streamNotifier.emitError(errorText, summary);
+
+  return failedReview;
 };
 
 export const handleReview = async (
@@ -50,16 +91,16 @@ export const handleReview = async (
   const env = buildExecutionEnv(context);
   const builtArgs = buildReviewArgArray(context.config, args);
   const responseArgs = buildResponseArgs(args);
+  const requestId = resolveRequestId(extra);
   const streamNotifier = createStreamNotifier({ providerName: context.name, args: responseArgs, extra });
-  const commandOptions = buildCommandOptions({
+  const commandOptions = buildReviewCommandOptions({
     context,
-    resolved: responseArgs,
-    cliArgs: builtArgs.args,
-    stdinInput: builtArgs.stdinInput,
+    responseArgs,
+    builtArgs,
     env,
-    onStdoutChunk: streamNotifier.onStdoutChunk,
-    onStderrChunk: streamNotifier.onStderrChunk,
-    signal: extra?.signal,
+    extra,
+    streamNotifier,
+    requestId,
   });
 
   streamNotifier.emitStart();
@@ -69,7 +110,7 @@ export const handleReview = async (
     const summary = buildExecutionSummary(result);
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
-      return await handleFailedReview(context, responseArgs, env, result);
+      return await buildFailedReviewResponse({ context, responseArgs, env, result, summary, streamNotifier });
     }
 
     return await buildSuccessfulResponse({
@@ -87,6 +128,8 @@ export const handleReview = async (
       sessionMode: 'none',
     });
   } finally {
+    if (requestId) unregisterActiveRequest(requestId);
+
     streamNotifier.stop();
   }
 };
