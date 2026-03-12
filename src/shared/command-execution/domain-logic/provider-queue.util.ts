@@ -1,5 +1,5 @@
 import type { ProviderQueueOptions } from '../common';
-import { QueueTimeoutError } from '../common/errors';
+import { CommandExecutionError, QueueTimeoutError } from '../common/errors';
 
 export type QueuedRequest = Readonly<{
   enqueuedAtMs: number;
@@ -72,6 +72,41 @@ export const buildLease = (release: () => void): ProviderQueueLease => {
   };
 
   return lease;
+};
+
+export type RejectQueuedRequestInput = Readonly<{
+  state: ProviderQueueState;
+  providerStates: Map<string, ProviderQueueState>;
+  options: ProviderQueueOptions;
+  queuedRequest: QueuedRequest;
+  signal: AbortSignal | undefined;
+  onAbort: () => void;
+  reject: (reason?: unknown) => void;
+  error: Error;
+}>;
+
+export const buildQueueAbortError = (): CommandExecutionError => {
+  const error = new CommandExecutionError('Command cancelled while waiting for provider queue slot', {});
+
+  return error;
+};
+
+export const removeAbortListener = (signal: AbortSignal | undefined, onAbort: (() => void) | undefined): void => {
+  if (!signal || !onAbort) return;
+
+  signal.removeEventListener('abort', onAbort);
+};
+
+export const rejectQueuedRequest = (input: RejectQueuedRequestInput): void => {
+  const { state, providerStates, options, queuedRequest, signal, onAbort, reject, error } = input;
+  const removed = removeQueuedRequest(state.waitQueue, queuedRequest);
+
+  if (!removed) return;
+
+  clearTimeout(queuedRequest.timer);
+  removeAbortListener(signal, onAbort);
+  cleanupProviderQueueState(providerStates, options.providerName);
+  reject(error);
 };
 
 export const buildQueueTimeoutError = (options: ProviderQueueOptions, enqueuedAtMs: number): QueueTimeoutError => {

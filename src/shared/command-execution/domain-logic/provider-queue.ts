@@ -1,14 +1,16 @@
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import type { ProviderQueueOptions } from '../common';
+import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from './provider-queue.util';
 import {
   buildLease,
+  buildQueueAbortError,
   buildQueueTimeoutError,
   cleanupProviderQueueState,
   getOrCreateProviderQueueState,
-  removeQueuedRequest,
+  rejectQueuedRequest,
+  removeAbortListener,
   startQueuedRequest,
 } from './provider-queue.util';
-import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from './provider-queue.util';
 
 export type ProviderQueueStore = Readonly<{
   acquireSlot: (options: ProviderQueueOptions) => Promise<ProviderQueueLease>;
@@ -58,22 +60,52 @@ const waitForQueuedSlot = async (
   options: ProviderQueueOptions
 ): Promise<void> => {
   const enqueuedAtMs = Date.now();
+  const signal = options.signal;
+
+  if (signal?.aborted) throw buildQueueAbortError();
 
   await new Promise<void>((resolve, reject) => {
+    const queuedRequestRef: { current?: QueuedRequest } = {};
+    const onAbort = (): void => {
+      const queuedRequest = queuedRequestRef.current;
+
+      if (!queuedRequest) return;
+
+      rejectQueuedRequest({
+        state,
+        providerStates,
+        options,
+        queuedRequest,
+        signal,
+        onAbort,
+        reject,
+        error: buildQueueAbortError(),
+      });
+    };
+
     const queuedRequest: QueuedRequest = {
       enqueuedAtMs,
       timer: setTimeout(() => {
-        const removed = removeQueuedRequest(state.waitQueue, queuedRequest);
-
-        if (!removed) return;
-
-        cleanupProviderQueueState(providerStates, options.providerName);
-        reject(buildQueueTimeoutError(options, queuedRequest.enqueuedAtMs));
+        rejectQueuedRequest({
+          state,
+          providerStates,
+          options,
+          queuedRequest,
+          signal,
+          onAbort,
+          reject,
+          error: buildQueueTimeoutError(options, queuedRequest.enqueuedAtMs),
+        });
       }, options.queueTimeoutMs),
-      resolve,
+      resolve: (): void => {
+        removeAbortListener(signal, onAbort);
+        resolve();
+      },
     };
 
+    queuedRequestRef.current = queuedRequest;
     state.waitQueue.push(queuedRequest);
+    signal?.addEventListener('abort', onAbort, { once: true });
   });
 };
 
