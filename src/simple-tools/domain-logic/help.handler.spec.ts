@@ -84,7 +84,11 @@ describe('handleHelp', () => {
         args: ['--help'],
         env: TEST_MINIMAL_ENV_STUB,
         timeoutMs: 30_000,
-        bypassSemaphore: true,
+        providerQueue: {
+          providerName: 'test',
+          maxConcurrency: 1,
+          queueTimeoutMs: 30_000,
+        },
       });
     });
 

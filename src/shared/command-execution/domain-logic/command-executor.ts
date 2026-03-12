@@ -1,7 +1,14 @@
 import crossSpawn from 'cross-spawn';
 
-import { createSemaphore } from './semaphore';
-import type { ExecuteCommandOptions, ExecutionResult, IdleTimeoutHandle, StreamCollector } from '../common';
+import { defaultProviderQueueStore } from './provider-queue';
+import type {
+  ExecuteCommandOptions,
+  ExecutionResult,
+  IdleTimeoutHandle,
+  ProviderQueueOptions,
+  StreamCollector,
+} from '../common';
+import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import { CommandExecutionError } from '../common/errors';
 import { setupIdleTimeout } from '../utils/command-idle-timeout.util';
 import { attachStreamCollector } from '../utils/command-stream-collector.util';
@@ -16,8 +23,7 @@ type ResolveExecutionResultInput = Readonly<{
   startTime: number;
 }>;
 
-const MAX_CONCURRENT_SPAWNS = 5;
-const defaultSemaphore = createSemaphore(MAX_CONCURRENT_SPAWNS);
+type QueueLease = Readonly<{ release: () => void }> | undefined;
 
 const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionResult => {
   const { stdout, stderr, exitCode, closeSignal, timedOut, startTime } = input;
@@ -43,6 +49,27 @@ const wrapChunkCallback = (
     idleTimeout.reset();
     callback?.(chunk);
   };
+};
+
+const resolveProviderQueueOptions = (options: ExecuteCommandOptions): ProviderQueueOptions => {
+  const providerQueue = options.providerQueue;
+
+  if (providerQueue) return providerQueue;
+
+  const fallbackProviderQueueOptions: ProviderQueueOptions = {
+    providerName: options.binaryPath,
+    maxConcurrency: GLOBAL_MAX_CONCURRENT_SPAWNS,
+    queueTimeoutMs: DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS,
+  };
+
+  return fallbackProviderQueueOptions;
+};
+
+const acquireQueueLease = async (options: ExecuteCommandOptions): Promise<QueueLease> => {
+  const providerQueueOptions = resolveProviderQueueOptions(options);
+  const lease = await defaultProviderQueueStore.acquireSlot(providerQueueOptions);
+
+  return lease;
 };
 
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
@@ -107,11 +134,11 @@ export const executeCommand = async (options: ExecuteCommandOptions): Promise<Ex
 
   if (options.bypassSemaphore) return spawnChild(options, startTime);
 
-  await defaultSemaphore.acquireSlot();
+  const queueLease = await acquireQueueLease(options);
 
   try {
     return await spawnChild(options, startTime);
   } finally {
-    defaultSemaphore.releaseSlot();
+    queueLease?.release();
   }
 };

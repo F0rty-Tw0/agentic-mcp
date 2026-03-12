@@ -9,6 +9,12 @@ export type CommandExecutionErrorDetails = Readonly<{
   output?: string;
 }>;
 
+export type QueueTimeoutErrorDetails = Readonly<{
+  providerName: string;
+  waitMs: number;
+  queueTimeoutMs: number;
+}>;
+
 const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
   const detailBytes = Buffer.byteLength(text, 'utf8');
 
@@ -17,6 +23,10 @@ const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
   const cappedDetail = Buffer.from(text, 'utf8').subarray(0, MAX_ERROR_STDERR_BYTES).toString('utf8');
 
   return `${cappedDetail}\n[${channel} truncated]`;
+};
+
+const buildQueueTimeoutMessage = (details: QueueTimeoutErrorDetails): string => {
+  return `Queue timeout for provider "${details.providerName}": waited ${details.waitMs}ms (limit: ${details.queueTimeoutMs}ms).`;
 };
 
 export class CommandExecutionError extends Error {
@@ -58,6 +68,29 @@ export class CommandExecutionError extends Error {
     const mcpErrorResponse: McpErrorResponse = {
       isError: true,
       content: [{ type: 'text', text: parts.join(' ') }],
+    };
+
+    return mcpErrorResponse;
+  }
+}
+
+export class QueueTimeoutError extends CommandExecutionError {
+  public readonly providerName: string;
+  public readonly waitMs: number;
+  public readonly queueTimeoutMs: number;
+
+  public constructor(details: QueueTimeoutErrorDetails, options?: ErrorOptions) {
+    super(buildQueueTimeoutMessage(details), {}, options);
+    this.name = QueueTimeoutError.name;
+    this.providerName = details.providerName;
+    this.waitMs = details.waitMs;
+    this.queueTimeoutMs = details.queueTimeoutMs;
+  }
+
+  public override toMcpResponse(): McpErrorResponse {
+    const mcpErrorResponse: McpErrorResponse = {
+      isError: true,
+      content: [{ type: 'text', text: this.message }],
     };
 
     return mcpErrorResponse;

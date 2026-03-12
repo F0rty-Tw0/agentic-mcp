@@ -1,3 +1,4 @@
+import { buildProviderQueueOptions } from './provider-queue-options.util';
 import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution';
 import type { ResolvedProviderEntry } from '../common';
 
@@ -177,12 +178,13 @@ export const fetchAvailableModels = async (
     const modelArgs = models.args ?? [];
     const trailingArgs = models.trailingArgs ?? [];
     const args = [...modelArgs, ...trailingArgs];
+    const providerQueue = buildProviderQueueOptions(context);
     const options: ExecuteCommandOptions = {
       binaryPath: context.binaryPath,
       args,
       env,
       timeoutMs: MODELS_COMMAND_TIMEOUT_MS,
-      bypassSemaphore: true,
+      providerQueue,
     };
 
     const result = await executeCommandFn(options);

@@ -1,7 +1,14 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import type { ResolvedProviderEntry } from '../../shared';
-import { buildMinimalEnv, executeCommand, resolveProviderEnv, stripAnsi, toMcpError } from '../../shared';
+import {
+  buildMinimalEnv,
+  buildProviderQueueOptions,
+  executeCommand,
+  resolveProviderEnv,
+  stripAnsi,
+  toMcpError,
+} from '../../shared';
 
 const HELP_TIMEOUT_MS = 30_000;
 
@@ -9,12 +16,13 @@ export const handleHelp = async (context: ResolvedProviderEntry): Promise<CallTo
   try {
     const providerEnv = resolveProviderEnv(context);
     const env = buildMinimalEnv(providerEnv);
+    const providerQueue = buildProviderQueueOptions(context);
     const result = await executeCommand({
       binaryPath: context.binaryPath,
       args: ['--help'],
       env,
       timeoutMs: HELP_TIMEOUT_MS,
-      bypassSemaphore: true,
+      providerQueue,
     });
 
     if (result.timedOut) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CommandExecutionError } from './command-execution.error';
+import { CommandExecutionError, QueueTimeoutError } from './command-execution.error';
 import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const';
 
 describe('CommandExecutionError.toMcpResponse', () => {
@@ -92,5 +92,35 @@ describe('CommandExecutionError.toMcpResponse', () => {
 
     expect(result.content).toHaveLength(1);
     expect(result.content[0]?.type).toBe('text');
+  });
+});
+
+const getFirstText = (error: CommandExecutionError): string => {
+  const result = error.toMcpResponse();
+  const firstContent = result.content[0];
+
+  if (!firstContent) {
+    throw new Error('Expected a single text response');
+  }
+
+  return firstContent.text;
+};
+
+describe('QueueTimeoutError', () => {
+  it('GIVEN provider queue timeout details WHEN constructing THEN it stores provider and wait metadata', () => {
+    const error = new QueueTimeoutError({ providerName: 'codex', waitMs: 31, queueTimeoutMs: 30 });
+
+    expect(error.providerName).toBe('codex');
+    expect(error.waitMs).toBe(31);
+    expect(error.queueTimeoutMs).toBe(30);
+  });
+
+  it('GIVEN a QueueTimeoutError WHEN converting to MCP response THEN it reports provider wait and limit', () => {
+    const error = new QueueTimeoutError({ providerName: 'codex', waitMs: 31, queueTimeoutMs: 30 });
+    const text = getFirstText(error);
+
+    expect(text).toContain('Queue timeout for provider "codex"');
+    expect(text).toContain('waited 31ms');
+    expect(text).toContain('limit: 30ms');
   });
 });

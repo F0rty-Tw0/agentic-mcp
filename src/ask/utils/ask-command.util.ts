@@ -2,6 +2,7 @@ import type { ExecuteCommandOptions, FlagValue, ProviderConfig, ResolvedProvider
 import {
   DEFAULT_MCP_TOOL_TIMEOUT_MS,
   ValidationError,
+  buildProviderQueueOptions,
   validateFiles,
   validateModel,
   validatePromptSize,
@@ -80,6 +81,7 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
     buildCommandOptionsInput;
 
   const timeoutMs = resolveAskTimeoutMs(context.config.timeout);
+  const providerQueue = buildProviderQueueOptions(context);
   const commandOptions: ExecuteCommandOptions = {
     binaryPath: context.binaryPath,
     args: [...cliArgs],
@@ -88,6 +90,7 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
     idleTimeoutMs: context.config.idleTimeout,
     stdin: stdinInput,
     cwd: resolved.working_directory,
+    providerQueue,
     onStdoutChunk,
     onStderrChunk,
     signal,

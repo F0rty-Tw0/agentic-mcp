@@ -15,6 +15,12 @@ export type RetryWithExponentialBackoffInput<T> = Readonly<{
   maxDelayMs: number;
 }>;
 
+export type ProviderQueueOptions = Readonly<{
+  providerName: string;
+  maxConcurrency: number;
+  queueTimeoutMs: number;
+}>;
+
 export type ExecuteCommandOptions = Readonly<{
   binaryPath: string;
   args: readonly string[];
@@ -24,6 +30,7 @@ export type ExecuteCommandOptions = Readonly<{
   stdin?: string;
   cwd?: string;
   bypassSemaphore?: boolean;
+  providerQueue?: ProviderQueueOptions;
   onStdoutChunk?: StreamChunkCallback;
   onStderrChunk?: StreamChunkCallback;
   signal?: AbortSignal;

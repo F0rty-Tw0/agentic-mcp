@@ -177,7 +177,11 @@ describe('fetchAvailableModels', () => {
       expect.objectContaining({
         binaryPath: '/usr/bin/test-cli',
         args: ['models'],
-        bypassSemaphore: true,
+        providerQueue: {
+          providerName: 'test',
+          maxConcurrency: 1,
+          queueTimeoutMs: 30_000,
+        },
       })
     );
   });

@@ -1,6 +1,13 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { buildMinimalEnv, executeCommand, resolveProviderEnv, stripAnsi, toMcpError } from '../../shared';
+import {
+  buildMinimalEnv,
+  buildProviderQueueOptions,
+  executeCommand,
+  resolveProviderEnv,
+  stripAnsi,
+  toMcpError,
+} from '../../shared';
 import type { ExecutionResult, ResolvedProviderEntry } from '../../shared';
 
 const PING_TIMEOUT_MS = 30_000;
@@ -54,12 +61,13 @@ export const handlePing = async (context: ResolvedProviderEntry): Promise<CallTo
 
     const providerEnv = resolveProviderEnv(context);
     const env = buildMinimalEnv(providerEnv);
+    const providerQueue = buildProviderQueueOptions(context);
     const result = await executeCommand({
       binaryPath: context.binaryPath,
       args: [context.config.versionCheck.flag],
       env,
       timeoutMs: PING_TIMEOUT_MS,
-      bypassSemaphore: true,
+      providerQueue,
     });
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
