@@ -40,8 +40,8 @@ describe('handleListProviders', () => {
   });
 
   describe('output formatting', () => {
-    it('GIVEN one detected provider WHEN listing THEN adds the next proof step', () => {
-      const providers = [createProvider({ name: 'claude', description: 'Anthropic Claude' })];
+    it('GIVEN one detected provider WHEN listing THEN adds supportLevel and the next proof step', () => {
+      const providers = [createProvider({ name: 'claude', description: 'Anthropic Claude', supportLevel: 'stable' })];
 
       const result = handleListProviders(providers);
 
@@ -51,18 +51,30 @@ describe('handleListProviders', () => {
             type: 'text',
             text:
               'Configured providers:\n' +
-              '- claude: Anthropic Claude [binary detected]\n' +
+              '- claude: Anthropic Claude [binary detected | stable]\n' +
               'Next: run ask_claude to prove authentication and a real response.',
           },
         ],
       });
     });
 
-    it('GIVEN mixed providers WHEN listing THEN shows truthful labels and one next step', () => {
+    it('GIVEN mixed providers WHEN listing THEN shows truthful labels, supportLevel, and one next step', () => {
       const providers = [
-        createProvider({ name: 'claude', description: 'Anthropic Claude' }),
-        createProvider({ name: 'codex', description: 'OpenAI Codex', enabled: true, available: false }),
-        createProvider({ name: 'gemini', description: 'Google Gemini', enabled: false, available: false }),
+        createProvider({ name: 'claude', description: 'Anthropic Claude', supportLevel: 'stable' }),
+        createProvider({
+          name: 'codex',
+          description: 'OpenAI Codex',
+          enabled: true,
+          available: false,
+          supportLevel: 'beta',
+        }),
+        createProvider({
+          name: 'gemini',
+          description: 'Google Gemini',
+          enabled: false,
+          available: false,
+          supportLevel: 'experimental',
+        }),
       ];
 
       const result = handleListProviders(providers);
@@ -71,10 +83,48 @@ describe('handleListProviders', () => {
 
       expect(text).toBe(
         'Configured providers:\n' +
-          '- claude: Anthropic Claude [binary detected]\n' +
-          '- codex: OpenAI Codex [binary missing]\n' +
-          '- gemini: Google Gemini [disabled]\n' +
+          '- claude: Anthropic Claude [binary detected | stable]\n' +
+          '- codex: OpenAI Codex [binary missing | beta]\n' +
+          '- gemini: Google Gemini [disabled | experimental]\n' +
           'Next: run ask_claude to prove authentication and a real response.'
+      );
+    });
+
+    it('GIVEN provider prerequisites WHEN listing THEN it includes them in output', () => {
+      const providers = [
+        createProvider({
+          name: 'aider',
+          description: 'Aider coding assistant',
+          available: false,
+          supportLevel: 'community',
+          prerequisites: ['python', 'git'],
+        }),
+      ];
+
+      const result = handleListProviders(providers);
+
+      expect((result.content[0] as McpPlainTextContent).text).toContain(
+        '- aider: Aider coding assistant [binary missing | community] prerequisites: python, git'
+      );
+    });
+
+    it('GIVEN disabled template provider WHEN listing THEN it shows supportLevel and prerequisites', () => {
+      const providers = [
+        createProvider({
+          name: 'amazon-q',
+          description: 'Amazon Q Developer template',
+          enabled: false,
+          available: false,
+          binaryPath: undefined,
+          supportLevel: 'experimental',
+          prerequisites: ['aws', 'python'],
+        }),
+      ];
+
+      const result = handleListProviders(providers);
+
+      expect((result.content[0] as McpPlainTextContent).text).toContain(
+        '- amazon-q: Amazon Q Developer template [disabled | experimental] prerequisites: aws, python'
       );
     });
 

@@ -5,8 +5,11 @@
     "claude": {
       "enabled": true,
       "description": "Claude Code CLI (Anthropic) — autonomous coding agent",
+      "supportLevel": "stable",
       "command": "claude",
       "timeout": 1800000,
+      "maxConcurrency": 1,
+      "queueTimeoutMs": 30000,
       "env": { "CLAUDECODE": "" },
       "outputFormat": "json",
       "commands": {
@@ -45,8 +48,11 @@
     "codex": {
       "enabled": true,
       "description": "OpenAI Codex CLI — AI coding assistant with session management",
+      "supportLevel": "stable",
       "command": "codex",
       "timeout": 1800000,
+      "maxConcurrency": 1,
+      "queueTimeoutMs": 30000,
       "env": {},
       "outputFormat": "json",
       "commands": {
@@ -69,7 +75,8 @@
             "uncommitted": ["--uncommitted"],
             "base": "--base",
             "commit": "--commit",
-            "model": "-m"
+            "model": "-m",
+            "workingDir": "-C"
           }
         },
         "sessions": {
@@ -84,9 +91,12 @@
     "copilot": {
       "enabled": true,
       "description": "GitHub Copilot CLI — AI pair programmer",
+      "supportLevel": "stable",
       "command": "copilot",
       "timeout": 1800000,
       "idleTimeout": 30000,
+      "maxConcurrency": 1,
+      "queueTimeoutMs": 30000,
       "env": {},
       "outputFormat": "text",
       "commands": {
@@ -119,8 +129,11 @@
     "gemini": {
       "enabled": true,
       "description": "Google Gemini CLI — large-context AI assistant",
+      "supportLevel": "stable",
       "command": "gemini",
       "timeout": 1800000,
+      "maxConcurrency": 1,
+      "queueTimeoutMs": 30000,
       "env": {},
       "outputFormat": "json",
       "commands": {
@@ -138,8 +151,11 @@
     "opencode": {
       "enabled": true,
       "description": "OpenCode — multi-model CLI coding assistant",
+      "supportLevel": "stable",
       "command": "opencode",
       "timeout": 1800000,
+      "maxConcurrency": 1,
+      "queueTimeoutMs": 30000,
       "env": {},
       "outputFormat": "json",
       "commands": {
@@ -159,6 +175,201 @@
             "continue": ["--continue"]
           }
         }
+      },
+      "input": { "method": "positional" }
+    },
+    "aider": {
+      "enabled": true,
+      "description": "Aider CLI — terminal pair programming assistant",
+      "supportLevel": "community",
+      "command": "aider",
+      "timeout": 1800000,
+      "env": {},
+      "outputFormat": "text",
+      "commands": {
+        "ask": {
+          "args": ["--message"],
+          "trailingArgs": ["--yes"],
+          "flags": {
+            "model": "--model"
+          }
+        }
+      },
+      "input": { "method": "flag" }
+    },
+    "goose": {
+      "enabled": true,
+      "description": "Goose CLI (Block) — local open-source AI agent",
+      "supportLevel": "beta",
+      "command": "goose",
+      "timeout": 1800000,
+      "env": {},
+      "outputFormat": "json",
+      "commands": {
+        "ask": {
+          "args": ["run", "--text"],
+          "trailingArgs": ["--no-session", "--output-format", "json"],
+          "flags": {
+            "model": "--model"
+          }
+        },
+        "sessions": {
+          "args": ["session", "list", "--format", "json"],
+          "flags": {
+            "resume": ["run", "--resume", "--session-id"]
+          }
+        }
+      },
+      "input": { "method": "flag" }
+    },
+    "amp": {
+      "enabled": true,
+      "description": "Amp CLI (Sourcegraph) — terminal coding agent",
+      "supportLevel": "beta",
+      "command": "amp",
+      "timeout": 1800000,
+      "env": {},
+      "outputFormat": "stream-json",
+      "commands": {
+        "ask": {
+          "args": ["--execute"],
+          "trailingArgs": ["--stream-json"],
+          "flags": {
+            "autoMode": ["--dangerously-allow-all"]
+          }
+        }
+      },
+      "input": { "method": "stdin" }
+    },
+    "cline": {
+      "enabled": true,
+      "description": "Cline CLI — terminal coding agent with headless automation",
+      "supportLevel": "beta",
+      "command": "cline",
+      "timeout": 1800000,
+      "env": {},
+      "outputFormat": "stream-json",
+      "commands": {
+        "ask": {
+          "args": ["-y"],
+          "trailingArgs": ["--json"]
+        }
+      },
+      "input": { "method": "positional" }
+    },
+    "cursor": {
+      "enabled": true,
+      "description": "Cursor Agent CLI — terminal and headless coding agent",
+      "supportLevel": "beta",
+      "command": "agent",
+      "timeout": 1800000,
+      "env": {},
+      "outputFormat": "json",
+      "commands": {
+        "ask": {
+          "args": ["-p"],
+          "trailingArgs": ["--output-format", "json"],
+          "flags": {
+            "model": "--model",
+            "workingDir": "--workspace",
+            "sandbox": {
+              "flag": "--sandbox",
+              "values": ["enabled", "disabled"]
+            }
+          }
+        }
+      },
+      "input": { "method": "flag" }
+    },
+    "droid": {
+      "enabled": true,
+      "description": "Factory Droid CLI — interactive and exec coding agent",
+      "supportLevel": "beta",
+      "command": "droid",
+      "timeout": 1800000,
+      "env": {},
+      "outputFormat": "json",
+      "commands": {
+        "ask": {
+          "args": ["exec"],
+          "trailingArgs": ["--output-format", "json"],
+          "flags": {
+            "model": "-m",
+            "workingDir": "--cwd"
+          }
+        }
+      },
+      "input": { "method": "positional" }
+    },
+    "amazon-q": {
+      "enabled": false,
+      "description": "Amazon Q CLI template — disabled until compatibility verification",
+      "supportLevel": "experimental",
+      "command": "q",
+      "timeout": 1800000,
+      "env": {},
+      "prerequisites": ["aws", "python"],
+      "outputFormat": "text",
+      "commands": {
+        "ask": {
+          "args": ["chat"]
+        }
+      },
+      "input": { "method": "positional" }
+    },
+    "plandex": {
+      "enabled": false,
+      "description": "Plandex CLI template — disabled until compatibility verification",
+      "supportLevel": "community",
+      "command": "plandex",
+      "timeout": 1800000,
+      "env": {},
+      "prerequisites": ["bash"],
+      "outputFormat": "text",
+      "commands": {
+        "ask": {}
+      },
+      "input": { "method": "positional" }
+    },
+    "openhands": {
+      "enabled": false,
+      "description": "OpenHands CLI template — disabled until compatibility verification",
+      "supportLevel": "experimental",
+      "command": "openhands",
+      "timeout": 1800000,
+      "env": {},
+      "prerequisites": ["uv", "python3"],
+      "outputFormat": "text",
+      "commands": {
+        "ask": {}
+      },
+      "input": { "method": "positional" }
+    },
+    "qwen-code": {
+      "enabled": false,
+      "description": "Qwen Code CLI template — disabled until compatibility verification",
+      "supportLevel": "experimental",
+      "command": "qwen",
+      "timeout": 1800000,
+      "env": {},
+      "prerequisites": ["node"],
+      "outputFormat": "text",
+      "commands": {
+        "ask": {}
+      },
+      "input": { "method": "positional" }
+    },
+    "tabnine": {
+      "enabled": false,
+      "description": "Tabnine CLI template — disabled until compatibility verification",
+      "supportLevel": "experimental",
+      "command": "tabnine",
+      "timeout": 1800000,
+      "env": {},
+      "prerequisites": ["docker"],
+      "outputFormat": "text",
+      "commands": {
+        "ask": {}
       },
       "input": { "method": "positional" }
     }

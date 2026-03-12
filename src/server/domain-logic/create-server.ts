@@ -2,11 +2,24 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CancelledNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { loadConfig, warnDangerousFlags } from '../../config/loader';
-import type { ConfigPathOptions, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import type { ConfigPathOptions, ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import { APP_VERSION, getActiveRequest, killProcess, resolveCliBinary, unregisterActiveRequest } from '../../shared';
 import { registerAllTools } from '../../tool-registry';
 import { NO_PROVIDERS_WARNING, SERVER_NAME } from '../common';
 import { toRequestIdString } from '../utils';
+
+const buildProviderMetadata = (
+  providerConfig: ProviderConfig
+): Pick<ResolvedProvider, 'supportLevel' | 'prerequisites'> => {
+  const supportLevel = providerConfig.supportLevel != null ? { supportLevel: providerConfig.supportLevel } : {};
+  const prerequisites = providerConfig.prerequisites != null ? { prerequisites: providerConfig.prerequisites } : {};
+  const providerMetadata: Pick<ResolvedProvider, 'supportLevel' | 'prerequisites'> = {
+    ...supportLevel,
+    ...prerequisites,
+  };
+
+  return providerMetadata;
+};
 
 export const createServer = async (options?: ConfigPathOptions): Promise<McpServer> => {
   const configOptions = options?.configPath ? { configPath: options.configPath } : undefined;
@@ -21,13 +34,14 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
 
   for (const [name, providerConfig] of Object.entries(config.providers)) {
     const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : undefined;
-
+    const providerMetadata = buildProviderMetadata(providerConfig);
     const provider: ResolvedProvider = {
       name,
       description: providerConfig.description,
       enabled: providerConfig.enabled,
       available: binaryPath !== undefined,
       binaryPath,
+      ...providerMetadata,
     };
 
     allProviders.push(provider);

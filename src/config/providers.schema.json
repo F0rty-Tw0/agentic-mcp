@@ -150,6 +150,10 @@
           "type": "string",
           "description": "Human-readable description of the provider. Surfaced in MCP tool descriptions so LLMs and users understand what the provider does. Example: \"Claude Code CLI (Anthropic) — autonomous coding agent\"."
         },
+        "supportLevel": {
+          "enum": ["stable", "beta", "experimental", "community"],
+          "description": "Optional maturity label for the provider. Use stable for first-party or well-proven CLIs, beta for supported but still-moving integrations, experimental for volatile surfaces, and community for externally maintained or lightly verified providers."
+        },
         "command": {
           "type": "string",
           "description": "The CLI binary name (not a path). Resolved to an absolute path at startup via PATH lookup using the 'which' package. Examples: \"claude\", \"codex\", \"gemini\"."
@@ -163,6 +167,16 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "description": "Idle timeout in milliseconds. If the process stops producing output for this duration after initial output was received, it is killed and the collected output is returned as a successful result. Useful for CLI tools that complete their work but do not exit the process. Optional — omit to disable idle-based termination."
+        },
+        "maxConcurrency": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "description": "Optional per-provider concurrency limit. Requests beyond this limit wait in the provider queue before spawning. Defaults to 1 when omitted."
+        },
+        "queueTimeoutMs": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Optional maximum time in milliseconds a request may wait in the provider queue before spawning. Distinct from the execution timeout. Defaults to 30000 when omitted."
         },
         "env": {
           "type": "object",

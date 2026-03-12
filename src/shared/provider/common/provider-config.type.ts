@@ -1,4 +1,4 @@
-import type { ProviderConfig } from './provider-config.schema';
+import type { ProviderConfig, SupportLevel } from './provider-config.schema';
 
 export type ProviderEnv = Record<string, string | null>;
 
@@ -14,4 +14,6 @@ export type ResolvedProvider = Readonly<{
   enabled: boolean;
   available: boolean;
   binaryPath?: string;
+  supportLevel?: SupportLevel;
+  prerequisites?: readonly string[];
 }>;

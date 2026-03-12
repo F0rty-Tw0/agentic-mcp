@@ -10,10 +10,26 @@ const providerStatus = (provider: ResolvedProvider): string => {
   return 'disabled';
 };
 
+const buildSupportLevelSuffix = (provider: ResolvedProvider): string => {
+  if (provider.supportLevel == null) return '';
+
+  return ` | ${provider.supportLevel}`;
+};
+
+const buildPrerequisitesSuffix = (provider: ResolvedProvider): string => {
+  const { prerequisites } = provider;
+
+  if (prerequisites == null || prerequisites.length === 0) return '';
+
+  return ` prerequisites: ${prerequisites.join(', ')}`;
+};
+
 const buildProviderLine = (provider: ResolvedProvider): string => {
   const status = providerStatus(provider);
+  const supportLevelSuffix = buildSupportLevelSuffix(provider);
+  const prerequisitesSuffix = buildPrerequisitesSuffix(provider);
 
-  return `- ${provider.name}: ${provider.description} [${status}]`;
+  return `- ${provider.name}: ${provider.description} [${status}${supportLevelSuffix}]${prerequisitesSuffix}`;
 };
 
 const buildNextStep = (providers: readonly ResolvedProvider[]): string => {

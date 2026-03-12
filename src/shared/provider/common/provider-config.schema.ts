@@ -21,7 +21,7 @@ const leveledFlagSchema = z.object({
 });
 
 const flagValueSchema = z.union([z.string(), z.array(z.string()).min(1), leveledFlagSchema, z.null(), z.undefined()]);
-
+const supportLevelSchema = z.enum(['stable', 'beta', 'experimental', 'community']);
 const outputFormatSchema: z.ZodType<OutputFormat> = z.enum(['json', 'stream-json', 'text']);
 
 const streamingCommandSchema = z.object({
@@ -47,9 +47,12 @@ const inputSchema = z.object({
 const providerConfigSchema = z.object({
   enabled: z.boolean(),
   description: z.string(),
+  supportLevel: supportLevelSchema.optional(),
   command: z.string(),
   timeout: z.number().positive(),
   idleTimeout: z.number().positive().optional(),
+  maxConcurrency: z.number().int().positive().optional(),
+  queueTimeoutMs: z.number().positive().optional(),
   env: z.record(z.string(), z.string().nullable()),
   prerequisites: z.array(z.string()).optional(),
   versionCheck: z
@@ -70,6 +73,8 @@ export const providersFileSchema = z.object({
 });
 
 export type FlagValue = z.infer<typeof flagValueSchema>;
+
+export type SupportLevel = z.infer<typeof supportLevelSchema>;
 
 export type CommandDef = z.infer<typeof commandDefSchema>;
 
