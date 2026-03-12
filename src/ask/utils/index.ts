@@ -1,6 +1,6 @@
 export { buildCappedOutput } from './capped-output.util';
 
-export { getAskCommand, getFlag, resolveAskCommand } from './command-def.util';
+export { getAskCommand, getFlag, getReviewCommand, resolveAskCommand } from './command-def.util';
 
 export { parseProviderOutput } from './output-parser.util';
 

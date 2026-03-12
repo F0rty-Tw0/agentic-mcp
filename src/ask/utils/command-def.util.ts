@@ -10,6 +10,14 @@ export const getAskCommand = (config: ProviderConfig): CommandDef => {
   return ask;
 };
 
+export const getReviewCommand = (config: ProviderConfig): CommandDef => {
+  const { review } = config.commands;
+
+  if (!review) throw new ValidationError('Provider config missing required "review" command');
+
+  return review;
+};
+
 export const resolveAskCommand = (config: ProviderConfig, streamLive = false): ResolvedAskCommand => {
   const ask = getAskCommand(config);
   const streaming = streamLive ? ask.streaming : undefined;

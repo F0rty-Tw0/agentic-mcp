@@ -1,1 +1,1 @@
-export { buildArgArray } from './arg.builder';
+export { buildArgArray, buildReviewArgArray } from './arg.builder';

@@ -1,7 +1,7 @@
 import type { CliSubcommand } from '../common';
 
 const GLOBAL_SUBCOMMANDS = new Set<CliSubcommand>(['ask_all', 'list_providers', 'provider_metrics']);
-const PROVIDER_SUBCOMMAND_PREFIXES = ['ask_', 'ping_', 'help_', 'sessions_'] as const;
+const PROVIDER_SUBCOMMAND_PREFIXES = ['ask_', 'review_', 'ping_', 'help_', 'sessions_'] as const;
 
 type ProviderSubcommandPrefix = (typeof PROVIDER_SUBCOMMAND_PREFIXES)[number];
 

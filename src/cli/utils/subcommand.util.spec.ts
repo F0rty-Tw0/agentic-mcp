@@ -34,6 +34,12 @@ describe('parseSubcommand', () => {
     expect(result).toBe('sessions_claude');
   });
 
+  it('GIVEN review_codex WHEN parsed THEN it returns the exact tool name', () => {
+    const result = parseSubcommand('review_codex');
+
+    expect(result).toBe('review_codex');
+  });
+
   it('GIVEN list_providers WHEN parsed THEN it returns the exact tool name', () => {
     const result = parseSubcommand('list_providers');
 
@@ -70,6 +76,12 @@ describe('parseSubcommand', () => {
     expect(result).toBeUndefined();
   });
 
+  it('GIVEN review_ with an empty provider WHEN parsed THEN it returns undefined', () => {
+    const result = parseSubcommand('review_');
+
+    expect(result).toBeUndefined();
+  });
+
   it('GIVEN an unknown string WHEN parsed THEN it returns undefined', () => {
     const result = parseSubcommand('unknown' as CliSubcommand);
 
@@ -86,6 +98,12 @@ describe('isCliSubcommand', () => {
 
   it('GIVEN sessions_claude WHEN checked THEN it returns true', () => {
     const result = isCliSubcommand('sessions_claude');
+
+    expect(result).toBe(true);
+  });
+
+  it('GIVEN review_codex WHEN checked THEN it returns true', () => {
+    const result = isCliSubcommand('review_codex');
 
     expect(result).toBe(true);
   });

@@ -8,10 +8,14 @@ import {
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
 } from '../../ask/common';
-import type { AskToolArgs, BuiltArgs } from '../../ask/common';
-import { getFlag, resolveAskCommand } from '../../ask/utils';
+import type { AskToolArgs, BuiltArgs, ReviewToolArgs } from '../../ask/common';
+import { getFlag, getReviewCommand, resolveAskCommand } from '../../ask/utils';
 import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
+
+const REVIEW_BASE_FLAG_KEY = 'base';
+const REVIEW_COMMIT_FLAG_KEY = 'commit';
+const REVIEW_UNCOMMITTED_FLAG_KEY = 'uncommitted';
 
 const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
   if (!flagValue) return [];
@@ -22,7 +26,6 @@ const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] =
 
   if (Array.isArray(flagValue)) return [...flagValue];
 
-  // LeveledFlag — requires a value; emit nothing if no value provided
   if (!argValue) return [];
 
   if (!flagValue.values.includes(argValue)) {
@@ -34,11 +37,15 @@ const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] =
   return [flagValue.flag, argValue];
 };
 
-const appendValueFlag = (cliArgs: string[], askCmd: CommandDef, flagKey: string, value?: string | boolean): void => {
-  // Falsy check is intentional: undefined = not provided, false = don't enable, "" = empty value
+const appendValueFlag = (
+  cliArgs: string[],
+  commandDef: CommandDef,
+  flagKey: string,
+  value?: string | boolean
+): void => {
   if (!value) return;
 
-  const flag = getFlag(askCmd, flagKey);
+  const flag = getFlag(commandDef, flagKey);
 
   if (!flag) return;
 
@@ -90,6 +97,38 @@ const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: AskToo
   appendValueFlag(cliArgs, askCmd, FLAG_SYSTEM_PROMPT, args.system_prompt);
 };
 
+const appendRequiredReviewFlag = (cliArgs: string[], reviewCmd: CommandDef, flagKey: string, value?: string): void => {
+  const flag = getFlag(reviewCmd, flagKey);
+
+  if (flag == null) {
+    throw new ValidationError(`Provider review command missing required "${flagKey}" flag`);
+  }
+
+  const flagArgs = resolveFlagToArgs(flag, value);
+
+  cliArgs.push(...flagArgs);
+};
+
+const appendReviewScopeArgs = (cliArgs: string[], reviewCmd: CommandDef, args: ReviewToolArgs): void => {
+  if (args.scope === 'uncommitted') {
+    appendRequiredReviewFlag(cliArgs, reviewCmd, REVIEW_UNCOMMITTED_FLAG_KEY);
+
+    return;
+  }
+
+  if (args.scope === 'commit') {
+    if (args.commit == null) throw new ValidationError('commit is required when scope=commit');
+
+    appendRequiredReviewFlag(cliArgs, reviewCmd, REVIEW_COMMIT_FLAG_KEY, args.commit);
+
+    return;
+  }
+
+  if (args.base == null) throw new ValidationError('base is required when scope=range');
+
+  appendRequiredReviewFlag(cliArgs, reviewCmd, REVIEW_BASE_FLAG_KEY, args.base);
+};
+
 export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): BuiltArgs => {
   const cliArgs: string[] = [];
   let stdinInput: string | undefined;
@@ -115,6 +154,24 @@ export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): BuiltA
   }
 
   const builtArgs: BuiltArgs = { args: cliArgs, stdinInput, outputFormat };
+
+  return builtArgs;
+};
+
+export const buildReviewArgArray = (config: ProviderConfig, args: ReviewToolArgs): BuiltArgs => {
+  const reviewCmd = getReviewCommand(config);
+  const cliArgs: string[] = [];
+
+  appendValueFlag(cliArgs, reviewCmd, FLAG_MODEL, args.model);
+  appendValueFlag(cliArgs, reviewCmd, FLAG_WORKING_DIR, args.working_directory);
+
+  if (reviewCmd.args?.length) {
+    cliArgs.push(...reviewCmd.args);
+  }
+
+  appendReviewScopeArgs(cliArgs, reviewCmd, args);
+
+  const builtArgs: BuiltArgs = { args: cliArgs, outputFormat: config.outputFormat };
 
   return builtArgs;
 };

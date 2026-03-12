@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+- Add Wave 3 provider coverage with shipped configs for Aider, Goose, Amp, Cline, Cursor Agent CLI, and Droid
+- Add disabled provider templates for Amazon Q, Plandex, OpenHands, Qwen Code, and Tabnine with recorded support levels and prerequisites
+- Surface provider `supportLevel` and `prerequisites` in `list_providers` so provider metadata matches actual support status
+- Add capability-gated `review_{provider}` tooling with Codex review support first
+- Add per-provider FIFO execution queues with distinct queue wait timeouts via `maxConcurrency` and `queueTimeoutMs`
+- Verify publish-ready package output with `pnpm run build`, `pnpm run ci`, and `npm pack --dry-run`
+- Refresh README coverage for the expanded provider matrix and review tooling
+
 ## [0.1.10] - 2026-03-11
 
 - Add `ask_all` aliases so `--provider` maps to `--providers` and `--models` maps to `--model`

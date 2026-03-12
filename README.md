@@ -42,15 +42,13 @@ You need:
 - At least one supported provider CLI installed locally and already authenticated
 - An MCP client only if you want editor or agent integration; direct CLI usage works without one
 
-Supported provider binaries:
+Supported provider binaries today:
 
-- `claude`
-- `codex`
-- `copilot`
-- `gemini`
-- `opencode`
+- Core enabled providers: `claude`, `codex`, `copilot`, `gemini`, `opencode`
+- Additional enabled providers: `aider`, `goose`, `amp`, `cline`, `agent` (Cursor Agent CLI), `droid`
+- Disabled templates shipped for later verification: `q` (Amazon Q), `plandex`, `openhands`, `qwen`, `tabnine`
 
-If those binaries are missing or not logged in, setup may succeed but provider calls will still fail. That is the most common source of confusion on first run.
+`list_providers` is the source of truth for what is enabled, what is disabled, which support level each provider is in, and which prerequisites a template still needs. If the underlying binary is missing or not logged in, setup may still succeed while provider calls fail.
 
 ## Quickstart
 
@@ -102,7 +100,7 @@ What this step does not prove:
 - provider authentication works
 - a real provider response can complete through `agentic-mcp`
 
-If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, and `ask_<provider>` appear.
+If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, `ask_<provider>`, and `review_<provider>` where supported appear.
 
 ### 3. Discover what is detected
 
@@ -113,6 +111,8 @@ npx agentic-mcp list_providers
 What this step proves:
 
 - which providers are `binary detected`, `binary missing`, or `disabled`
+- which support level each configured provider reports
+- which prerequisites a disabled template still expects
 - which provider should be your first real-answer candidate
 
 What this step does not prove:
@@ -193,6 +193,35 @@ npx agentic-mcp sessions_claude
 
 When run without a subcommand, `agentic-mcp` starts as an MCP stdio server.
 
+### Review repository changes with a provider
+
+> Today this is primarily useful with `review_codex`, because Codex is the first shipped provider with a review command.
+
+```bash
+npx agentic-mcp review_codex --scope uncommitted --working-dir .
+```
+
+Review flags:
+
+| Flag                            | Meaning                                            | When to use it                                                               |
+| ------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `--scope uncommitted`           | Review staged, unstaged, and untracked changes     | Fast pass on your current working tree                                       |
+| `--scope commit --commit <sha>` | Review one commit                                  | Focus on a single change set                                                 |
+| `--scope range --base <ref>`    | Review everything relative to a base branch or ref | Review a feature branch against main                                         |
+| `--working-dir <path>`          | Run the review in a specific repository root       | Required when your current shell directory is not the repo you want reviewed |
+| `--model <name>`                | Pass a provider-specific model hint                | Override the provider default when needed                                    |
+| `--stream-live`                 | Show live review progress in the terminal          | Useful for longer reviews so the command does not look idle                  |
+
+Examples:
+
+```bash
+npx agentic-mcp review_codex --scope uncommitted --working-dir .
+npx agentic-mcp review_codex --scope commit --commit HEAD~1 --working-dir .
+npx agentic-mcp review_codex --scope range --base origin/main --working-dir . --model gpt-5
+```
+
+The review command is routed through the same MCP tool surface as `ask_<provider>`, so editor clients can expose `review_<provider>` when that provider declares a review command.
+
 ### Compare providers on the same prompt
 
 ```bash
@@ -236,13 +265,24 @@ npx agentic-mcp provider_metrics
 
 These provider definitions ship with the project. Whether they are actually usable on your machine still depends on the underlying CLI binary being installed and authenticated.
 
-| Provider | Binary     | Included by default |
-| -------- | ---------- | ------------------- |
-| Claude   | `claude`   | Yes                 |
-| Codex    | `codex`    | Yes                 |
-| Copilot  | `copilot`  | Yes                 |
-| Gemini   | `gemini`   | Yes                 |
-| OpenCode | `opencode` | Yes                 |
+| Provider  | Binary      | Support level | Enabled by default | Notes                                |
+| --------- | ----------- | ------------- | ------------------ | ------------------------------------ |
+| Claude    | `claude`    | stable        | Yes                | ask, sessions                        |
+| Codex     | `codex`     | stable        | Yes                | ask, review, sessions                |
+| Copilot   | `copilot`   | stable        | Yes                | ask, sessions                        |
+| Gemini    | `gemini`    | stable        | Yes                | ask                                  |
+| OpenCode  | `opencode`  | stable        | Yes                | ask, sessions, model listing         |
+| Aider     | `aider`     | community     | Yes                | ask                                  |
+| Goose     | `goose`     | beta          | Yes                | ask, sessions                        |
+| Amp       | `amp`       | beta          | Yes                | ask                                  |
+| Cline     | `cline`     | beta          | Yes                | ask                                  |
+| Cursor    | `agent`     | beta          | Yes                | ask                                  |
+| Droid     | `droid`     | beta          | Yes                | ask                                  |
+| Amazon Q  | `q`         | experimental  | No                 | disabled template with prerequisites |
+| Plandex   | `plandex`   | community     | No                 | disabled template with prerequisites |
+| OpenHands | `openhands` | experimental  | No                 | disabled template with prerequisites |
+| Qwen Code | `qwen`      | experimental  | No                 | disabled template with prerequisites |
+| Tabnine   | `tabnine`   | experimental  | No                 | disabled template with prerequisites |
 
 Provider definitions live in `src/config/providers.json`.
 
@@ -269,11 +309,12 @@ Core commands:
 | Command                   | What it does                                                                             |
 | ------------------------- | ---------------------------------------------------------------------------------------- |
 | `ask_<provider> <prompt>` | Query one provider                                                                       |
+| `review_<provider>`       | Run repository review where that provider declares a review command                      |
 | `ask_all <prompt>`        | Query several providers in parallel                                                      |
 | `ping_<provider>`         | Check limited provider proof                                                             |
 | `help_<provider>`         | Show the provider CLI help output                                                        |
 | `sessions_<provider>`     | List known sessions for that provider                                                    |
-| `list_providers`          | Show configured providers with detected status                                           |
+| `list_providers`          | Show configured providers with detected status, support levels, and prerequisites        |
 | `provider_metrics`        | Show which providers you actually used, how often they succeeded, and how long they took |
 | `setup`                   | Configure an MCP client                                                                  |
 

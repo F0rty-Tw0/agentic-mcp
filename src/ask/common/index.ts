@@ -22,7 +22,7 @@ export type {
   SuccessResponseInput,
 } from './ask-runtime-contracts.type';
 
-export type { AskToolArgs, BuiltArgs } from './tool-args.types';
+export type { AskToolArgs, BuiltArgs, ReviewScope, ReviewToolArgs } from './tool-args.types';
 
 export { isLeveledFlag } from './tool-args.types';
 

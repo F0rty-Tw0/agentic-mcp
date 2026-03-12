@@ -25,7 +25,7 @@ const formatCliArgLabel = (argName: string): string => {
 };
 
 const resolveProviderNames = (toolName: string): readonly string[] | undefined => {
-  const match = /^(?:ask|ping|help|sessions)_(.+)$/.exec(toolName);
+  const match = /^(?:ask|review|ping|help|sessions)_(.+)$/.exec(toolName);
 
   if (!match) return;
 

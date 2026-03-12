@@ -19,6 +19,18 @@ export type AskToolArgs = Readonly<{
   system_prompt?: string;
 }>;
 
+export type ReviewScope = 'uncommitted' | 'commit' | 'range';
+
+export type ReviewToolArgs = Readonly<{
+  scope: ReviewScope;
+  commit?: string;
+  base?: string;
+  model?: string;
+  working_directory?: string;
+  stream_live?: boolean;
+  include_structured?: boolean;
+}>;
+
 export type BuiltArgs = Readonly<{
   args: readonly string[];
   stdinInput?: string;

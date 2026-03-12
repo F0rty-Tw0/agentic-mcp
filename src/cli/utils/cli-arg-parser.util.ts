@@ -36,6 +36,7 @@ const parseValueFlag = (state: ParseState, flag: string, value: string): boolean
   const key = VALUE_FLAGS[flag];
 
   if (!key) return false;
+
   state[key] = value;
 
   return true;
@@ -89,6 +90,7 @@ const tokenizeArgs = (args: readonly string[]): ParseState => {
       i += 2;
       continue;
     }
+
     const skip = parseSpecialFlags(state, arg, nextArg);
 
     if (skip) {
@@ -99,6 +101,7 @@ const tokenizeArgs = (args: readonly string[]): ParseState => {
     if (arg && !arg.startsWith('--') && state.prompt === undefined) {
       state.prompt = arg;
     }
+
     i += 1;
   }
 

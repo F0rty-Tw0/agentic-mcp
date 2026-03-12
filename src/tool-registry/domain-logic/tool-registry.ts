@@ -2,8 +2,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { buildAskToolDefinition, buildSessionsToolDefinition } from './ask-tool.builder';
-import { handleAsk } from '../../ask';
-import type { AskToolArgs } from '../../ask';
+import { buildReviewToolDefinition } from './review-tool.builder';
+import { handleAsk, handleReview } from '../../ask';
+import type { AskToolArgs, ReviewToolArgs } from '../../ask';
 import { buildAskAllToolDefinition, handleAskAll } from '../../ask-all';
 import type { AskAllToolArgs } from '../../ask-all';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
@@ -21,9 +22,8 @@ import {
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, config } = provider;
 
-  // ask_<provider>
   const askDef = buildAskToolDefinition(name, config);
-  const askCOnfig = {
+  const askConfig = {
     description: askDef.description,
     inputSchema: askDef.inputSchema,
     annotations: askDef.annotations,
@@ -31,9 +31,24 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
 
   server.registerTool(
     askDef.name,
-    askCOnfig,
+    askConfig,
     async (args: AskToolArgs, extra: ProgressContext): Promise<CallToolResult> => handleAsk(provider, args, extra)
   );
+
+  if (config.commands.review) {
+    const reviewDef = buildReviewToolDefinition(name, config);
+    const reviewConfig = {
+      description: reviewDef.description,
+      inputSchema: reviewDef.inputSchema,
+      annotations: reviewDef.annotations,
+    };
+
+    server.registerTool(
+      reviewDef.name,
+      reviewConfig,
+      async (args, extra): Promise<CallToolResult> => handleReview(provider, args as ReviewToolArgs, extra)
+    );
+  }
 
   if (config.commands.sessions) {
     const sessionsDef = buildSessionsToolDefinition(name);
@@ -46,7 +61,6 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
     server.registerTool(sessionsDef.name, sessionsConfig, (): CallToolResult => handleSessions(name));
   }
 
-  // ping_<provider>
   const pingDef = buildPingToolDefinition(name);
   const pingConfig = {
     description: pingDef.description,
@@ -55,7 +69,6 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
 
   server.registerTool(pingDef.name, pingConfig, async (): Promise<CallToolResult> => handlePing(provider));
 
-  // help_<provider>
   const helpDef = buildHelpToolDefinition(name);
   const helpConfig = {
     description: helpDef.description,

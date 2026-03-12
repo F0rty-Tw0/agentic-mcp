@@ -144,6 +144,20 @@ describe('runCli', () => {
     expect(stdoutSpy).toHaveBeenNthCalledWith(2, 'ok\n');
   });
 
+  it('GIVEN review_codex WHEN run THEN it calls the MCP helper with parsed review args', async () => {
+    await runCli('review_codex', ['--scope', 'uncommitted', '--working-dir', '/repo']);
+
+    const callCliToolInput = mocks.callCliTool.mock.calls[0]?.[0];
+
+    expect(callCliToolInput).toMatchObject({
+      toolName: 'review_codex',
+      args: { scope: 'uncommitted', working_directory: '/repo', stream_live: true },
+      configPath: undefined,
+    });
+    expect(typeof callCliToolInput?.onProgress).toBe('function');
+    expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
+  });
+
   it('GIVEN an unknown command WHEN run THEN it writes an error to stderr and sets exitCode to 1', async () => {
     await runCli('unknown_cmd' as CliSubcommand, []);
 

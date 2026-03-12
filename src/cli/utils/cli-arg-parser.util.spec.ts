@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseAskAllArgs, parseAskArgs } from './cli-arg-parser.util';
+import { parseReviewArgs } from './review-arg-parser.util';
 import { ValidationError } from '../../shared';
 
 describe('parseAskArgs', () => {
@@ -207,5 +208,34 @@ describe('parseAskAllArgs', () => {
     const result = parseAskAllArgs([]);
 
     expect(result).toStrictEqual({ prompt: '' });
+  });
+});
+
+describe('parseReviewArgs', () => {
+  it('GIVEN uncommitted scope with working dir WHEN parsed THEN it returns review args', () => {
+    const result = parseReviewArgs(['--scope', 'uncommitted', '--working-dir', '/repo']);
+
+    expect(result).toStrictEqual({ scope: 'uncommitted', working_directory: '/repo', stream_live: true });
+  });
+
+  it('GIVEN range scope with base and model WHEN parsed THEN it returns review args', () => {
+    const result = parseReviewArgs(['--scope', 'range', '--base', 'origin/main', '--model', 'gpt-5']);
+
+    expect(result).toStrictEqual({ scope: 'range', base: 'origin/main', model: 'gpt-5', stream_live: true });
+  });
+
+  it('GIVEN missing --scope WHEN parsed THEN it throws ValidationError', () => {
+    const run = (): void => {
+      parseReviewArgs(['--working-dir', '/repo']);
+    };
+
+    expect(run).toThrow(ValidationError);
+    expect(run).toThrow('review commands require --scope');
+  });
+
+  it('GIVEN review args without explicit stream flag WHEN parsed THEN it enables stream_live by default', () => {
+    const result = parseReviewArgs(['--scope', 'uncommitted']);
+
+    expect(result).toStrictEqual({ scope: 'uncommitted', stream_live: true });
   });
 });

@@ -1,26 +1,30 @@
 import process from 'node:process';
 
 import { printResult } from './cli-output';
-import type { AskToolArgs } from '../../ask';
+import type { AskToolArgs, ReviewToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
 import { ValidationError } from '../../shared';
 import type { CallCliToolInput, CliSubcommand } from '../common';
 import { parseAskAllArgs, parseAskArgs } from '../utils/cli-arg-parser.util';
 import { renderCliProgress } from '../utils/cli-progress-renderer.util';
 import { callCliTool } from '../utils/in-process-mcp-client.util';
+import { parseReviewArgs } from '../utils/review-arg-parser.util';
 import { parseSubcommand } from '../utils/subcommand.util';
 
-const buildToolArgs = (subcommand: CliSubcommand, remainingArgs: readonly string[]): AskToolArgs | AskAllToolArgs => {
+const buildToolArgs = (
+  subcommand: CliSubcommand,
+  remainingArgs: readonly string[]
+): AskToolArgs | AskAllToolArgs | ReviewToolArgs => {
   if (subcommand === 'ask_all') {
-    const result = parseAskAllArgs(remainingArgs);
-
-    return result;
+    return parseAskAllArgs(remainingArgs);
   }
 
   if (subcommand.startsWith('ask_')) {
-    const result = parseAskArgs(remainingArgs);
+    return parseAskArgs(remainingArgs);
+  }
 
-    return result;
+  if (subcommand.startsWith('review_')) {
+    return parseReviewArgs(remainingArgs);
   }
 
   return {};
@@ -28,7 +32,7 @@ const buildToolArgs = (subcommand: CliSubcommand, remainingArgs: readonly string
 
 const buildCallCliToolInput = (
   subcommand: CliSubcommand,
-  args: AskToolArgs | AskAllToolArgs,
+  args: AskToolArgs | AskAllToolArgs | ReviewToolArgs,
   configPath?: string
 ): CallCliToolInput => {
   if ('stream_live' in args && args.stream_live === true) {
