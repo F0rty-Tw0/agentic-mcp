@@ -10,7 +10,7 @@ describe('handleSessions', () => {
     expect(result.content[0]).toStrictEqual({ type: 'text', text: '(no sessions)' });
   });
 
-  it('GIVEN sessions for provider WHEN listing THEN returns provider filtered sessions', () => {
+  it('GIVEN sessions for provider WHEN listing THEN returns provider filtered sessions with useful history details', () => {
     const providerName = 'sessions-provider-a';
 
     SESSION_STORE.createOrGet(providerName, 'session-1');
@@ -22,6 +22,8 @@ describe('handleSessions', () => {
 
     expect(text).toContain('session-1');
     expect(text).toContain('turns=1');
+    expect(text).toContain('last_accessed=');
+    expect(text).toContain('last_turn="user: hello"');
     expect(text).not.toContain('session-2');
   });
 });
