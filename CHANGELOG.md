@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add `agentic-mcp prove` as the fastest real-answer proof path, with optional explicit provider selection
+- Add `ask_all --report <path>` so side-by-side comparisons can be saved as reusable JSON artifacts
 - Rework onboarding and setup guidance to prefer `prove` over manual first-proof `ask_<provider>` commands where the goal is initial validation
 - Make `list_providers`, `ping_<provider>`, `ask_all`, and `provider_metrics` surface more concrete proof and comparison guidance in their user-facing output
 

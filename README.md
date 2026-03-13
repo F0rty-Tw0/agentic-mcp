@@ -133,15 +133,16 @@ Milestone: You have now successfully routed a real provider through `agentic-mcp
 ### 4. Compare providers when two are usable
 
 ```bash
-npx agentic-mcp ask_all "Reply with one sentence on why your answer is useful here." --providers claude,codex
+npx agentic-mcp ask_all "Reply with one sentence on why your answer is useful here." --providers claude,codex --report ./reports/first-comparison.json
 ```
 
-Use this only when you want side-by-side comparison on the same prompt.
+Use this only when you want side-by-side comparison on the same prompt. Add `--report <path>` when you want to keep the structured comparison as a reusable JSON artifact.
 
 What this step proves:
 
 - you can compare providers through one interface instead of hand-running the same prompt multiple times
 - `ask_all` is the product's comparison workflow, not just an advanced extra
+- the comparison can be saved and reused outside the terminal
 
 Milestone: You have now completed your first side-by-side provider comparison through `agentic-mcp`.
 
@@ -256,9 +257,10 @@ The review command is routed through the same MCP tool surface as `ask_<provider
 npx agentic-mcp ask_all "Summarize this API design" --providers claude,codex,gemini
 npx agentic-mcp ask_all "Compare providers" --providers gemini codex
 npx agentic-mcp ask_all "Use one shared model" --providers claude,gemini --model claude-sonnet-4
+npx agentic-mcp ask_all "Compare bugfixes" --providers claude,codex --report ./reports/bugfixes.json
 ```
 
-Use this when you want side-by-side answers without hand-running the same prompt several times.
+Use this when you want side-by-side answers without hand-running the same prompt several times. Add `--report <path>` when you want a saved JSON artifact of the comparison.
 
 #### ask_all flag semantics
 

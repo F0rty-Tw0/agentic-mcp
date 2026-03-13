@@ -54,7 +54,7 @@ What success means: each provider can complete a real single-provider ask before
 ### 3. Run the side-by-side comparison
 
 ```bash
-npx agentic-mcp ask_all "Reply with one sentence about why consistency matters." --providers claude,codex
+npx agentic-mcp ask_all "Reply with one sentence about why consistency matters." --providers claude,codex --report ./reports/consistency.json
 ```
 
 Expected output shape:
@@ -62,8 +62,9 @@ Expected output shape:
 - one structured result containing both providers
 - per-provider success or failure data
 - response text grouped by provider
+- an optional JSON report file when `--report <path>` is provided
 
-What success means: you can compare providers through one interface instead of hand-running the same prompt multiple times, and the contrast is now concrete rather than theoretical.
+What success means: you can compare providers through one interface instead of hand-running the same prompt multiple times, the contrast is now concrete rather than theoretical, and the result can be reused later if you save a report artifact.
 
 ## When not to use `ask_all`
 

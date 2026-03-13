@@ -7,6 +7,7 @@ Compare multiple providers on the same prompt — `ask_all` is the side-by-side 
 - Runs the same prompt across multiple configured providers in parallel
 - Returns a structured side-by-side result with per-provider success status, attribution, and execution timing
 - Helps you evaluate differences in answer quality, latency, and failures without bespoke glue scripts
+- Supports CLI report export so one comparison can become a reusable JSON artifact via `agentic-mcp ask_all ... --report <path>`
 - Keeps provider comparison explicit so single-provider work can stay on `ask_<provider>`
 
 Use `ask_all` when comparison is the goal. Do not use it for routine single-provider work, because it costs more and adds extra output to interpret.
