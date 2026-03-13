@@ -18,4 +18,8 @@ describe('HELP_TEXT', () => {
   it('GIVEN CLI help WHEN rendered THEN it mentions the prove command', () => {
     expect(HELP_TEXT).toContain('prove');
   });
+
+  it('GIVEN CLI help WHEN rendered THEN it mentions the ask_all report option', () => {
+    expect(HELP_TEXT).toContain('--report <path>');
+  });
 });
