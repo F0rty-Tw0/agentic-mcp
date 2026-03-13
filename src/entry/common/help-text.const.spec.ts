@@ -14,4 +14,8 @@ describe('HELP_TEXT', () => {
   it('GIVEN CLI help WHEN rendered THEN provider_metrics wording reflects real usage feedback', () => {
     expect(HELP_TEXT).toContain('Show which providers you actually used');
   });
+
+  it('GIVEN CLI help WHEN rendered THEN it mentions the prove command', () => {
+    expect(HELP_TEXT).toContain('prove');
+  });
 });
