@@ -43,8 +43,8 @@ What success means: both binaries are present, selectable, and worth taking to t
 ### 2. Prove each provider can answer on its own
 
 ```bash
-npx agentic-mcp ask_claude "Reply with one sentence about why consistency matters."
-npx agentic-mcp ask_codex "Reply with one sentence about why consistency matters."
+npx agentic-mcp ask_claude "Suggest the safest refactor for a TypeScript function that validates CLI args while preserving behavior."
+npx agentic-mcp ask_codex "Suggest the safest refactor for a TypeScript function that validates CLI args while preserving behavior."
 ```
 
 Replace the provider names with the pair you actually installed.
@@ -54,7 +54,7 @@ What success means: each provider can complete a real single-provider ask before
 ### 3. Run the side-by-side comparison
 
 ```bash
-npx agentic-mcp ask_all "Reply with one sentence about why consistency matters." --providers claude,codex --report ./reports/consistency.json
+npx agentic-mcp ask_all "Suggest the safest refactor for a TypeScript function that validates CLI args while preserving behavior." --providers claude,codex --report ./reports/refactor-compare.json
 ```
 
 Expected output shape:

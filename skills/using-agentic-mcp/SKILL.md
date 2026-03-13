@@ -20,19 +20,21 @@ Do not use this for general skill authoring. Use `skills-writing` for that.
 ## Core Workflow
 
 1. If the environment supports skills, load its "using skills" guidance first.
-2. Run setup or minimal onboarding:
-   - `npx agentic-mcp setup --client claude-code --yes`
-   - or `npx agentic-mcp init` if you want skill-first onboarding before writing MCP config
+2. Run minimal onboarding first:
+   - `npx agentic-mcp init`
 3. Discover what is detected:
    - `list_providers`
-   - `ping_<provider>`
+   - `ping_<provider>` only when you need a limited proof check
    - `help_<provider>` only when you need capabilities or CLI details
 4. Prove real usage before claiming readiness:
-   - use `ask_<provider>` to get the first real answer
-5. Compare providers deliberately:
+   - use `prove` for the fastest first real answer
+   - use `ask_<provider>` for focused single-provider work after the first proof
+5. Configure MCP client integration only after the first proof when you need it:
+   - `npx agentic-mcp setup --client claude-code --yes`
+6. Compare providers deliberately:
    - use `ask_all` only when comparison itself is the goal
-6. If MCP calls are unavailable, use CLI with the same sequence.
-7. Report configured files, detected providers, what remains unproven, and whether a real ask succeeded.
+7. If MCP calls are unavailable, use CLI with the same sequence.
+8. Report configured files, detected providers, what remains unproven, and whether a real ask succeeded.
 
 ## Prompt Templates
 
@@ -43,13 +45,16 @@ Set up agentic-mcp for me end-to-end and do not stop early.
 
 Execution requirements:
 1) If your environment supports skills, load the equivalent of a "using skills" workflow first.
-2) Configure MCP client integration with: npx agentic-mcp setup --client claude-code --yes
-3) Validate discovery and limited-proof checks: list_providers, ping_claude
-4) Prove real usage with: ask_claude "Reply with OK and your provider name."
-5) Use help_claude only if you need capabilities or CLI details.
-6) If any check fails, fix root cause and rerun checks.
-7) Return a concise report with configured files, detected providers, what remains unproven, and whether the real ask succeeded.
-8) Ask if any other providers should be set up too; if yes, configure and verify them the same way.
+2) Run minimal onboarding first with: npx agentic-mcp init
+3) Discover providers with: list_providers
+4) Run ping_claude only if you need a limited proof check.
+5) Prove real usage first with: npx agentic-mcp prove claude
+6) If Claude Code setup is part of the goal, then configure MCP client integration with: npx agentic-mcp setup --client claude-code --yes
+7) After setup, get a focused real answer with: ask_claude "Reply with OK and your provider name."
+8) Use help_claude only if you need capabilities or CLI details.
+9) If any check fails, fix root cause and rerun checks.
+10) Return a concise report with configured files, detected providers, what remains unproven, and whether the real ask succeeded.
+11) Ask if any other providers should be set up too; if yes, configure and verify them the same way.
 ```
 
 ### MCP Execution Prompt

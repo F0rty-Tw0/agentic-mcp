@@ -28,24 +28,28 @@ Not every customer environment has the same skill catalog. Use these as examples
 
 If skills are unavailable, follow the numbered workflow prompts in this document directly.
 
-## Copy-Paste Prompt: Set Up MCP End-to-End
+## Copy-Paste Prompt: Prove First, Then Set Up MCP
 
 ```text
 Set up agentic-mcp for me end-to-end and do not stop early.
 
 Execution requirements:
 1) If your environment supports skills, load the equivalent of a "using skills" workflow first (for example `using-agentic-mcp`, `skills-using`, or `/using-skills`).
-2) Configure MCP client integration with:
-   npx agentic-mcp setup --client claude-code --yes
-3) Validate discovery and limited-proof checks:
+2) Run minimal onboarding first with:
+   npx agentic-mcp init
+3) Discover providers with:
    - list_providers
-   - ping_claude
-4) Prove real usage with:
+4) Run ping_claude only if you need a limited proof check.
+5) Prove real usage first with:
+   - npx agentic-mcp prove claude
+6) If Claude Code setup is part of the goal, then configure MCP client integration with:
+   npx agentic-mcp setup --client claude-code --yes
+7) After setup, get a focused real answer with:
    - ask_claude "Reply with OK and your provider name."
-5) Use help_claude only if you need capabilities or CLI details.
-6) If any check fails, fix root cause and rerun checks.
-7) Return a concise report with configured files, detected providers, what remains unproven, and whether the real ask succeeded.
-8) Ask if any other providers should be set up too; if yes, configure and verify them the same way.
+8) Use help_claude only if you need capabilities or CLI details.
+9) If any check fails, fix root cause and rerun checks.
+10) Return a concise report with configured files, detected providers, what remains unproven, and whether the real ask succeeded.
+11) Ask if any other providers should be set up too; if yes, configure and verify them the same way.
 ```
 
 ## Copy-Paste Prompt: Use MCP Tools Correctly

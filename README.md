@@ -51,6 +51,7 @@ MCP is how editor and agent clients reach the same workflow. It is the delivery 
 - Use a provider's native CLI when one provider is enough and you do not need comparison or MCP reuse
 - Use `llm` when you want a broad plugin-centric CLI for local and remote models
 - Use OpenRouter when you want hosted multi-model routing behind one API
+- Use `mcpc` when your main goal is configure-once MCP portability and you do not need installed-CLI proof or side-by-side comparison
 - Use `agentic-mcp` when you already work through installed provider CLIs and want proof, comparison, and one reusable workflow
 
 ## How it works
