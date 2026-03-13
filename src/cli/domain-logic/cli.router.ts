@@ -1,5 +1,6 @@
 import process from 'node:process';
 
+import { writeAskAllReport } from './ask-all-report.writer';
 import { printResult } from './cli-output';
 import type { AskToolArgs, ReviewToolArgs } from '../../ask';
 import type { AskAllToolArgs } from '../../ask-all';
@@ -11,30 +12,92 @@ import { callCliTool } from '../utils/in-process-mcp-client.util';
 import { parseReviewArgs } from '../utils/review-arg-parser.util';
 import { parseSubcommand } from '../utils/subcommand.util';
 
-const buildToolArgs = (
-  subcommand: CliSubcommand,
-  remainingArgs: readonly string[]
-): AskToolArgs | AskAllToolArgs | ReviewToolArgs => {
+type CliToolArgs = AskToolArgs | AskAllToolArgs | ReviewToolArgs;
+
+type AskAllCliOptions = Readonly<{
+  reportPath?: string;
+  sanitizedArgs: readonly string[];
+}>;
+
+type CliExecutionPlan = Readonly<{
+  args: CliToolArgs;
+  reportPath?: string;
+}>;
+
+const buildMissingReportPathMessage = (): string => 'ask_all requires a file path after --report.';
+
+const buildDuplicateReportPathMessage = (): string => 'ask_all accepts --report only once.';
+
+const extractAskAllCliOptions = (remainingArgs: readonly string[]): AskAllCliOptions => {
+  const sanitizedArgs: string[] = [];
+  let reportPath: string | undefined;
+
+  for (let i = 0; i < remainingArgs.length; i += 1) {
+    const arg = remainingArgs[i];
+
+    if (arg !== '--report') {
+      if (arg != null) sanitizedArgs.push(arg);
+
+      continue;
+    }
+
+    if (reportPath != null) {
+      throw new ValidationError(buildDuplicateReportPathMessage());
+    }
+
+    const nextArg = remainingArgs[i + 1];
+
+    if (nextArg == null || nextArg.startsWith('--')) {
+      throw new ValidationError(buildMissingReportPathMessage());
+    }
+
+    reportPath = nextArg;
+    i += 1;
+  }
+
+  const result: AskAllCliOptions = {
+    reportPath,
+    sanitizedArgs,
+  };
+
+  return result;
+};
+
+const buildCliExecutionPlan = (subcommand: CliSubcommand, remainingArgs: readonly string[]): CliExecutionPlan => {
   if (subcommand === 'ask_all') {
-    return parseAskAllArgs(remainingArgs);
+    const askAllCliOptions = extractAskAllCliOptions(remainingArgs);
+    const result: CliExecutionPlan = {
+      args: parseAskAllArgs(askAllCliOptions.sanitizedArgs),
+      reportPath: askAllCliOptions.reportPath,
+    };
+
+    return result;
   }
 
   if (subcommand.startsWith('ask_')) {
-    return parseAskArgs(remainingArgs);
+    const result: CliExecutionPlan = {
+      args: parseAskArgs(remainingArgs),
+    };
+
+    return result;
   }
 
   if (subcommand.startsWith('review_')) {
-    return parseReviewArgs(remainingArgs);
+    const result: CliExecutionPlan = {
+      args: parseReviewArgs(remainingArgs),
+    };
+
+    return result;
   }
 
-  return {};
+  const result: CliExecutionPlan = {
+    args: {},
+  };
+
+  return result;
 };
 
-const buildCallCliToolInput = (
-  subcommand: CliSubcommand,
-  args: AskToolArgs | AskAllToolArgs | ReviewToolArgs,
-  configPath?: string
-): CallCliToolInput => {
+const buildCallCliToolInput = (subcommand: CliSubcommand, args: CliToolArgs, configPath?: string): CallCliToolInput => {
   if ('stream_live' in args && args.stream_live === true) {
     const result: CallCliToolInput = {
       toolName: subcommand,
@@ -53,6 +116,18 @@ const buildCallCliToolInput = (
   };
 
   return result;
+};
+
+const writeReportSavedMessage = (reportPath: string, isError: boolean): void => {
+  const message = `Report saved to ${reportPath}\n`;
+
+  if (isError) {
+    process.stderr.write(message);
+
+    return;
+  }
+
+  process.stdout.write(message);
 };
 
 const writeValidationError = (error: ValidationError): void => {
@@ -75,9 +150,17 @@ export const runCli = async (
   }
 
   try {
-    const args = buildToolArgs(parsedSubcommand, remainingArgs);
-    const callCliToolInput = buildCallCliToolInput(parsedSubcommand, args, configPath);
+    const cliExecutionPlan = buildCliExecutionPlan(parsedSubcommand, remainingArgs);
+    const callCliToolInput = buildCallCliToolInput(parsedSubcommand, cliExecutionPlan.args, configPath);
     const result = await callCliTool(callCliToolInput);
+
+    if (cliExecutionPlan.reportPath != null) {
+      await writeAskAllReport({ reportPath: cliExecutionPlan.reportPath, result });
+      printResult(result, { includeStructuredContent: false });
+      writeReportSavedMessage(cliExecutionPlan.reportPath, result.isError === true);
+
+      return;
+    }
 
     printResult(result);
   } catch (error: unknown) {

@@ -8,14 +8,34 @@ import type { CallCliToolInput, CliSubcommand } from '../common';
 
 const mocks = vi.hoisted(() => ({
   callCliTool: vi.fn<(input: CallCliToolInput) => Promise<CallToolResult>>(),
+  writeAskAllReport: vi.fn<(input: Readonly<{ reportPath: string; result: CallToolResult }>) => Promise<void>>(),
 }));
 
 vi.mock('../utils/in-process-mcp-client.util', () => ({
   callCliTool: mocks.callCliTool,
 }));
 
+vi.mock('./ask-all-report.writer', () => ({
+  writeAskAllReport: mocks.writeAskAllReport,
+}));
+
 const buildSuccessResult = (): CallToolResult => ({
   content: [{ type: 'text', text: 'ok' }],
+});
+
+const buildAskAllSuccessResult = (): CallToolResult => ({
+  content: [{ type: 'text', text: 'Comparison complete for 2 providers' }],
+  structuredContent: {
+    prompt: 'hello',
+    totalProviders: 2,
+    succeeded: 2,
+    failed: 0,
+    totalExecutionTimeMs: 42,
+    results: [
+      { provider: 'claude', success: true, executionTimeMs: 20, response: 'ok' },
+      { provider: 'codex', success: true, executionTimeMs: 22, response: 'ok' },
+    ],
+  },
 });
 
 const buildErrorResult = (): CallToolResult => ({
@@ -46,7 +66,9 @@ describe('runCli', () => {
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     process.exitCode = undefined;
     mocks.callCliTool.mockReset();
+    mocks.writeAskAllReport.mockReset();
     mocks.callCliTool.mockResolvedValue(buildSuccessResult());
+    mocks.writeAskAllReport.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -96,6 +118,33 @@ describe('runCli', () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it('GIVEN ask_all with --report WHEN run THEN it strips the report flag, writes the artifact, and prints a saved message', async () => {
+    const result = buildAskAllSuccessResult();
+
+    mocks.callCliTool.mockResolvedValueOnce(result);
+
+    await runCli('ask_all', ['hello', '--report', '/tmp/report.json']);
+
+    expect(mocks.callCliTool).toHaveBeenCalledWith({
+      toolName: 'ask_all',
+      args: { prompt: 'hello' },
+      configPath: undefined,
+    });
+    expect(mocks.writeAskAllReport).toHaveBeenCalledWith({
+      reportPath: '/tmp/report.json',
+      result,
+    });
+    expect(stdoutSpy).toHaveBeenNthCalledWith(1, 'Comparison complete for 2 providers\n');
+    expect(stdoutSpy).toHaveBeenNthCalledWith(2, 'Report saved to /tmp/report.json\n');
+  });
+
+  it('GIVEN ask_all with --report and no path WHEN run THEN it writes a validation error and does not call the MCP helper', async () => {
+    await runCli('ask_all', ['hello', '--report']);
+
+    expect(mocks.callCliTool).not.toHaveBeenCalled();
+    expect(stderrSpy).toHaveBeenCalledWith('Validation error: ask_all requires a file path after --report.\n');
+    expect(process.exitCode).toBe(1);
+  });
   it('GIVEN ping_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ping_claude', []);
 
