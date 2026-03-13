@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-03-13
+
 - Add `agentic-mcp prove` as the fastest real-answer proof path, with optional explicit provider selection
 - Add `ask_all --report <path>` so side-by-side comparisons can be saved as reusable JSON artifacts
 - Rework onboarding and setup guidance to prefer `prove` over manual first-proof `ask_<provider>` commands where the goal is initial validation
@@ -94,7 +96,8 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.11...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.12...HEAD
+[0.1.12]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.8...v0.1.9
