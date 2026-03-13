@@ -14,7 +14,7 @@ By the end of this path, you will have:
 
 - detected the provider CLIs available on this machine
 - chosen the best first provider to prove
-- completed one real `ask_<provider>` call through `agentic-mcp`
+- completed one real proof run through `agentic-mcp`
 
 This path does not require MCP client setup.
 
@@ -57,13 +57,14 @@ What success means: you know which provider should be your first real-answer can
 ### 3. Get the first real answer
 
 ```bash
-npx agentic-mcp ask_claude "Reply with OK and your provider name."
+npx agentic-mcp prove
 ```
 
-Replace `claude` with the detected provider you actually installed.
+Use `npx agentic-mcp prove codex` if you want to force a specific detected provider.
 
 Expected output shape:
 
+- a short prove message naming the selected provider
 - a normal provider response in stdout
 - no fallback wording about detection-only checks
 
@@ -80,7 +81,7 @@ Replace `claude` with the detected provider you actually installed.
 Expected output shape:
 
 - `binary detected at ...` or `version check succeeded ...`
-- a reminder to run `ask_<provider>` for real proof
+- a reminder to run `prove` or `ask_<provider>` for real proof
 
 What success means: the binary is present and the limited check works.
 
@@ -98,7 +99,7 @@ Next move:
 2. Authenticate it directly.
 3. Rerun `npx agentic-mcp list_providers`.
 
-### `ping_<provider>` works but `ask_<provider>` fails
+### `ping_<provider>` works but `prove` fails
 
 Interpretation: the binary exists, but authentication or provider-side access is still broken.
 
@@ -106,4 +107,4 @@ Next move:
 
 1. Run the provider CLI directly and confirm it can answer.
 2. Fix authentication there.
-3. Retry `npx agentic-mcp ask_<provider> ...`.
+3. Retry `npx agentic-mcp prove` or `npx agentic-mcp ask_<provider> ...`.
