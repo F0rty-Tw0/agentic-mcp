@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
   const connect = vi.fn<(transport: unknown) => Promise<void>>();
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
   const runSetup = vi.fn<(args: readonly string[]) => Promise<void>>();
+  const runProve = vi.fn<(input: Readonly<{ args: readonly string[]; configPath?: string }>) => Promise<void>>();
   const runCli = vi.fn<(subcommand: string, remainingArgs: readonly string[], configPath?: string) => Promise<void>>();
   const isCliSubcommand = vi.fn<(arg: string) => boolean>();
   const stdioServerTransport = vi.fn();
@@ -27,6 +28,7 @@ const mocks = vi.hoisted(() => {
     createServer,
     isCliSubcommand,
     runCli,
+    runProve,
     runSetup,
     stdioServerTransport,
     transportInstance,
@@ -44,6 +46,10 @@ vi.mock('../../cli', () => ({
 
 vi.mock('../../setup', () => ({
   runSetup: mocks.runSetup,
+}));
+
+vi.mock('../../prove', () => ({
+  runProve: mocks.runProve,
 }));
 
 vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
@@ -80,6 +86,8 @@ describe('main', () => {
     mocks.runCli.mockResolvedValue(undefined);
 
     mocks.runSetup.mockReset();
+    mocks.runProve.mockReset();
+    mocks.runProve.mockResolvedValue(undefined);
 
     mocks.stdioServerTransport.mockReset();
     mocks.stdioServerTransport.mockImplementation(createMockTransport);
@@ -122,6 +130,7 @@ describe('main', () => {
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--job-id'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--stream-live'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('sessions_<provider>'));
+    expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('prove'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('init'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--minimal'));
     expect(stdoutWriteSpy).toHaveBeenCalledWith(expect.stringContaining('--version'));
@@ -171,6 +180,19 @@ describe('main', () => {
 
     expect(mocks.runSetup).toHaveBeenCalledWith(['--minimal', '--client', 'cursor']);
     expect(mocks.createServer).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN "prove" as first arg WHEN main() is called THEN it calls runProve with remaining args and does not start the server', async () => {
+    process.argv = ['node', '', 'prove', 'codex', '--config', '/tmp/custom.json'];
+
+    await entry();
+
+    expect(mocks.runProve).toHaveBeenCalledWith({
+      args: ['codex', '--config', '/tmp/custom.json'],
+      configPath: '/tmp/custom.json',
+    });
+    expect(mocks.createServer).not.toHaveBeenCalled();
+    expect(mocks.runCli).not.toHaveBeenCalled();
   });
 
   describe('CLI subcommand routing', () => {

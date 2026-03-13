@@ -3,6 +3,7 @@ import process from 'node:process';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { isCliSubcommand, runCli } from '../../cli';
+import { runProve } from '../../prove';
 import { createServer } from '../../server';
 import { runSetup } from '../../setup';
 import { APP_VERSION } from '../../shared';
@@ -32,6 +33,12 @@ export const entry = async (): Promise<void> => {
 
   if (firstArg === 'init') {
     return runSetup(['--minimal', ...args.slice(1)]);
+  }
+
+  if (firstArg === 'prove') {
+    const configPath = parseConfigPath(process.argv);
+
+    return runProve({ args: args.slice(1), configPath });
   }
 
   if (firstArg && isCliSubcommand(firstArg)) {
