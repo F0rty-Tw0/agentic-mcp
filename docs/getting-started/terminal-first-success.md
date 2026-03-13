@@ -2,6 +2,12 @@
 
 Use this path when you want proof that `agentic-mcp` can do real work before you spend time on MCP client setup.
 
+## Pick this path if
+
+- you already installed one provider CLI and want to know whether it can answer through `agentic-mcp`
+- you want the fastest route to a first working result
+- you do not want to configure an editor or agent client yet
+
 ## What success looks like
 
 By the end of this path, you will have:

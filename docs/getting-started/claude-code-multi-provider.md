@@ -2,6 +2,20 @@
 
 Use this path when you already have one or more local provider CLIs installed and want Claude Code to reach them through one reusable proof-and-compare workflow.
 
+## Pick this path if
+
+- you already work inside Claude Code and want the same provider workflow there
+- you do not want to wire a separate MCP entry for each installed provider
+- you want setup to end in a real provider answer, not just a config write
+
+## What success looks like
+
+By the end of this path, you will have:
+
+- written the Claude Code MCP entry for `agentic-mcp`
+- reloaded Claude Code and confirmed the tools are visible
+- completed one real `ask_<provider>` call through the shared workflow
+
 ## Prerequisites
 
 - Node.js 22 or newer

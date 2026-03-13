@@ -27,13 +27,24 @@
 - MCP client setup becomes repetitive when each tool wants its own integration entry
 - `agentic-mcp` keeps proof, comparison, and reusable setup in one workflow
 
-## Start here by goal
+## Choose your path in 30 seconds
 
-- [I want my first real answer from the terminal](./docs/getting-started/terminal-first-success.md)
-- [I want Claude Code to reuse one setup across my installed providers](./docs/getting-started/claude-code-multi-provider.md)
-- [I want to compare two providers on the same prompt](./docs/getting-started/compare-two-providers.md)
+- **I already installed one provider and I want proof it can answer real work from the terminal.**
+  Start here: [Get your first real answer from the terminal](./docs/getting-started/terminal-first-success.md)
+
+- **I already installed two providers and I want to compare which one gives the better answer.**
+  Start here: [Compare two providers on the same prompt](./docs/getting-started/compare-two-providers.md)
+
+- **I already use Claude Code and I want the same proof-and-compare workflow there without wiring each provider separately.**
+  Start here: [Reuse one Claude Code setup across my installed providers](./docs/getting-started/claude-code-multi-provider.md)
 
 MCP is how editor and agent clients reach the same workflow. It is the delivery mechanism, not the reason to use the project.
+
+## Concrete scenarios
+
+- "I installed Claude and want to know whether it is actually authenticated before I wire it into anything else."
+- "I installed Claude and Codex and want to compare their refactor suggestions on the same prompt."
+- "I already work in Claude Code and want one reusable setup instead of separate per-provider MCP entries."
 
 ## When to use something else
 

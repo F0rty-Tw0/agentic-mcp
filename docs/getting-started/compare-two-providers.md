@@ -2,6 +2,12 @@
 
 Use this path when the value is in the contrast: quality, latency, or failure behavior across two installed providers.
 
+## Pick this path if
+
+- you already have two providers installed and want to compare them on one task
+- you want to see concrete differences instead of guessing which provider is better
+- comparison itself is the reason you are here
+
 ## What success looks like
 
 By the end of this path, you will have:
