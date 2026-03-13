@@ -15,8 +15,8 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 ## Output Contract
 
 - Human output includes `What was done`, `Detected providers`, `What remains unproven`, and the next command or diagnostic step
-- JSON output keeps the existing top-level fields and adds `summary.nextStep`, `summary.unproven`, and, for minimal mode, `summary.firstAskCommand`
-- If a provider is detected, setup points to a concrete `ask_<provider>` command
+- JSON output keeps the existing top-level fields and adds `summary.nextStep`, `summary.unproven`, and, for minimal mode, `summary.firstProofCommand`
+- If a provider is detected, setup points to a concrete `prove <provider>` command
 - If no provider is detected, setup points to the next diagnostic step instead of implying readiness
 
 ## Structure
@@ -49,7 +49,7 @@ Exercises the setup CLI with real filesystem operations in a temp directory. Use
 | Backup creation             | When `--backup` is passed with an existing config, a `.bak` file is created with the original content        | `.bak` file content matches the original config                                                        |
 | Non-interactive safety gate | Without `--yes` in non-interactive mode, setup aborts with an error and does not write any file              | stderr contains `"non-interactive write requires explicit --yes"`; target file does not exist          |
 | Dry run                     | With `--dry-run`, output is produced but no file is written to disk                                          | stdout length > 0; target file does not exist                                                          |
-| Minimal setup               | With `--minimal`, the skill is installed and the next real-answer command is surfaced                        | skill file exists; stdout explains what remains unproven and shows the first real-answer command       |
+| Minimal setup               | With `--minimal`, the skill is installed and the next real-proof command is surfaced                         | skill file exists; stdout explains what remains unproven and shows the first real-proof command        |
 
 ## Unit Tests
 

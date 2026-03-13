@@ -14,6 +14,7 @@ describe('SKILL_CONTENT', () => {
       '`ask_all`',
       '`sessions_<provider>`',
       '`provider_metrics`',
+      '`prove`',
     ];
 
     for (const requiredCommand of requiredCommands) {
@@ -24,6 +25,7 @@ describe('SKILL_CONTENT', () => {
   it('GIVEN installed skill WHEN describing command choice THEN it explains what to use and when', () => {
     const expectedGuidance = [
       'Need to discover detected providers',
+      'Need the fastest first real proof',
       'Need limited proof for one provider',
       'Need to inspect provider-specific capabilities',
       'Need one provider to answer a task',
