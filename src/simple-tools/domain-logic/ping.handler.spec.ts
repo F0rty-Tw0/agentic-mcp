@@ -31,7 +31,7 @@ type VersionCheckFailure = Readonly<{
 }>;
 
 const createAskProofMessage = (providerName: string): string => {
-  return `Run ask_${providerName} to prove authentication and a real response.`;
+  return `Run prove ${providerName} or ask_${providerName} to prove authentication and a real response.`;
 };
 
 const createBinaryDetectedText = (providerName: string): string => {
@@ -45,7 +45,7 @@ const createVersionSucceededText = (providerName: string, version: string): stri
 const createVersionFailedText = (providerName: string, input: VersionCheckFailure): string => {
   const { exitCode, signal, timedOut } = input;
 
-  return `${providerName}: version check failed (exit ${exitCode}, signal: ${signal}, timedOut: ${String(timedOut)}). Fix the CLI, then rerun ping_${providerName} before ask_${providerName}.`;
+  return `${providerName}: version check failed (exit ${exitCode}, signal: ${signal}, timedOut: ${String(timedOut)}). Fix the CLI, then rerun ping_${providerName} before prove ${providerName} or ask_${providerName}.`;
 };
 
 describe('handlePing', () => {
@@ -136,7 +136,7 @@ describe('handlePing', () => {
         apiKey: 'secret',
         ['MCP_TOOL_TIMEOUT']: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
       });
-      expect((result.content[0] as McpPlainTextContent).text).toContain('Run ask_gemini');
+      expect((result.content[0] as McpPlainTextContent).text).toContain('Run prove gemini');
     });
 
     it('GIVEN output with ANSI codes WHEN handling ping THEN strips ANSI from output', async () => {

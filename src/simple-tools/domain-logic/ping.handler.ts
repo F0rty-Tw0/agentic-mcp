@@ -28,7 +28,7 @@ const createPingResponse = (text: string): CallToolResult => {
 };
 
 const createAskProofMessage = (providerName: string): string => {
-  return `Run ask_${providerName} to prove authentication and a real response.`;
+  return `Run prove ${providerName} or ask_${providerName} to prove authentication and a real response.`;
 };
 
 const createBinaryDetectedText = (context: ResolvedProviderEntry): string => {
@@ -40,7 +40,7 @@ const createVersionSucceededText = (context: ResolvedProviderEntry, version: str
 };
 
 const createVersionFailedText = (context: ResolvedProviderEntry, result: PingFailureResult): string => {
-  return `${context.name}: version check failed (exit ${result.exitCode}, signal: ${result.signal}, timedOut: ${String(result.timedOut)}). Fix the CLI, then rerun ping_${context.name} before ask_${context.name}.`;
+  return `${context.name}: version check failed (exit ${result.exitCode}, signal: ${result.signal}, timedOut: ${String(result.timedOut)}). Fix the CLI, then rerun ping_${context.name} before prove ${context.name} or ask_${context.name}.`;
 };
 
 const resolveVersion = (output: string, pattern?: string): string => {
