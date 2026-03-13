@@ -42,12 +42,28 @@ const buildNextStep = (providers: readonly ResolvedProvider[]): string => {
   return 'Next: install and authenticate a supported provider CLI, then rerun list_providers.';
 };
 
+const buildReadinessLine = (providers: readonly ResolvedProvider[]): string => {
+  const hasDetectedProvider = providers.some((provider) => provider.enabled && provider.available);
+
+  if (!hasDetectedProvider) {
+    return '';
+  }
+
+  return 'Readiness: binary detection is not proof of authentication or a real response.';
+};
+
 export const handleListProviders = (providers: readonly ResolvedProvider[]): CallToolResult => {
   const lines = providers.map(buildProviderLine);
   const sections = ['Configured providers:'];
 
   if (lines.length > 0) {
     sections.push(lines.join('\n'));
+  }
+
+  const readinessLine = buildReadinessLine(providers);
+
+  if (readinessLine !== '') {
+    sections.push(readinessLine);
   }
 
   sections.push(buildNextStep(providers));

@@ -52,6 +52,7 @@ describe('handleListProviders', () => {
             text:
               'Configured providers:\n' +
               '- claude: Anthropic Claude [binary detected | stable]\n' +
+              'Readiness: binary detection is not proof of authentication or a real response.\n' +
               'Next: run prove claude to prove authentication and a real response.',
           },
         ],
@@ -86,6 +87,7 @@ describe('handleListProviders', () => {
           '- claude: Anthropic Claude [binary detected | stable]\n' +
           '- codex: OpenAI Codex [binary missing | beta]\n' +
           '- gemini: Google Gemini [disabled | experimental]\n' +
+          'Readiness: binary detection is not proof of authentication or a real response.\n' +
           'Next: run prove claude to prove authentication and a real response.'
       );
     });
