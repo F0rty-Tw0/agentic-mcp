@@ -4,12 +4,37 @@ import { toMcpError } from '../../shared';
 import type { ToolDefinition } from '../../shared';
 import { getProviderMetrics } from '../data-access/provider-metrics-store';
 
+const buildProviderSummaryLine = (
+  providerStats: Awaited<ReturnType<typeof getProviderMetrics>>['providers'][number]
+): string =>
+  `- ${providerStats.provider}: ${providerStats.totalCalls} calls, ${providerStats.successCount} succeeded, ` +
+  `${providerStats.failureCount} failed, avg ${providerStats.avgExecutionTimeMs}ms, last ${providerStats.lastCallAt}`;
+
+const buildProviderMetricsSummaryText = (summary: Awaited<ReturnType<typeof getProviderMetrics>>): string => {
+  const headerLines = [`Provider usage since ${summary.collectedSince}`, `Total calls: ${summary.totalCalls}`];
+
+  if (summary.providers.length === 0) {
+    const emptyText = [...headerLines, 'Providers:', '- none yet'].join('\n');
+
+    return emptyText;
+  }
+
+  const text = [
+    ...headerLines,
+    'Providers:',
+    ...summary.providers.map((provider) => buildProviderSummaryLine(provider)),
+  ].join('\n');
+
+  return text;
+};
+
 export const handleProviderMetrics = async (): Promise<CallToolResult> => {
   try {
     const summary = await getProviderMetrics();
-    const text = JSON.stringify(summary, null, 2);
+    const text = buildProviderMetricsSummaryText(summary);
     const callToolResult: CallToolResult = {
       content: [{ type: 'text', text }],
+      structuredContent: summary,
     };
 
     return callToolResult;

@@ -16,7 +16,7 @@ describe('handleProviderMetrics', () => {
     vi.restoreAllMocks();
   });
 
-  it('GIVEN a provider metrics summary WHEN called THEN returns it as JSON text content', async () => {
+  it('GIVEN a provider metrics summary WHEN called THEN returns summary text plus structured content', async () => {
     const fakeSummary = {
       collectedSince: '2026-01-01T00:00:00.000Z',
       metricsFilePath: '/tmp/provider-metrics.json',
@@ -37,12 +37,18 @@ describe('handleProviderMetrics', () => {
     vi.mocked(getProviderMetrics).mockResolvedValue(fakeSummary);
 
     const result = await handleProviderMetrics();
+    const textContent = result.content[0];
 
     expect(result.isError).toBeUndefined();
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0]).toStrictEqual({
+    expect(result.structuredContent).toStrictEqual(fakeSummary);
+    expect(textContent).toStrictEqual({
       type: 'text',
-      text: JSON.stringify(fakeSummary, null, 2),
+      text: [
+        'Provider usage since 2026-01-01T00:00:00.000Z',
+        'Total calls: 3',
+        'Providers:',
+        '- claude: 3 calls, 2 succeeded, 1 failed, avg 200ms, last 2026-01-01T00:01:00.000Z',
+      ].join('\n'),
     });
   });
 
