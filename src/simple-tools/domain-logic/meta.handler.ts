@@ -36,7 +36,7 @@ const buildNextStep = (providers: readonly ResolvedProvider[]): string => {
   const detectedProvider = providers.find((provider) => provider.enabled && provider.available);
 
   if (detectedProvider) {
-    return `Next: run ask_${detectedProvider.name} to prove authentication and a real response.`;
+    return `Next: run prove ${detectedProvider.name} to prove authentication and a real response.`;
   }
 
   return 'Next: install and authenticate a supported provider CLI, then rerun list_providers.';

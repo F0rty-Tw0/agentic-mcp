@@ -52,7 +52,7 @@ describe('handleListProviders', () => {
             text:
               'Configured providers:\n' +
               '- claude: Anthropic Claude [binary detected | stable]\n' +
-              'Next: run ask_claude to prove authentication and a real response.',
+              'Next: run prove claude to prove authentication and a real response.',
           },
         ],
       });
@@ -86,7 +86,7 @@ describe('handleListProviders', () => {
           '- claude: Anthropic Claude [binary detected | stable]\n' +
           '- codex: OpenAI Codex [binary missing | beta]\n' +
           '- gemini: Google Gemini [disabled | experimental]\n' +
-          'Next: run ask_claude to prove authentication and a real response.'
+          'Next: run prove claude to prove authentication and a real response.'
       );
     });
 
