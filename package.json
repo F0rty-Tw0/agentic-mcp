@@ -1,7 +1,7 @@
 {
   "name": "agentic-mcp",
   "version": "0.1.10",
-  "description": "Use any installed AI CLI from one MCP server or terminal command",
+  "description": "Prove and compare the AI CLIs you already installed from one command surface or one MCP setup",
   "license": "MIT",
   "author": "Artiom Tofan",
   "repository": {

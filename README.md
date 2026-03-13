@@ -1,38 +1,52 @@
 # agentic-mcp
 
-> Use any installed AI CLI from one MCP server or one terminal command.
+> Prove and compare the AI CLIs you already installed, from one command surface or one MCP setup.
 
 [![CI](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/F0rty-Tw0/agentic-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-`agentic-mcp` helps you get a real answer from the provider you already installed, compare multiple local providers on the same prompt, and configure one MCP client entry instead of wiring each provider separately.
+`agentic-mcp` helps you prove an installed provider CLI can do real work, compare multiple installed providers on the same prompt, and reuse one workflow across terminal and MCP clients.
 
 ## Who this is for
 
-- Terminal-only developers who want a working answer fast
-- MCP client users who want one setup path for Claude Code, Cursor, or Windsurf
-- Tool and agent builders who want one surface for provider discovery, asks, and comparison
+- Terminal-first developers who already have at least one provider CLI installed
+- Developers who want to compare two installed providers on the same prompt
+- MCP client users who want one reusable setup path for Claude Code, Cursor, or Windsurf
+- Tool and agent builders who want a consistent ask, ping, and comparison surface across installed CLIs
+
+## Who should skip it
+
+- Users who only need one provider and are happy with that provider's native CLI
+- Users looking for hosted routing, hosted billing, or a cloud model marketplace
+- Users who do not yet have any provider CLI installed or authenticated
+
+## Why this exists
+
+- Installed AI CLIs expose different proof paths, flags, and workflows
+- Comparing providers by hand means rerunning the same prompt and collecting outputs yourself
+- MCP client setup becomes repetitive when each tool wants its own integration entry
+- `agentic-mcp` keeps proof, comparison, and reusable setup in one workflow
 
 ## Start here by goal
 
 - [I want my first real answer from the terminal](./docs/getting-started/terminal-first-success.md)
-- [I want Claude Code to reach multiple local providers through one setup](./docs/getting-started/claude-code-multi-provider.md)
+- [I want Claude Code to reuse one setup across my installed providers](./docs/getting-started/claude-code-multi-provider.md)
 - [I want to compare two providers on the same prompt](./docs/getting-started/compare-two-providers.md)
 
 MCP is how editor and agent clients reach the same workflow. It is the delivery mechanism, not the reason to use the project.
 
-## Why people use it
+## When to use something else
 
-- Get a real answer from the CLI you already installed without learning a provider-specific wrapper.
-- Compare providers on the same prompt without bespoke glue scripts.
-- Configure one MCP client entry instead of maintaining separate per-provider integrations.
-- Keep direct CLI and MCP usage aligned so the same workflow works in both places.
+- Use a provider's native CLI when one provider is enough and you do not need comparison or MCP reuse
+- Use `llm` when you want a broad plugin-centric CLI for local and remote models
+- Use OpenRouter when you want hosted multi-model routing behind one API
+- Use `agentic-mcp` when you already work through installed provider CLIs and want proof, comparison, and one reusable workflow
 
 ## How it works
 
 1. You install and authenticate one or more provider CLIs locally.
-2. `agentic-mcp` gives you one command and tool surface across those providers.
-3. Your terminal or MCP client calls `agentic-mcp`, which forwards the request to the underlying provider CLI with the right arguments.
+2. `agentic-mcp` helps you prove one works for a real task and compare several on the same prompt.
+3. If you want editor or agent integration, you reuse that same workflow through an MCP client.
 
 ## Before you start
 
@@ -72,37 +86,7 @@ What this step does not prove:
 - provider authentication works
 - a real prompt can complete through a provider
 
-### 2. Configure your MCP client or stay in the terminal
-
-If you want MCP tools inside Claude Code, Cursor, or Windsurf, write the client config entry now:
-
-```bash
-npx agentic-mcp setup --client claude-code --yes
-npx agentic-mcp setup --client cursor --yes
-npx agentic-mcp setup --client windsurf --yes
-```
-
-For another MCP client, generate a generic JSON entry and choose the target file yourself:
-
-```bash
-npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes
-```
-
-If you want to preview changes before writing, add `--dry-run`. If you only care about terminal usage, you can skip MCP client setup and continue to the next step.
-
-What this step proves:
-
-- `agentic-mcp` can write or preview the MCP client entry
-- the setup output tells you what was configured, what was detected, and what remains unproven
-
-What this step does not prove:
-
-- provider authentication works
-- a real provider response can complete through `agentic-mcp`
-
-If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, `ask_<provider>`, and `review_<provider>` where supported appear.
-
-### 3. Discover what is detected
+### 2. Discover what is detected
 
 ```bash
 npx agentic-mcp list_providers
@@ -120,7 +104,37 @@ What this step does not prove:
 - provider authentication works
 - a real prompt can complete through that provider
 
-### 4. Run a limited ping check
+### 3. Get your first real answer
+
+```bash
+npx agentic-mcp ask_claude "Reply with OK and your provider name."
+```
+
+Replace `claude` with the provider you actually installed.
+
+What this step proves:
+
+- `agentic-mcp` can route a real prompt through the selected provider
+- your installed provider is usable for real work through this project
+
+Milestone: You have now successfully routed a real provider through `agentic-mcp`.
+
+### 4. Compare providers when two are usable
+
+```bash
+npx agentic-mcp ask_all "Reply with one sentence on why your answer is useful here." --providers claude,codex
+```
+
+Use this only when you want side-by-side comparison on the same prompt.
+
+What this step proves:
+
+- you can compare providers through one interface instead of hand-running the same prompt multiple times
+- `ask_all` is the product's comparison workflow, not just an advanced extra
+
+Milestone: You have now completed your first side-by-side provider comparison through `agentic-mcp`.
+
+### 5. Optional: run a limited ping check
 
 ```bash
 npx agentic-mcp ping_claude
@@ -138,33 +152,35 @@ What this step does not prove:
 - provider authentication works
 - a real provider answer can complete
 
-### 5. Get your first real answer
+### 6. Add MCP client setup when you want editor or agent integration
+
+If you want MCP tools inside Claude Code, Cursor, or Windsurf, write the client config entry now:
 
 ```bash
-npx agentic-mcp ask_claude "Reply with OK and your provider name."
+npx agentic-mcp setup --client claude-code --yes
+npx agentic-mcp setup --client cursor --yes
+npx agentic-mcp setup --client windsurf --yes
 ```
+
+For another MCP client, generate a generic JSON entry and choose the target file yourself:
+
+```bash
+npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes
+```
+
+If you want to preview changes before writing, add `--dry-run`. If you only care about terminal usage, you can stop after the proof steps above.
 
 What this step proves:
 
-- `agentic-mcp` can route a real prompt through the selected provider
-- your installed provider is usable for real work through this project
+- `agentic-mcp` can write or preview the MCP client entry
+- the setup output tells you what was configured, what was detected, and what remains unproven
 
-Milestone: You have now successfully routed a real provider through `agentic-mcp`.
+What this step does not prove:
 
-### 6. Compare providers when two are usable
+- provider authentication works
+- a real provider response can complete through `agentic-mcp`
 
-```bash
-npx agentic-mcp ask_all "Reply with one sentence on why your answer is useful here." --providers claude,codex
-```
-
-Use this only when you want side-by-side comparison on the same prompt.
-
-What this step proves:
-
-- you can compare providers through one interface instead of hand-running the same prompt multiple times
-- `ask_all` is the product's comparison workflow, not just an advanced extra
-
-Milestone: You have now completed your first side-by-side provider comparison through `agentic-mcp`.
+If you are using MCP mode, restart your client after setup and confirm that tools such as `list_providers`, `ping_<provider>`, `ask_<provider>`, and `review_<provider>` where supported appear.
 
 ## Supported MCP clients
 

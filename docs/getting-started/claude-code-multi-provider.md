@@ -1,6 +1,6 @@
-# Use multiple providers inside Claude Code
+# Reuse one Claude Code setup across installed providers
 
-Use this path when you want one Claude Code MCP setup surface to reach whichever local provider CLIs you already installed.
+Use this path when you already have one or more local provider CLIs installed and want Claude Code to reach them through one reusable proof-and-compare workflow.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ Expected result:
 
 - tools such as `list_providers`, `ping_<provider>`, and `ask_<provider>` become visible
 
-What success means: Claude Code can now see the `agentic-mcp` tool surface.
+What success means: Claude Code can now see the same `agentic-mcp` workflow you will use for provider proof, comparison, and follow-on asks.
 
 ### 3. Confirm what is detected
 
@@ -64,7 +64,7 @@ Expected output shape:
 - a real provider response
 - no setup-only or ping-only wording
 
-What success means: Claude Code has successfully routed a real provider through one shared workflow instead of separate per-provider setup paths.
+What success means: Claude Code can now reuse the same proof-and-compare workflow instead of forcing you to wire each provider separately.
 
 ## Most likely blocker
 
