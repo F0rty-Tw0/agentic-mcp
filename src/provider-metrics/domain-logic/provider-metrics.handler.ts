@@ -2,28 +2,47 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { toMcpError } from '../../shared';
 import type { ToolDefinition } from '../../shared';
+import type { ProviderMetricsSummary, ProviderStats } from '../common';
 import { getProviderMetrics } from '../data-access/provider-metrics-store';
 
-const buildProviderSummaryLine = (
-  providerStats: Awaited<ReturnType<typeof getProviderMetrics>>['providers'][number]
-): string =>
-  `- ${providerStats.provider}: ${providerStats.totalCalls} calls, ${providerStats.successCount} succeeded, ` +
-  `${providerStats.failureCount} failed, avg ${providerStats.avgExecutionTimeMs}ms, last ${providerStats.lastCallAt}`;
+const buildSuccessRate = (providerStats: ProviderStats): number => {
+  const successRate = Math.round((providerStats.successCount / providerStats.totalCalls) * 100);
 
-const buildProviderMetricsSummaryText = (summary: Awaited<ReturnType<typeof getProviderMetrics>>): string => {
-  const headerLines = [`Provider usage since ${summary.collectedSince}`, `Total calls: ${summary.totalCalls}`];
+  return successRate;
+};
 
-  if (summary.providers.length === 0) {
-    const emptyText = [...headerLines, 'Providers:', '- none yet'].join('\n');
+const buildProviderSummaryLine = (providerStats: ProviderStats): string => {
+  const successRate = buildSuccessRate(providerStats);
+  const line =
+    `- ${providerStats.provider}: ${providerStats.totalCalls} calls, ${providerStats.successCount} succeeded, ` +
+    `${providerStats.failureCount} failed, success ${successRate}%, avg ${providerStats.avgExecutionTimeMs}ms, ` +
+    `last ${providerStats.lastCallAt}`;
 
-    return emptyText;
+  return line;
+};
+
+const buildNextStepLine = (summary: ProviderMetricsSummary): string => {
+  if (summary.totalCalls === 0) {
+    return 'Next: run prove or ask_<provider> to start collecting provider metrics.';
   }
 
-  const text = [
-    ...headerLines,
+  return 'Next: run ask_all --report <path> when you want a saved comparison artifact.';
+};
+
+const buildProviderMetricsSummaryText = (summary: ProviderMetricsSummary): string => {
+  const providerLines =
+    summary.providers.length === 0
+      ? ['- none yet']
+      : summary.providers.map((provider) => buildProviderSummaryLine(provider));
+  const lines = [
+    `Provider usage since ${summary.collectedSince}`,
+    `Metrics file: ${summary.metricsFilePath}`,
+    `Total calls: ${summary.totalCalls}`,
     'Providers:',
-    ...summary.providers.map((provider) => buildProviderSummaryLine(provider)),
-  ].join('\n');
+    ...providerLines,
+    buildNextStepLine(summary),
+  ];
+  const text = lines.join('\n');
 
   return text;
 };

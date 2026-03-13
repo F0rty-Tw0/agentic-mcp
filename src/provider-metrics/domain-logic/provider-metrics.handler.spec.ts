@@ -45,9 +45,11 @@ describe('handleProviderMetrics', () => {
       type: 'text',
       text: [
         'Provider usage since 2026-01-01T00:00:00.000Z',
+        'Metrics file: /tmp/provider-metrics.json',
         'Total calls: 3',
         'Providers:',
-        '- claude: 3 calls, 2 succeeded, 1 failed, avg 200ms, last 2026-01-01T00:01:00.000Z',
+        '- claude: 3 calls, 2 succeeded, 1 failed, success 67%, avg 200ms, last 2026-01-01T00:01:00.000Z',
+        'Next: run ask_all --report <path> when you want a saved comparison artifact.',
       ].join('\n'),
     });
   });
