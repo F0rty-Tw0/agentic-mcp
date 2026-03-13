@@ -1,5 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+import { buildAskAllSummary } from './ask-all-summary.builder';
 import { handleAsk } from '../../ask';
 import type { AskToolArgs } from '../../ask';
 import { resolveAskTimeoutMs } from '../../ask/utils';
@@ -160,10 +161,11 @@ export const handleAskAll = async (
     results,
   };
 
-  const text = JSON.stringify(askAllResult, null, 2);
+  const summaryText = buildAskAllSummary(askAllResult);
   const callToolResult: CallToolResult = {
     isError: succeeded.length === 0,
-    content: [{ type: 'text', text }],
+    content: [{ type: 'text', text: summaryText }],
+    structuredContent: askAllResult,
   };
 
   return callToolResult;

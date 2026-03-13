@@ -1,16 +1,50 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+import type { ResolvedProviderEntry } from '../../shared';
+import type { AskAllResult } from '../common';
+
 const NO_MODEL = 'no-model';
 
-const makeSuccessResult = (text: string): CallToolResult => ({
-  content: [{ type: 'text', text }],
-  isError: false,
-});
+export const makeProvider = (
+  name: string,
+  config: Partial<ResolvedProviderEntry['config']> = {}
+): ResolvedProviderEntry => {
+  const provider: ResolvedProviderEntry = {
+    name,
+    binaryPath: `/usr/bin/${name}`,
+    config: config as ResolvedProviderEntry['config'],
+  };
 
-const makeErrorResult = (text: string): CallToolResult => ({
-  content: [{ type: 'text', text }],
-  isError: true,
-});
+  return provider;
+};
+
+export const makeSuccessResult = (text: string): CallToolResult => {
+  const result: CallToolResult = {
+    content: [{ type: 'text', text }],
+    isError: false,
+  };
+
+  return result;
+};
+
+export const makeErrorResult = (text: string): CallToolResult => {
+  const result: CallToolResult = {
+    content: [{ type: 'text', text }],
+    isError: true,
+  };
+
+  return result;
+};
+
+export const parseResult = (result: CallToolResult): AskAllResult => {
+  const structuredContent = result.structuredContent;
+
+  if (!structuredContent) {
+    throw new Error('Expected structuredContent to be defined');
+  }
+
+  return structuredContent as AskAllResult;
+};
 
 export const EXPLICIT_SHARED_MODEL = 'claude-sonnet-4';
 

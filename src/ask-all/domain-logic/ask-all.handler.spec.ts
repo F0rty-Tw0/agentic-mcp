@@ -2,31 +2,19 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAskAll } from './ask-all.handler';
-import { EXPLICIT_SHARED_MODEL, resolveExplicitModelResult } from './ask-all.handler.spec.helper';
+import {
+  EXPLICIT_SHARED_MODEL,
+  makeErrorResult,
+  makeProvider,
+  makeSuccessResult,
+  parseResult,
+  resolveExplicitModelResult,
+} from './ask-all.handler.spec.helper';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
 import type { McpTextContent, ResolvedProviderEntry } from '../../shared';
-import type { AskAllResult, AskAllToolArgs } from '../common';
+import type { AskAllToolArgs } from '../common';
 
 vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
-
-const makeProvider = (name: string, config: Partial<ResolvedProviderEntry['config']> = {}): ResolvedProviderEntry => ({
-  name,
-  binaryPath: `/usr/bin/${name}`,
-  config: config as ResolvedProviderEntry['config'],
-});
-
-const makeSuccessResult = (text: string): CallToolResult => ({
-  content: [{ type: 'text', text }],
-  isError: false,
-});
-
-const makeErrorResult = (text: string): CallToolResult => ({
-  content: [{ type: 'text', text }],
-  isError: true,
-});
-
-const parseResult = (result: CallToolResult): AskAllResult =>
-  JSON.parse((result.content[0] as McpTextContent).text) as AskAllResult;
 
 describe('handleAskAll', () => {
   let claude: ResolvedProviderEntry;
@@ -293,6 +281,22 @@ describe('handleAskAll', () => {
       expect(typeof parsed.totalExecutionTimeMs).toBe('number');
       expect(parsed.totalExecutionTimeMs).toBeGreaterThanOrEqual(0);
       expect(typeof parsed.results[0]?.executionTimeMs).toBe('number');
+    });
+
+    it('GIVEN mixed provider outcomes WHEN called THEN text content summarizes the comparison', async () => {
+      vi.mocked(handleAsk)
+        .mockResolvedValueOnce(makeSuccessResult('ok'))
+        .mockResolvedValueOnce(makeErrorResult('failed'));
+
+      const args: AskAllToolArgs = { prompt: 'hello' };
+      const result = await handleAskAll([claude, codex], args);
+      const summaryText = (result.content[0] as McpTextContent).text;
+
+      expect(summaryText).toContain('Comparison complete for 2 providers');
+      expect(summaryText).toContain('Succeeded: 1');
+      expect(summaryText).toContain('Failed: 1');
+      expect(summaryText).toContain('- claude: success');
+      expect(summaryText).toContain('- codex: failed');
     });
   });
 
