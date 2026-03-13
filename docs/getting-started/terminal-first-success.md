@@ -1,6 +1,16 @@
 # Get your first real answer from the terminal
 
-Use this path when you want proof that `agentic-mcp` can do real work before you bother with MCP client setup.
+Use this path when you want proof that `agentic-mcp` can do real work before you spend time on MCP client setup.
+
+## What success looks like
+
+By the end of this path, you will have:
+
+- detected the provider CLIs available on this machine
+- chosen the best first provider to prove
+- completed one real `ask_<provider>` call through `agentic-mcp`
+
+This path does not require MCP client setup.
 
 ## Prerequisites
 
@@ -38,7 +48,22 @@ Expected output shape:
 
 What success means: you know which provider should be your first real-answer candidate.
 
-### 3. Run the limited ping check
+### 3. Get the first real answer
+
+```bash
+npx agentic-mcp ask_claude "Reply with OK and your provider name."
+```
+
+Replace `claude` with the detected provider you actually installed.
+
+Expected output shape:
+
+- a normal provider response in stdout
+- no fallback wording about detection-only checks
+
+What success means: you have now routed a real prompt through `agentic-mcp` and the selected provider can do useful work from the terminal.
+
+### 4. Optional: run the limited ping check
 
 ```bash
 npx agentic-mcp ping_claude
@@ -54,19 +79,6 @@ Expected output shape:
 What success means: the binary is present and the limited check works.
 
 What this still does not prove: authentication and a successful provider response.
-
-### 4. Get the first real answer
-
-```bash
-npx agentic-mcp ask_claude "Reply with OK and your provider name."
-```
-
-Expected output shape:
-
-- a normal provider response in stdout
-- no fallback wording about detection-only checks
-
-What success means: you have now routed a real prompt through `agentic-mcp` and the selected provider can do useful work from the terminal.
 
 ## Most likely blocker
 

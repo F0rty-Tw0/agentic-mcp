@@ -1,6 +1,16 @@
 # Compare two providers on the same prompt
 
-Use this path when the value is in the contrast: quality, latency, or failure behavior across providers.
+Use this path when the value is in the contrast: quality, latency, or failure behavior across two installed providers.
+
+## What success looks like
+
+By the end of this path, you will have:
+
+- confirmed both provider CLIs are available
+- proved each provider can answer on its own
+- captured one side-by-side comparison through `ask_all`
+
+This path is only worth it when comparison itself is the goal.
 
 ## Prerequisites
 
@@ -22,7 +32,7 @@ Expected output shape:
 - both target providers appear as `binary detected`
 - the output does not claim readiness without a real ask
 
-What success means: both binaries are present and selectable.
+What success means: both binaries are present, selectable, and worth taking to the first proof step.
 
 ### 2. Prove each provider can answer on its own
 
@@ -47,7 +57,7 @@ Expected output shape:
 - per-provider success or failure data
 - response text grouped by provider
 
-What success means: you can compare providers through one interface without bespoke glue scripts.
+What success means: you can compare providers through one interface instead of hand-running the same prompt multiple times, and the contrast is now concrete rather than theoretical.
 
 ## When not to use `ask_all`
 
