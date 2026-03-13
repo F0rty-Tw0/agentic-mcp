@@ -141,10 +141,8 @@ export class InMemorySessionStore {
   }
 
   private evictIfNeeded(): void {
-    while (this.entries.size >= MAX_SESSIONS) {
-      const oldestKey = this.entries.keys().next().value;
-
-      if (!oldestKey) return;
+    for (const oldestKey of this.entries.keys()) {
+      if (this.entries.size < MAX_SESSIONS) break;
 
       this.entries.delete(oldestKey);
       this.locks.delete(oldestKey);

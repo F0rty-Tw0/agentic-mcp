@@ -44,9 +44,8 @@ export const retryWithExponentialBackoff = async <T>(
 ): Promise<T> => {
   validateRetryInput(retryWithExponentialBackoffInput);
   const { operation, maxRetries, initialDelayMs, maxDelayMs } = retryWithExponentialBackoffInput;
-  let attemptIndex = 0;
 
-  while (attemptIndex <= maxRetries) {
+  for (let attemptIndex = 0; attemptIndex <= maxRetries; attemptIndex += 1) {
     try {
       const result = await operation();
 
@@ -59,7 +58,6 @@ export const retryWithExponentialBackoff = async <T>(
       const delayMs = calculateDelay(attemptIndex, initialDelayMs, maxDelayMs);
 
       await sleep(delayMs);
-      attemptIndex += 1;
     }
   }
 

@@ -20,11 +20,11 @@ const pruneExpiredJobs = (nowMs: number): void => {
 };
 
 const enforceBoundedCapacity = (): void => {
-  while (backgroundJobStore.size > MAX_BACKGROUND_JOB_RECORDS) {
-    const oldestKey = backgroundJobStore.keys().next().value;
-
-    if (oldestKey === undefined) return;
-
+  for (
+    let oldestKey = backgroundJobStore.keys().next().value;
+    backgroundJobStore.size > MAX_BACKGROUND_JOB_RECORDS && oldestKey !== undefined;
+    oldestKey = backgroundJobStore.keys().next().value
+  ) {
     backgroundJobStore.delete(oldestKey);
   }
 };

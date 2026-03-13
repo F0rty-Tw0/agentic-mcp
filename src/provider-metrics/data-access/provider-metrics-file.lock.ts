@@ -60,7 +60,7 @@ const tryCreateLockDirectory = async (lockDirectoryPath: string): Promise<boolea
 const waitForLockDirectory = async (lockDirectoryPath: string): Promise<void> => {
   const deadlineAt = Date.now() + LOCK_TIMEOUT_MS;
 
-  while (Date.now() < deadlineAt) {
+  for (let now = Date.now(); now < deadlineAt; now = Date.now()) {
     const lockDirectoryCreated = await tryCreateLockDirectory(lockDirectoryPath);
 
     if (lockDirectoryCreated) return;
