@@ -41,7 +41,7 @@ type ConfiguredJsonOutput = Readonly<{
   writeIntent: string;
 }>;
 
-const FIRST_ASK_COMMAND = 'npx agentic-mcp ask_claude "Reply with OK and your provider name."';
+const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
 
 describe('runConfiguredSetup', () => {
   afterEach(() => {
@@ -141,7 +141,7 @@ describe('runConfiguredSetup', () => {
     expect(output).toContain('What was done:');
     expect(output).toContain('What remains unproven:');
     expect(output).toContain('Next command to prove real use:');
-    expect(output).toContain(FIRST_ASK_COMMAND);
+    expect(output).toContain(FIRST_PROOF_COMMAND);
     expect(output).toContain('Warnings:');
   });
 
@@ -175,8 +175,8 @@ describe('runConfiguredSetup', () => {
       path: DEFAULT_CLAUDE_PATH,
       status: 'written',
     });
-    expect(parsed.summary.nextStep.kind).toBe('ask');
-    expect(parsed.summary.nextStep.command).toBe(FIRST_ASK_COMMAND);
+    expect(parsed.summary.nextStep.kind).toBe('prove');
+    expect(parsed.summary.nextStep.command).toBe(FIRST_PROOF_COMMAND);
     expect(parsed.summary.unproven).toContain('A real provider response through agentic-mcp has not been proven yet.');
     expect(parsed.targetPath).toBe(DEFAULT_CLAUDE_PATH);
     expect(parsed.warnings).toStrictEqual([]);

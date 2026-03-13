@@ -26,12 +26,12 @@ type MinimalJsonOutput = Readonly<{
       kind: string;
       purpose: string;
     }>;
-    firstAskCommand?: string;
+    firstProofCommand?: string;
     unproven: readonly string[];
   }>;
 }>;
 
-const FIRST_ASK_COMMAND = 'npx agentic-mcp ask_claude "Reply with OK and your provider name."';
+const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
 
 describe('runMinimalSetup', () => {
   afterEach(() => {
@@ -60,8 +60,8 @@ describe('runMinimalSetup', () => {
     expect(output).toContain('What remains unproven:');
     expect(output).toContain('Next step:');
     expect(output).toContain('npx agentic-mcp setup --client claude-code --yes');
-    expect(output).toContain('First real-answer command after setup:');
-    expect(output).toContain(FIRST_ASK_COMMAND);
+    expect(output).toContain('First real-proof command after setup:');
+    expect(output).toContain(FIRST_PROOF_COMMAND);
   });
 
   it('GIVEN non-generic client with json output WHEN running minimal setup THEN prints automation-friendly truthfulness fields', async () => {
@@ -91,7 +91,7 @@ describe('runMinimalSetup', () => {
     expect(parsed.nextSteps).toContain('npx agentic-mcp setup --client cursor --yes');
     expect(parsed.summary.nextStep.kind).toBe('setup');
     expect(parsed.summary.nextStep.command).toBe('npx agentic-mcp setup --client cursor --yes');
-    expect(parsed.summary.firstAskCommand).toBe(FIRST_ASK_COMMAND);
+    expect(parsed.summary.firstProofCommand).toBe(FIRST_PROOF_COMMAND);
     expect(parsed.summary.unproven).toContain('MCP client configuration has not been written yet.');
   });
 });
