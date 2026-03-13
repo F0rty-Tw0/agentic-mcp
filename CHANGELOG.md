@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-03-12
+
 - Add Wave 3 provider coverage with shipped configs for Aider, Goose, Amp, Cline, Cursor Agent CLI, and Droid
 - Add disabled provider templates for Amazon Q, Plandex, OpenHands, Qwen Code, and Tabnine with recorded support levels and prerequisites
 - Surface provider `supportLevel` and `prerequisites` in `list_providers` so provider metadata matches actual support status
@@ -87,7 +89,8 @@
 - `agentic-mcp setup` CLI for configuring MCP clients
 - `ask_all` fan-out to all providers in parallel
 
-[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/F0rty-Tw0/agentic-mcp/compare/v0.1.7...v0.1.8
