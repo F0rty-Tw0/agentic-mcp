@@ -118,14 +118,14 @@ What this step does not prove:
 ### 3. Get your first real answer
 
 ```bash
-npx agentic-mcp ask_claude "Reply with OK and your provider name."
+npx agentic-mcp prove
 ```
 
-Replace `claude` with the provider you actually installed.
+Use `npx agentic-mcp prove codex` if you want to force a specific detected provider.
 
 What this step proves:
 
-- `agentic-mcp` can route a real prompt through the selected provider
+- `agentic-mcp` can pick a detected provider and route a real prompt through it
 - your installed provider is usable for real work through this project
 
 Milestone: You have now successfully routed a real provider through `agentic-mcp`.
@@ -213,6 +213,7 @@ For Claude tooling, the setup target name is `claude-code`, but the config file 
 You do not need an MCP client to use `agentic-mcp`.
 
 ```bash
+npx agentic-mcp prove
 npx agentic-mcp ask_claude "What changed in TypeScript 5.9?"
 npx agentic-mcp ask_codex "Suggest a refactor for this function"
 npx agentic-mcp sessions_claude
@@ -343,6 +344,7 @@ Core commands:
 | `sessions_<provider>`     | List known sessions for that provider                                                    |
 | `list_providers`          | Show configured providers with detected status, support levels, and prerequisites        |
 | `provider_metrics`        | Show which providers you actually used, how often they succeeded, and how long they took |
+| `prove [provider]`        | Run one canned real-answer proof against a detected provider                             |
 | `setup`                   | Configure an MCP client                                                                  |
 
 Run `npx agentic-mcp --help` for the full CLI reference.
