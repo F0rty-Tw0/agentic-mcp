@@ -57,6 +57,18 @@ describe('extractResultText', () => {
 
     expect(result).toBe('{\n  "response": "hello"\n}');
   });
+
+  it('GIVEN structuredContent and includeStructuredContent false WHEN extracted THEN it returns text only', () => {
+    const result = extractResultText(
+      {
+        content: [{ type: 'text', text: 'hello' }],
+        structuredContent: { response: 'hello' },
+      },
+      { includeStructuredContent: false }
+    );
+
+    expect(result).toBe('hello');
+  });
 });
 
 describe('printResult', () => {
@@ -105,6 +117,17 @@ describe('printResult', () => {
     );
   });
 
+  it('GIVEN successful result with structuredContent and includeStructuredContent false WHEN printed THEN it writes text without JSON', () => {
+    printResult(
+      {
+        content: [{ type: 'text', text: 'hello' }],
+        structuredContent: { response: 'hello', attribution: { provider: 'test' } },
+      },
+      { includeStructuredContent: false }
+    );
+
+    expect(stdoutSpy).toHaveBeenCalledWith('hello\n');
+  });
   it('GIVEN error result WHEN printed THEN sets exitCode to 1', () => {
     printResult({ content: [{ type: 'text', text: 'oops' }], isError: true });
 

@@ -2,27 +2,32 @@ import process from 'node:process';
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-const buildStructuredContentText = (structuredContent: unknown): string => {
-  if (!structuredContent) return '';
+type PrintResultOptions = Readonly<{
+  includeStructuredContent?: boolean;
+}>;
+
+const buildStructuredContentText = (structuredContent: unknown, includeStructuredContent: boolean): string => {
+  if (!structuredContent || !includeStructuredContent) return '';
 
   const structuredContentText = JSON.stringify(structuredContent, null, 2);
 
   return structuredContentText;
 };
 
-export const extractResultText = (result: CallToolResult): string => {
+export const extractResultText = (result: CallToolResult, printResultOptions: PrintResultOptions = {}): string => {
+  const { includeStructuredContent = true } = printResultOptions;
   const textParts = result.content
     .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
     .map((part) => part.text);
-  const structuredContentText = buildStructuredContentText(result.structuredContent);
+  const structuredContentText = buildStructuredContentText(result.structuredContent, includeStructuredContent);
   const outputParts = structuredContentText ? [...textParts, structuredContentText] : textParts;
   const text = outputParts.join('\n');
 
   return text;
 };
 
-export const printResult = (result: CallToolResult): void => {
-  const text = extractResultText(result);
+export const printResult = (result: CallToolResult, printResultOptions: PrintResultOptions = {}): void => {
+  const text = extractResultText(result, printResultOptions);
 
   if (result.isError) {
     process.stderr.write(`${text}\n`);
