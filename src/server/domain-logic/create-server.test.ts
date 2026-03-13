@@ -106,7 +106,8 @@ describe('integration: ping', () => {
 
     expect(text).toContain(provider);
     expect(text).toMatch(/binary detected|version check succeeded/);
-    expect(text).toContain(`Run ask_${provider}`);
+    expect(text).toContain(`Run prove ${provider}`);
+    expect(text).toContain(`ask_${provider}`);
   });
 });
 
@@ -148,6 +149,6 @@ describe('integration: list_providers', () => {
     const text = (result.content[0] as McpTextContent).text;
 
     expect(text).toMatch(/binary detected|binary missing|disabled/);
-    expect(text).toMatch(/Next: run ask_|Next: install and authenticate/);
+    expect(text).toMatch(/Next: run prove |Next: install and authenticate/);
   });
 });
