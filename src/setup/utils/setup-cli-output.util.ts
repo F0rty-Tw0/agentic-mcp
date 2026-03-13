@@ -73,7 +73,7 @@ export const formatHumanSetupOutput = (
     '',
     ...buildSection('What remains unproven:', summary.unproven),
     '',
-    summary.nextStep.kind === 'ask' ? 'Next command to prove real use:' : 'Next diagnostic step:',
+    summary.nextStep.kind === 'prove' ? 'Next command to prove real use:' : 'Next diagnostic step:',
     `  ${summary.nextStep.command}`,
   ];
 
@@ -117,8 +117,8 @@ export const formatHumanMinimalSetupOutput = (input: MinimalSetupOutputInput): s
     `  ${summary.nextStep.command}`,
   ];
 
-  if (summary.firstAskCommand != null) {
-    lines.push('', 'First real-answer command after setup:', `  ${summary.firstAskCommand}`);
+  if (summary.firstProofCommand != null) {
+    lines.push('', 'First real-proof command after setup:', `  ${summary.firstProofCommand}`);
   }
 
   return `${lines.join('\n')}\n`;

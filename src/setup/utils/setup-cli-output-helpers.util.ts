@@ -14,7 +14,7 @@ export type MinimalSetupOutputInput = Readonly<{
 
 export type OutputNextStep = Readonly<{
   command: string;
-  kind: 'ask' | 'diagnostic' | 'setup';
+  kind: 'prove' | 'diagnostic' | 'setup';
   purpose: string;
 }>;
 
@@ -22,27 +22,25 @@ export type OutputSummary = Readonly<{
   completedSteps: readonly string[];
   unproven: readonly string[];
   nextStep: OutputNextStep;
-  firstAskCommand?: string;
+  firstProofCommand?: string;
 }>;
-
-const FIRST_ASK_PROMPT = 'Reply with OK and your provider name.';
 
 const buildSetupCommand = (client: SupportedClient): string => {
   return `npx agentic-mcp setup --client ${client} --yes`;
 };
 
-const buildFirstAskCommand = (providerName: string): string => {
-  return `npx agentic-mcp ask_${providerName} "${FIRST_ASK_PROMPT}"`;
+const buildFirstProofCommand = (providerName: string): string => {
+  return `npx agentic-mcp prove ${providerName}`;
 };
 
-const resolveFirstAskCommand = (detectedProviders: readonly DetectedProvider[]): string | undefined => {
+const resolveFirstProofCommand = (detectedProviders: readonly DetectedProvider[]): string | undefined => {
   const detectedProvider = detectedProviders.find((provider) => provider.available);
 
   if (!detectedProvider) {
     return undefined;
   }
 
-  return buildFirstAskCommand(detectedProvider.name);
+  return buildFirstProofCommand(detectedProvider.name);
 };
 
 export const formatProviderSummary = (detectedProviders: readonly DetectedProvider[]): string => {
@@ -70,7 +68,7 @@ export const buildConfiguredSummary = (
   result: SetupApplyResult,
   detectedProviders: readonly DetectedProvider[]
 ): OutputSummary => {
-  const firstAskCommand = resolveFirstAskCommand(detectedProviders);
+  const firstProofCommand = resolveFirstProofCommand(detectedProviders);
   const completedSteps = [`Prepared ${args.mode} setup for ${args.client}.`, `Setup result: ${result.status}.`];
 
   if (result.path != null) {
@@ -85,7 +83,7 @@ export const buildConfiguredSummary = (
     completedSteps.push(`Reason: ${result.reason}`);
   }
 
-  if (firstAskCommand != null) {
+  if (firstProofCommand != null) {
     return {
       completedSteps,
       unproven: [
@@ -93,8 +91,8 @@ export const buildConfiguredSummary = (
         'A real provider response through agentic-mcp has not been proven yet.',
       ],
       nextStep: {
-        command: firstAskCommand,
-        kind: 'ask',
+        command: firstProofCommand,
+        kind: 'prove',
         purpose: 'Prove a real provider response through agentic-mcp.',
       },
     };
@@ -129,7 +127,7 @@ export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
 
 export const buildMinimalSummary = (input: MinimalSetupOutputInput): OutputSummary => {
   const setupCommand = buildSetupCommand(input.client);
-  const firstAskCommand = resolveFirstAskCommand(input.detectedProviders);
+  const firstProofCommand = resolveFirstProofCommand(input.detectedProviders);
   const completedSteps = [
     `Suggested client setup command: ${setupCommand}`,
     formatSkillOutput(input.skillResult).trimEnd(),
@@ -147,16 +145,16 @@ export const buildMinimalSummary = (input: MinimalSetupOutputInput): OutputSumma
       kind: 'setup',
       purpose: 'Write the MCP client configuration entry.',
     },
-    firstAskCommand,
+    firstProofCommand,
   };
 };
 
 export const buildMinimalNextSteps = (input: MinimalSetupOutputInput): readonly string[] => {
   const steps = [buildSetupCommand(input.client), 'npx agentic-mcp list_providers'];
-  const firstAskCommand = resolveFirstAskCommand(input.detectedProviders);
+  const firstProofCommand = resolveFirstProofCommand(input.detectedProviders);
 
-  if (firstAskCommand != null) {
-    steps.push(firstAskCommand);
+  if (firstProofCommand != null) {
+    steps.push(firstProofCommand);
   }
 
   return steps;

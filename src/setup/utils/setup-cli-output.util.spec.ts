@@ -12,7 +12,7 @@ import {
 } from './setup-cli-output.util';
 import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan } from '../common';
 
-const FIRST_ASK_COMMAND = 'npx agentic-mcp ask_claude "Reply with OK and your provider name."';
+const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
 
 type OutputSummary = Readonly<{
   completedSteps: readonly string[];
@@ -22,7 +22,7 @@ type OutputSummary = Readonly<{
     kind: string;
     purpose: string;
   }>;
-  firstAskCommand?: string;
+  firstProofCommand?: string;
 }>;
 
 type ConfiguredJsonOutput = Readonly<{
@@ -142,8 +142,8 @@ describe('setup-cli-output utilities', () => {
     expect(parsed.warnings).toStrictEqual(['warn-1']);
     expect(parsed.result.backupPath).toBe('/tmp/mcp.json.bak');
     expect(parsed.providers[0]?.name).toBe('claude');
-    expect(parsed.summary.nextStep.command).toBe(FIRST_ASK_COMMAND);
-    expect(parsed.summary.nextStep.kind).toBe('ask');
+    expect(parsed.summary.nextStep.command).toBe(FIRST_PROOF_COMMAND);
+    expect(parsed.summary.nextStep.kind).toBe('prove');
     expect(parsed.summary.unproven).toContain('Provider authentication has not been proven yet.');
   });
 
@@ -163,7 +163,7 @@ describe('setup-cli-output utilities', () => {
     expect(output).toContain('Detected providers:');
     expect(output).toContain('What remains unproven:');
     expect(output).toContain('Next command to prove real use:');
-    expect(output).toContain(FIRST_ASK_COMMAND);
+    expect(output).toContain(FIRST_PROOF_COMMAND);
     expect(output).toContain('Warnings:');
     expect(output).toContain('Reason: Written config must include mcpServers');
   });
@@ -191,8 +191,8 @@ describe('setup-cli-output utilities', () => {
     expect(output).toContain('What remains unproven:');
     expect(output).toContain('Next step:');
     expect(output).toContain('npx agentic-mcp setup --client claude-code --yes');
-    expect(output).toContain('First real-answer command after setup:');
-    expect(output).toContain(FIRST_ASK_COMMAND);
+    expect(output).toContain('First real-proof command after setup:');
+    expect(output).toContain(FIRST_PROOF_COMMAND);
   });
 
   it('GIVEN minimal setup inputs WHEN formatting json output THEN it returns parseable truthful guidance fields', () => {
@@ -212,7 +212,7 @@ describe('setup-cli-output utilities', () => {
     expect(parsed.skillResult.status).toBe('already-exists');
     expect(parsed.nextSteps).toContain('npx agentic-mcp setup --client cursor --yes');
     expect(parsed.summary.nextStep.command).toBe('npx agentic-mcp setup --client cursor --yes');
-    expect(parsed.summary.firstAskCommand).toBe(FIRST_ASK_COMMAND);
+    expect(parsed.summary.firstProofCommand).toBe(FIRST_PROOF_COMMAND);
   });
 
   it('GIVEN non-interactive write without --yes WHEN checking block THEN returns true', () => {
