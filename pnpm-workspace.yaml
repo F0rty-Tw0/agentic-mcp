@@ -8,12 +8,12 @@ catalogs:
     '@types/node': ^25.3.5
     '@vitest/coverage-v8': '^4.0.18'
     tsx: ^4.21.0
-    typescript: ^5.9.3
-    eslint: 9.39.4
+    typescript: ^6.0.2
+    eslint: 10.2.0
     eslint-config-prettier: 10.1.8
-    lint-suite: 1.3.2
+    lint-suite: 1.3.7
     vitest: ^4.0.18
-    esbuild: ^0.27.3
+    esbuild: ^0.28.0
     prettier: ^3.8.1
   runtime:
     '@modelcontextprotocol/sdk': ^1.27.1
