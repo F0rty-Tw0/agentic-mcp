@@ -4,6 +4,7 @@ import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
+import { ValidationError } from '../../shared/validation/common';
 import type { SessionMode } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
@@ -84,12 +85,22 @@ const canFallBackToTier1 = (
   return result;
 };
 
+const buildMissingPromptResult = (state: SessionFlowState): SessionFlowResult => {
+  const error = new ValidationError('Prompt is required');
+  const response = error.toMcpResponse();
+  const result: SessionFlowResult = { response, responseText: '', sessionMode: state.mode, wasCancelled: false };
+
+  return result;
+};
+
 export const executeSessionFlow = async ({
   context,
   args,
   extra,
   state,
 }: SessionExecutionInput): Promise<SessionFlowResult> => {
+  if (!args.prompt) return buildMissingPromptResult(state);
+
   const firstExecution = await runSessionExecution(context, args, extra, state);
   const shouldFallBack = canFallBackToTier1(firstExecution, state, extra);
 

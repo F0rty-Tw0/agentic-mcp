@@ -267,6 +267,36 @@ describe('executeSessionFlow tier2 fallback', () => {
   });
 });
 
+describe('executeSessionFlow prompt validation', () => {
+  const context = createResolvedProviderEntry();
+  const state = createSessionFlowState();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockRunAskInvocation.mockResolvedValue(createAskExecution());
+  });
+
+  it('GIVEN a session ask without a prompt WHEN executeSessionFlow called THEN it returns a validation error without running', async () => {
+    const args = createAskToolArgs({ prompt: undefined });
+
+    const result = await executeSessionFlow({ context, args, state });
+
+    const content = [{ type: 'text', text: 'Validation error: Prompt is required' }];
+
+    expect(mockRunAskInvocation).not.toHaveBeenCalled();
+    expect(result.response).toStrictEqual({ isError: true, content });
+  });
+
+  it('GIVEN a session ask with an empty prompt WHEN executeSessionFlow called THEN it returns a validation error', async () => {
+    const args = createAskToolArgs({ prompt: '' });
+
+    const result = await executeSessionFlow({ context, args, state });
+
+    expect(mockRunAskInvocation).not.toHaveBeenCalled();
+    expect(result.response.isError).toBe(true);
+  });
+});
+
 describe('buildSessionFlowState', () => {
   const context = createResolvedProviderEntry();
 
