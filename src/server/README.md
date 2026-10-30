@@ -44,10 +44,11 @@ Exercises the full MCP server wiring end-to-end using `InMemoryTransport` (no ne
 
 Starts a server from a temporary `providers.json` whose only provider is a Node script that logs each spawn and then sleeps (`maxConcurrency: 1`). The client cancels calls with an `AbortSignal`.
 
-| Test                  | What It Verifies                                                         | Expected Output                                                       |
-| --------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| Cancel a queued call  | A call cancelled while it waits for the provider slot never runs the CLI | Spawn log holds only the first call; no response for the cancelled id |
-| Cancel a running call | A running call's CLI is killed and the server sends no response          | Logged pid is gone; no response for the cancelled id                  |
+| Test                     | What It Verifies                                                         | Expected Output                                                       |
+| ------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Cancel a queued call     | A call cancelled while it waits for the provider slot never runs the CLI | Spawn log holds only the first call; no response for the cancelled id |
+| Cancel a running call    | A running call's CLI is killed and the server sends no response          | Logged pid is gone; no response for the cancelled id                  |
+| Cancel a running ask_all | Cancelling `ask_all` kills the provider CLI it started                   | Logged pid is gone; no response for the cancelled id                  |
 
 ### `create-server-schema.test.ts`
 

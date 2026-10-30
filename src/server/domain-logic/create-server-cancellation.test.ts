@@ -170,9 +170,9 @@ const traceTransport = (transport: InMemoryTransport, clientTrace: ClientTrace):
   };
 };
 
-const callFake = async (prompt: string, signal?: AbortSignal): Promise<CallOutcome> => {
+const callTool = async (name: string, prompt: string, signal?: AbortSignal): Promise<CallOutcome> => {
   const toolArguments = { prompt };
-  const params = { name: 'ask_fake', arguments: toolArguments };
+  const params = { name, arguments: toolArguments };
   const options = { signal };
 
   try {
@@ -211,12 +211,12 @@ afterAll(async () => {
 
 describe('integration: MCP request cancellation', () => {
   it('GIVEN a call waiting in the provider queue WHEN the client cancels it THEN the CLI never spawns and no response is sent', async () => {
-    const firstCall = callFake('first:1500');
+    const firstCall = callTool('ask_fake', 'first:1500');
 
     await waitForSpawn('first');
 
     const controller = new AbortController();
-    const queuedCall = callFake('queued:0', controller.signal);
+    const queuedCall = callTool('ask_fake', 'queued:0', controller.signal);
 
     await sleep(100);
     controller.abort('test cancel');
@@ -232,7 +232,7 @@ describe('integration: MCP request cancellation', () => {
 
   it('GIVEN a running call WHEN the client cancels it THEN the CLI is killed and no response is sent', async () => {
     const controller = new AbortController();
-    const runningCall = callFake('running:20000', controller.signal);
+    const runningCall = callTool('ask_fake', 'running:20000', controller.signal);
     const spawn = await waitForSpawn('running');
 
     controller.abort('test cancel');
@@ -243,5 +243,20 @@ describe('integration: MCP request cancellation', () => {
 
     expect(isProcessAlive(spawn.pid)).toBe(false);
     expect(trace.responseIds).not.toContain(runningCallId);
+  });
+
+  it('GIVEN a running ask_all WHEN the client cancels it THEN the provider CLI is killed and no response is sent', async () => {
+    const controller = new AbortController();
+    const askAllCall = callTool('ask_all', 'fan-out:20000', controller.signal);
+    const spawn = await waitForSpawn('fan-out');
+
+    controller.abort('test cancel');
+    await askAllCall;
+    await sleep(SETTLE_MS);
+
+    const askAllCallId = trace.toolCallIds[3];
+
+    expect(isProcessAlive(spawn.pid)).toBe(false);
+    expect(trace.responseIds).not.toContain(askAllCallId);
   });
 });

@@ -325,7 +325,7 @@ describe('registerAllTools', () => {
       expect(handleAsk).toHaveBeenCalledWith(codex, { prompt: 'hey' }, undefined);
     });
 
-    it('GIVEN ask_all handler WHEN invoked THEN delegates to handleAskAll with resolvedProviders and args', async () => {
+    it('GIVEN ask_all handler WHEN invoked THEN delegates to handleAskAll with resolvedProviders, args and the request extra', async () => {
       const claude = makeProvider('claude');
       const codex = makeProvider('codex');
 
@@ -335,9 +335,10 @@ describe('registerAllTools', () => {
 
       const handler = getHandler(server, 'ask_all');
       const args = { prompt: 'hello' };
-      const result = await handler(args);
+      const extra = { signal: new AbortController().signal };
+      const result = await handler(args, extra);
 
-      expect(handleAskAll).toHaveBeenCalledWith([claude, codex], args);
+      expect(handleAskAll).toHaveBeenCalledWith([claude, codex], args, extra);
       expect(result).toBe(SUCCESS_RESULT);
     });
 

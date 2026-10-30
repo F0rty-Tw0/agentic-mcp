@@ -97,10 +97,10 @@ export const registerAllTools = (
     annotations: askAllDef.annotations,
   };
 
-  server.registerTool(askAllDef.name, askAllConfig, async (args): Promise<CallToolResult> => {
+  server.registerTool(askAllDef.name, askAllConfig, async (args, extra): Promise<CallToolResult> => {
     if (!isAskAllToolArgs(args)) throw new ValidationError(`${askAllDef.name} requires a prompt`);
 
-    return handleAskAll(resolvedProviders, args);
+    return handleAskAll(resolvedProviders, args, extra);
   });
 
   const metricsDef = buildProviderMetricsToolDefinition();
