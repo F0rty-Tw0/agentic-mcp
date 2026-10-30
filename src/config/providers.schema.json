@@ -165,12 +165,14 @@
         "timeout": {
           "type": "number",
           "exclusiveMinimum": 0,
+          "maximum": 2147483647,
           "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 600000 (10 min) for fast providers and 1800000 (30 min) for reasoning-heavy providers."
         },
         "idleTimeout": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Idle timeout in milliseconds. If the process stops producing output for this duration after initial output was received, it is killed and the collected output is returned as a successful result. Useful for CLI tools that complete their work but do not exit the process. Optional — omit to disable idle-based termination."
+          "maximum": 2147483647,
+          "description": "Idle timeout in milliseconds. Once the process has written output, if it then stays silent for this long it is killed and the call fails as a timeout. Silence before the first output is bounded by timeout only. Optional — omit to disable idle-based termination."
         },
         "maxConcurrency": {
           "type": "integer",
@@ -180,6 +182,7 @@
         "queueTimeoutMs": {
           "type": "number",
           "exclusiveMinimum": 0,
+          "maximum": 2147483647,
           "description": "Optional maximum time in milliseconds a request may wait in the provider queue before spawning. Distinct from the execution timeout. Defaults to 30000 when omitted."
         },
         "env": {
