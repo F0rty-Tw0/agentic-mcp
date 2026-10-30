@@ -27,6 +27,40 @@ const SAFE_ENV_KEYS = [
   'COMSPEC',
 ] as const;
 
+const sendSignal = (target: number, signal: NodeJS.Signals): boolean => {
+  try {
+    process.kill(target, signal);
+  } catch {
+    return false;
+  }
+
+  return true;
+};
+
+const resolveTerminatedTarget = (pid: number): number | undefined => {
+  const groupTarget = -pid;
+
+  const groupSignalled = sendSignal(groupTarget, 'SIGTERM');
+
+  if (groupSignalled) return groupTarget;
+
+  const pidSignalled = sendSignal(pid, 'SIGTERM');
+
+  if (pidSignalled) return pid;
+
+  return undefined;
+};
+
+const isAlive = (target: number): boolean => {
+  try {
+    process.kill(target, 0);
+  } catch {
+    return false;
+  }
+
+  return true;
+};
+
 export const killProcess = async (pid: number): Promise<boolean> => {
   if (process.platform === 'win32') {
     return new Promise<boolean>((resolve) => {
@@ -36,12 +70,10 @@ export const killProcess = async (pid: number): Promise<boolean> => {
     });
   }
 
-  // POSIX: SIGTERM, then SIGKILL after grace period
-  try {
-    process.kill(pid, 'SIGTERM');
-  } catch {
-    return false;
-  }
+  // POSIX: children are spawned as group leaders, so -pid also reaches descendants holding their stdio.
+  const target = resolveTerminatedTarget(pid);
+
+  if (target === undefined) return false;
 
   return new Promise<boolean>((resolve) => {
     const POLL_INTERVAL_MS = 100;
@@ -51,13 +83,7 @@ export const killProcess = async (pid: number): Promise<boolean> => {
       if (settled) return;
 
       settled = true;
-
-      try {
-        process.kill(pid, 'SIGKILL');
-      } catch {
-        // Process already exited
-      }
-
+      sendSignal(target, 'SIGKILL');
       resolve(true);
     }, KILL_GRACE_MS);
 
@@ -66,14 +92,17 @@ export const killProcess = async (pid: number): Promise<boolean> => {
     const checkExit = (): void => {
       if (settled) return;
 
-      try {
-        process.kill(pid, 0); // Existence check — throws if process is gone
+      const alive = isAlive(target);
+
+      if (alive) {
         setTimeout(checkExit, POLL_INTERVAL_MS).unref();
-      } catch {
-        settled = true;
-        clearTimeout(killTimer);
-        resolve(true);
+
+        return;
       }
+
+      settled = true;
+      clearTimeout(killTimer);
+      resolve(true);
     };
 
     setTimeout(checkExit, POLL_INTERVAL_MS).unref();

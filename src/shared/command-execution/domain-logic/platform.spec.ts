@@ -97,7 +97,7 @@ describe('platform', () => {
         expect(await killProcess(123)).toBe(false);
       });
 
-      it('GIVEN process exits immediately WHEN first poll runs THEN returns true without SIGKILL', async () => {
+      it('GIVEN process group exits immediately WHEN first poll runs THEN the group got SIGTERM and no SIGKILL', async () => {
         const killSpy = vi.spyOn(process, 'kill').mockImplementation((_pid: number, signal?: string | number): true => {
           if (signal === 0) throw new Error('ESRCH');
 
@@ -109,8 +109,8 @@ describe('platform', () => {
         await vi.advanceTimersByTimeAsync(150);
 
         expect(await promise).toBe(true);
-        expect(killSpy).toHaveBeenCalledWith(123, 'SIGTERM');
-        expect(killSpy).not.toHaveBeenCalledWith(123, 'SIGKILL');
+        expect(killSpy).toHaveBeenCalledWith(-123, 'SIGTERM');
+        expect(killSpy).not.toHaveBeenCalledWith(-123, 'SIGKILL');
       });
 
       it('GIVEN process exits after several polls WHEN polled THEN returns true', async () => {
@@ -136,7 +136,7 @@ describe('platform', () => {
         expect(pollCount).toBeGreaterThanOrEqual(3);
       });
 
-      it('GIVEN process does not exit WHEN grace period expires THEN sends SIGKILL and returns true', async () => {
+      it('GIVEN process group does not exit WHEN grace period expires THEN sends SIGKILL to the group and returns true', async () => {
         const killSpy = vi.spyOn(process, 'kill').mockReturnValue(true);
 
         const promise = killProcess(123);
@@ -144,7 +144,7 @@ describe('platform', () => {
         await vi.advanceTimersByTimeAsync(5_100);
 
         expect(await promise).toBe(true);
-        expect(killSpy).toHaveBeenCalledWith(123, 'SIGKILL');
+        expect(killSpy).toHaveBeenCalledWith(-123, 'SIGKILL');
       });
 
       it('GIVEN process exits between last poll and kill timer WHEN SIGKILL throws THEN still returns true', async () => {
@@ -176,7 +176,7 @@ describe('platform', () => {
         // Advance well past the grace period — kill timer should be cleared or settled-guarded
         await vi.advanceTimersByTimeAsync(6_000);
 
-        expect(killSpy).not.toHaveBeenCalledWith(123, 'SIGKILL');
+        expect(killSpy).not.toHaveBeenCalledWith(-123, 'SIGKILL');
       });
 
       it('GIVEN kill timer already settled WHEN subsequent poll fires THEN poll returns without checking process', async () => {
@@ -193,6 +193,21 @@ describe('platform', () => {
         await vi.advanceTimersByTimeAsync(1_000);
 
         expect(killSpy.mock.calls).toHaveLength(callCountAtSettle);
+      });
+
+      it('GIVEN the pid leads no process group WHEN called THEN SIGTERM falls back to the pid alone', async () => {
+        const killSpy = vi.spyOn(process, 'kill').mockImplementation((pid: number, signal?: string | number): true => {
+          if (pid < 0 || signal === 0) throw new Error('ESRCH');
+
+          return true;
+        });
+
+        const promise = killProcess(123);
+
+        await vi.advanceTimersByTimeAsync(150);
+
+        expect(await promise).toBe(true);
+        expect(killSpy).toHaveBeenCalledWith(123, 'SIGTERM');
       });
 
       it('GIVEN successful kill WHEN called THEN sends SIGTERM as the first signal', async () => {
