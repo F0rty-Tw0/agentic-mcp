@@ -1,4 +1,4 @@
-import { base, boundaries, javascript, json, prettier, typescript, vitest } from 'lint-suite';
+import { base, boundaries, javascript, json, prettier, typescript, vitest } from 'lint-suite/eslint';
 
 export default [
   ...base,
