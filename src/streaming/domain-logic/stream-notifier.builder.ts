@@ -19,7 +19,7 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
 
   const isEnabled = isStreamEnabled({ args: input.args, progressToken, extra: input.extra });
 
-  if (!isEnabled || !progressToken || !input.extra) return createNoopStreamNotifier();
+  if (!isEnabled || progressToken === undefined || !input.extra) return createNoopStreamNotifier();
 
   const state: NotifierState = {
     streamId: `ask-${input.providerName}-${randomUUID()}`,
