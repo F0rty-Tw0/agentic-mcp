@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { providersFileSchema } from '../shared';
-import type { ProvidersFile } from '../shared';
+import type { CommandDef, ProvidersFile } from '../shared';
 
 const providersJsonUrl = new URL('./providers.json', import.meta.url);
 
@@ -15,6 +15,10 @@ const readJson = async (url: URL): Promise<unknown> => {
 
 type Providers = ProvidersFile['providers'];
 
+const validAskCommand: CommandDef = { args: ['run'] };
+const validCommands: Providers[string]['commands'] = { ask: validAskCommand };
+const validInput: Providers[string]['input'] = { method: 'positional' };
+
 const validProviderConfig: Providers[string] = {
   enabled: true,
   description: 'Example provider config for schema tests',
@@ -22,24 +26,18 @@ const validProviderConfig: Providers[string] = {
   timeout: 120000,
   env: {},
   outputFormat: 'json',
-  commands: {
-    ask: {
-      args: ['run'],
-    },
-  },
-  input: {
-    method: 'positional',
-  },
+  commands: validCommands,
+  input: validInput,
 };
 
 type ProviderConfigWithoutOutputFormat = Omit<ProvidersFile['providers'][string], 'outputFormat'>;
 
-const buildProvidersConfig = (provider: unknown): unknown => ({
-  configVersion: 1,
-  providers: {
-    example: provider,
-  },
-});
+const buildProvidersConfig = (provider: unknown): unknown => {
+  const providers = { example: provider };
+  const providersConfig = { configVersion: 1, providers };
+
+  return providersConfig;
+};
 
 const removeOutputFormat = (provider: ProvidersFile['providers'][string]): ProviderConfigWithoutOutputFormat => {
   const providerEntries = Object.entries(provider).filter(([key]) => key !== 'outputFormat');
@@ -117,13 +115,11 @@ describe('providers config', () => {
   });
 
   it('GIVEN provider config without ask command WHEN validating THEN it fails', () => {
+    const sessions: CommandDef = { args: ['sessions'] };
+    const sessionsOnlyCommands: Providers[string]['commands'] = { sessions };
     const providerWithoutAsk: ProvidersFile['providers'][string] = {
       ...validProviderConfig,
-      commands: {
-        sessions: {
-          args: ['sessions'],
-        },
-      },
+      commands: sessionsOnlyCommands,
     };
     const parsed = providersFileSchema.safeParse(buildProvidersConfig(providerWithoutAsk));
 
