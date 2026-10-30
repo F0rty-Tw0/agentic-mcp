@@ -157,16 +157,12 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
     return parsedProviderOutput;
   }
 
-  const parsedLines: unknown[] = [];
+  const parsedLines = lines.map((line) => parseJsonLine(line)).filter(isDefined);
 
-  for (const line of lines) {
-    try {
-      parsedLines.push(JSON.parse(line));
-    } catch {
-      const parsedProviderOutput: ParsedProviderOutput = { text: stdout };
+  if (!parsedLines.length) {
+    const parsedProviderOutput: ParsedProviderOutput = { text: stdout };
 
-      return parsedProviderOutput;
-    }
+    return parsedProviderOutput;
   }
 
   const parsedText = extractLatestParsedText(parsedLines) ?? JSON.stringify(parsedLines, null, 2);

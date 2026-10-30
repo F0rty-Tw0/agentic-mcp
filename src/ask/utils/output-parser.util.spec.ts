@@ -54,13 +54,37 @@ describe('parseProviderOutput', () => {
     expect(result.metadata).toBeUndefined();
   });
 
-  it('GIVEN malformed NDJSON line WHEN parsing THEN returns raw stdout', () => {
-    const output = '{"a":1}\nnot-json';
+  it('GIVEN NDJSON where no line parses WHEN parsing THEN returns raw stdout', () => {
+    const output = 'not-json\nstill not json';
 
     const result = parseProviderOutput(output, 'stream-json');
 
     expect(result.text).toBe(output);
     expect(result.metadata).toBeUndefined();
+  });
+
+  it('GIVEN stream-json with a stray non-JSON line WHEN parsing THEN extracts the final result text', () => {
+    const outputLines = [
+      '{"type":"system","subtype":"init"}',
+      'Warning: something non-JSON',
+      '{"type":"result","subtype":"success","result":"final answer"}',
+    ];
+    const output = outputLines.join('\n');
+
+    const result = parseProviderOutput(output, 'stream-json');
+
+    expect(result.text).toBe('final answer');
+  });
+
+  it('GIVEN stream-json with a truncated last line WHEN parsing THEN keeps only the parsed lines', () => {
+    const outputLines = ['{"type":"result","result":"final answer"}', '{"type":"assistant","mess'];
+    const output = outputLines.join('\n');
+
+    const result = parseProviderOutput(output, 'stream-json');
+    const parsedLine = { type: 'result', result: 'final answer' };
+
+    expect(result.text).toBe('final answer');
+    expect(result.metadata).toStrictEqual({ outputFormatObserved: 'stream-json', parsed: [parsedLine] });
   });
 
   it('GIVEN json output with mixed log lines WHEN parsing THEN extracts latest agent message text', () => {
