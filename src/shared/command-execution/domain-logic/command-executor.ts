@@ -1,3 +1,6 @@
+import type { ChildProcess, StdioOptions } from 'node:child_process';
+import process from 'node:process';
+
 import crossSpawn from 'cross-spawn';
 
 import { defaultProviderQueueStore } from './provider-queue';
@@ -83,23 +86,21 @@ const acquireQueueLease = async (options: ExecuteCommandOptions): Promise<QueueL
   return lease;
 };
 
+const spawnProcess = (options: ExecuteCommandOptions): ChildProcess => {
+  const { binaryPath, args, env, stdin, cwd } = options;
+  const stdio: StdioOptions = [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'];
+  // POSIX: lead a new process group so killProcess(-pid) also reaches descendants; Windows uses taskkill /T.
+  const detached = process.platform !== 'win32';
+  const child = crossSpawn(binaryPath, args, { env, stdio, cwd, detached });
+
+  return child;
+};
+
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
-  const {
-    binaryPath,
-    args,
-    env,
-    timeoutMs,
-    idleTimeoutMs,
-    stdin,
-    cwd,
-    onStdoutChunk,
-    onStderrChunk,
-    signal,
-    onSpawned,
-  } = options;
+  const { binaryPath, timeoutMs, idleTimeoutMs, stdin, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
 
   return new Promise<ExecutionResult>((resolve, reject) => {
-    const child = crossSpawn(binaryPath, args, { env, stdio: [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'], cwd });
+    const child = spawnProcess(options);
 
     if (child.pid !== undefined && onSpawned) onSpawned(child.pid);
 

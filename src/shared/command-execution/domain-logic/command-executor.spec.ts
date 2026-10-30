@@ -107,7 +107,25 @@ describe('executeCommand', () => {
         env: TEST_EXECUTE_COMMAND_OPTIONS_STUB.env,
         stdio: ['ignore', 'pipe', 'pipe'],
         cwd: '/workspace',
+        detached: true,
       });
+    });
+
+    it('GIVEN a win32 host WHEN executed THEN the child is not detached because taskkill /T reaches the tree', async () => {
+      const originalPlatform = process.platform;
+      const child = makeAutoClosingChild();
+
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ChildProcess);
+
+      await executeCommand({ ...TEST_EXECUTE_COMMAND_OPTIONS_STUB, bypassSemaphore: true });
+      Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
+
+      expect(crossSpawn).toHaveBeenCalledWith(
+        '/usr/bin/test-cli',
+        ['run'],
+        expect.objectContaining({ detached: false })
+      );
     });
 
     it('GIVEN a completed command WHEN result is returned THEN executionTimeMs is a non-negative number', async () => {
