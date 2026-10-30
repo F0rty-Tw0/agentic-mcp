@@ -54,6 +54,9 @@ const wrapChunkCallback = (
   };
 };
 
+// A CLI that exits before reading stdin fails the write with EPIPE; its exit code already reports the failure.
+const ignoreStdinError = (): void => undefined;
+
 const resolveProviderQueueOptions = (options: ExecuteCommandOptions): ProviderQueueOptions => {
   const providerQueue = options.providerQueue;
 
@@ -131,6 +134,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
     });
 
     if (stdin && child.stdin) {
+      child.stdin.on('error', ignoreStdinError);
       child.stdin.write(stdin);
       child.stdin.end();
     }

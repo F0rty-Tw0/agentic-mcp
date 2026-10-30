@@ -38,7 +38,7 @@ export const createControllableChild = (pid?: number): ControllableChild => {
   const main = createEventEmitter();
   const stdoutEmitter = createEventEmitter();
   const stderrEmitter = createEventEmitter();
-  const stdinMock: ControllableChildStdin = { write: vi.fn(), end: vi.fn() };
+  const stdinMock: ControllableChildStdin = { write: vi.fn(), end: vi.fn(), on: vi.fn() };
 
   const stdout = { on: stdoutEmitter.on };
   const stderr = { on: stderrEmitter.on };
