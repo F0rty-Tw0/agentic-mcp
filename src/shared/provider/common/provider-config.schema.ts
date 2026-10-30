@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { MAX_TIMER_DELAY_MS } from './provider-timeout.const';
 import type { OutputFormat } from '../../mcp-protocol/common';
 
 const PROVIDER_NAME_REGEX = /^[a-z][a-z0-9-]{0,31}$/;
@@ -46,6 +47,10 @@ const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),
 });
 
+const TIMER_DELAY_LIMIT_MESSAGE = `must be at most ${MAX_TIMER_DELAY_MS} ms (Node timer limit)`;
+const positiveNumberSchema = z.number().positive();
+const timerDelayMsSchema = positiveNumberSchema.max(MAX_TIMER_DELAY_MS, TIMER_DELAY_LIMIT_MESSAGE);
+
 const versionCheckSchema = z.object({
   flag: z.string(),
   pattern: z.string().optional(),
@@ -56,10 +61,10 @@ const providerConfigSchema = z.object({
   description: z.string(),
   supportLevel: supportLevelSchema.optional(),
   command: z.string(),
-  timeout: z.number().positive(),
-  idleTimeout: z.number().positive().optional(),
+  timeout: timerDelayMsSchema,
+  idleTimeout: timerDelayMsSchema.optional(),
   maxConcurrency: z.number().int().positive().optional(),
-  queueTimeoutMs: z.number().positive().optional(),
+  queueTimeoutMs: timerDelayMsSchema.optional(),
   env: z.record(z.string(), z.string().nullable()),
   prerequisites: z.array(z.string()).optional(),
   versionCheck: versionCheckSchema.optional(),

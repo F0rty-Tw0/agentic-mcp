@@ -1,1 +1,3 @@
 export const DEFAULT_MCP_TOOL_TIMEOUT_MS = 1_800_000;
+
+export const MAX_TIMER_DELAY_MS = 2_147_483_647;
