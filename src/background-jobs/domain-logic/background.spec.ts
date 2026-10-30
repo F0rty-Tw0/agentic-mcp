@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildJobStatusResponse, startBackgroundInvocation } from './background';
@@ -6,33 +6,50 @@ import type { BackgroundJobRecord } from '../common';
 
 type StatusPayload = Readonly<Record<string, unknown>>;
 
-const mocks = vi.hoisted(() => ({
-  getBackgroundJob: vi.fn(),
-  setBackgroundJobCompleted: vi.fn(),
-  setBackgroundJobFailed: vi.fn(),
-  setBackgroundJobRunning: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  const result = {
+    getBackgroundJob: vi.fn(),
+    setBackgroundJobCompleted: vi.fn(),
+    setBackgroundJobFailed: vi.fn(),
+    setBackgroundJobRunning: vi.fn(),
+  };
 
-vi.mock('../data-access/job-store', () => ({
-  getBackgroundJob: mocks.getBackgroundJob,
-  setBackgroundJobCompleted: mocks.setBackgroundJobCompleted,
-  setBackgroundJobFailed: mocks.setBackgroundJobFailed,
-  setBackgroundJobRunning: mocks.setBackgroundJobRunning,
-}));
-
-const buildCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => ({
-  content: [{ type: 'text', text: 'default response' }],
-  ...overrides,
+  return result;
 });
 
-const buildBackgroundJobRecord = (overrides: Partial<BackgroundJobRecord> = {}): BackgroundJobRecord => ({
-  id: 'job-123',
-  provider: 'test-provider',
-  state: 'pending',
-  createdAt: '2024-01-01T00:00:00.000Z',
-  updatedAt: '2024-01-01T00:00:00.000Z',
-  ...overrides,
+vi.mock('../data-access/job-store', () => {
+  const result = {
+    getBackgroundJob: mocks.getBackgroundJob,
+    setBackgroundJobCompleted: mocks.setBackgroundJobCompleted,
+    setBackgroundJobFailed: mocks.setBackgroundJobFailed,
+    setBackgroundJobRunning: mocks.setBackgroundJobRunning,
+  };
+
+  return result;
 });
+
+const buildCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => {
+  const content: TextContent[] = [{ type: 'text', text: 'default response' }];
+  const result: CallToolResult = {
+    content,
+    ...overrides,
+  };
+
+  return result;
+};
+
+const buildBackgroundJobRecord = (overrides: Partial<BackgroundJobRecord> = {}): BackgroundJobRecord => {
+  const result: BackgroundJobRecord = {
+    id: 'job-123',
+    provider: 'test-provider',
+    state: 'pending',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+
+  return result;
+};
 
 const extractPayloadFromTextContent = (result: CallToolResult): StatusPayload => {
   const content = result.content[0];
@@ -81,12 +98,14 @@ describe('buildJobStatusResponse', () => {
   });
 
   it('GIVEN existing completed job with structuredContent WHEN buildJobStatusResponse called THEN returns JSON with structuredContent', () => {
+    const attribution = { provider: 'test' };
+    const structuredContent = { response: 'the final answer', attribution };
     const record = buildBackgroundJobRecord({
       id: 'job-structured',
       state: 'completed',
       updatedAt: '2024-01-02T00:00:00.000Z',
       resultText: 'the final answer',
-      structuredContent: { response: 'the final answer', attribution: { provider: 'test' } },
+      structuredContent,
     });
 
     mocks.getBackgroundJob.mockReturnValue(record);
@@ -94,9 +113,11 @@ describe('buildJobStatusResponse', () => {
     const result = buildJobStatusResponse('job-structured');
     const payload = extractPayloadFromTextContent(result);
 
+    const expectedAttribution = { provider: 'test' };
+
     expect(payload.structuredContent).toStrictEqual({
       response: 'the final answer',
-      attribution: { provider: 'test' },
+      attribution: expectedAttribution,
     });
   });
 
@@ -148,7 +169,8 @@ describe('startBackgroundInvocation', () => {
   });
 
   it('GIVEN successful invocation WHEN startBackgroundInvocation called THEN sets job running then completed', async () => {
-    const successResult = buildCallToolResult({ content: [{ type: 'text', text: 'success output' }] });
+    const content: TextContent[] = [{ type: 'text', text: 'success output' }];
+    const successResult = buildCallToolResult({ content });
     const run = vi.fn().mockResolvedValue(successResult);
 
     void startBackgroundInvocation('job-1', run);
@@ -161,9 +183,12 @@ describe('startBackgroundInvocation', () => {
   });
 
   it('GIVEN successful invocation with structuredContent WHEN startBackgroundInvocation called THEN persists structuredContent', async () => {
+    const content: TextContent[] = [{ type: 'text', text: 'success output' }];
+    const attribution = { provider: 'test' };
+    const structuredContent = { response: 'success output', attribution };
     const successResult = buildCallToolResult({
-      content: [{ type: 'text', text: 'success output' }],
-      structuredContent: { response: 'success output', attribution: { provider: 'test' } },
+      content,
+      structuredContent,
     });
     const run = vi.fn().mockResolvedValue(successResult);
 
@@ -171,16 +196,20 @@ describe('startBackgroundInvocation', () => {
 
     await vi.waitFor(() => expect(mocks.setBackgroundJobCompleted).toHaveBeenCalled());
 
+    const expectedAttribution = { provider: 'test' };
+    const expectedStructuredContent = { response: 'success output', attribution: expectedAttribution };
+
     expect(mocks.setBackgroundJobCompleted).toHaveBeenCalledWith('job-structured', {
       resultText: 'success output',
-      structuredContent: { response: 'success output', attribution: { provider: 'test' } },
+      structuredContent: expectedStructuredContent,
     });
   });
 
   it('GIVEN error response from invocation WHEN startBackgroundInvocation called THEN sets job running then failed with extracted text', async () => {
+    const content: TextContent[] = [{ type: 'text', text: 'invocation error message' }];
     const errorResult = buildCallToolResult({
       isError: true,
-      content: [{ type: 'text', text: 'invocation error message' }],
+      content,
     });
     const run = vi.fn().mockResolvedValue(errorResult);
 
@@ -194,9 +223,10 @@ describe('startBackgroundInvocation', () => {
   });
 
   it('GIVEN error response with no text WHEN startBackgroundInvocation called THEN uses default "background invocation failed" message', async () => {
+    const content: ContentBlock[] = [{ type: 'image', data: 'base64data', mimeType: 'image/png' }];
     const errorResult = buildCallToolResult({
       isError: true,
-      content: [{ type: 'image', data: 'base64data', mimeType: 'image/png' }],
+      content,
     });
     const run = vi.fn().mockResolvedValue(errorResult);
 

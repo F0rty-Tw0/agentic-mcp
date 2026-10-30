@@ -142,14 +142,18 @@ describe('background-job-store', () => {
 
       setBackgroundJobRunning(job.id);
 
+      const attribution = { provider: 'test' };
+      const structuredContent = { response: 'the answer', attribution };
       const result = setBackgroundJobCompleted(job.id, {
         resultText: 'the answer',
-        structuredContent: { response: 'the answer', attribution: { provider: 'test' } },
+        structuredContent,
       });
+
+      const expectedAttribution = { provider: 'test' };
 
       expect(result?.structuredContent).toStrictEqual({
         response: 'the answer',
-        attribution: { provider: 'test' },
+        attribution: expectedAttribution,
       });
     });
 
@@ -216,9 +220,12 @@ describe('background-job-store', () => {
     it('GIVEN a job that previously had structuredContent WHEN setBackgroundJobFailed called THEN structuredContent is cleared', () => {
       const job = createBackgroundJob('claude');
 
+      const attribution = { provider: 'test' };
+      const structuredContent = { response: 'previous result', attribution };
+
       setBackgroundJobCompleted(job.id, {
         resultText: 'previous result',
-        structuredContent: { response: 'previous result', attribution: { provider: 'test' } },
+        structuredContent,
       });
 
       const result = setBackgroundJobFailed(job.id, 'now failed');
@@ -307,16 +314,21 @@ describe('background-job-store', () => {
     it('GIVEN a completed job with structuredContent WHEN getBackgroundJob called THEN returns record with structuredContent', () => {
       const job = createBackgroundJob('claude');
 
+      const attribution = { provider: 'test' };
+      const structuredContent = { response: 'final output', attribution };
+
       setBackgroundJobCompleted(job.id, {
         resultText: 'final output',
-        structuredContent: { response: 'final output', attribution: { provider: 'test' } },
+        structuredContent,
       });
 
       const result = getBackgroundJob(job.id);
 
+      const expectedAttribution = { provider: 'test' };
+
       expect(result?.structuredContent).toStrictEqual({
         response: 'final output',
-        attribution: { provider: 'test' },
+        attribution: expectedAttribution,
       });
     });
 

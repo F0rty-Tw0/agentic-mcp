@@ -4,10 +4,10 @@ import { nowIso } from '../../shared';
 import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS, MAX_RESULT_TEXT_LENGTH } from '../common';
 import type { BackgroundJobCompletionInput, BackgroundJobRecord } from '../common';
 
-type BackgroundJobStoreEntry = Readonly<{
-  createdAtMs: number;
-  record: BackgroundJobRecord;
-}>;
+type BackgroundJobStoreEntry = {
+  readonly createdAtMs: number;
+  readonly record: BackgroundJobRecord;
+};
 
 const backgroundJobStore = new Map<string, BackgroundJobStoreEntry>();
 
@@ -76,11 +76,15 @@ export const createBackgroundJob = (provider: string): BackgroundJobRecord => {
 };
 
 export const setBackgroundJobRunning = (id: string): BackgroundJobRecord | undefined => {
-  return updateJob(id, (existing) => ({
-    ...existing,
-    state: 'running',
-    updatedAt: nowIso(),
-  }));
+  return updateJob(id, (existing) => {
+    const result: BackgroundJobRecord = {
+      ...existing,
+      state: 'running',
+      updatedAt: nowIso(),
+    };
+
+    return result;
+  });
 };
 
 export const setBackgroundJobCompleted = (
@@ -89,25 +93,33 @@ export const setBackgroundJobCompleted = (
 ): BackgroundJobRecord | undefined => {
   const { resultText, structuredContent } = backgroundJobCompletionInput;
 
-  return updateJob(id, (existing) => ({
-    ...existing,
-    state: 'completed',
-    resultText: truncateResultText(resultText),
-    structuredContent,
-    error: undefined,
-    updatedAt: nowIso(),
-  }));
+  return updateJob(id, (existing) => {
+    const result: BackgroundJobRecord = {
+      ...existing,
+      state: 'completed',
+      resultText: truncateResultText(resultText),
+      structuredContent,
+      error: undefined,
+      updatedAt: nowIso(),
+    };
+
+    return result;
+  });
 };
 
 export const setBackgroundJobFailed = (id: string, error: string): BackgroundJobRecord | undefined => {
-  return updateJob(id, (existing) => ({
-    ...existing,
-    state: 'failed',
-    error,
-    resultText: undefined,
-    structuredContent: undefined,
-    updatedAt: nowIso(),
-  }));
+  return updateJob(id, (existing) => {
+    const result: BackgroundJobRecord = {
+      ...existing,
+      state: 'failed',
+      error,
+      resultText: undefined,
+      structuredContent: undefined,
+      updatedAt: nowIso(),
+    };
+
+    return result;
+  });
 };
 
 export const getBackgroundJob = (id: string): BackgroundJobRecord | undefined => {
