@@ -3,35 +3,39 @@ import { z } from 'zod';
 import { FLAG_MODEL, FLAG_WORKING_DIR } from '../../ask/common';
 import type { ReviewScope } from '../../ask/common';
 import { getFlag, getReviewCommand } from '../../ask/utils';
-import type { CommandDef, ProviderConfig, ToolDefinition } from '../../shared';
+import type { ToolDefinition } from '../../shared/mcp-protocol/common';
+import type { CommandDef, ProviderConfig } from '../../shared/provider/common';
 
 type ToolInputSchema = Readonly<Record<string, z.ZodType>>;
 type MutableToolInputSchema = Record<string, z.ZodType>;
 
 const addIncludeStructuredField = (schema: MutableToolInputSchema): void => {
-  schema.include_structured = z
-    .boolean()
-    .optional()
-    .describe('Opt in to structured metadata on the result object in addition to surfaced text content');
+  const description = 'Opt in to structured metadata on the result object in addition to surfaced text content';
+
+  schema.include_structured = z.boolean().optional().describe(description);
 };
 
 const addModelField = (schema: MutableToolInputSchema, commandDef: CommandDef): void => {
-  if (getFlag(commandDef, FLAG_MODEL) == null) return;
+  const modelFlag = getFlag(commandDef, FLAG_MODEL);
 
-  schema.model = z
-    .string()
-    .optional()
-    .describe('Model to use for this request. If omitted, the provider CLI default is used');
+  if (modelFlag == null) return;
+
+  const description = 'Model to use for this request. If omitted, the provider CLI default is used';
+
+  schema.model = z.string().optional().describe(description);
 };
 
 const buildReviewScopes = (reviewCmd: CommandDef): [ReviewScope, ...ReviewScope[]] => {
   const scopes: ReviewScope[] = [];
+  const uncommittedFlag = getFlag(reviewCmd, 'uncommitted');
+  const commitFlag = getFlag(reviewCmd, 'commit');
+  const baseFlag = getFlag(reviewCmd, 'base');
 
-  if (getFlag(reviewCmd, 'uncommitted') != null) scopes.push('uncommitted');
+  if (uncommittedFlag != null) scopes.push('uncommitted');
 
-  if (getFlag(reviewCmd, 'commit') != null) scopes.push('commit');
+  if (commitFlag != null) scopes.push('commit');
 
-  if (getFlag(reviewCmd, 'base') != null) scopes.push('range');
+  if (baseFlag != null) scopes.push('range');
 
   const [firstScope, ...otherScopes] = scopes;
 
@@ -43,25 +47,27 @@ const buildReviewScopes = (reviewCmd: CommandDef): [ReviewScope, ...ReviewScope[
 const buildReviewInputSchema = (config: ProviderConfig): ToolInputSchema => {
   const reviewCmd = getReviewCommand(config);
   const scopeValues = buildReviewScopes(reviewCmd);
+  const scopeDescription = 'Review scope — choose uncommitted changes, a single commit, or a range from a base ref.';
+  const scope = z.enum(scopeValues).describe(scopeDescription);
   const schema: MutableToolInputSchema = {
-    scope: z
-      .enum(scopeValues)
-      .describe('Review scope — choose uncommitted changes, a single commit, or a range from a base ref.'),
+    scope,
   };
+  const commitFlag = getFlag(reviewCmd, 'commit');
+  const baseFlag = getFlag(reviewCmd, 'base');
+  const workingDirFlag = getFlag(reviewCmd, FLAG_WORKING_DIR);
 
-  if (getFlag(reviewCmd, 'commit') != null) {
+  if (commitFlag != null) {
     schema.commit = z.string().optional().describe('Commit SHA or ref to review when scope=commit');
   }
 
-  if (getFlag(reviewCmd, 'base') != null) {
+  if (baseFlag != null) {
     schema.base = z.string().optional().describe('Base branch or ref to review against when scope=range');
   }
 
-  if (getFlag(reviewCmd, FLAG_WORKING_DIR) != null) {
-    schema.working_directory = z
-      .string()
-      .optional()
-      .describe('Working directory path — the review command runs against this repository root');
+  if (workingDirFlag != null) {
+    const description = 'Working directory path — the review command runs against this repository root';
+
+    schema.working_directory = z.string().optional().describe(description);
   }
 
   addModelField(schema, reviewCmd);
@@ -72,13 +78,14 @@ const buildReviewInputSchema = (config: ProviderConfig): ToolInputSchema => {
 };
 
 export const buildReviewToolDefinition = (providerName: string, config: ProviderConfig): ToolDefinition => {
+  const annotations = { readOnlyHint: true, openWorldHint: true };
   const definition: ToolDefinition = {
     name: `review_${providerName}`,
     description:
       `Run a repository review with ${providerName}. Returns review text content and opt-in structured metadata ` +
       `for attribution and parsed provider payloads.`,
     inputSchema: buildReviewInputSchema(config),
-    annotations: { readOnlyHint: true, openWorldHint: true },
+    annotations,
   };
 
   return definition;

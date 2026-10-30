@@ -5,49 +5,72 @@ import type { MockInstance } from 'vitest';
 import { registerAllTools } from './tool-registry';
 import { handleReview } from '../../ask/domain-logic/review.handler';
 import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import { ValidationError } from '../../shared';
 
-vi.mock('../../ask/domain-logic/review.handler', () => ({ handleReview: vi.fn() }));
+vi.mock('../../ask/domain-logic/review.handler', () => {
+  const mockedModule = { handleReview: vi.fn() };
 
-const createConfig = (withReview: boolean): ProviderConfig => ({
-  enabled: true,
-  description: 'Provider config',
-  command: 'codex',
-  timeout: 120_000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: { args: ['exec'] },
-    ...(withReview
-      ? {
-          review: {
-            args: ['review'],
-            flags: {
-              uncommitted: ['--uncommitted'],
-              base: '--base',
-              commit: '--commit',
-            },
-          },
-        }
-      : {}),
-  },
-  input: { method: 'positional' },
+  return mockedModule;
 });
 
-const createProviderEntry = (name: string, withReview: boolean): ResolvedProviderEntry => ({
-  name,
-  binaryPath: `/usr/bin/${name}`,
-  config: createConfig(withReview),
-});
+type ProviderCommands = ProviderConfig['commands'];
 
-const createResolvedProvider = (name: string): ResolvedProvider => ({
-  name,
-  description: `${name} provider`,
-  enabled: true,
-  available: true,
-  binaryPath: `/usr/bin/${name}`,
-});
+const createConfig = (withReview: boolean): ProviderConfig => {
+  const ask = { args: ['exec'] };
+  const flags = {
+    uncommitted: ['--uncommitted'],
+    base: '--base',
+    commit: '--commit',
+  };
+  const review = {
+    args: ['review'],
+    flags,
+  };
+  const reviewCommands: ProviderCommands = { review };
+  const noReviewCommands: ProviderCommands = {};
+  const optionalCommands = withReview ? reviewCommands : noReviewCommands;
+  const commands = {
+    ask,
+    ...optionalCommands,
+  };
+  const input: ProviderConfig['input'] = { method: 'positional' };
+  const providerConfig: ProviderConfig = {
+    enabled: true,
+    description: 'Provider config',
+    command: 'codex',
+    timeout: 120_000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+  };
 
-type MockServer = Readonly<{ registerTool: MockInstance }>;
+  return providerConfig;
+};
+
+const createProviderEntry = (name: string, withReview: boolean): ResolvedProviderEntry => {
+  const resolvedProviderEntry: ResolvedProviderEntry = {
+    name,
+    binaryPath: `/usr/bin/${name}`,
+    config: createConfig(withReview),
+  };
+
+  return resolvedProviderEntry;
+};
+
+const createResolvedProvider = (name: string): ResolvedProvider => {
+  const resolvedProvider: ResolvedProvider = {
+    name,
+    description: `${name} provider`,
+    enabled: true,
+    available: true,
+    binaryPath: `/usr/bin/${name}`,
+  };
+
+  return resolvedProvider;
+};
+
+type MockServer = { readonly registerTool: MockInstance };
 
 const getRegisteredNames = (server: MockServer): string[] => {
   return server.registerTool.mock.calls.map(([toolName]: unknown[]) => toolName as string);
@@ -63,7 +86,8 @@ const getHandler = (server: MockServer, toolName: string): ((...args: unknown[])
 
 describe('registerAllTools review support', () => {
   let server: MockServer;
-  const successResult: CallToolResult = { content: [{ type: 'text', text: 'review output' }] };
+  const content: CallToolResult['content'] = [{ type: 'text', text: 'review output' }];
+  const successResult: CallToolResult = { content };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -98,5 +122,16 @@ describe('registerAllTools review support', () => {
 
     expect(handleReview).toHaveBeenCalledWith(provider, args, undefined);
     expect(result).toBe(successResult);
+  });
+
+  it('GIVEN registered review handler WHEN invoked without a scope THEN rejects with ValidationError and skips handleReview', async () => {
+    const provider = createProviderEntry('codex', true);
+
+    registerAllTools(server as never, [provider], [createResolvedProvider('codex')]);
+
+    const handler = getHandler(server, 'review_codex');
+
+    await expect(handler({})).rejects.toThrow(ValidationError);
+    expect(handleReview).not.toHaveBeenCalled();
   });
 });

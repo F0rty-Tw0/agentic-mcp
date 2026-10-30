@@ -5,29 +5,44 @@ import type { ProviderConfig } from '../../shared';
 
 type AskToolFlags = Readonly<Record<string, unknown>>;
 
-const createConfig = (flags: AskToolFlags): ProviderConfig => ({
-  enabled: true,
-  description: 'Test provider',
-  command: 'test-cli',
-  timeout: 120000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: { args: ['-p'], flags: flags as ProviderConfig['commands']['ask']['flags'] },
-  },
-  input: { method: 'flag' },
-});
+const createConfig = (flags: AskToolFlags): ProviderConfig => {
+  const ask = { args: ['-p'], flags: flags as ProviderConfig['commands']['ask']['flags'] };
+  const commands = {
+    ask,
+  };
+  const input: ProviderConfig['input'] = { method: 'flag' };
+  const providerConfig: ProviderConfig = {
+    enabled: true,
+    description: 'Test provider',
+    command: 'test-cli',
+    timeout: 120000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+  };
 
-const withSessions = (config: ProviderConfig): ProviderConfig => ({
-  ...config,
-  commands: { ...config.commands, sessions: { flags: { resume: ['--resume'] } } },
-});
+  return providerConfig;
+};
+
+const withSessions = (config: ProviderConfig): ProviderConfig => {
+  const flags = { resume: ['--resume'] };
+  const sessions = { flags };
+  const commands = { ...config.commands, sessions };
+  const providerConfig: ProviderConfig = {
+    ...config,
+    commands,
+  };
+
+  return providerConfig;
+};
 
 describe('buildAskToolDefinition wave 3 provider config shapes', () => {
   describe('wave 3a', () => {
     it('GIVEN aider style config WHEN building tool definition THEN model is present but session_id is absent', () => {
+      const baseConfig = createConfig({ model: '--model' });
       const config = {
-        ...createConfig({ model: '--model' }),
+        ...baseConfig,
         outputFormat: 'text',
       } satisfies ProviderConfig;
       const result = buildAskToolDefinition('aider', config);
@@ -47,10 +62,12 @@ describe('buildAskToolDefinition wave 3 provider config shapes', () => {
     });
 
     it('GIVEN amp style config WHEN building tool definition THEN auto_mode is present for dangerous allow all', () => {
+      const baseConfig = createConfig({ autoMode: ['--dangerously-allow-all'] });
+      const input: ProviderConfig['input'] = { method: 'stdin' };
       const config = {
-        ...createConfig({ autoMode: ['--dangerously-allow-all'] }),
+        ...baseConfig,
         outputFormat: 'stream-json',
-        input: { method: 'stdin' },
+        input,
       } satisfies ProviderConfig;
       const result = buildAskToolDefinition('amp', config);
 
@@ -62,10 +79,12 @@ describe('buildAskToolDefinition wave 3 provider config shapes', () => {
 
   describe('wave 3b', () => {
     it('GIVEN cline style config WHEN building tool definition THEN only the standard fields are present', () => {
+      const baseConfig = createConfig({});
+      const input: ProviderConfig['input'] = { method: 'positional' };
       const config = {
-        ...createConfig({}),
+        ...baseConfig,
         outputFormat: 'stream-json',
-        input: { method: 'positional' },
+        input,
       } satisfies ProviderConfig;
       const result = buildAskToolDefinition('cline', config);
 
@@ -76,14 +95,17 @@ describe('buildAskToolDefinition wave 3 provider config shapes', () => {
     });
 
     it('GIVEN cursor style config WHEN building tool definition THEN model, working_directory, and sandbox are present', () => {
+      const sandbox = { flag: '--sandbox', values: ['enabled', 'disabled'] };
+      const baseConfig = createConfig({
+        model: '--model',
+        workingDir: '--workspace',
+        sandbox,
+      });
+      const input: ProviderConfig['input'] = { method: 'flag' };
       const config = {
-        ...createConfig({
-          model: '--model',
-          workingDir: '--workspace',
-          sandbox: { flag: '--sandbox', values: ['enabled', 'disabled'] },
-        }),
+        ...baseConfig,
         outputFormat: 'json',
-        input: { method: 'flag' },
+        input,
       } satisfies ProviderConfig;
       const result = buildAskToolDefinition('cursor', config);
 
@@ -93,10 +115,12 @@ describe('buildAskToolDefinition wave 3 provider config shapes', () => {
     });
 
     it('GIVEN droid style config WHEN building tool definition THEN model and working_directory are present', () => {
+      const baseConfig = createConfig({ model: '-m', workingDir: '--cwd' });
+      const input: ProviderConfig['input'] = { method: 'positional' };
       const config = {
-        ...createConfig({ model: '-m', workingDir: '--cwd' }),
+        ...baseConfig,
         outputFormat: 'json',
-        input: { method: 'positional' },
+        input,
       } satisfies ProviderConfig;
       const result = buildAskToolDefinition('droid', config);
 
