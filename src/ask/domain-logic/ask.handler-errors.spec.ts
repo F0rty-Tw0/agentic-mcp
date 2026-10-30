@@ -34,9 +34,16 @@ vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
   return result;
 });
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => {
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
   const result = {
     buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
     stripAnsi: vi.fn((input: string) => input),
   };
 

@@ -9,9 +9,8 @@ import {
   FLAG_SANDBOX,
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
-  isLeveledFlag,
 } from '../../ask/common';
-import { getFlag } from '../../ask/utils';
+import { getFlag, isLeveledFlag } from '../../ask/utils';
 import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/provider/common';
 
 type ToolInputSchema = Readonly<Record<string, z.ZodType>>;

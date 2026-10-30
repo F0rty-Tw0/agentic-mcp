@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => {
   return mocksValue;
 });
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => {
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
   const platformUtilModule = {
     resolveCliBinary: mocks.resolveCliBinary,
   };

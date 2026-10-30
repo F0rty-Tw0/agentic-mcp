@@ -1,4 +1,4 @@
-import { ASK_PROVIDER_CONFIG_STUB } from '../../../ask/common/stubs';
+import { ASK_PROVIDER_CONFIG_STUB } from '../../../ask/test/stubs/ask-provider-config.stub';
 import type { CommandDef, FlagValue, ProviderConfig } from '../../../shared/provider/common';
 
 type AskFlagMap = Readonly<Record<string, FlagValue>>;

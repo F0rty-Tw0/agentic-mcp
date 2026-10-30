@@ -41,9 +41,16 @@ vi.mock('../../shared/validation/utils/validation.util', () => {
   return result;
 });
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => {
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
   const result = {
     buildMinimalEnv: mocks.buildMinimalEnv,
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
     stripAnsi: mocks.stripAnsi,
   };
 
