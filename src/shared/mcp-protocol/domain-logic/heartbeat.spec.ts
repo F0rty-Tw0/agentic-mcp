@@ -50,6 +50,15 @@ describe('startHeartbeat', () => {
 
       expect(stop).toBeTypeOf('function');
     });
+
+    it('GIVEN extra without a client progressToken WHEN 60s elapse THEN no progress notification is sent', async () => {
+      const extra = createExtra();
+
+      startHeartbeat(extra);
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(extra.sendNotification).not.toHaveBeenCalled();
+    });
   });
 
   describe('immediate heartbeat', () => {
@@ -88,16 +97,21 @@ describe('startHeartbeat', () => {
       });
     });
 
-    it('GIVEN extra without progressToken WHEN called THEN generates a UUID-based token', () => {
-      const extra = createExtra();
+    it('GIVEN extra with progressToken 0 WHEN called THEN sends the notification with token 0', () => {
+      const extra = createExtra(0);
 
       startHeartbeat(extra);
 
-      expect(extra.sendNotification).toHaveBeenCalledTimes(1);
+      const params = {
+        progressToken: 0,
+        progress: 0,
+        message: 'Processing… (0s elapsed)',
+      };
 
-      const serialized = JSON.stringify(vi.mocked(extra.sendNotification).mock.calls);
-
-      expect(serialized).toContain('agentic-mcp-heartbeat-');
+      expect(extra.sendNotification).toHaveBeenCalledWith({
+        method: 'notifications/progress',
+        params,
+      });
     });
   });
 
