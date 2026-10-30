@@ -1,43 +1,53 @@
 import { buildAskAllToolArgs, normalizeAskAllArgs, validateAskAllFlags } from './ask-all-arg-parser.util';
-import type { AskToolArgs } from '../../ask';
-import type { AskAllToolArgs } from '../../ask-all';
+import type { AskToolArgs } from '../../ask/common';
+import type { AskAllToolArgs } from '../../ask-all/common';
+
+type AskArgsDraft = { -readonly [TKey in keyof AskToolArgs]: AskToolArgs[TKey] };
+
+type AskArgKey = keyof AskToolArgs;
+
+type ValueFlagKey =
+  'model' | 'working_directory' | 'auto_mode' | 'system_prompt' | 'effort' | 'max_budget' | 'context' | 'session_id';
 
 type ParseState = {
-  prompt?: string;
-  model?: string;
-  workingDirectory?: string;
-  autoMode?: string;
-  systemPrompt?: string;
-  effort?: string;
-  maxBudget?: string;
-  context?: string;
-  sessionId?: string;
-  streamLive?: boolean;
-  includeStructured?: boolean;
-  mode?: 'async';
-  action?: 'status';
-  jobId?: string;
-  files: string[];
-  [key: string]: string | boolean | string[] | undefined;
+  readonly draft: AskArgsDraft;
+  readonly files: string[];
 };
 
-const VALUE_FLAGS: Readonly<Record<string, keyof ParseState>> = {
+const VALUE_FLAGS: Readonly<Record<string, ValueFlagKey>> = {
   '--model': 'model',
-  '--working-dir': 'workingDirectory',
-  '--auto-mode': 'autoMode',
-  '--system-prompt': 'systemPrompt',
+  '--working-dir': 'working_directory',
+  '--auto-mode': 'auto_mode',
+  '--system-prompt': 'system_prompt',
   '--effort': 'effort',
-  '--max-budget': 'maxBudget',
+  '--max-budget': 'max_budget',
   '--context': 'context',
-  '--session-id': 'sessionId',
+  '--session-id': 'session_id',
 };
 
-const parseValueFlag = (state: ParseState, flag: string, value: string): boolean => {
+const ASK_ARG_KEYS: AskArgKey[] = [
+  'prompt',
+  'model',
+  'working_directory',
+  'auto_mode',
+  'system_prompt',
+  'effort',
+  'max_budget',
+  'context',
+  'session_id',
+  'stream_live',
+  'include_structured',
+  'mode',
+  'action',
+  'job_id',
+];
+
+const parseValueFlag = (state: ParseState, flag: string, value: string | undefined): boolean => {
   const key = VALUE_FLAGS[flag];
 
   if (!key) return false;
 
-  state[key] = value;
+  state.draft[key] = value;
 
   return true;
 };
@@ -52,26 +62,26 @@ const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | und
   }
 
   if (arg === '--async') {
-    state.mode = 'async';
+    state.draft.mode = 'async';
 
     return 1;
   }
 
   if (arg === '--stream-live') {
-    state.streamLive = true;
+    state.draft.stream_live = true;
 
     return 1;
   }
 
   if (arg === '--include-structured') {
-    state.includeStructured = true;
+    state.draft.include_structured = true;
 
     return 1;
   }
 
   if (arg === '--job-id') {
-    state.action = 'status';
-    state.jobId = nextArg;
+    state.draft.action = 'status';
+    state.draft.job_id = nextArg;
 
     return 2;
   }
@@ -79,14 +89,15 @@ const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | und
   return 0;
 };
 
-const tokenizeArgs = (args: readonly string[]): ParseState => {
-  const state: ParseState = { files: [] };
+const tokenizeArgs = (args: string[]): ParseState => {
+  const state: ParseState = { draft: {}, files: [] };
 
   for (let i = 0; i < args.length;) {
-    const arg = args[i] as string;
-    const nextArg = args[i + 1] as string;
+    const arg = args[i] ?? '';
+    const nextArg = args[i + 1];
+    const isValueFlag = parseValueFlag(state, arg, nextArg);
 
-    if (parseValueFlag(state, arg, nextArg)) {
+    if (isValueFlag) {
       i += 2;
       continue;
     }
@@ -98,8 +109,10 @@ const tokenizeArgs = (args: readonly string[]): ParseState => {
       continue;
     }
 
-    if (arg && !arg.startsWith('--') && state.prompt === undefined) {
-      state.prompt = arg;
+    const isFlag = arg.startsWith('--');
+
+    if (arg && !isFlag && state.draft.prompt === undefined) {
+      state.draft.prompt = arg;
     }
 
     i += 1;
@@ -108,47 +121,34 @@ const tokenizeArgs = (args: readonly string[]): ParseState => {
   return state;
 };
 
-const STATE_TO_ARG_MAP: readonly (readonly [keyof ParseState, string])[] = [
-  ['prompt', 'prompt'],
-  ['model', 'model'],
-  ['workingDirectory', 'working_directory'],
-  ['autoMode', 'auto_mode'],
-  ['systemPrompt', 'system_prompt'],
-  ['effort', 'effort'],
-  ['maxBudget', 'max_budget'],
-  ['context', 'context'],
-  ['sessionId', 'session_id'],
-  ['streamLive', 'stream_live'],
-  ['includeStructured', 'include_structured'],
-  ['mode', 'mode'],
-  ['action', 'action'],
-  ['jobId', 'job_id'],
-];
+const assignDefined = <TKey extends AskArgKey>(draft: AskArgsDraft, key: TKey, value: AskArgsDraft[TKey]): void => {
+  if (value === undefined) return;
+
+  draft[key] = value;
+};
 
 const buildAskToolArgs = (state: ParseState): AskToolArgs => {
-  const result: Record<string, unknown> = {};
+  const result: AskArgsDraft = {};
 
-  for (const [stateKey, argKey] of STATE_TO_ARG_MAP) {
-    if (state[stateKey] !== undefined) {
-      result[argKey] = state[stateKey];
-    }
+  for (const key of ASK_ARG_KEYS) {
+    assignDefined(result, key, state.draft[key]);
   }
 
   if (state.files.length > 0) {
     result.files = state.files;
   }
 
-  return result as AskToolArgs;
+  return result;
 };
 
-export const parseAskArgs = (args: readonly string[]): AskToolArgs => {
+export const parseAskArgs = (args: string[]): AskToolArgs => {
   const state = tokenizeArgs(args);
   const result = buildAskToolArgs(state);
 
   return result;
 };
 
-export const parseAskAllArgs = (args: readonly string[]): AskAllToolArgs => {
+export const parseAskAllArgs = (args: string[]): AskAllToolArgs => {
   const normalizedArgs = normalizeAskAllArgs(args);
 
   validateAskAllFlags(normalizedArgs);

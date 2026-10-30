@@ -6,42 +6,71 @@ import { runCli } from './cli.router';
 import { ASK_STREAM_EVENT_SCHEMA } from '../../streaming/common';
 import type { CallCliToolInput, CliSubcommand } from '../common';
 
-const mocks = vi.hoisted(() => ({
-  callCliTool: vi.fn<(input: CallCliToolInput) => Promise<CallToolResult>>(),
-  writeAskAllReport: vi.fn<(input: Readonly<{ reportPath: string; result: CallToolResult }>) => Promise<void>>(),
-}));
+type WriteAskAllReportInput = {
+  readonly reportPath: string;
+  readonly result: CallToolResult;
+};
 
-vi.mock('../utils/in-process-mcp-client.util', () => ({
-  callCliTool: mocks.callCliTool,
-}));
+type ContentPart = CallToolResult['content'][number];
 
-vi.mock('./ask-all-report.writer', () => ({
-  writeAskAllReport: mocks.writeAskAllReport,
-}));
+const mocks = vi.hoisted(() => {
+  const routerMocks = {
+    callCliTool: vi.fn<(input: CallCliToolInput) => Promise<CallToolResult>>(),
+    writeAskAllReport: vi.fn<(input: WriteAskAllReportInput) => Promise<void>>(),
+  };
 
-const buildSuccessResult = (): CallToolResult => ({
-  content: [{ type: 'text', text: 'ok' }],
+  return routerMocks;
 });
 
-const buildAskAllSuccessResult = (): CallToolResult => ({
-  content: [{ type: 'text', text: 'Comparison complete for 2 providers' }],
-  structuredContent: {
+vi.mock('../utils/in-process-mcp-client.util', () => {
+  const clientModule = { callCliTool: mocks.callCliTool };
+
+  return clientModule;
+});
+
+vi.mock('./ask-all-report.writer', () => {
+  const writerModule = { writeAskAllReport: mocks.writeAskAllReport };
+
+  return writerModule;
+});
+
+const buildTextPart = (text: string): ContentPart => {
+  const part: ContentPart = { type: 'text', text };
+
+  return part;
+};
+
+const buildSuccessResult = (): CallToolResult => {
+  const content = [buildTextPart('ok')];
+  const result: CallToolResult = { content };
+
+  return result;
+};
+
+const buildAskAllSuccessResult = (): CallToolResult => {
+  const content = [buildTextPart('Comparison complete for 2 providers')];
+  const claudeResult = { provider: 'claude', success: true, executionTimeMs: 20, response: 'ok' };
+  const codexResult = { provider: 'codex', success: true, executionTimeMs: 22, response: 'ok' };
+  const results = [claudeResult, codexResult];
+  const structuredContent = {
     prompt: 'hello',
     totalProviders: 2,
     succeeded: 2,
     failed: 0,
     totalExecutionTimeMs: 42,
-    results: [
-      { provider: 'claude', success: true, executionTimeMs: 20, response: 'ok' },
-      { provider: 'codex', success: true, executionTimeMs: 22, response: 'ok' },
-    ],
-  },
-});
+    results,
+  };
+  const result: CallToolResult = { content, structuredContent };
 
-const buildErrorResult = (): CallToolResult => ({
-  content: [{ type: 'text', text: 'boom' }],
-  isError: true,
-});
+  return result;
+};
+
+const buildErrorResult = (): CallToolResult => {
+  const content = [buildTextPart('boom')];
+  const result: CallToolResult = { content, isError: true };
+
+  return result;
+};
 
 const buildLiveChunkMessage = (): string => {
   const result = JSON.stringify({
@@ -79,9 +108,11 @@ describe('runCli', () => {
   it('GIVEN ask_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ask_claude', ['hello']);
 
+    const expectedArgs = { prompt: 'hello' };
+
     expect(mocks.callCliTool).toHaveBeenCalledWith({
       toolName: 'ask_claude',
-      args: { prompt: 'hello' },
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
@@ -90,9 +121,11 @@ describe('runCli', () => {
   it('GIVEN ask_all WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ask_all', ['hello']);
 
+    const expectedArgs = { prompt: 'hello' };
+
     expect(mocks.callCliTool).toHaveBeenCalledWith({
       toolName: 'ask_all',
-      args: { prompt: 'hello' },
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
@@ -101,9 +134,11 @@ describe('runCli', () => {
   it('GIVEN ask_all with --models alias WHEN run THEN it normalizes the value and calls the MCP helper', async () => {
     await runCli('ask_all', ['hello', '--models', 'claude-sonnet-4']);
 
+    const expectedArgs = { prompt: 'hello', model: 'claude-sonnet-4' };
+
     expect(mocks.callCliTool).toHaveBeenCalledWith({
       toolName: 'ask_all',
-      args: { prompt: 'hello', model: 'claude-sonnet-4' },
+      args: expectedArgs,
       configPath: undefined,
     });
   });
@@ -125,9 +160,11 @@ describe('runCli', () => {
 
     await runCli('ask_all', ['hello', '--report', '/tmp/report.json']);
 
+    const expectedArgs = { prompt: 'hello' };
+
     expect(mocks.callCliTool).toHaveBeenCalledWith({
       toolName: 'ask_all',
-      args: { prompt: 'hello' },
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(mocks.writeAskAllReport).toHaveBeenCalledWith({
@@ -148,9 +185,11 @@ describe('runCli', () => {
   it('GIVEN ping_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('ping_claude', []);
 
+    const expectedArgs = {};
+
     expect(mocks.callCliTool).toHaveBeenCalledWith({
       toolName: 'ping_claude',
-      args: {},
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
@@ -159,9 +198,11 @@ describe('runCli', () => {
   it('GIVEN sessions_claude WHEN run THEN it calls the MCP helper with the exact tool name', async () => {
     await runCli('sessions_claude', []);
 
+    const expectedArgs = {};
+
     expect(mocks.callCliTool).toHaveBeenCalledWith({
       toolName: 'sessions_claude',
-      args: {},
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(stdoutSpy).toHaveBeenCalledWith('ok\n');
@@ -169,10 +210,9 @@ describe('runCli', () => {
 
   it('GIVEN ask_claude with --stream-live WHEN run THEN it forwards stream_live and renders live progress', async () => {
     mocks.callCliTool.mockImplementationOnce(async (input) => {
-      input.onProgress?.({
-        progress: 1,
-        message: buildLiveChunkMessage(),
-      });
+      const progress = { progress: 1, message: buildLiveChunkMessage() };
+
+      input.onProgress?.(progress);
 
       const result = await Promise.resolve(buildSuccessResult());
 
@@ -183,9 +223,11 @@ describe('runCli', () => {
 
     const callCliToolInput = mocks.callCliTool.mock.calls[0]?.[0];
 
+    const expectedArgs = { prompt: 'hello', stream_live: true };
+
     expect(callCliToolInput).toMatchObject({
       toolName: 'ask_claude',
-      args: { prompt: 'hello', stream_live: true },
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(typeof callCliToolInput?.onProgress).toBe('function');
@@ -198,9 +240,11 @@ describe('runCli', () => {
 
     const callCliToolInput = mocks.callCliTool.mock.calls[0]?.[0];
 
+    const expectedArgs = { scope: 'uncommitted', working_directory: '/repo', stream_live: true };
+
     expect(callCliToolInput).toMatchObject({
       toolName: 'review_codex',
-      args: { scope: 'uncommitted', working_directory: '/repo', stream_live: true },
+      args: expectedArgs,
       configPath: undefined,
     });
     expect(typeof callCliToolInput?.onProgress).toBe('function');

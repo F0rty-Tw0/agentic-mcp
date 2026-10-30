@@ -1,5 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { createServer } from '../../server';
@@ -8,10 +9,11 @@ import type { CallCliToolInput } from '../common';
 
 type ToolSchemaProperties = Readonly<Record<string, unknown>>;
 
-type ListedTool = Readonly<{
-  name: string;
-  inputSchema?: Readonly<{ properties?: ToolSchemaProperties }>;
-}>;
+type CliRequestOptions = {
+  readonly onprogress: CallCliToolInput['onProgress'];
+  readonly resetTimeoutOnProgress: true;
+  readonly timeout: number;
+};
 
 const CLI_ARG_LABELS: Readonly<Record<string, string>> = {
   files: '--file',
@@ -24,14 +26,20 @@ const formatCliArgLabel = (argName: string): string => {
   return result;
 };
 
-const resolveProviderNames = (toolName: string): readonly string[] | undefined => {
+const resolveProviderNames = (toolName: string): string[] | undefined => {
   const match = /^(?:ask|review|ping|help|sessions)_(.+)$/.exec(toolName);
 
   if (!match) return;
 
   if (toolName === 'ask_all') return;
 
-  return [match[1] as string];
+  const providerName = match[1];
+
+  if (providerName === undefined) return;
+
+  const result = [providerName];
+
+  return result;
 };
 
 const buildUnknownToolErrorMessage = (toolName: string): string => {
@@ -44,12 +52,11 @@ const buildUnknownToolErrorMessage = (toolName: string): string => {
 
 const resolveToolProperties = async (client: Client, toolName: string): Promise<ToolSchemaProperties> => {
   const { tools } = await client.listTools();
-  const listedTools = tools as readonly ListedTool[];
-  const tool = listedTools.find((candidate) => candidate.name === toolName);
+  const tool = tools.find((candidate) => candidate.name === toolName);
 
   if (!tool) throw new ValidationError(buildUnknownToolErrorMessage(toolName));
 
-  const result = tool.inputSchema?.properties ?? {};
+  const result = tool.inputSchema.properties ?? {};
 
   return result;
 };
@@ -61,9 +68,8 @@ const validateSupportedArgs = async (client: Client, input: CallCliToolInput): P
   if (!argNames.length) return;
 
   const toolProperties = await resolveToolProperties(client, toolName);
-  const unsupportedArgLabels = argNames
-    .filter((argName) => !(argName in toolProperties))
-    .map((argName) => formatCliArgLabel(argName));
+  const unsupportedArgNames = argNames.filter((argName) => !(argName in toolProperties));
+  const unsupportedArgLabels = unsupportedArgNames.map((argName) => formatCliArgLabel(argName));
 
   if (!unsupportedArgLabels.length) return;
 
@@ -74,18 +80,19 @@ const validateSupportedArgs = async (client: Client, input: CallCliToolInput): P
   throw new ValidationError(`${noun} ${joinedLabels} ${verb} not supported by ${toolName}`);
 };
 
-const buildRequestOptions = (
-  onProgress: CallCliToolInput['onProgress']
-): Readonly<{ onprogress: CallCliToolInput['onProgress']; resetTimeoutOnProgress: true; timeout: number }> => {
-  const result: Readonly<{
-    onprogress: CallCliToolInput['onProgress'];
-    resetTimeoutOnProgress: true;
-    timeout: number;
-  }> = {
+const buildRequestOptions = (onProgress: CallCliToolInput['onProgress']): CliRequestOptions => {
+  const result: CliRequestOptions = {
     onprogress: onProgress,
     resetTimeoutOnProgress: true,
     timeout: DEFAULT_MCP_TOOL_TIMEOUT_MS,
   };
+
+  return result;
+};
+
+const isCallToolResult = (value: unknown): value is CallToolResult => {
+  const parsed = CallToolResultSchema.safeParse(value);
+  const result = parsed.success;
 
   return result;
 };
@@ -113,7 +120,9 @@ export const callCliTool = async (input: CallCliToolInput): Promise<CallToolResu
     const requestOptions = buildRequestOptions(onProgress);
     const result = await client.callTool({ name: toolName, arguments: args }, undefined, requestOptions);
 
-    return result as CallToolResult;
+    if (!isCallToolResult(result)) throw new ValidationError(`CLI tool "${toolName}" returned an unexpected result`);
+
+    return result;
   } finally {
     await client.close();
     await server.close();
