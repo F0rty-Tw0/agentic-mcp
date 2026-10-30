@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server';
 import type { ProvidersFile } from '../../shared';
-import type { AsyncViFn, SyncViFn } from '../../shared/command-execution/common/test-utils';
+import type { AsyncViFn, SyncViFn } from '../../shared/command-execution/test/common/vi-fn.type';
 
-type ActiveRequest = Readonly<{ requestId: string; pid: number }>;
-type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
+type ActiveRequest = { readonly requestId: string; readonly pid: number };
+type LoadConfigOptions = { readonly configPath?: string };
+
+type LoadConfigMock = AsyncViFn<[options?: LoadConfigOptions], ProvidersFile>;
 type KillProcessMock = AsyncViFn<[pid: number], boolean>;
 type GetActiveRequestMock = SyncViFn<[requestId: string], ActiveRequest | undefined>;
 type UnregisterActiveRequestMock = SyncViFn<[requestId: string], void>;
@@ -20,33 +22,51 @@ const mocks = vi.hoisted(() => {
   const unregisterActiveRequest = vi.fn<UnregisterActiveRequestMock>();
   const registerAllTools = vi.fn<RegisterAllToolsMock>();
 
-  return {
+  const result = {
     loadConfig,
     killProcess,
     getActiveRequest,
     unregisterActiveRequest,
     registerAllTools,
   };
+
+  return result;
 });
 
-vi.mock('../../config/loader', () => ({
-  loadConfig: mocks.loadConfig,
-  warnDangerousFlags: vi.fn(),
-}));
+vi.mock('../../config/loader', () => {
+  const mockedModule = {
+    loadConfig: mocks.loadConfig,
+    warnDangerousFlags: vi.fn(),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  resolveCliBinary: vi.fn(),
-  killProcess: mocks.killProcess,
-}));
+  return mockedModule;
+});
 
-vi.mock('../../shared/validation/domain-logic/request-registry', () => ({
-  getActiveRequest: mocks.getActiveRequest,
-  unregisterActiveRequest: mocks.unregisterActiveRequest,
-}));
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const mockedModule = {
+    resolveCliBinary: vi.fn(),
+    killProcess: mocks.killProcess,
+  };
 
-vi.mock('../../tool-registry', () => ({
-  registerAllTools: mocks.registerAllTools,
-}));
+  return mockedModule;
+});
+
+vi.mock('../../shared/validation/domain-logic/request-registry', () => {
+  const mockedModule = {
+    getActiveRequest: mocks.getActiveRequest,
+    unregisterActiveRequest: mocks.unregisterActiveRequest,
+  };
+
+  return mockedModule;
+});
+
+vi.mock('../../tool-registry', () => {
+  const mockedModule = {
+    registerAllTools: mocks.registerAllTools,
+  };
+
+  return mockedModule;
+});
 
 const emptyConfig: ProvidersFile = {
   configVersion: 1,
@@ -97,7 +117,9 @@ describe('createServer – cancellation notification handler', () => {
     mocks.getActiveRequest.mockReturnValue({ requestId: '42', pid: 1234 });
     mocks.killProcess.mockResolvedValue(true);
 
-    await handler({ params: { requestId: '42' } });
+    const params = { requestId: '42' };
+
+    await handler({ params });
 
     expect(mocks.getActiveRequest).toHaveBeenCalledWith('42');
     expect(mocks.killProcess).toHaveBeenCalledWith(1234);
@@ -109,7 +131,9 @@ describe('createServer – cancellation notification handler', () => {
 
     mocks.getActiveRequest.mockReturnValue(undefined);
 
-    await handler({ params: { requestId: '99' } });
+    const params = { requestId: '99' };
+
+    await handler({ params });
 
     expect(mocks.getActiveRequest).toHaveBeenCalledWith('99');
     expect(mocks.killProcess).not.toHaveBeenCalled();
@@ -122,7 +146,9 @@ describe('createServer – cancellation notification handler', () => {
     mocks.getActiveRequest.mockReturnValue({ requestId: '7', pid: 5678 });
     mocks.killProcess.mockResolvedValue(true);
 
-    await handler({ params: { requestId: 7 } });
+    const params = { requestId: 7 };
+
+    await handler({ params });
 
     expect(mocks.getActiveRequest).toHaveBeenCalledWith('7');
     expect(mocks.killProcess).toHaveBeenCalledWith(5678);
@@ -132,7 +158,9 @@ describe('createServer – cancellation notification handler', () => {
   it('GIVEN a falsy requestId WHEN cancellation notification is received THEN it returns early without any action', async () => {
     const handler = await createServerAndCaptureHandler();
 
-    await handler({ params: { requestId: 0 } });
+    const params = { requestId: 0 };
+
+    await handler({ params });
 
     expect(mocks.getActiveRequest).not.toHaveBeenCalled();
     expect(mocks.killProcess).not.toHaveBeenCalled();
