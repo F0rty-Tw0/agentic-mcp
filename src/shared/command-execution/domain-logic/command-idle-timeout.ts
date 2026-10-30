@@ -26,8 +26,6 @@ export const setupIdleTimeout = (idleTimeoutMs: number | undefined, pid: number 
     if (timer) clearTimeout(timer);
   };
 
-  scheduleKill();
-
   const idleTimeoutHandle: IdleTimeoutHandle = { reset, clear, timedOut: () => idleTimedOut };
 
   return idleTimeoutHandle;

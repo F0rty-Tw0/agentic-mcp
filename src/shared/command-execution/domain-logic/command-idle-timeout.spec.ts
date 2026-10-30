@@ -97,19 +97,20 @@ describe('setupIdleTimeout', () => {
       expect(killProcessMock).not.toHaveBeenCalled();
     });
 
-    it('WHEN no output ever arrives THEN the process is killed after the idle period', async () => {
+    it('WHEN no output ever arrives THEN no idle kill is scheduled (the overall timeout covers silent starts)', async () => {
       vi.useFakeTimers();
       setupIdleTimeout(100, 9999);
 
-      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(200);
 
-      expect(killProcessMock).toHaveBeenCalledWith(9999);
+      expect(killProcessMock).not.toHaveBeenCalled();
     });
 
-    it('WHEN the idle period elapses THEN the handle reports an idle timeout', async () => {
+    it('WHEN the idle period elapses after output THEN the handle reports an idle timeout', async () => {
       vi.useFakeTimers();
       const handle = setupIdleTimeout(100, 9999);
 
+      handle.reset();
       await vi.advanceTimersByTimeAsync(100);
 
       expect(handle.timedOut()).toBe(true);

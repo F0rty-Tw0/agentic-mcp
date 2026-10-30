@@ -62,9 +62,11 @@ describe('FEATURE: executeCommand with real child processes', () => {
     });
   });
 
-  describe('GIVEN a child that never writes any output', () => {
+  describe('GIVEN a child that writes once and then goes silent', () => {
     it('WHEN idleTimeoutMs elapses THEN the child is killed and the result reports a timeout', async () => {
-      const options = buildNodeOptions('setTimeout(() => undefined, 20_000)', { idleTimeoutMs: 300 });
+      const options = buildNodeOptions("process.stdout.write('x'); setTimeout(() => undefined, 20_000)", {
+        idleTimeoutMs: 300,
+      });
 
       const result = await executeCommand(options);
 

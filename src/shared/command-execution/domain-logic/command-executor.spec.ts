@@ -249,10 +249,10 @@ describe('executeCommand', () => {
   });
 
   describe('idle timeout', () => {
-    it('GIVEN a silent process and idleTimeoutMs WHEN the idle period elapses THEN timedOut is true', async () => {
+    it('GIVEN a process that goes silent after output WHEN the idle period elapses THEN timedOut is true', async () => {
       vi.useFakeTimers();
 
-      const { child, emitClose } = createControllableChild(2468);
+      const { child, emitClose, emitStdout } = createControllableChild(2468);
 
       vi.mocked(crossSpawn).mockReturnValue(child as unknown as ChildProcess);
 
@@ -262,6 +262,7 @@ describe('executeCommand', () => {
         bypassSemaphore: true,
       });
 
+      emitStdout(Buffer.from('partial'));
       vi.advanceTimersByTime(1_001);
       emitClose(null, 'SIGTERM');
 
