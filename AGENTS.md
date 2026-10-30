@@ -22,12 +22,12 @@
 - Barrel `index.ts` at four levels:
   - **Module root** (`ask/index.ts`): wildcard re-exports from subdirs (`export * from './common'`).
   - **`domain-logic/`**: named re-exports only — this is the module's public API surface for executable behavior. Export functions/constants only; reusable types belong in `common/`.
-  - **`common/`**, **`utils/`**, **`stubs/`**: named re-exports, no wildcards. `utils/index.ts` exports functions only; never re-export types there.
+  - **`common/`**, **`utils/`**: named re-exports, no wildcards. `utils/index.ts` exports functions only; never re-export types there. Test-only folders (`test/`) have no barrels.
 
 ## Module Structure
 
 - Each feature lives in its own top-level `src/` directory (e.g., `ask/`, `streaming/`, `session/`).
-- Standard subdirectories: `domain-logic/` (business logic, handlers), `common/` (types, constants, stubs), `utils/` (pure helper functions).
+- Standard subdirectories: `domain-logic/` (business logic, handlers, anything with I/O or state), `common/` (types in `*.type.ts`, constants in `*.const.ts`), `utils/` (pure helper functions), `test/` (test-only files).
 - Not every module needs all three — only create subdirs that have content.
 - **`utils/` is a leaf layer** — pure helpers only. `utils/` MUST NOT import from `domain-logic/`. If a helper needs domain behavior, move the helper into `domain-logic/`. If it only needs a shared contract, move that contract into `common/`.
 - **No `utils` pattern inside `data-access/`** — keep persistence helpers inside `data-access/`, but name them for their storage role (`*.store.ts`, `*.schema.ts`, `*.path.ts`, `*.lock.ts`) instead of `*.util.ts` or nested `utils/`.
@@ -35,7 +35,7 @@
 - **Cross-module shared types live in `src/shared/common/`** — only move a type there when multiple top-level modules truly depend on it.
 - **No type ownership in `domain-logic/` or `utils/`** — exported types/interfaces used outside their declaring file must move to `common/`. Keep test-only helper types private whenever possible.
 - **No type forwarding through `domain-logic/` or `utils/`** — do not re-export types from those layers just to make them reachable elsewhere. Move the type to `common/` instead.
-- Test stubs live in `common/stubs/` with their own barrel `index.ts`.
+- Test-only files live under the owning module's `test/` folder: `test/stubs/*.stub.ts` (`UPPER_SNAKE_STUB` constants), `test/mocks/*.mock.ts`, `test/fixtures/`, `test/utils/*.spec.util.ts` (factories), `test/common/*.type.ts` / `*.const.ts`. Enforced by lint-suite `local/test-file-shape`.
 
 ## Testing
 
@@ -72,14 +72,14 @@ No production code before a failing test. Red -> Green -> Refactor. If you wrote
 ## Patterns You Must Follow
 
 - **Guard-first** — early returns over nested blocks.
-- **`Readonly<>`** — wrap type aliases by default. Also wrap nested `Record<>` fields.
+- **`readonly` properties** — mark primitive-typed properties `readonly`; use `T[]`, not `readonly T[]` (lint-suite `local/readonly-type-properties`). Disable per line, with a reason, only for fields that are really mutated.
 - **Named variables before use** — `const result: Type = { ... }; return result;` instead of returning literals directly. Same for push: `const item: Type = { ... }; list.push(item);` — never inline objects into `push()`, `return`, or function arguments.
 - **Name stable contracts explicitly** — do not use `ReturnType<typeof someFunction>` for reusable domain, transport, or test-contract types. Export a named type from the owning `common/` module and import it directly.
 - **Prefer real library/domain types over derived function types** — use `CallToolResult`, `ExecutionResult`, `ChildProcess`, `MockInstance`, etc. instead of reverse-engineering them with `ReturnType`.
 - **Null checks for config values** — use `value == null`, not `!value` (preserves falsy-but-valid values like `""` or `0`).
 - **Custom error classes** — throw `ValidationError` or `CommandExecutionError`, never bare `Error`.
 - **No magic numbers** — extract to constants in `src/shared/`.
-- **Single input object** — functions with 3+ parameters take one `Readonly<{...}>` typed object, not positional args. Name the type `*Input`, `*Context`, or `*Options`.
+- **Single input object** — functions with 3+ parameters take one named object type, not positional args. Name the type `*Input`, `*Context`, or `*Options`.
 - **Destructure at use-site** — destructure input objects inside the function body, not in the parameter list: `const { a, b } = input;`.
 - **Variable name mirrors type** — `buildAttributionInput: BuildAttributionInput`, `modelHintContext: ModelHintContext`.
 - **`Pick<>` for narrow dependencies** — when a function only needs a few fields from a large type, use `Pick<ExecutionResult, 'executionTimeMs' | 'truncated'>`.
