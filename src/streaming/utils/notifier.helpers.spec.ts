@@ -125,10 +125,10 @@ describe('splitChunkByBytes', () => {
     }
   });
 
-  it('GIVEN empty string WHEN called THEN returns single-element array with empty string', () => {
+  it('GIVEN empty string WHEN called THEN returns no chunks so no empty chunk event is emitted', () => {
     const result = splitChunkByBytes('');
 
-    expect(result).toStrictEqual(['']);
+    expect(result).toStrictEqual([]);
   });
 
   it('GIVEN multi-byte characters exceeding limit WHEN splitChunkByBytes called THEN splits correctly respecting character boundaries', () => {
