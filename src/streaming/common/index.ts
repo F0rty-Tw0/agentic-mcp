@@ -1,5 +1,3 @@
-export { ASK_STREAM_EVENT_SCHEMA } from './stream-event.types';
-
 export type {
   AskStreamChannel,
   AskStreamDiagnostics,
@@ -9,9 +7,10 @@ export type {
   AskStreamExecutionSummary,
   NotifierState,
   StreamNotifier,
-} from './stream-event.types';
+} from './stream-event.type';
 
 export {
+  ASK_STREAM_EVENT_SCHEMA,
   HEARTBEAT_IDLE_INTERVAL_MS,
   MAX_STREAM_CHUNK_BYTES,
   STREAM_COALESCE_WINDOW_MS,

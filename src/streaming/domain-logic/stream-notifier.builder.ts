@@ -1,25 +1,25 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ProgressContext } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common';
 import type { AskStreamExecutionSummary, NotifierState, StreamNotifier } from '../common';
-import { emitDone, emitError, emitSystemEvent, queueChunk } from '../utils/notifier-runtime.util';
+import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime';
 import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
 
-type StreamLiveArgs = Readonly<{ stream_live?: boolean }>;
+type StreamLiveArgs = { readonly stream_live?: boolean };
 
-type CreateStreamNotifierInput = Readonly<{
-  providerName: string;
-  args: StreamLiveArgs;
-  extra?: ProgressContext;
-}>;
+type CreateStreamNotifierInput = {
+  readonly providerName: string;
+  readonly args: StreamLiveArgs;
+  readonly extra?: ProgressContext;
+};
 
 export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNotifier => {
   const progressToken = resolveProgressToken(input.extra);
 
-  if (!isStreamEnabled({ args: input.args, progressToken, extra: input.extra }) || !progressToken || !input.extra) {
-    return createNoopStreamNotifier();
-  }
+  const isEnabled = isStreamEnabled({ args: input.args, progressToken, extra: input.extra });
+
+  if (!isEnabled || !progressToken || !input.extra) return createNoopStreamNotifier();
 
   const state: NotifierState = {
     streamId: `ask-${input.providerName}-${randomUUID()}`,
@@ -36,12 +36,15 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
   const context = { extra: input.extra, progressToken };
 
   const heartbeatTimer = setInterval(() => {
-    if (Date.now() - state.lastChunkAtMs < HEARTBEAT_IDLE_INTERVAL_MS) return;
+    const nowMs = Date.now();
+    const idleMs = nowMs - state.lastChunkAtMs;
+
+    if (idleMs < HEARTBEAT_IDLE_INTERVAL_MS) return;
 
     emitSystemEvent(state, context, 'heartbeat');
   }, HEARTBEAT_IDLE_INTERVAL_MS);
 
-  return {
+  const streamNotifier: StreamNotifier = {
     onStdoutChunk: (chunk: string): void => {
       queueChunk(state, 'stdout', chunk, context);
     },
@@ -66,4 +69,6 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
     },
     enabled: true,
   };
+
+  return streamNotifier;
 };

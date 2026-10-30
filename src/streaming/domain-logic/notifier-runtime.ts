@@ -1,12 +1,12 @@
-import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers';
-import type { ProgressContext, ProgressToken } from '../../shared';
+import type { ProgressContext, ProgressToken } from '../../shared/mcp-protocol/common';
 import type { AskStreamChannel, AskStreamEventPayload, AskStreamExecutionSummary, NotifierState } from '../common';
 import { STREAM_COALESCE_WINDOW_MS } from '../common';
+import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from '../utils/notifier.helpers';
 
-type EmitterContext = Readonly<{
-  extra: ProgressContext;
-  progressToken: ProgressToken;
-}>;
+type EmitterContext = {
+  readonly extra: ProgressContext;
+  readonly progressToken: ProgressToken;
+};
 
 const emitEvent = (state: NotifierState, context: EmitterContext, event: AskStreamEventPayload): void => {
   if (state.stopped) return;
@@ -16,18 +16,17 @@ const emitEvent = (state: NotifierState, context: EmitterContext, event: AskStre
 
   state.sequence += 1;
 
-  void context.extra
-    .sendNotification({
-      method: 'notifications/progress',
-      params: {
-        progressToken: context.progressToken,
-        progress: currentSequence,
-        message: JSON.stringify(payload),
-      },
-    })
-    .catch(() => {
-      if (payload.type === 'chunk') state.droppedChunks += 1;
-    });
+  const params = {
+    progressToken: context.progressToken,
+    progress: currentSequence,
+    message: JSON.stringify(payload),
+  };
+
+  const notificationSent = context.extra.sendNotification({ method: 'notifications/progress', params });
+
+  void notificationSent.catch(() => {
+    if (payload.type === 'chunk') state.droppedChunks += 1;
+  });
 };
 
 const flushQueuedChunks = (state: NotifierState, context: EmitterContext): void => {

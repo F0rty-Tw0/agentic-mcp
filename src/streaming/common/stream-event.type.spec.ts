@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { ASK_STREAM_EVENT_SCHEMA } from './stream-event.types';
-import type { AskStreamEvent } from './stream-event.types';
+import type { AskStreamEvent } from './stream-event.type';
+import { ASK_STREAM_EVENT_SCHEMA } from './streaming.const';
 
 describe('stream event types', () => {
   it('GIVEN a stream event WHEN serializing THEN shape is stable and includes required metadata', () => {

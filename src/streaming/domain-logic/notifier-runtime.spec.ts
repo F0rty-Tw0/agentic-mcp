@@ -1,47 +1,51 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime.util';
-import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from './notifier.helpers';
+import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime';
 import type { ProgressContext, ProgressToken } from '../../shared';
 import type { AskStreamDiagnostics, NotifierState } from '../common';
 import { STREAM_COALESCE_WINDOW_MS } from '../common';
+import { ASK_STREAM_DIAGNOSTICS_STUB, NOTIFIER_STATE_STUB } from '../test/stubs/streaming.stub';
+import { buildStreamDiagnostics, splitChunkByBytes, withEventEnvelope } from '../utils/notifier.helpers';
 
-vi.mock('./notifier.helpers');
+vi.mock('../utils/notifier.helpers');
 
-const makeDiagnostics = (): AskStreamDiagnostics => ({
-  streamId: 'stream-test',
-  lastSequence: 0,
-  emittedChunks: 0,
-  droppedChunks: 0,
-  coalescedChunks: 0,
-  terminalEventGraceTimeoutMs: 5_000,
-});
+const makeDiagnostics = (): AskStreamDiagnostics => {
+  const askStreamDiagnostics: AskStreamDiagnostics = { ...ASK_STREAM_DIAGNOSTICS_STUB };
 
-const makeState = (overrides?: Partial<NotifierState>): NotifierState => ({
-  streamId: 'stream-test',
-  sequence: 1,
-  emittedChunks: 0,
-  droppedChunks: 0,
-  coalescedChunks: 0,
-  queuedStdout: '',
-  queuedStderr: '',
-  lastChunkAtMs: 0,
-  stopped: false,
-  flushTimer: undefined,
-  ...overrides,
-});
+  return askStreamDiagnostics;
+};
 
-const makeContext = (): { extra: ProgressContext; progressToken: ProgressToken } => ({
-  extra: {
-    sendNotification: vi.fn().mockResolvedValue(undefined),
-  },
-  progressToken: 42,
-});
+const makeState = (overrides?: Partial<NotifierState>): NotifierState => {
+  const notifierState: NotifierState = { ...NOTIFIER_STATE_STUB, ...overrides };
+
+  return notifierState;
+};
+
+type EmitterContext = {
+  readonly extra: ProgressContext;
+  readonly progressToken: ProgressToken;
+};
+
+const makeContext = (): EmitterContext => {
+  const sendNotification = vi.fn().mockResolvedValue(undefined);
+  const extra = { sendNotification };
+  const emitterContext: EmitterContext = { extra, progressToken: 42 };
+
+  return emitterContext;
+};
+
+const splitNonEmptyChunk = (chunk: string): string[] => {
+  if (chunk.length === 0) return [];
+
+  const parts = [chunk];
+
+  return parts;
+};
 
 beforeEach(() => {
   vi.useFakeTimers();
 
-  vi.mocked(splitChunkByBytes).mockImplementation((chunk: string) => (chunk.length === 0 ? [] : [chunk]));
+  vi.mocked(splitChunkByBytes).mockImplementation(splitNonEmptyChunk);
 
   vi.mocked(withEventEnvelope).mockImplementation(
     (event, streamId, sequence) =>
@@ -368,13 +372,15 @@ describe('emitEvent (internal, via exported functions)', () => {
 
     const envelope = vi.mocked(withEventEnvelope).mock.results[0]?.value as unknown;
 
+    const params = {
+      progressToken: 42,
+      progress: 1,
+      message: JSON.stringify(envelope),
+    };
+
     expect(context.extra.sendNotification).toHaveBeenCalledWith({
       method: 'notifications/progress',
-      params: {
-        progressToken: 42,
-        progress: 1,
-        message: JSON.stringify(envelope),
-      },
+      params,
     });
   });
 });
