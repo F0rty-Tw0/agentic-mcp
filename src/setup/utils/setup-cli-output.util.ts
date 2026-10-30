@@ -21,6 +21,13 @@ const buildSection = (title: string, values: string[]): string[] => {
 
 export { formatProviderSummary, formatSkillOutput } from './setup-cli-output-helpers.util';
 
+const isMissingFileError = (error: unknown): boolean => {
+  const hasCode = typeof error === 'object' && error !== null && 'code' in error;
+  const isMissingFile = hasCode && error.code === 'ENOENT';
+
+  return isMissingFile;
+};
+
 export const readExistingConfigText = async (
   targetPath: string | undefined,
   readConfigFile: (path: string) => Promise<string>
@@ -29,8 +36,12 @@ export const readExistingConfigText = async (
 
   try {
     return await readConfigFile(targetPath);
-  } catch {
-    return undefined;
+  } catch (error) {
+    const isMissingFile = isMissingFileError(error);
+
+    if (isMissingFile) return undefined;
+
+    throw error;
   }
 };
 

@@ -28,18 +28,32 @@ const resolveTargetPath = (input: SetupPlanInput): string | undefined => {
   return path.join(input.homeDirectory, clientPath);
 };
 
+type WriteIntent = SetupPlan['writeIntent'];
+
+const resolveWriteIntent = (
+  input: SetupPlanInput,
+  targetPath: string | undefined,
+  isInvalidMerge: boolean
+): WriteIntent => {
+  if (input.dryRun) return 'skip';
+
+  if (targetPath == null) return 'manual';
+
+  if (isInvalidMerge) return 'manual';
+
+  return 'write';
+};
+
 export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
   const targetPath = resolveTargetPath(input);
-
-  let writeIntent: 'skip' | 'manual' | 'write';
-
-  if (input.dryRun) {
-    writeIntent = 'skip';
-  } else if (targetPath == null) {
-    writeIntent = 'manual';
-  } else {
-    writeIntent = 'write';
-  }
+  const mergedConfig = buildMergedClientConfig({
+    existingConfigText: input.existingConfigText,
+    agenticServerEntry: input.agenticServerEntry,
+  });
+  const isMergeMode = input.mode === 'merge';
+  const isInvalidJson = mergedConfig.status === 'invalid-json';
+  const isInvalidMerge = isMergeMode && isInvalidJson;
+  const writeIntent = resolveWriteIntent(input, targetPath, isInvalidMerge);
   const warnings: string[] = [];
 
   if (input.client === 'generic' && targetPath == null) {
@@ -49,17 +63,19 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
   if (input.mode === 'overwrite') {
     warnings.push('Overwrite mode replaces existing config content.');
   }
-  const mergedConfig = buildMergedClientConfig({
-    existingConfigText: input.existingConfigText,
-    agenticServerEntry: input.agenticServerEntry,
-  });
+
+  if (isInvalidMerge) {
+    warnings.push(
+      `Existing config at ${String(targetPath)} is not valid JSON and was left unchanged (${String(mergedConfig.reason)}). Add the entry by hand or rerun with --mode overwrite.`
+    );
+  }
 
   const overwriteConfig: OverwriteMergeResult = {
     status: 'created',
     mergedConfig: buildOverwriteConfig(input.agenticServerEntry),
   };
 
-  const mergeResult = input.mode === 'merge' ? mergedConfig : overwriteConfig;
+  const mergeResult = isMergeMode ? mergedConfig : overwriteConfig;
 
   const result: SetupPlan = {
     client: input.client,
