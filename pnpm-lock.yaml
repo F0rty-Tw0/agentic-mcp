@@ -205,8 +205,8 @@ catalogs:
       version: 5.0.5
   runtime:
     '@modelcontextprotocol/sdk':
-      specifier: ^1.27.1
-      version: 1.32.2
+      specifier: ~1.28.0
+      version: 1.28.0
     cross-spawn:
       specifier: ^7.0.6
       version: 7.0.6
@@ -225,7 +225,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: catalog:runtime
-        version: 1.32.2(supports-color@10.2.2)(zod@4.6.7)
+        version: 1.28.0(supports-color@10.2.2)(zod@4.6.7)
       cross-spawn:
         specifier: catalog:runtime
         version: 7.0.6
@@ -623,11 +623,11 @@ packages:
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@hono/node-server@2.1.5':
-    resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
-    engines: {node: '>=20'}
+  '@hono/node-server@1.19.17':
+    resolution: {integrity: sha512-dSneS5qhiauZWGDCeK4o695Xd9nUNjviSZCMQrj10eetr8Uln1ucn6bbphOM6UynAMMtNIzZNSpL9vnASJwrPQ==}
+    engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4 || ^5.0.0-0
+      hono: ^4
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -916,8 +916,8 @@ packages:
     peerDependencies:
       stylelint: 17.16.0
 
-  '@modelcontextprotocol/sdk@1.32.2':
-    resolution: {integrity: sha512-SWsVtH/0vULSQStoZ6xxH2K09Li8fXYTMC64ZeogCdpZ3XSi1eCPOByV1OpuJxuI3OcmHhosDWYyii07tpPsLw==}
+  '@modelcontextprotocol/sdk@1.28.0':
+    resolution: {integrity: sha512-gmloF+i+flI8ouQK7MWW4mOwuMh4RePBuPFAEPC6+pdqyWOUMDOixb6qZ69owLJpz6XmyllCouc4t8YWO+E2Nw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -3694,7 +3694,7 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@hono/node-server@2.1.5(hono@4.13.14)':
+  '@hono/node-server@1.19.17(hono@4.13.14)':
     dependencies:
       hono: 4.13.14
 
@@ -4034,9 +4034,9 @@ snapshots:
       stylelint: 17.16.0(supports-color@10.2.2)
       typescript: 6.0.3
 
-  '@modelcontextprotocol/sdk@1.32.2(supports-color@10.2.2)(zod@4.6.7)':
+  '@modelcontextprotocol/sdk@1.28.0(supports-color@10.2.2)(zod@4.6.7)':
     dependencies:
-      '@hono/node-server': 2.1.5(hono@4.13.14)
+      '@hono/node-server': 1.19.17(hono@4.13.14)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5

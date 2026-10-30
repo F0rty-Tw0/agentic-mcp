@@ -21,7 +21,7 @@ catalogs:
     prettier: ^3.9.10
     release-it: ^21.1.1
   runtime:
-    '@modelcontextprotocol/sdk': ^1.27.1
+    '@modelcontextprotocol/sdk': ~1.28.0
     cross-spawn: ^7.0.6
     which: ^6.0.1
     zod: ^4.3.6
