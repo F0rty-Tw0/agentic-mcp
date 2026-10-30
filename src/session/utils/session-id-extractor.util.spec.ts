@@ -83,11 +83,42 @@ describe('extractNativeSessionId', () => {
     expect(sessionId).toBe('codex-fallback-1');
   });
 
-  it('GIVEN non-codex provider with ndjson in json mode WHEN extracting THEN returns undefined', () => {
+  it('GIVEN non-codex provider with ndjson in json mode WHEN extracting THEN falls back to ndjson parser', () => {
     const outputLines = ['{"type":"progress"}', '{"conversation_id":"non-codex-1"}'];
     const output = outputLines.join('\n');
     const sessionId = extractNativeSessionId('claude', output, 'json');
 
-    expect(sessionId).toBeUndefined();
+    expect(sessionId).toBe('non-codex-1');
+  });
+
+  it('GIVEN codex exec events with thread_id on the first line WHEN extracting THEN returns the thread id', () => {
+    const outputLines = [
+      '{"type":"thread.started","thread_id":"0199a213-81c0-7800-8aa1-bbab2a035a53"}',
+      '{"type":"item.completed","item":{"type":"agent_message","text":"hi"}}',
+      '{"type":"turn.completed","usage":{"input_tokens":1}}',
+    ];
+    const output = outputLines.join('\n');
+    const sessionId = extractNativeSessionId('codex', output, 'json');
+
+    expect(sessionId).toBe('0199a213-81c0-7800-8aa1-bbab2a035a53');
+  });
+
+  it('GIVEN opencode events with camelCase sessionID WHEN extracting THEN returns the session id', () => {
+    const outputLines = [
+      '{"type":"step_start","timestamp":1,"sessionID":"ses_abc123"}',
+      '{"type":"text","timestamp":2,"sessionID":"ses_abc123","part":{"text":"hi"}}',
+    ];
+    const output = outputLines.join('\n');
+    const sessionId = extractNativeSessionId('opencode', output, 'json');
+
+    expect(sessionId).toBe('ses_abc123');
+  });
+
+  it('GIVEN stream-json with a stray non-JSON last line WHEN extracting THEN returns the id from an earlier line', () => {
+    const outputLines = ['{"type":"system","session_id":"claude-7"}', 'Warning: truncated'];
+    const output = outputLines.join('\n');
+    const sessionId = extractNativeSessionId('claude', output, 'stream-json');
+
+    expect(sessionId).toBe('claude-7');
   });
 });

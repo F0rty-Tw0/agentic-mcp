@@ -8,6 +8,8 @@ type ParsedSession = {
 type ParsedSessionResponse = {
   readonly session_id?: unknown;
   readonly conversation_id?: unknown;
+  readonly thread_id?: unknown;
+  readonly sessionID?: unknown;
   readonly session?: ParsedSession;
 };
 
@@ -26,6 +28,8 @@ const safeValidateSessionId = (value?: string): string | undefined => {
   }
 };
 
+const asString = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+
 const parseJsonSessionId = (stdout: string): string | undefined => {
   try {
     const parsedJson: unknown = JSON.parse(stdout);
@@ -33,10 +37,12 @@ const parseJsonSessionId = (stdout: string): string | undefined => {
     if (!isParsedSessionResponse(parsedJson)) return;
 
     const parsed = parsedJson;
-    const sessionId = typeof parsed.session_id === 'string' ? parsed.session_id : undefined;
-    const conversationId = typeof parsed.conversation_id === 'string' ? parsed.conversation_id : undefined;
-    const sessionIdInSession = typeof parsed.session?.id === 'string' ? parsed.session.id : undefined;
-    const candidate = sessionId ?? conversationId ?? sessionIdInSession;
+    const sessionId = asString(parsed.session_id);
+    const conversationId = asString(parsed.conversation_id);
+    const threadId = asString(parsed.thread_id);
+    const camelCaseSessionId = asString(parsed.sessionID);
+    const sessionIdInSession = asString(parsed.session?.id);
+    const candidate = sessionId ?? conversationId ?? threadId ?? camelCaseSessionId ?? sessionIdInSession;
 
     return safeValidateSessionId(candidate);
   } catch {
@@ -44,15 +50,19 @@ const parseJsonSessionId = (stdout: string): string | undefined => {
   }
 };
 
+// Providers put the id on different event lines (codex: first `thread.started`, claude: every line).
 const parseNdjsonSessionId = (stdout: string): string | undefined => {
   const rawLines = stdout.split(/\r?\n/);
   const trimmedLines = rawLines.map((line) => line.trim());
   const lines = trimmedLines.filter((line) => line.length > 0);
-  const lastLine = lines.at(-1);
 
-  if (!lastLine) return;
+  for (const line of lines) {
+    const sessionId = parseJsonSessionId(line);
 
-  return parseJsonSessionId(lastLine);
+    if (sessionId) return sessionId;
+  }
+
+  return;
 };
 
 const parseTextSessionId = (stdout: string): string | undefined => {
@@ -62,7 +72,7 @@ const parseTextSessionId = (stdout: string): string | undefined => {
 };
 
 export const extractNativeSessionId = (
-  providerName: string,
+  _providerName: string,
   stdout: string,
   outputFormat: OutputFormat
 ): string | undefined => {
@@ -74,7 +84,5 @@ export const extractNativeSessionId = (
 
   if (parsed) return parsed;
 
-  if (providerName === 'codex') return parseNdjsonSessionId(stdout);
-
-  return;
+  return parseNdjsonSessionId(stdout);
 };
