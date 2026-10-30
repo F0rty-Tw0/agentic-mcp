@@ -10,23 +10,33 @@ import {
 } from '../../ask/common';
 import type { AskToolArgs, BuiltArgs, ReviewToolArgs } from '../../ask/common';
 import { getFlag, getReviewCommand, resolveAskCommand } from '../../ask/utils';
-import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
+import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/provider/common';
 
 const REVIEW_BASE_FLAG_KEY = 'base';
 const REVIEW_COMMIT_FLAG_KEY = 'commit';
 const REVIEW_UNCOMMITTED_FLAG_KEY = 'uncommitted';
 
+const resolveStringFlagToArgs = (flag: string, argValue?: string): string[] => {
+  if (!argValue) return [flag];
+
+  const flagArgs = [flag, argValue];
+
+  return flagArgs;
+};
+
 const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
   if (!flagValue) return [];
 
-  if (typeof flagValue === 'string') return argValue ? [flagValue, argValue] : [flagValue];
+  if (typeof flagValue === 'string') return resolveStringFlagToArgs(flagValue, argValue);
 
   if (Array.isArray(flagValue)) return [...flagValue];
 
   if (!argValue) return [];
 
-  if (!flagValue.values.includes(argValue)) {
+  const isAllowedValue = flagValue.values.includes(argValue);
+
+  if (!isAllowedValue) {
     throw new ValidationError(
       `Invalid value "${argValue}" for flag "${flagValue.flag}". Allowed: ${flagValue.values.join(', ')}`
     );
@@ -53,7 +63,7 @@ const appendValueFlag = (
   cliArgs.push(...flagArgs);
 };
 
-const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files?: readonly string[]): void => {
+const appendFileFlags = (cliArgs: string[], askCmd: CommandDef, files?: AskToolArgs['files']): void => {
   if (!files?.length) return;
 
   const flag = getFlag(askCmd, FLAG_FILE);
