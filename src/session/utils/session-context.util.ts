@@ -1,8 +1,8 @@
-type BuildSessionPromptInput = Readonly<{
-  sessionTurnsText: string;
-  userContext?: string;
-  prompt: string;
-}>;
+type BuildSessionPromptInput = {
+  readonly sessionTurnsText: string;
+  readonly userContext?: string;
+  readonly prompt: string;
+};
 
 export const buildSessionPrompt = ({ sessionTurnsText, userContext, prompt }: BuildSessionPromptInput): string => {
   const parts: string[] = [];

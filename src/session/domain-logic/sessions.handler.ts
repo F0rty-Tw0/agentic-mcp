@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
 import type { SessionRecord } from '../common';
 import { SESSION_STORE } from '../data-access';
@@ -34,9 +34,11 @@ export const handleSessions = (providerName: string): CallToolResult => {
     right.lastAccessedAt.localeCompare(left.lastAccessedAt)
   );
   const lines = sessions.map((session) => buildSessionLine(session));
-  const text = lines.length > 0 ? lines.join('\n') : '(no sessions)';
+  const joinedLines = lines.join('\n');
+  const text = lines.length > 0 ? joinedLines : '(no sessions)';
+  const content: TextContent[] = [{ type: 'text', text }];
   const callToolResult: CallToolResult = {
-    content: [{ type: 'text', text }],
+    content,
   };
 
   return callToolResult;

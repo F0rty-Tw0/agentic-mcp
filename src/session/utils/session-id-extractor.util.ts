@@ -1,11 +1,18 @@
-import type { OutputFormat } from '../../shared';
 import { validateSessionId } from '../../shared';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
 
-type ParsedSessionResponse = Readonly<{
-  session_id?: unknown;
-  conversation_id?: unknown;
-  session?: Readonly<{ id?: unknown }>;
-}>;
+type ParsedSession = {
+  readonly id?: unknown;
+};
+
+type ParsedSessionResponse = {
+  readonly session_id?: unknown;
+  readonly conversation_id?: unknown;
+  readonly session?: ParsedSession;
+};
+
+const isParsedSessionResponse = (value: unknown): value is ParsedSessionResponse =>
+  typeof value === 'object' && value !== null;
 
 const safeValidateSessionId = (value?: string): string | undefined => {
   if (!value) return;
@@ -21,7 +28,11 @@ const safeValidateSessionId = (value?: string): string | undefined => {
 
 const parseJsonSessionId = (stdout: string): string | undefined => {
   try {
-    const parsed = JSON.parse(stdout) as ParsedSessionResponse;
+    const parsedJson: unknown = JSON.parse(stdout);
+
+    if (!isParsedSessionResponse(parsedJson)) return;
+
+    const parsed = parsedJson;
     const sessionId = typeof parsed.session_id === 'string' ? parsed.session_id : undefined;
     const conversationId = typeof parsed.conversation_id === 'string' ? parsed.conversation_id : undefined;
     const sessionIdInSession = typeof parsed.session?.id === 'string' ? parsed.session.id : undefined;
@@ -34,10 +45,9 @@ const parseJsonSessionId = (stdout: string): string | undefined => {
 };
 
 const parseNdjsonSessionId = (stdout: string): string | undefined => {
-  const lines = stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const rawLines = stdout.split(/\r?\n/);
+  const trimmedLines = rawLines.map((line) => line.trim());
+  const lines = trimmedLines.filter((line) => line.length > 0);
   const lastLine = lines.at(-1);
 
   if (!lastLine) return;

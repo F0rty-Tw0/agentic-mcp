@@ -2,32 +2,33 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { SessionMode } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
 
-type SessionFlowState = Readonly<{
-  sessionId: string;
-  prompt: string;
-  nativeSessionId?: string;
-  mode: SessionMode;
-}>;
+type SessionFlowState = {
+  readonly sessionId: string;
+  readonly prompt?: string;
+  readonly nativeSessionId?: string;
+  readonly mode: SessionMode;
+};
 
-type SessionFlowResult = Readonly<{
-  response: CallToolResult;
-  responseText: string;
-  nativeSessionId?: string;
-  sessionMode: SessionMode;
-  wasCancelled: boolean;
-}>;
+type SessionFlowResult = {
+  readonly response: CallToolResult;
+  readonly responseText: string;
+  readonly nativeSessionId?: string;
+  readonly sessionMode: SessionMode;
+  readonly wasCancelled: boolean;
+};
 
-type SessionExecutionInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  extra?: ProgressContext;
-  state: SessionFlowState;
-}>;
+type SessionExecutionInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly extra?: ProgressContext;
+  readonly state: SessionFlowState;
+};
 
 const runSessionExecution = async (
   context: ResolvedProviderEntry,
@@ -35,9 +36,10 @@ const runSessionExecution = async (
   extra: ProgressContext | undefined,
   state: SessionFlowState
 ): Promise<SessionFlowResult> => {
+  const promptArgs: AskToolArgs = { ...args, prompt: state.prompt };
   const execution = await runAskInvocation({
     context,
-    args: { ...args, prompt: state.prompt },
+    args: promptArgs,
     extra,
     tier2SessionId: state.nativeSessionId,
   });
@@ -74,7 +76,7 @@ export const executeSessionFlow = async ({
 };
 
 export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskToolArgs): SessionFlowState => {
-  const sessionId = args.session_id as string;
+  const { session_id: sessionId = '' } = args;
 
   SESSION_STORE.createOrGet(context.name, sessionId);
 
@@ -83,7 +85,7 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
   if (existingNativeSessionId) {
     const result: SessionFlowState = {
       sessionId,
-      prompt: args.prompt as string,
+      prompt: args.prompt,
       nativeSessionId: existingNativeSessionId,
       mode: 'tier2-native',
     };
@@ -91,13 +93,12 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
     return result;
   }
 
+  const sessionTurnsText = SESSION_STORE.getPrependContext(context.name, sessionId);
+  const promptText = String(args.prompt);
+  const prompt = buildSessionPrompt({ sessionTurnsText, userContext: args.context, prompt: promptText });
   const result: SessionFlowState = {
     sessionId,
-    prompt: buildSessionPrompt({
-      sessionTurnsText: SESSION_STORE.getPrependContext(context.name, sessionId),
-      userContext: args.context,
-      prompt: args.prompt as string,
-    }),
+    prompt,
     mode: 'tier1-prepend',
   };
 

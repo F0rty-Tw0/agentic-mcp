@@ -3,18 +3,20 @@ import type { SessionRecord, SessionTurn } from '../common';
 import { capTurnsByBytes, cloneRecord, formatTurns, toSessionKey } from '../utils/session-store.util';
 
 type SessionStoreEntry = {
-  id: string;
-  provider: string;
+  readonly id: string;
+  readonly provider: string;
   turns: SessionTurn[];
-  createdAt: string;
+  readonly createdAt: string;
+  // eslint-disable-next-line local/readonly-type-properties -- the store refreshes the access time in place
   lastAccessedAt: string;
+  // eslint-disable-next-line local/readonly-type-properties -- the store records the native id in place
   nativeSessionId?: string;
 };
 
-type ContextBudget = Readonly<{
-  maxContextTurns?: number;
-  maxContextBytes?: number;
-}>;
+type ContextBudget = {
+  readonly maxContextTurns?: number;
+  readonly maxContextBytes?: number;
+};
 
 export class InMemorySessionStore {
   private readonly entries = new Map<string, SessionStoreEntry>();
@@ -64,7 +66,7 @@ export class InMemorySessionStore {
     return cloneRecord(existing);
   }
 
-  public listByProvider(provider: string): readonly SessionRecord[] {
+  public listByProvider(provider: string): SessionRecord[] {
     const records: SessionRecord[] = [];
 
     for (const entry of this.entries.values()) {
@@ -101,8 +103,9 @@ export class InMemorySessionStore {
 
   public tryAcquireLock(provider: string, id: string): boolean {
     const key = toSessionKey(provider, id);
+    const isLocked = this.locks.has(key);
 
-    if (this.locks.has(key)) return false;
+    if (isLocked) return false;
 
     this.locks.add(key);
 

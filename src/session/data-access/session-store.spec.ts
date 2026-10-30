@@ -8,7 +8,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const getListedSession = (listed: readonly SessionRecord[]): SessionRecord => {
+const getListedSession = (listed: SessionRecord[]): SessionRecord => {
   const listedSession = listed[0];
 
   if (listedSession == null) throw new Error('listed session missing');
