@@ -10,20 +10,40 @@ const terminateGroup = (pid: number): void => {
   }
 };
 
+const TERMINATION_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
+
 export const createChildGroupRegistry = (): ChildGroupRegistry => {
   const liveGroups = new Set<number>();
-  let exitHookInstalled = false;
+  let hooksInstalled = false;
 
   const terminateAll = (): void => {
     liveGroups.forEach(terminateGroup);
     liveGroups.clear();
   };
 
-  const track = (pid: number): UntrackChildGroup => {
-    // Detached children miss the terminal's SIGINT/SIGHUP, so the server signals their groups as it exits.
-    if (!exitHookInstalled) process.once('exit', terminateAll);
+  // CLI mode has no signal handlers; the server's graceful shutdown exits through the exit hook instead.
+  const installSignalForwarder = (signal: NodeJS.Signals): void => {
+    const listenerCount = process.listenerCount(signal);
+    const isHandledElsewhere = listenerCount > 0;
 
-    exitHookInstalled = true;
+    if (isHandledElsewhere) return;
+
+    process.once(signal, () => {
+      terminateAll();
+      process.kill(process.pid, signal);
+    });
+  };
+
+  const installHooks = (): void => {
+    process.once('exit', terminateAll);
+    TERMINATION_SIGNALS.forEach(installSignalForwarder);
+    hooksInstalled = true;
+  };
+
+  const track = (pid: number): UntrackChildGroup => {
+    // Detached children miss the terminal's SIGINT/SIGHUP, so their groups are signalled when this process stops.
+    if (!hooksInstalled) installHooks();
+
     liveGroups.add(pid);
 
     const untrack: UntrackChildGroup = (): void => {

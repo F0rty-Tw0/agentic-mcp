@@ -41,7 +41,53 @@ describe('FEATURE: child process group registry', () => {
       registry.track(4242);
       registry.track(4343);
 
-      expect(process.once).toHaveBeenCalledExactlyOnceWith('exit', registry.terminateAll);
+      const exitHookCalls = vi.mocked(process.once).mock.calls.filter(([event]) => event === 'exit');
+
+      expect(exitHookCalls).toStrictEqual([['exit', registry.terminateAll]]);
+    });
+  });
+
+  describe('GIVEN no other handler for SIGINT, SIGTERM or SIGHUP (CLI mode)', () => {
+    it('WHEN the first group is tracked THEN a forwarder is installed for each signal', () => {
+      vi.spyOn(process, 'listenerCount').mockReturnValue(0);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      const onceCalls = vi.mocked(process.once).mock.calls;
+      const events = onceCalls.map(([event]) => event);
+      const signalEvents = events.filter((event) => event !== 'exit');
+
+      expect(signalEvents).toStrictEqual(['SIGINT', 'SIGTERM', 'SIGHUP']);
+    });
+
+    it('WHEN the signal arrives THEN the groups are terminated and the signal is re-raised', () => {
+      vi.spyOn(process, 'listenerCount').mockReturnValue(0);
+      const killSpy = vi.spyOn(process, 'kill').mockReturnValue(true);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      const sigintCall = vi.mocked(process.once).mock.calls.find(([event]) => event === 'SIGINT');
+      const forwardSignal = sigintCall?.[1];
+
+      forwardSignal?.('SIGINT');
+
+      expect(killSpy).toHaveBeenNthCalledWith(1, -4242, 'SIGTERM');
+      expect(killSpy).toHaveBeenNthCalledWith(2, process.pid, 'SIGINT');
+    });
+  });
+
+  describe('GIVEN the server already handles the signals (graceful shutdown)', () => {
+    it('WHEN a group is tracked THEN no forwarder is installed and the exit hook covers shutdown', () => {
+      vi.spyOn(process, 'listenerCount').mockReturnValue(1);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      const events = vi.mocked(process.once).mock.calls.map(([event]) => event);
+
+      expect(events).toStrictEqual(['exit']);
     });
   });
 
