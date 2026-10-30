@@ -5,28 +5,46 @@ import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS, MAX_RESULT_TEXT_LENG
 import type { BackgroundJobCompletionInput, BackgroundJobRecord } from '../common';
 
 type BackgroundJobStoreEntry = {
-  readonly createdAtMs: number;
+  readonly finishedAtMs?: number;
   readonly record: BackgroundJobRecord;
 };
 
 const backgroundJobStore = new Map<string, BackgroundJobStoreEntry>();
 
+const isExpired = (entry: BackgroundJobStoreEntry, nowMs: number): boolean => {
+  const { finishedAtMs } = entry;
+
+  if (finishedAtMs === undefined) return false;
+
+  const result = nowMs - finishedAtMs > BACKGROUND_JOB_TTL_MS;
+
+  return result;
+};
+
 const pruneExpiredJobs = (nowMs: number): void => {
   for (const [id, entry] of backgroundJobStore) {
-    if (nowMs - entry.createdAtMs > BACKGROUND_JOB_TTL_MS) {
-      backgroundJobStore.delete(id);
-    }
+    const expired = isExpired(entry, nowMs);
+
+    if (expired) backgroundJobStore.delete(id);
   }
 };
 
 const enforceBoundedCapacity = (): void => {
-  for (
-    let oldestKey = backgroundJobStore.keys().next().value;
-    backgroundJobStore.size > MAX_BACKGROUND_JOB_RECORDS && oldestKey !== undefined;
-    oldestKey = backgroundJobStore.keys().next().value
-  ) {
-    backgroundJobStore.delete(oldestKey);
+  for (const [id, entry] of backgroundJobStore) {
+    if (backgroundJobStore.size <= MAX_BACKGROUND_JOB_RECORDS) return;
+
+    if (entry.finishedAtMs !== undefined) backgroundJobStore.delete(id);
   }
+};
+
+const resolveFinishedAtMs = (record: BackgroundJobRecord): number | undefined => {
+  const active = record.state === 'pending' || record.state === 'running';
+
+  if (active) return;
+
+  const result = Date.now();
+
+  return result;
 };
 
 const truncateResultText = (text: string): string => {
@@ -45,7 +63,8 @@ const updateJob = (
 
   const nextRecord = updater(existingEntry.record);
 
-  const storeEntry: BackgroundJobStoreEntry = { ...existingEntry, record: nextRecord };
+  const finishedAtMs = resolveFinishedAtMs(nextRecord);
+  const storeEntry: BackgroundJobStoreEntry = { finishedAtMs, record: nextRecord };
 
   backgroundJobStore.set(id, storeEntry);
 
@@ -66,7 +85,7 @@ export const createBackgroundJob = (provider: string): BackgroundJobRecord => {
 
   pruneExpiredJobs(nowMs);
 
-  const storeEntry: BackgroundJobStoreEntry = { createdAtMs: nowMs, record };
+  const storeEntry: BackgroundJobStoreEntry = { record };
 
   backgroundJobStore.set(id, storeEntry);
 
