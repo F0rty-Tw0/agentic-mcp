@@ -3,14 +3,14 @@ import { describe, expect, it } from 'vitest';
 import type { ProviderCallRecord, ProviderMetricsFile } from '../common';
 import { buildProviderMetricsSummary } from './provider-metrics-summary.builder';
 
-const createRecord = (
-  input: Readonly<{
-    provider: string;
-    executionTimeMs: number;
-    success: boolean;
-    calledAt: string;
-  }>
-): ProviderCallRecord => {
+type CreateRecordInput = {
+  readonly provider: string;
+  readonly executionTimeMs: number;
+  readonly success: boolean;
+  readonly calledAt: string;
+};
+
+const createRecord = (input: CreateRecordInput): ProviderCallRecord => {
   const record: ProviderCallRecord = {
     provider: input.provider,
     executionTimeMs: input.executionTimeMs,
@@ -21,7 +21,7 @@ const createRecord = (
   return record;
 };
 
-const createMetricsFile = (records: readonly ProviderCallRecord[]): ProviderMetricsFile => {
+const createMetricsFile = (records: ProviderCallRecord[]): ProviderMetricsFile => {
   const providerMetricsFile: ProviderMetricsFile = {
     collectedSince: '2026-01-01T00:00:00.000Z',
     records,
@@ -70,30 +70,32 @@ describe('buildProviderMetricsSummary', () => {
 
     const result = buildProviderMetricsSummary(providerMetricsFile, METRICS_FILE_PATH);
 
+    const providers = [
+      {
+        provider: 'claude',
+        totalCalls: 2,
+        successCount: 1,
+        failureCount: 1,
+        totalExecutionTimeMs: 301,
+        avgExecutionTimeMs: 151,
+        lastCallAt: '2026-01-01T00:03:00.000Z',
+      },
+      {
+        provider: 'codex',
+        totalCalls: 1,
+        successCount: 0,
+        failureCount: 1,
+        totalExecutionTimeMs: 40,
+        avgExecutionTimeMs: 40,
+        lastCallAt: '2026-01-01T00:02:00.000Z',
+      },
+    ];
+
     expect(result).toStrictEqual({
       collectedSince: '2026-01-01T00:00:00.000Z',
       metricsFilePath: METRICS_FILE_PATH,
       totalCalls: 3,
-      providers: [
-        {
-          provider: 'claude',
-          totalCalls: 2,
-          successCount: 1,
-          failureCount: 1,
-          totalExecutionTimeMs: 301,
-          avgExecutionTimeMs: 151,
-          lastCallAt: '2026-01-01T00:03:00.000Z',
-        },
-        {
-          provider: 'codex',
-          totalCalls: 1,
-          successCount: 0,
-          failureCount: 1,
-          totalExecutionTimeMs: 40,
-          avgExecutionTimeMs: 40,
-          lastCallAt: '2026-01-01T00:02:00.000Z',
-        },
-      ],
+      providers,
     });
   });
 

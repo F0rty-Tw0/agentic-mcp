@@ -1,4 +1,3 @@
-import type { CommandExecutionErrorDetails, ExecutionResult, ResolvedProviderEntry } from '../../shared';
 import {
   CommandExecutionError,
   buildMinimalEnv,
@@ -10,18 +9,20 @@ import {
   parseFirstAvailableModel,
   resolveProviderEnv,
 } from '../../shared';
+import type { ExecutionResult } from '../../shared/command-execution/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskToolArgs } from '../common';
 import { parseProviderOutput } from '../utils';
 
 type ExecutionEnv = Readonly<Record<string, string>>;
 
-type ModelHintContext = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  stdout: string;
-  stderr: string;
-  env: ExecutionEnv;
-}>;
+type ModelHintContext = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly env: ExecutionEnv;
+};
 
 const buildFailureOutput = (context: ResolvedProviderEntry, result: ExecutionResult): string | undefined => {
   if (!result.stdout.length) return;
@@ -41,8 +42,9 @@ export const buildExecutionEnv = (context: ResolvedProviderEntry): ExecutionEnv 
 
 export const resolveModelHint = async (modelHintContext: ModelHintContext): Promise<string> => {
   const { context, args, stdout, stderr, env } = modelHintContext;
+  const isModelError = detectModelError(stdout, stderr);
 
-  if (!detectModelError(stdout, stderr)) return '';
+  if (!isModelError) return '';
 
   const availableModels = await fetchAvailableModels(context, env, executeCommand);
   const attemptedModel = args.model ?? extractAttemptedModel(stdout, stderr);
@@ -56,7 +58,9 @@ export const resolveModelFallback = async (modelFallbackContext: ModelHintContex
 
   if (args.model) return;
 
-  if (!detectModelError(stdout, stderr)) return;
+  const isModelError = detectModelError(stdout, stderr);
+
+  if (!isModelError) return;
 
   const availableModels = await fetchAvailableModels(context, env, executeCommand);
 
@@ -73,7 +77,7 @@ export const buildCommandFailure = async (
   env: ExecutionEnv,
   result: ExecutionResult
 ): Promise<CommandExecutionError> => {
-  const details: CommandExecutionErrorDetails = {
+  const details = {
     exitCode: result.exitCode,
     signal: result.signal,
     timedOut: result.timedOut,

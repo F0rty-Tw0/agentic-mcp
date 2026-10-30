@@ -17,22 +17,30 @@ const createReviewFlags = (includeModel: boolean): NonNullable<ProviderConfig['c
   return reviewFlags;
 };
 
-const createConfig = (includeModel = true): ProviderConfig => ({
-  enabled: true,
-  description: 'Codex review config',
-  command: 'codex',
-  timeout: 120_000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: { args: ['exec'] },
-    review: {
-      args: ['review'],
-      flags: createReviewFlags(includeModel),
-    },
-  },
-  input: { method: 'positional' },
-});
+const createConfig = (includeModel = true): ProviderConfig => {
+  const ask = { args: ['exec'] };
+  const review = {
+    args: ['review'],
+    flags: createReviewFlags(includeModel),
+  };
+  const commands = {
+    ask,
+    review,
+  };
+  const input: ProviderConfig['input'] = { method: 'positional' };
+  const providerConfig: ProviderConfig = {
+    enabled: true,
+    description: 'Codex review config',
+    command: 'codex',
+    timeout: 120_000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+  };
+
+  return providerConfig;
+};
 
 describe('buildReviewToolDefinition', () => {
   it('GIVEN review-enabled provider WHEN building definition THEN it uses the review_{provider} name and description', () => {
@@ -51,9 +59,7 @@ describe('buildReviewToolDefinition', () => {
 
     expect(scopeSchema).toBeDefined();
 
-    if (!scopeSchema) {
-      throw new Error('Expected review scope schema to exist');
-    }
+    if (!scopeSchema) throw new Error('Expected review scope schema to exist');
 
     expect(scopeSchema.parse('uncommitted')).toBe('uncommitted');
     expect(scopeSchema.parse('commit')).toBe('commit');
@@ -69,22 +75,23 @@ describe('buildReviewToolDefinition', () => {
     const baseConfig = createConfig();
     const baseReview = baseConfig.commands.review;
 
-    if (!baseReview?.flags) {
-      throw new Error('Expected review flags to exist');
-    }
+    if (!baseReview?.flags) throw new Error('Expected review flags to exist');
 
+    const flags = {
+      ...baseReview.flags,
+      workingDir: '-C',
+    };
+    const review = {
+      ...baseReview,
+      flags,
+    };
+    const commands = {
+      ...baseConfig.commands,
+      review,
+    };
     const config: ProviderConfig = {
       ...baseConfig,
-      commands: {
-        ...baseConfig.commands,
-        review: {
-          ...baseReview,
-          flags: {
-            ...baseReview.flags,
-            workingDir: '-C',
-          },
-        },
-      },
+      commands,
     };
 
     const result = buildReviewToolDefinition('codex', config);

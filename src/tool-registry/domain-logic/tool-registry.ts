@@ -4,12 +4,13 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { buildAskToolDefinition, buildSessionsToolDefinition } from './ask-tool.builder';
 import { buildReviewToolDefinition } from './review-tool.builder';
 import { handleAsk, handleReview } from '../../ask';
-import type { AskToolArgs, ReviewToolArgs } from '../../ask';
+import type { AskToolArgs } from '../../ask/common';
 import { buildAskAllToolDefinition, handleAskAll } from '../../ask-all';
-import type { AskAllToolArgs } from '../../ask-all';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
 import { handleSessions } from '../../session';
-import type { ProgressContext, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared/provider/common';
+import { ValidationError } from '../../shared/validation/common';
 import {
   buildHelpToolDefinition,
   buildListProvidersDefinition,
@@ -18,6 +19,7 @@ import {
   handleListProviders,
   handlePing,
 } from '../../simple-tools';
+import { isAskAllToolArgs, isReviewToolArgs } from '../utils/tool-args.util';
 
 const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntry): void => {
   const { name, config } = provider;
@@ -43,11 +45,11 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       annotations: reviewDef.annotations,
     };
 
-    server.registerTool(
-      reviewDef.name,
-      reviewConfig,
-      async (args, extra): Promise<CallToolResult> => handleReview(provider, args as ReviewToolArgs, extra)
-    );
+    server.registerTool(reviewDef.name, reviewConfig, async (args, extra): Promise<CallToolResult> => {
+      if (!isReviewToolArgs(args)) throw new ValidationError(`${reviewDef.name} requires a review scope`);
+
+      return handleReview(provider, args, extra);
+    });
   }
 
   if (config.commands.sessions) {
@@ -80,8 +82,8 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
 
 export const registerAllTools = (
   server: McpServer,
-  resolvedProviders: readonly ResolvedProviderEntry[],
-  allProviders: readonly ResolvedProvider[]
+  resolvedProviders: ResolvedProviderEntry[],
+  allProviders: ResolvedProvider[]
 ): void => {
   for (const provider of resolvedProviders) {
     registerProviderTools(server, provider);
@@ -95,11 +97,11 @@ export const registerAllTools = (
     annotations: askAllDef.annotations,
   };
 
-  server.registerTool(
-    askAllDef.name,
-    askAllConfig,
-    async (args): Promise<CallToolResult> => handleAskAll(resolvedProviders, args as AskAllToolArgs)
-  );
+  server.registerTool(askAllDef.name, askAllConfig, async (args): Promise<CallToolResult> => {
+    if (!isAskAllToolArgs(args)) throw new ValidationError(`${askAllDef.name} requires a prompt`);
+
+    return handleAskAll(resolvedProviders, args);
+  });
 
   const metricsDef = buildProviderMetricsToolDefinition();
   const metricsConfig = { description: metricsDef.description, annotations: metricsDef.annotations };

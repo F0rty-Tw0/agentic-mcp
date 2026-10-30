@@ -70,12 +70,11 @@ describe('integration: CLI entry point binary', () => {
     async () => {
       if (!binaryExists) return;
 
-      const error = (await execFileAsync(process.execPath, [BINARY_PATH, '--config', '/nonexistent/path.json']).catch(
-        (err: unknown) => err
-      )) as { code: number; stderr: string };
+      const execution = execFileAsync(process.execPath, [BINARY_PATH, '--config', '/nonexistent/path.json']);
+      const error: unknown = await execution.catch((err: unknown) => err);
 
-      expect(error.code).not.toBe(0);
-      expect(error.stderr).toBeTruthy();
+      expect(error).not.toHaveProperty('code', 0);
+      expect(error).toHaveProperty('stderr', expect.stringMatching(/.+/));
     },
     TIMEOUT_MS
   );

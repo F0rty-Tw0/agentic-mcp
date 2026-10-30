@@ -4,10 +4,10 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import type { ConfigPathOptions, ProvidersFile } from '../shared';
 import { providersFileSchema } from '../shared';
+import type { ConfigPathOptions, ProvidersFile } from '../shared/provider/common';
 
-const DANGEROUS_FLAGS = [
+const DANGEROUS_FLAGS: string[] = [
   '--dangerously-skip-permissions',
   '--allow-all-tools',
   '--allow-all',
@@ -15,16 +15,18 @@ const DANGEROUS_FLAGS = [
   '--full-auto',
   '--yes-always',
   '--yolo',
-] as const;
-
-type DangerousFlag = (typeof DANGEROUS_FLAGS)[number];
+];
 
 const userLocalConfigPath = (): string | undefined => {
   if (process.platform !== 'win32') return path.join(os.homedir(), '.config', 'agentic-mcp', 'providers.json');
 
   const appData = process.env.APPDATA;
 
-  return appData ? path.join(appData, 'agentic-mcp', 'providers.json') : undefined;
+  if (!appData) return undefined;
+
+  const appDataConfigPath = path.join(appData, 'agentic-mcp', 'providers.json');
+
+  return appDataConfigPath;
 };
 
 const resolveConfigPath = async (explicit?: string): Promise<string> => {
@@ -53,9 +55,11 @@ const resolveConfigPath = async (explicit?: string): Promise<string> => {
   return fileURLToPath(new URL('./providers.json', import.meta.url));
 };
 
-export const warnDangerousFlags = (config: ProvidersFile, providerNames?: readonly string[]): void => {
+export const warnDangerousFlags = (config: ProvidersFile, providerNames?: ConfigPathOptions['providerNames']): void => {
   for (const [name, provider] of Object.entries(config.providers)) {
-    if (providerNames && !providerNames.includes(name)) continue;
+    const isSelected = providerNames?.includes(name) ?? true;
+
+    if (!isSelected) continue;
 
     const askCommand = provider.commands.ask;
 
@@ -65,7 +69,9 @@ export const warnDangerousFlags = (config: ProvidersFile, providerNames?: readon
     if (!Array.isArray(autoMode)) continue;
 
     for (const flag of autoMode) {
-      if (DANGEROUS_FLAGS.includes(flag as DangerousFlag)) {
+      const isDangerous = DANGEROUS_FLAGS.includes(flag);
+
+      if (isDangerous) {
         process.stderr.write(`Warning: provider "${name}" uses dangerous auto-mode flag "${flag}"\n`);
       }
     }

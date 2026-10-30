@@ -10,13 +10,15 @@ describe('extractNativeSessionId', () => {
   });
 
   it('GIVEN JSON output with nested session id WHEN extracting THEN returns nested id', () => {
-    const sessionId = extractNativeSessionId('claude', JSON.stringify({ session: { id: 'nested-1' } }), 'json');
+    const session = { id: 'nested-1' };
+    const sessionId = extractNativeSessionId('claude', JSON.stringify({ session }), 'json');
 
     expect(sessionId).toBe('nested-1');
   });
 
   it('GIVEN JSON output with non-string nested session id WHEN extracting THEN returns undefined', () => {
-    const sessionId = extractNativeSessionId('claude', JSON.stringify({ session: { id: 123 } }), 'json');
+    const session = { id: 123 };
+    const sessionId = extractNativeSessionId('claude', JSON.stringify({ session }), 'json');
 
     expect(sessionId).toBeUndefined();
   });
@@ -34,7 +36,8 @@ describe('extractNativeSessionId', () => {
   });
 
   it('GIVEN NDJSON output WHEN extracting THEN returns conversation_id from last line', () => {
-    const output = ['{"type":"progress"}', '{"conversation_id":"codex-1"}'].join('\n');
+    const outputLines = ['{"type":"progress"}', '{"conversation_id":"codex-1"}'];
+    const output = outputLines.join('\n');
     const sessionId = extractNativeSessionId('codex', output, 'stream-json');
 
     expect(sessionId).toBe('codex-1');
@@ -47,7 +50,8 @@ describe('extractNativeSessionId', () => {
   });
 
   it('GIVEN stream output with invalid last line WHEN extracting THEN returns undefined', () => {
-    const output = ['{"type":"progress"}', 'not-json'].join('\n');
+    const outputLines = ['{"type":"progress"}', 'not-json'];
+    const output = outputLines.join('\n');
     const sessionId = extractNativeSessionId('codex', output, 'stream-json');
 
     expect(sessionId).toBeUndefined();
@@ -72,14 +76,16 @@ describe('extractNativeSessionId', () => {
   });
 
   it('GIVEN codex provider with ndjson in json mode WHEN extracting THEN falls back to ndjson parser', () => {
-    const output = ['{"type":"progress"}', '{"conversation_id":"codex-fallback-1"}'].join('\n');
+    const outputLines = ['{"type":"progress"}', '{"conversation_id":"codex-fallback-1"}'];
+    const output = outputLines.join('\n');
     const sessionId = extractNativeSessionId('codex', output, 'json');
 
     expect(sessionId).toBe('codex-fallback-1');
   });
 
   it('GIVEN non-codex provider with ndjson in json mode WHEN extracting THEN returns undefined', () => {
-    const output = ['{"type":"progress"}', '{"conversation_id":"non-codex-1"}'].join('\n');
+    const outputLines = ['{"type":"progress"}', '{"conversation_id":"non-codex-1"}'];
+    const output = outputLines.join('\n');
     const sessionId = extractNativeSessionId('claude', output, 'json');
 
     expect(sessionId).toBeUndefined();

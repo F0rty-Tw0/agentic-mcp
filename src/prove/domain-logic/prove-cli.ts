@@ -6,10 +6,10 @@ import { detectInstalledProviders } from '../../setup/domain-logic/detect-provid
 import { DEFAULT_PROVE_PROMPT } from '../common';
 import type { ProveCliDependencies, ProveCliInput } from '../common';
 
-type RequestedProviderInput = Readonly<{
-  requestedProviderName?: string;
-  forwardedArgs: readonly string[];
-}>;
+type RequestedProviderInput = {
+  readonly requestedProviderName?: string;
+  readonly forwardedArgs: string[];
+};
 
 const defaultDependencies: ProveCliDependencies = {
   detectInstalledProviders,
@@ -18,10 +18,11 @@ const defaultDependencies: ProveCliDependencies = {
   stderrWrite: (text) => process.stderr.write(text),
 };
 
-const resolveRequestedProviderInput = (args: readonly string[]): RequestedProviderInput => {
+const resolveRequestedProviderInput = (args: string[]): RequestedProviderInput => {
   const [firstArg] = args;
+  const isFlagFirst = firstArg?.startsWith('--') === true;
 
-  if (firstArg == null || firstArg.startsWith('--')) {
+  if (firstArg == null || isFlagFirst) {
     const result: RequestedProviderInput = {
       forwardedArgs: args,
     };
@@ -38,6 +39,7 @@ const resolveRequestedProviderInput = (args: readonly string[]): RequestedProvid
 };
 
 const findDetectedProvider = (
+  // eslint-disable-next-line local/readonly-type-properties -- receives setup's readonly detected-provider array
   detectedProviders: readonly DetectedProvider[],
   requestedProviderName?: string
 ): DetectedProvider | undefined => {

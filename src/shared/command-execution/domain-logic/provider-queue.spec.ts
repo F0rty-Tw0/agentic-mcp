@@ -4,12 +4,16 @@ import type { ProviderQueueOptions } from '../common';
 import { createProviderQueueStore } from './provider-queue';
 import { QueueTimeoutError } from '../common/errors';
 
-const createQueueInput = (overrides: Partial<ProviderQueueOptions> = {}): ProviderQueueOptions => ({
-  providerName: 'codex',
-  maxConcurrency: 1,
-  queueTimeoutMs: 50,
-  ...overrides,
-});
+const createQueueInput = (overrides: Partial<ProviderQueueOptions> = {}): ProviderQueueOptions => {
+  const providerQueueOptions: ProviderQueueOptions = {
+    providerName: 'codex',
+    maxConcurrency: 1,
+    queueTimeoutMs: 50,
+    ...overrides,
+  };
+
+  return providerQueueOptions;
+};
 
 describe('createProviderQueueStore', () => {
   it('GIVEN maxConcurrency 1 WHEN two requests share a provider THEN the second waits for the first', async () => {

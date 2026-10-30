@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
 import type { BackgroundJobCompletionInput, BackgroundJobStatusPayload } from '../common';
 import {
@@ -15,16 +15,21 @@ export const buildJobStatusResponse = (jobId: string): CallToolResult => {
   const record = getBackgroundJob(jobId);
 
   if (!record) {
+    const content: TextContent[] = [{ type: 'text', text: `Unknown job_id: ${jobId}` }];
     const callToolResult: CallToolResult = {
       isError: true,
-      content: [{ type: 'text', text: `Unknown job_id: ${jobId}` }],
+      content,
     };
 
     return callToolResult;
   }
-  const resultText = record.resultText ? { result: record.resultText } : {};
-  const structuredContent = record.structuredContent ? { structuredContent: record.structuredContent } : {};
-  const errorText = record.error ? { error: record.error } : {};
+  const emptyPatch = {};
+  const resultPatch = { result: record.resultText };
+  const structuredContentPatch = { structuredContent: record.structuredContent };
+  const errorPatch = { error: record.error };
+  const resultText = record.resultText ? resultPatch : emptyPatch;
+  const structuredContent = record.structuredContent ? structuredContentPatch : emptyPatch;
+  const errorText = record.error ? errorPatch : emptyPatch;
 
   const payload: BackgroundJobStatusPayload = {
     job_id: record.id,
@@ -36,8 +41,9 @@ export const buildJobStatusResponse = (jobId: string): CallToolResult => {
   };
 
   const text = JSON.stringify(payload);
+  const statusContent: TextContent[] = [{ type: 'text', text }];
   const callToolResult: CallToolResult = {
-    content: [{ type: 'text', text }],
+    content: statusContent,
   };
 
   return callToolResult;
@@ -59,7 +65,7 @@ export const startBackgroundInvocation = async (jobId: string, run: RunInvocatio
 
     const backgroundJobCompletionInput: BackgroundJobCompletionInput = {
       resultText: extractTextContent(response),
-      structuredContent: response.structuredContent as Readonly<Record<string, unknown>> | undefined,
+      structuredContent: response.structuredContent,
     };
 
     setBackgroundJobCompleted(jobId, backgroundJobCompletionInput);

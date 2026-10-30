@@ -1,5 +1,5 @@
 import { buildProviderQueueOptions } from './provider-queue-options.util';
-import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution';
+import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution/common';
 import type { ResolvedProviderEntry } from '../common';
 
 const MODEL_ERROR_PATTERN =
@@ -61,17 +61,17 @@ export const buildModelHint = (
 const isModelLine = (line: string): boolean => Boolean(line) && !line.startsWith('#') && !line.startsWith('-');
 
 const tokenizeModel = (value: string): string[] => {
-  const normalized = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+  const lowered = value.toLowerCase();
+  const normalized = lowered.replace(/[^a-z0-9]+/g, ' ').trim();
 
   if (!normalized) return [];
 
   return normalized.split(/\s+/);
 };
 
-const extractModelVersion = (value: string): { major: number; minor: number } | undefined => {
+type ModelVersion = { readonly major: number; readonly minor: number };
+
+const extractModelVersion = (value: string): ModelVersion | undefined => {
   const match = /(\d+)\.(\d+)/.exec(value);
 
   if (!match?.[1] || !match[2]) return;
@@ -79,9 +79,14 @@ const extractModelVersion = (value: string): { major: number; minor: number } | 
   const major = Number.parseInt(match[1], 10);
   const minor = Number.parseInt(match[2], 10);
 
-  if (Number.isNaN(major) || Number.isNaN(minor)) return;
+  const isMajorNaN = Number.isNaN(major);
+  const isMinorNaN = Number.isNaN(minor);
 
-  return { major, minor };
+  if (isMajorNaN || isMinorNaN) return;
+
+  const modelVersion: ModelVersion = { major, minor };
+
+  return modelVersion;
 };
 
 const scoreByVersion = (requestedModel: string, candidateModel: string): number => {
@@ -120,10 +125,10 @@ const scoreModelCandidate = (requestedModel: string, candidateModel: string): nu
 };
 
 const parseAvailableModels = (availableModels: string): string[] => {
-  return availableModels
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => isModelLine(line));
+  const lines = availableModels.split(/\r?\n/);
+  const trimmedLines = lines.map((line) => line.trim());
+
+  return trimmedLines.filter((line) => isModelLine(line));
 };
 
 export const parseFirstAvailableModel = (availableModels: string): string | undefined => {

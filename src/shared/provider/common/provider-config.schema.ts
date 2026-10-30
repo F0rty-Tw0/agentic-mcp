@@ -3,17 +3,18 @@ import { z } from 'zod';
 import type { OutputFormat } from '../../mcp-protocol/common';
 
 const PROVIDER_NAME_REGEX = /^[a-z][a-z0-9-]{0,31}$/;
-const RESERVED_PROVIDER_NAMES = ['providers'] as const;
+const RESERVED_PROVIDER_NAMES: string[] = ['providers'];
+const PROVIDER_NAME_FORMAT_MESSAGE =
+  'provider name must be lowercase alphanumeric with hyphens (a-z, 0-9, -), start with a letter, max 32 chars';
+const reservedProviderNameIssue = {
+  message: `provider name must not be a reserved name: ${RESERVED_PROVIDER_NAMES.join(', ')}`,
+};
 
-const providerNameSchema = z
-  .string()
-  .regex(
-    PROVIDER_NAME_REGEX,
-    'provider name must be lowercase alphanumeric with hyphens (a-z, 0-9, -), start with a letter, max 32 chars'
-  )
-  .refine((name) => !RESERVED_PROVIDER_NAMES.includes(name as (typeof RESERVED_PROVIDER_NAMES)[number]), {
-    message: `provider name must not be a reserved name: ${RESERVED_PROVIDER_NAMES.join(', ')}`,
-  });
+const providerNameFormatSchema = z.string().regex(PROVIDER_NAME_REGEX, PROVIDER_NAME_FORMAT_MESSAGE);
+const providerNameSchema = providerNameFormatSchema.refine(
+  (name) => !RESERVED_PROVIDER_NAMES.includes(name),
+  reservedProviderNameIssue
+);
 
 const leveledFlagSchema = z.object({
   flag: z.string(),
@@ -44,6 +45,11 @@ const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),
 });
 
+const versionCheckSchema = z.object({
+  flag: z.string(),
+  pattern: z.string().optional(),
+});
+
 const providerConfigSchema = z.object({
   enabled: z.boolean(),
   description: z.string(),
@@ -55,12 +61,7 @@ const providerConfigSchema = z.object({
   queueTimeoutMs: z.number().positive().optional(),
   env: z.record(z.string(), z.string().nullable()),
   prerequisites: z.array(z.string()).optional(),
-  versionCheck: z
-    .object({
-      flag: z.string(),
-      pattern: z.string().optional(),
-    })
-    .optional(),
+  versionCheck: versionCheckSchema.optional(),
   outputFormat: outputFormatSchema,
   commands: commandsSchema,
   input: inputSchema,

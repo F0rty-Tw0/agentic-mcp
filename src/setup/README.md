@@ -21,18 +21,20 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 
 ## Structure
 
-| Directory       | Purpose                                                                         |
-| --------------- | ------------------------------------------------------------------------------- |
-| `common/`       | Client path definitions, setup types                                            |
-| `domain-logic/` | Setup CLI orchestration, provider detection, config generation                  |
-| `utils/`        | Setup plan builder, config file I/O (temp+rename+verify), CLI output formatting |
+| Directory       | Purpose                                                                  |
+| --------------- | ------------------------------------------------------------------------ |
+| `common/`       | Client path definitions, setup types                                     |
+| `domain-logic/` | Setup CLI orchestration, provider detection, config generation, file I/O |
+| `utils/`        | Setup plan builder, config merging, CLI output formatting                |
+| `test/`         | Test-only constants, types, and spec utils                               |
 
 ## Key Files
 
 - `domain-logic/setup-cli.ts` — `runSetup()` — orchestrates the full setup flow with dependency injection for testability
 - `domain-logic/detect-providers.ts` — Scans the system for installed provider binaries
 - `domain-logic/generate-config.ts` — Generates the MCP server JSON entry
-- `utils/apply-setup-plan.util.ts` — Atomic file write using temp file + rename + verification
+- `domain-logic/apply-setup-plan.ts` — Atomic file write using temp file + rename + verification
+- `domain-logic/install-skill.ts` — Installs the `using-agentic-mcp` Claude Code skill
 
 ## Integration Tests
 

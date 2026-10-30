@@ -12,35 +12,66 @@ import {
   getActiveRequest,
   stripAnsi,
 } from '../../shared';
+import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_STDIN_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
-  ASK_DEFAULT_ARG_ARRAY_STUB,
-  ASK_STDIN_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
-  createAskContext,
-} from '../common/stubs';
+} from '../test/stubs/ask-execution-result.stub';
+import { createAskContext } from '../test/utils/ask-context.spec.util';
 
-type ProgressNotificationMockCalls = Array<[ServerNotification & { params?: { message?: string } }]>;
+type NotificationParams = {
+  readonly message?: string;
+};
 
-vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
-  buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
-}));
+type NotificationParamsHolder = {
+  readonly params?: NotificationParams;
+};
 
-vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
-  executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
-}));
+type ProgressNotificationMockCalls = Array<[ServerNotification & NotificationParamsHolder]>;
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
-  stripAnsi: vi.fn((input: string) => input),
-}));
+vi.mock('../../cli-args/domain-logic/arg.builder', () => {
+  const result = {
+    buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
+  };
 
-vi.mock('../../shared/provider/utils/model-error.util', () => ({
-  detectModelError: vi.fn(() => false),
-  extractAttemptedModel: vi.fn(() => undefined),
-  fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
-  buildModelHint: vi.fn(() => ''),
-}));
+  return result;
+});
+
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
+  const result = {
+    executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const result = {
+    buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
+    stripAnsi: vi.fn((input: string) => input),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/provider/utils/model-error.util', () => {
+  const fetchAvailableModelsMock = vi.fn().mockResolvedValue(undefined);
+  const result = {
+    detectModelError: vi.fn(() => false),
+    extractAttemptedModel: vi.fn(() => undefined),
+    fetchAvailableModels: fetchAvailableModelsMock,
+    buildModelHint: vi.fn(() => ''),
+  };
+
+  return result;
+});
 
 const API_KEY = 'API_KEY';
 const MCP_TOOL_TIMEOUT = 'MCP_TOOL_TIMEOUT';
@@ -87,15 +118,17 @@ describe('handleAsk', () => {
       const result = await handleAsk(context, { prompt: 'test prompt', include_structured: true });
 
       expect(result.content[0]).toStrictEqual({ type: 'text', text: 'command output' });
+      const attribution = {
+        provider: 'test',
+        executionTimeMs: 100,
+        outputBytes: 14,
+        truncated: false,
+        outputFormat: 'json',
+      };
+
       expect(result.structuredContent).toMatchObject({
         response: 'command output',
-        attribution: {
-          provider: 'test',
-          executionTimeMs: 100,
-          outputBytes: 14,
-          truncated: false,
-          outputFormat: 'json',
-        },
+        attribution,
       });
     });
 
@@ -108,7 +141,8 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ask THEN injects default timeout env', async () => {
-      const context = createAskContext({ env: { [API_KEY]: 'secret' } });
+      const env = { [API_KEY]: 'secret' };
+      const context = createAskContext({ env });
 
       await handleAsk(context, { prompt: 'test prompt' });
 
@@ -119,8 +153,10 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN handling ask THEN injects default timeout env', async () => {
+      const env = { [API_KEY]: 'secret' };
+      const askContext = createAskContext({ env });
       const context: ResolvedProviderEntry = {
-        ...createAskContext({ env: { [API_KEY]: 'secret' } }),
+        ...askContext,
         name: 'codex',
       };
 
@@ -150,7 +186,8 @@ describe('handleAsk', () => {
     });
 
     it('GIVEN stdin input method WHEN handling ask THEN passes stdinInput to executeCommand', async () => {
-      const context = createAskContext({ input: { method: 'stdin' } });
+      const input = { method: 'stdin' } as const;
+      const context = createAskContext({ input });
 
       vi.mocked(buildArgArray).mockReturnValue(ASK_STDIN_ARG_ARRAY_STUB);
 
@@ -219,11 +256,13 @@ describe('handleAsk', () => {
         await Promise.resolve();
         options.onStdoutChunk?.('chunk-data');
 
-        return {
+        const result = {
           ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
           stdout: 'chunk-data',
           stdoutBytes: 10,
         };
+
+        return result;
       });
 
       await handleAsk(context, { prompt: 'test prompt', stream_live: false }, extra);

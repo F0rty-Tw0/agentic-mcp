@@ -2,7 +2,7 @@ import { resolveCliBinary } from '../../shared';
 import { KNOWN_PROVIDER_COMMANDS } from '../common';
 import type { DetectedProvider } from '../common';
 
-export const detectInstalledProviders = async (): Promise<readonly DetectedProvider[]> => {
+export const detectInstalledProviders = async (): Promise<DetectedProvider[]> => {
   const results = await Promise.all(
     KNOWN_PROVIDER_COMMANDS.map(async (name) => {
       const resolvedBinaryPath = await resolveCliBinary(name);

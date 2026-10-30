@@ -1,7 +1,7 @@
-type ActiveRequest = Readonly<{
-  requestId: string;
-  pid: number;
-}>;
+type ActiveRequest = {
+  readonly requestId: string;
+  readonly pid: number;
+};
 
 const activeRequests = new Map<string, ActiveRequest>();
 

@@ -7,7 +7,7 @@ const BASE_ENTRY: McpServerEntry = {
 
 export const generateClientConfigEntry = (
   client: SupportedClient,
-  detectedProviders: readonly DetectedProvider[]
+  detectedProviders: DetectedProvider[]
 ): McpServerEntry => {
   const hasAnyAvailableProvider = detectedProviders.some((provider) => provider.available);
 

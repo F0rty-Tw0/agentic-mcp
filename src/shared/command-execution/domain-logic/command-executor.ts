@@ -9,26 +9,27 @@ import type {
   StreamCollector,
 } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
+import { setupIdleTimeout } from './command-idle-timeout';
+import { createAbortSubscription, setupTimeout } from './command-timeout';
 import { CommandExecutionError } from '../common/errors';
-import { setupIdleTimeout } from '../utils/command-idle-timeout.util';
+import type { ProviderQueueLease } from '../common/provider-queue.type';
 import { attachStreamCollector } from '../utils/command-stream-collector.util';
-import { createAbortSubscription, setupTimeout } from '../utils/command-timeout.util';
 
-type ResolveExecutionResultInput = Readonly<{
-  stdout: StreamCollector;
-  stderr: StreamCollector;
-  exitCode: number | null;
-  closeSignal: string | null;
-  timedOut: boolean;
-  startTime: number;
-}>;
+type ResolveExecutionResultInput = {
+  readonly stdout: StreamCollector;
+  readonly stderr: StreamCollector;
+  readonly exitCode: number | null;
+  readonly closeSignal: string | null;
+  readonly timedOut: boolean;
+  readonly startTime: number;
+};
 
-type QueueLease = Readonly<{ release: () => void }> | undefined;
+type QueueLease = ProviderQueueLease | undefined;
 
 const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionResult => {
   const { stdout, stderr, exitCode, closeSignal, timedOut, startTime } = input;
 
-  return {
+  const executionResult: ExecutionResult = {
     stdout: stdout.output(),
     stderr: stderr.output(),
     exitCode,
@@ -39,6 +40,8 @@ const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionRe
     stderrBytes: stderr.bytes(),
     executionTimeMs: Date.now() - startTime,
   };
+
+  return executionResult;
 };
 
 const wrapChunkCallback = (

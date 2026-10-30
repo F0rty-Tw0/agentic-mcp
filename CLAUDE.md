@@ -48,11 +48,11 @@ Global:
 
 ## Key Patterns
 
-- **Folder structure**: each module uses `domain-logic/`, `common/`, `utils/` subdirs with barrel `index.ts`
-- **Stubs**: test fixtures live in `common/stubs/` folders, using `create*`/`build*` factory functions
+- **Folder structure**: each module uses `domain-logic/`, `common/`, `utils/` subdirs with barrel `index.ts`; test-only files in `test/`
+- **Stubs**: `test/stubs/*.stub.ts` constants and `test/utils/*.spec.util.ts` `create*`/`build*` factories (never `common/stubs/`)
 - **Named return variables**: `const result = ...; return result;` (not inline returns)
 - **Guard-first**: early returns over nested blocks
-- **`Readonly<>`**: wrap type aliases and parameter objects by default
+- **`readonly` properties**: primitive properties `readonly`, arrays as `T[]` (lint-suite enforces)
 
 ## Build & Test
 
@@ -60,7 +60,7 @@ Global:
 - Dev: `pnpm run dev` (tsx)
 - Unit tests: `pnpm run test` (vitest, `.spec.ts` files co-located)
 - Integration tests: `pnpm run test:integration` (separate vitest config, `.test.ts` files)
-- Type-check: `pnpm run typecheck`
+- Type-check: `pnpm run typecheck` (TypeScript 7 `tsc`; `.pnpmfile.cjs` gives typescript-eslint and lint-suite TypeScript 6, since TS 7 has no JS API)
 - Lint: `pnpm run lint`
 - Format: `pnpm run format`
 - Validate providers config: `pnpm run validate:providers`

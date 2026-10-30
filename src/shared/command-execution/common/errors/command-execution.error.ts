@@ -1,19 +1,6 @@
-import type { McpErrorResponse } from '../../../mcp-protocol/common';
+import type { McpErrorResponse, McpTextContent } from '../../../mcp-protocol/common';
 import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const';
-
-export type CommandExecutionErrorDetails = Readonly<{
-  exitCode?: number | null;
-  signal?: string | null;
-  timedOut?: boolean;
-  stderr?: string;
-  output?: string;
-}>;
-
-export type QueueTimeoutErrorDetails = Readonly<{
-  providerName: string;
-  waitMs: number;
-  queueTimeoutMs: number;
-}>;
+import type { CommandExecutionErrorDetails, QueueTimeoutErrorDetails } from './command-execution-error.type';
 
 const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
   const detailBytes = Buffer.byteLength(text, 'utf8');
@@ -65,9 +52,10 @@ export class CommandExecutionError extends Error {
       parts.push(`Output: ${capErrorDetail(this.output, 'output')}`);
     }
 
+    const content: McpTextContent[] = [{ type: 'text', text: parts.join(' ') }];
     const mcpErrorResponse: McpErrorResponse = {
       isError: true,
-      content: [{ type: 'text', text: parts.join(' ') }],
+      content,
     };
 
     return mcpErrorResponse;
@@ -88,9 +76,10 @@ export class QueueTimeoutError extends CommandExecutionError {
   }
 
   public override toMcpResponse(): McpErrorResponse {
+    const content: McpTextContent[] = [{ type: 'text', text: this.message }];
     const mcpErrorResponse: McpErrorResponse = {
       isError: true,
-      content: [{ type: 'text', text: this.message }],
+      content,
     };
 
     return mcpErrorResponse;

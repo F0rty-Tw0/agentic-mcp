@@ -32,7 +32,7 @@ Provider configuration types and environment resolution.
 - Resolves environment variables (API keys, tokens) from provider config
 - Detects model-related errors in provider output
 - Exports Zod schemas (`providersFileSchema`) for config validation
-- Provides test stubs/factories in `common/stubs/`
+- Provides test stubs in `test/stubs/`
 
 **Key files:**
 
@@ -52,7 +52,7 @@ MCP protocol utilities — types and helpers for MCP communication.
 
 **Key files:**
 
-- `utils/heartbeat.util.ts` — Keep-alive signaling for long-running operations
+- `domain-logic/heartbeat.ts` — Keep-alive signaling for long-running operations
 - `utils/to-mcp-error.util.ts` — Error-to-MCP-response conversion
 
 **Unit tests:** 2 `.spec.ts` files covering heartbeat timing and error conversion.

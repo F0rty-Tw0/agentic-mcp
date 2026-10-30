@@ -5,23 +5,39 @@ import type { ProviderConfig } from '../../shared';
 
 type AskToolFlags = Readonly<Record<string, unknown>>;
 
-const createConfig = (flags: AskToolFlags): ProviderConfig => ({
-  enabled: true,
-  description: 'Test provider',
-  command: 'test-cli',
-  timeout: 120000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: { args: ['-p'], flags: flags as ProviderConfig['commands']['ask']['flags'] },
-  },
-  input: { method: 'flag' },
-});
+type DescribedSchema = { readonly description: string };
 
-const withSessions = (config: ProviderConfig): ProviderConfig => ({
-  ...config,
-  commands: { ...config.commands, sessions: { flags: { resume: ['--resume'] } } },
-});
+const createConfig = (flags: AskToolFlags): ProviderConfig => {
+  const ask = { args: ['-p'], flags: flags as ProviderConfig['commands']['ask']['flags'] };
+  const commands = {
+    ask,
+  };
+  const input: ProviderConfig['input'] = { method: 'flag' };
+  const providerConfig: ProviderConfig = {
+    enabled: true,
+    description: 'Test provider',
+    command: 'test-cli',
+    timeout: 120000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+  };
+
+  return providerConfig;
+};
+
+const withSessions = (config: ProviderConfig): ProviderConfig => {
+  const flags = { resume: ['--resume'] };
+  const sessions = { flags };
+  const commands = { ...config.commands, sessions };
+  const providerConfig: ProviderConfig = {
+    ...config,
+    commands,
+  };
+
+  return providerConfig;
+};
 
 describe('buildAskToolDefinition', () => {
   describe('tool name and description', () => {
@@ -98,17 +114,19 @@ describe('buildAskToolDefinition', () => {
 
   describe('effort flag (leveled)', () => {
     it('GIVEN provider with leveled effort flag WHEN building tool definition THEN effort field is a z.enum', () => {
-      const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
+      const effort = { flag: '--effort', values: ['low', 'medium', 'high'] };
+      const config = createConfig({ effort });
       const result = buildAskToolDefinition('test', config);
 
       expect(result.inputSchema).toHaveProperty('effort');
     });
 
     it('GIVEN provider with leveled effort flag WHEN building tool definition THEN effort description lists allowed values', () => {
-      const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
+      const effort = { flag: '--effort', values: ['low', 'medium', 'high'] };
+      const config = createConfig({ effort });
       const result = buildAskToolDefinition('test', config);
 
-      const description = (result.inputSchema?.effort as { description: string }).description;
+      const description = (result.inputSchema?.effort as DescribedSchema).description;
 
       expect(description).toContain('low');
       expect(description).toContain('medium');
@@ -164,7 +182,8 @@ describe('buildAskToolDefinition', () => {
 
   describe('sandbox flag (leveled)', () => {
     it('GIVEN provider with leveled sandbox flag WHEN building tool definition THEN sandbox field is in schema', () => {
-      const config = createConfig({ sandbox: { flag: '--sandbox', values: ['read-only', 'workspace-write'] } });
+      const sandbox = { flag: '--sandbox', values: ['read-only', 'workspace-write'] };
+      const config = createConfig({ sandbox });
       const result = buildAskToolDefinition('test', config);
 
       expect(result.inputSchema).toHaveProperty('sandbox');
@@ -196,7 +215,8 @@ describe('buildAskToolDefinition', () => {
 
   describe('effort schema validation', () => {
     it('GIVEN effort z.enum schema WHEN parsing valid value THEN it succeeds', () => {
-      const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
+      const effort = { flag: '--effort', values: ['low', 'medium', 'high'] };
+      const config = createConfig({ effort });
       const result = buildAskToolDefinition('test', config);
 
       const effortSchema = result.inputSchema?.effort;
@@ -206,7 +226,8 @@ describe('buildAskToolDefinition', () => {
     });
 
     it('GIVEN effort z.enum schema WHEN parsing invalid value THEN it throws', () => {
-      const config = createConfig({ effort: { flag: '--effort', values: ['low', 'medium', 'high'] } });
+      const effort = { flag: '--effort', values: ['low', 'medium', 'high'] };
+      const config = createConfig({ effort });
       const result = buildAskToolDefinition('test', config);
 
       const effortSchema = result.inputSchema?.effort;
@@ -217,8 +238,9 @@ describe('buildAskToolDefinition', () => {
 
   describe('auto_mode flag', () => {
     it('GIVEN provider with leveled autoMode flag WHEN building tool definition THEN auto_mode is a z.enum', () => {
+      const autoMode = { flag: '--permission-mode', values: ['acceptEdits', 'dontAsk'] };
       const config = createConfig({
-        autoMode: { flag: '--permission-mode', values: ['acceptEdits', 'dontAsk'] },
+        autoMode,
       });
       const result = buildAskToolDefinition('test', config);
 
@@ -268,13 +290,15 @@ describe('buildAskToolDefinition', () => {
 
   describe('claude provider config', () => {
     it('GIVEN claude provider config WHEN building tool definition THEN effort, max_budget, system_prompt, auto_mode are all present', () => {
+      const effort = { flag: '--effort', values: ['low', 'medium', 'high'] };
+      const autoMode = { flag: '--permission-mode', values: ['acceptEdits', 'bypassPermissions'] };
       const config = createConfig({
         model: '--model',
-        effort: { flag: '--effort', values: ['low', 'medium', 'high'] },
+        effort,
         maxBudget: '--max-budget-usd',
         systemPrompt: '--system-prompt',
         workingDir: '--add-dir',
-        autoMode: { flag: '--permission-mode', values: ['acceptEdits', 'bypassPermissions'] },
+        autoMode,
         file: null,
       });
       const result = buildAskToolDefinition('claude', config);

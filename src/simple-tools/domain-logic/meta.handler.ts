@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProvider } from '../../shared';
+import type { ResolvedProvider } from '../../shared/provider/common';
 
 const providerStatus = (provider: ResolvedProvider): string => {
   if (provider.available) return 'binary detected';
@@ -32,27 +32,23 @@ const buildProviderLine = (provider: ResolvedProvider): string => {
   return `- ${provider.name}: ${provider.description} [${status}${supportLevelSuffix}]${prerequisitesSuffix}`;
 };
 
-const buildNextStep = (providers: readonly ResolvedProvider[]): string => {
+const buildNextStep = (providers: ResolvedProvider[]): string => {
   const detectedProvider = providers.find((provider) => provider.enabled && provider.available);
 
-  if (detectedProvider) {
-    return `Next: run prove ${detectedProvider.name} to prove authentication and a real response.`;
-  }
+  if (detectedProvider) return `Next: run prove ${detectedProvider.name} to prove authentication and a real response.`;
 
   return 'Next: install and authenticate a supported provider CLI, then rerun list_providers.';
 };
 
-const buildReadinessLine = (providers: readonly ResolvedProvider[]): string => {
+const buildReadinessLine = (providers: ResolvedProvider[]): string => {
   const hasDetectedProvider = providers.some((provider) => provider.enabled && provider.available);
 
-  if (!hasDetectedProvider) {
-    return '';
-  }
+  if (!hasDetectedProvider) return '';
 
   return 'Readiness: binary detection is not proof of authentication or a real response.';
 };
 
-export const handleListProviders = (providers: readonly ResolvedProvider[]): CallToolResult => {
+export const handleListProviders = (providers: ResolvedProvider[]): CallToolResult => {
   const lines = providers.map(buildProviderLine);
   const sections = ['Configured providers:'];
 
@@ -69,8 +65,9 @@ export const handleListProviders = (providers: readonly ResolvedProvider[]): Cal
   sections.push(buildNextStep(providers));
 
   const text = sections.join('\n');
+  const content: CallToolResult['content'] = [{ type: 'text', text }];
   const callToolResult: CallToolResult = {
-    content: [{ type: 'text', text }],
+    content,
   };
 
   return callToolResult;

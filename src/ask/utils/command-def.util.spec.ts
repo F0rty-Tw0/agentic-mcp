@@ -4,24 +4,35 @@ import { getAskCommand, getFlag, resolveAskCommand } from './command-def.util';
 import type { CommandDef, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
 import { FLAG_AUTO_MODE, FLAG_FILE, FLAG_MODEL, FLAG_SANDBOX, FLAG_WORKING_DIR } from '../common';
-import { ASK_PROVIDER_CONFIG_STUB } from '../common/stubs';
+import { ASK_PROVIDER_CONFIG_STUB } from '../test/stubs/ask-provider-config.stub';
 
-const makeProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => ({
-  ...ASK_PROVIDER_CONFIG_STUB,
-  description: 'test provider',
-  timeout: 30_000,
-  outputFormat: 'text',
-  commands: {
-    ask: { args: ['exec'] },
-  },
-  input: { method: 'flag' },
-  ...overrides,
-});
+const makeProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => {
+  const input = { method: 'flag' } as const;
+  const ask = { args: ['exec'] };
+  const commands = {
+    ask,
+  };
+  const result: ProviderConfig = {
+    ...ASK_PROVIDER_CONFIG_STUB,
+    description: 'test provider',
+    timeout: 30_000,
+    outputFormat: 'text',
+    commands,
+    input,
+    ...overrides,
+  };
 
-const makeCommandDef = (overrides: Partial<CommandDef> = {}): CommandDef => ({
-  args: ['exec'],
-  ...overrides,
-});
+  return result;
+};
+
+const makeCommandDef = (overrides: Partial<CommandDef> = {}): CommandDef => {
+  const result: CommandDef = {
+    args: ['exec'],
+    ...overrides,
+  };
+
+  return result;
+};
 
 describe('flag constants', () => {
   it('GIVEN flag constants WHEN accessed THEN have expected values', () => {
@@ -36,7 +47,8 @@ describe('flag constants', () => {
 describe('getAskCommand', () => {
   it('GIVEN provider with ask command WHEN called THEN returns the ask CommandDef', () => {
     const askDef: CommandDef = { args: ['exec'], trailingArgs: ['--json'] };
-    const config = makeProviderConfig({ commands: { ask: askDef } });
+    const commands = { ask: askDef };
+    const config = makeProviderConfig({ commands });
 
     const result = getAskCommand(config);
 
@@ -46,7 +58,8 @@ describe('getAskCommand', () => {
   it('GIVEN provider with ask and other commands WHEN called THEN returns only the ask CommandDef', () => {
     const askDef: CommandDef = { args: ['ask'] };
     const reviewDef: CommandDef = { args: ['review'] };
-    const config = makeProviderConfig({ commands: { ask: askDef, review: reviewDef } });
+    const commands = { ask: askDef, review: reviewDef };
+    const config = makeProviderConfig({ commands });
 
     const result = getAskCommand(config);
 
@@ -54,15 +67,20 @@ describe('getAskCommand', () => {
   });
 
   it('GIVEN provider with ask command with flags WHEN called THEN returns CommandDef preserving flags', () => {
+    const sandbox = { flag: '--sandbox', values: ['read-only'] };
+    const flags = { model: '-m', sandbox };
     const askDef: CommandDef = {
       args: ['exec'],
-      flags: { model: '-m', sandbox: { flag: '--sandbox', values: ['read-only'] } },
+      flags,
     };
-    const config = makeProviderConfig({ commands: { ask: askDef } });
+    const commands = { ask: askDef };
+    const config = makeProviderConfig({ commands });
 
     const result = getAskCommand(config);
 
-    expect(result.flags).toStrictEqual({ model: '-m', sandbox: { flag: '--sandbox', values: ['read-only'] } });
+    const expectedSandbox = { flag: '--sandbox', values: ['read-only'] };
+
+    expect(result.flags).toStrictEqual({ model: '-m', sandbox: expectedSandbox });
   });
 
   it('GIVEN provider missing ask command WHEN called THEN throws ValidationError', () => {
@@ -86,14 +104,16 @@ describe('getAskCommand', () => {
 
 describe('resolveAskCommand', () => {
   it('GIVEN non-streaming ask config WHEN streamLive is false THEN returns default trailing args and output format', () => {
+    const ask = {
+      args: ['-p'],
+      trailingArgs: ['--output-format', 'json'],
+    };
+    const commands = {
+      ask,
+    };
     const config = makeProviderConfig({
       outputFormat: 'json',
-      commands: {
-        ask: {
-          args: ['-p'],
-          trailingArgs: ['--output-format', 'json'],
-        },
-      },
+      commands,
     });
 
     const result = resolveAskCommand(config, false);
@@ -103,18 +123,21 @@ describe('resolveAskCommand', () => {
   });
 
   it('GIVEN ask streaming overrides WHEN streamLive is true THEN returns streaming trailing args and output format', () => {
+    const streaming = {
+      trailingArgs: ['--verbose', '--output-format', 'stream-json'],
+      outputFormat: 'stream-json' as const,
+    };
+    const ask = {
+      args: ['-p'],
+      trailingArgs: ['--output-format', 'json'],
+      streaming,
+    };
+    const commands = {
+      ask,
+    };
     const config = makeProviderConfig({
       outputFormat: 'json',
-      commands: {
-        ask: {
-          args: ['-p'],
-          trailingArgs: ['--output-format', 'json'],
-          streaming: {
-            trailingArgs: ['--verbose', '--output-format', 'stream-json'],
-            outputFormat: 'stream-json',
-          },
-        },
-      },
+      commands,
     });
 
     const result = resolveAskCommand(config, true);
@@ -126,7 +149,8 @@ describe('resolveAskCommand', () => {
 
 describe('getFlag', () => {
   it('GIVEN command with string flag WHEN queried by key THEN returns the string value', () => {
-    const cmd = makeCommandDef({ flags: { model: '-m' } });
+    const flags = { model: '-m' };
+    const cmd = makeCommandDef({ flags });
 
     const result = getFlag(cmd, 'model');
 
@@ -134,7 +158,8 @@ describe('getFlag', () => {
   });
 
   it('GIVEN command with array flag WHEN queried by key THEN returns the array value', () => {
-    const cmd = makeCommandDef({ flags: { autoMode: ['--full-auto'] } });
+    const flags = { autoMode: ['--full-auto'] };
+    const cmd = makeCommandDef({ flags });
 
     const result = getFlag(cmd, 'autoMode');
 
@@ -143,7 +168,8 @@ describe('getFlag', () => {
 
   it('GIVEN command with leveled flag WHEN queried by key THEN returns the leveled object', () => {
     const leveled = { flag: '--sandbox', values: ['read-only', 'workspace-write'] };
-    const cmd = makeCommandDef({ flags: { sandbox: leveled } });
+    const flags = { sandbox: leveled };
+    const cmd = makeCommandDef({ flags });
 
     const result = getFlag(cmd, 'sandbox');
 
@@ -151,7 +177,8 @@ describe('getFlag', () => {
   });
 
   it('GIVEN command with null flag WHEN queried by key THEN returns null', () => {
-    const cmd = makeCommandDef({ flags: { file: null } });
+    const flags = { file: null };
+    const cmd = makeCommandDef({ flags });
 
     const result = getFlag(cmd, 'file');
 
@@ -159,7 +186,8 @@ describe('getFlag', () => {
   });
 
   it('GIVEN command with flags WHEN queried by nonexistent key THEN returns undefined', () => {
-    const cmd = makeCommandDef({ flags: { model: '-m' } });
+    const flags = { model: '-m' };
+    const cmd = makeCommandDef({ flags });
 
     const result = getFlag(cmd, 'nonexistent');
 

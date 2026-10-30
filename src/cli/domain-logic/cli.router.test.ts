@@ -40,14 +40,21 @@ const isSuccessfulPingText = (text: string): boolean => {
 };
 
 const isProviderAvailable = async (provider: string): Promise<boolean> => {
-  const result = await execFileAsync(process.execPath, [BINARY_PATH, `ping_${provider}`]).catch(() => undefined);
+  const pingPromise = execFileAsync(process.execPath, [BINARY_PATH, `ping_${provider}`]);
+  const result = await pingPromise.catch(() => undefined);
 
-  return !result ? false : isSuccessfulPingText(result.stdout);
+  if (!result) return false;
+
+  const isAvailable = isSuccessfulPingText(result.stdout);
+
+  return isAvailable;
 };
 
 const findAvailableProvider = async (): Promise<string | undefined> => {
   for (const provider of KNOWN_PROVIDERS) {
-    if (await isProviderAvailable(provider)) return provider;
+    const isAvailable = await isProviderAvailable(provider);
+
+    if (isAvailable) return provider;
   }
 
   return undefined;
@@ -56,34 +63,42 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
 const STREAMED_STDERR_MARKER = 'STREAMED-STDERR-MARKER';
 const FINAL_STDOUT_MARKER = 'FINAL-STDOUT-MARKER';
 
-const createStreamingFixture = async (): Promise<Readonly<{ configPath: string; tempDir: string }>> => {
+type StreamingFixture = {
+  readonly configPath: string;
+  readonly tempDir: string;
+};
+
+type ExecFailure = {
+  readonly code: number;
+  readonly stderr: string;
+};
+
+const createStreamingFixture = async (): Promise<StreamingFixture> => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), 'cli-stream-fixture-'));
   const scriptPath = path.join(tempDir, 'stream-provider.js');
   const configPath = path.join(tempDir, 'providers.json');
-  const script = [
+  const scriptLines = [
     `process.stderr.write('${STREAMED_STDERR_MARKER}');`,
     `process.stdout.write('${FINAL_STDOUT_MARKER}');`,
-  ].join('\n');
+  ];
+  const script = scriptLines.join('\n');
+  const ask = { args: [scriptPath] };
+  const commands = { ask };
+  const input = { method: 'positional' };
+  const fixture = {
+    enabled: true,
+    description: 'Streaming fixture provider',
+    command: process.execPath,
+    timeout: 10_000,
+    env: {},
+    outputFormat: 'text',
+    commands,
+    input,
+  };
+  const providers = { fixture };
   const config = {
     configVersion: 1,
-    providers: {
-      fixture: {
-        enabled: true,
-        description: 'Streaming fixture provider',
-        command: process.execPath,
-        timeout: 10_000,
-        env: {},
-        outputFormat: 'text',
-        commands: {
-          ask: {
-            args: [scriptPath],
-          },
-        },
-        input: {
-          method: 'positional',
-        },
-      },
-    },
+    providers,
   };
 
   await writeFile(scriptPath, script, 'utf8');
@@ -230,7 +245,7 @@ describe('integration: CLI router', () => {
 
         const error = (await execFileAsync(process.execPath, [BINARY_PATH, 'ask_nonexistent', 'test']).catch(
           (err: unknown) => err
-        )) as { code: number; stderr: string };
+        )) as ExecFailure;
 
         expect(error.code).not.toBe(0);
         expect(error.stderr).toContain('not found');
@@ -248,7 +263,7 @@ describe('integration: CLI router', () => {
           'list_providers',
           '--config',
           '/nonexistent/path.json',
-        ]).catch((err: unknown) => err)) as { code: number; stderr: string };
+        ]).catch((err: unknown) => err)) as ExecFailure;
 
         expect(error.code).not.toBe(0);
         expect(error.stderr).toBeTruthy();

@@ -2,33 +2,33 @@ import process from 'node:process';
 
 import { writeAskAllReport } from './ask-all-report.writer';
 import { printResult } from './cli-output';
-import type { AskToolArgs, ReviewToolArgs } from '../../ask';
-import type { AskAllToolArgs } from '../../ask-all';
+import { renderCliProgress } from './cli-progress.renderer';
+import type { AskToolArgs, ReviewToolArgs } from '../../ask/common';
+import type { AskAllToolArgs } from '../../ask-all/common';
 import { ValidationError } from '../../shared';
 import type { CallCliToolInput, CliSubcommand } from '../common';
 import { parseAskAllArgs, parseAskArgs } from '../utils/cli-arg-parser.util';
-import { renderCliProgress } from '../utils/cli-progress-renderer.util';
 import { callCliTool } from '../utils/in-process-mcp-client.util';
 import { parseReviewArgs } from '../utils/review-arg-parser.util';
 import { parseSubcommand } from '../utils/subcommand.util';
 
 type CliToolArgs = AskToolArgs | AskAllToolArgs | ReviewToolArgs;
 
-type AskAllCliOptions = Readonly<{
-  reportPath?: string;
-  sanitizedArgs: readonly string[];
-}>;
+type AskAllCliOptions = {
+  readonly reportPath?: string;
+  readonly sanitizedArgs: string[];
+};
 
-type CliExecutionPlan = Readonly<{
-  args: CliToolArgs;
-  reportPath?: string;
-}>;
+type CliExecutionPlan = {
+  readonly args: CliToolArgs;
+  readonly reportPath?: string;
+};
 
 const buildMissingReportPathMessage = (): string => 'ask_all requires a file path after --report.';
 
 const buildDuplicateReportPathMessage = (): string => 'ask_all accepts --report only once.';
 
-const extractAskAllCliOptions = (remainingArgs: readonly string[]): AskAllCliOptions => {
+const extractAskAllCliOptions = (remainingArgs: string[]): AskAllCliOptions => {
   const sanitizedArgs: string[] = [];
   let reportPath: string | undefined;
 
@@ -41,15 +41,12 @@ const extractAskAllCliOptions = (remainingArgs: readonly string[]): AskAllCliOpt
       continue;
     }
 
-    if (reportPath != null) {
-      throw new ValidationError(buildDuplicateReportPathMessage());
-    }
+    if (reportPath != null) throw new ValidationError(buildDuplicateReportPathMessage());
 
     const nextArg = remainingArgs[i + 1];
+    const isFlag = nextArg?.startsWith('--') ?? false;
 
-    if (nextArg == null || nextArg.startsWith('--')) {
-      throw new ValidationError(buildMissingReportPathMessage());
-    }
+    if (nextArg == null || isFlag) throw new ValidationError(buildMissingReportPathMessage());
 
     reportPath = nextArg;
     i += 1;
@@ -63,7 +60,7 @@ const extractAskAllCliOptions = (remainingArgs: readonly string[]): AskAllCliOpt
   return result;
 };
 
-const buildCliExecutionPlan = (subcommand: CliSubcommand, remainingArgs: readonly string[]): CliExecutionPlan => {
+const buildCliExecutionPlan = (subcommand: CliSubcommand, remainingArgs: string[]): CliExecutionPlan => {
   if (subcommand === 'ask_all') {
     const askAllCliOptions = extractAskAllCliOptions(remainingArgs);
     const result: CliExecutionPlan = {
@@ -74,7 +71,9 @@ const buildCliExecutionPlan = (subcommand: CliSubcommand, remainingArgs: readonl
     return result;
   }
 
-  if (subcommand.startsWith('ask_')) {
+  const isAskSubcommand = subcommand.startsWith('ask_');
+
+  if (isAskSubcommand) {
     const result: CliExecutionPlan = {
       args: parseAskArgs(remainingArgs),
     };
@@ -82,7 +81,9 @@ const buildCliExecutionPlan = (subcommand: CliSubcommand, remainingArgs: readonl
     return result;
   }
 
-  if (subcommand.startsWith('review_')) {
+  const isReviewSubcommand = subcommand.startsWith('review_');
+
+  if (isReviewSubcommand) {
     const result: CliExecutionPlan = {
       args: parseReviewArgs(remainingArgs),
     };
@@ -135,11 +136,7 @@ const writeValidationError = (error: ValidationError): void => {
   process.exitCode = 1;
 };
 
-export const runCli = async (
-  subcommand: string,
-  remainingArgs: readonly string[],
-  configPath?: string
-): Promise<void> => {
+export const runCli = async (subcommand: string, remainingArgs: string[], configPath?: string): Promise<void> => {
   const parsedSubcommand = parseSubcommand(subcommand);
 
   if (!parsedSubcommand) {

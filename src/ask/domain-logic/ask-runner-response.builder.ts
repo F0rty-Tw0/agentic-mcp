@@ -1,18 +1,18 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
 import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';
-import type { SessionMode } from '../../session';
+import type { SessionMode } from '../../session/common';
 import type { AskToolStructuredContent, ProviderAttribution, SuccessResponseInput } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
 
-type BuildStructuredContentInput = Readonly<{
-  responseText: string;
-  attribution: ProviderAttribution;
-  sessionMode: SessionMode;
-  includeStructured?: boolean;
-  parsed?: unknown;
-}>;
+type BuildStructuredContentInput = {
+  readonly responseText: string;
+  readonly attribution: ProviderAttribution;
+  readonly sessionMode: SessionMode;
+  readonly includeStructured?: boolean;
+  readonly parsed?: unknown;
+};
 
 const buildStructuredContent = (
   buildStructuredContentInput: BuildStructuredContentInput
@@ -21,8 +21,11 @@ const buildStructuredContent = (
 
   if (!includeStructured) return;
 
-  const parsedContent = parsed !== undefined ? { parsed } : {};
-  const sessionModeContent = sessionMode !== 'none' ? { sessionMode } : {};
+  const noContent = {};
+  const parsedPatch = { parsed };
+  const sessionModePatch = { sessionMode };
+  const parsedContent = parsed !== undefined ? parsedPatch : noContent;
+  const sessionModeContent = sessionMode !== 'none' ? sessionModePatch : noContent;
   const structuredContent: AskToolStructuredContent = {
     response: responseText,
     attribution,
@@ -31,6 +34,16 @@ const buildStructuredContent = (
   };
 
   return structuredContent;
+};
+
+const buildModelHintFailure = (parsedText: string, modelHint: string): CallToolResult => {
+  const errorContent: TextContent[] = [{ type: 'text', text: parsedText + modelHint }];
+  const callToolResult: CallToolResult = {
+    isError: true,
+    content: errorContent,
+  };
+
+  return callToolResult;
 };
 
 export const buildSuccessfulResponse = async (successResponseInput: SuccessResponseInput): Promise<CallToolResult> => {
@@ -54,19 +67,15 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
   if (modelHint) {
     streamNotifier.emitError('Model validation failed', summary);
 
-    const callToolResult: CallToolResult = {
-      isError: true,
-      content: [{ type: 'text', text: parsedOutput.text + modelHint }],
-    };
-
-    return callToolResult;
+    return buildModelHintFailure(parsedOutput.text, modelHint);
   }
 
   streamNotifier.emitDone(summary);
+  const result = { executionTimeMs, truncated, stdoutBytes };
   const buildAttributionInput = {
     provider: context.name,
     model: args.model,
-    result: { executionTimeMs, truncated, stdoutBytes },
+    result,
     outputFormat,
     metadata: parsedOutput.metadata,
     sessionMode,
@@ -81,7 +90,11 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
     parsed: parsedOutput.metadata?.parsed,
   });
   const content: CallToolResult['content'] = [{ type: 'text', text: responseText }];
-  const callToolResult: CallToolResult = structuredContent ? { content, structuredContent } : { content };
+  const contentResult: CallToolResult = { content };
+
+  if (!structuredContent) return contentResult;
+
+  const callToolResult: CallToolResult = { content, structuredContent };
 
   return callToolResult;
 };

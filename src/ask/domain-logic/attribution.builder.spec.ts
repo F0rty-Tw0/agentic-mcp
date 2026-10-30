@@ -74,10 +74,11 @@ describe('buildAttribution', () => {
 
   describe('executionTimeMs field', () => {
     it('GIVEN executionTimeMs 1500 WHEN buildAttribution called THEN executionTimeMs is 1500', () => {
+      const executionResult = { ...BASE_RESULT, executionTimeMs: 1500 };
       const result = buildAttribution({
         provider: 'claude',
         model: undefined,
-        result: { ...BASE_RESULT, executionTimeMs: 1500 },
+        result: executionResult,
         outputFormat: 'text',
         metadata: undefined,
         sessionMode: 'none',
@@ -87,10 +88,11 @@ describe('buildAttribution', () => {
     });
 
     it('GIVEN executionTimeMs 0 WHEN buildAttribution called THEN executionTimeMs is 0', () => {
+      const executionResult = { ...BASE_RESULT, executionTimeMs: 0 };
       const result = buildAttribution({
         provider: 'claude',
         model: undefined,
-        result: { ...BASE_RESULT, executionTimeMs: 0 },
+        result: executionResult,
         outputFormat: 'text',
         metadata: undefined,
         sessionMode: 'none',
@@ -102,10 +104,11 @@ describe('buildAttribution', () => {
 
   describe('outputBytes field', () => {
     it('GIVEN stdoutBytes 256 WHEN buildAttribution called THEN outputBytes is 256', () => {
+      const executionResult = { ...BASE_RESULT, stdoutBytes: 256 };
       const result = buildAttribution({
         provider: 'claude',
         model: undefined,
-        result: { ...BASE_RESULT, stdoutBytes: 256 },
+        result: executionResult,
         outputFormat: 'text',
         metadata: undefined,
         sessionMode: 'none',
@@ -117,10 +120,11 @@ describe('buildAttribution', () => {
 
   describe('truncated field', () => {
     it('GIVEN truncated false WHEN buildAttribution called THEN truncated is false', () => {
+      const executionResult = { ...BASE_RESULT, truncated: false };
       const result = buildAttribution({
         provider: 'claude',
         model: undefined,
-        result: { ...BASE_RESULT, truncated: false },
+        result: executionResult,
         outputFormat: 'text',
         metadata: undefined,
         sessionMode: 'none',
@@ -130,10 +134,11 @@ describe('buildAttribution', () => {
     });
 
     it('GIVEN truncated true WHEN buildAttribution called THEN truncated is true', () => {
+      const executionResult = { ...BASE_RESULT, truncated: true };
       const result = buildAttribution({
         provider: 'claude',
         model: undefined,
-        result: { ...BASE_RESULT, truncated: true },
+        result: executionResult,
         outputFormat: 'text',
         metadata: undefined,
         sessionMode: 'none',
@@ -257,10 +262,11 @@ describe('buildAttribution', () => {
   describe('full attribution shape', () => {
     it('GIVEN all fields WHEN buildAttribution called THEN returns complete ProviderAttribution', () => {
       const metadata = { outputFormatObserved: 'stream-json' as const };
+      const executionResult = { ...BASE_RESULT, executionTimeMs: 2000, stdoutBytes: 512, truncated: true };
       const result = buildAttribution({
         provider: 'gemini',
         model: 'gemini-pro',
-        result: { ...BASE_RESULT, executionTimeMs: 2000, stdoutBytes: 512, truncated: true },
+        result: executionResult,
         outputFormat: 'stream-json',
         metadata,
         sessionMode: 'tier1-prepend',

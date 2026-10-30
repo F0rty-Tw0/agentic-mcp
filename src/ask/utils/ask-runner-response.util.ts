@@ -1,16 +1,21 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 import { extractNativeSessionId } from '../../session';
-import type { OutputFormat, ResolvedProviderEntry } from '../../shared';
 import { stripAnsi } from '../../shared';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskExecution } from '../common';
 
-export const buildFailureExecution = (response: CallToolResult, wasCancelled: boolean): AskExecution => ({
-  response,
-  sessionMode: 'none',
-  responseText: '',
-  wasCancelled,
-});
+export const buildFailureExecution = (response: CallToolResult, wasCancelled: boolean): AskExecution => {
+  const result: AskExecution = {
+    response,
+    sessionMode: 'none',
+    responseText: '',
+    wasCancelled,
+  };
+
+  return result;
+};
 
 export const buildExecution = (
   response: CallToolResult,
@@ -20,11 +25,14 @@ export const buildExecution = (
 ): AskExecution => {
   const firstContent = response.content[0];
 
-  return {
+  const responseText = firstContent?.type === 'text' ? firstContent.text : '';
+  const result: AskExecution = {
     response,
     sessionMode: 'none',
-    responseText: firstContent?.type === 'text' ? firstContent.text : '',
+    responseText,
     nativeSessionId: extractNativeSessionId(context.name, stripAnsi(stdout), outputFormat),
     wasCancelled: false,
   };
+
+  return result;
 };

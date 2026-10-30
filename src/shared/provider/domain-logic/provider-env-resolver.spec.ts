@@ -6,6 +6,9 @@ import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common';
 import type { ProviderConfig, ResolvedProviderEntry } from '../common';
 
 const createContext = (overrides: Partial<ProviderConfig> = {}, providerName = 'test'): ResolvedProviderEntry => {
+  const ask = { args: ['exec'], flags: {} };
+  const commands = { ask };
+  const input: ProviderConfig['input'] = { method: 'positional' };
   const config: ProviderConfig = {
     enabled: true,
     description: 'Test provider',
@@ -13,21 +16,24 @@ const createContext = (overrides: Partial<ProviderConfig> = {}, providerName = '
     timeout: 120_000,
     env: {},
     outputFormat: 'json',
-    commands: { ask: { args: ['exec'], flags: {} } },
-    input: { method: 'positional' },
+    commands,
+    input,
     ...overrides,
   };
 
-  return {
+  const resolvedProviderEntry: ResolvedProviderEntry = {
     name: providerName,
     binaryPath: '/usr/bin/test-cli',
     config,
   };
+
+  return resolvedProviderEntry;
 };
 
 describe('resolveProviderEnv', () => {
   it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN resolving env THEN injects default timeout', () => {
-    const context = createContext({ env: { API_KEY: 'secret' } }, 'codex');
+    const env = { API_KEY: 'secret' };
+    const context = createContext({ env }, 'codex');
 
     const resolvedEnv = resolveProviderEnv(context);
 
@@ -38,7 +44,8 @@ describe('resolveProviderEnv', () => {
   });
 
   it('GIVEN provider with MCP_TOOL_TIMEOUT WHEN resolving env THEN preserves explicit value', () => {
-    const context = createContext({ env: { MCP_TOOL_TIMEOUT: '900000', API_KEY: 'secret' } }, 'gemini');
+    const env = { MCP_TOOL_TIMEOUT: '900000', API_KEY: 'secret' };
+    const context = createContext({ env }, 'gemini');
 
     const resolvedEnv = resolveProviderEnv(context);
 

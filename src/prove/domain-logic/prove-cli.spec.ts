@@ -7,26 +7,30 @@ import type { DetectedProvider } from '../../setup/common';
 
 const DEFAULT_PROVE_PROMPT = 'Reply with OK and your provider name.';
 
-type MockDependencies = Readonly<{
-  detectInstalledProviders: ReturnType<typeof vi.fn<() => Promise<readonly DetectedProvider[]>>>;
-  runCli: ReturnType<
-    typeof vi.fn<(subcommand: string, remainingArgs: readonly string[], configPath?: string) => Promise<void>>
+type MockDependencies = {
+  readonly detectInstalledProviders: ReturnType<typeof vi.fn<() => Promise<DetectedProvider[]>>>;
+  readonly runCli: ReturnType<
+    typeof vi.fn<(subcommand: string, remainingArgs: string[], configPath?: string) => Promise<void>>
   >;
-  stdoutWrite: ReturnType<typeof vi.fn<(text: string) => void>>;
-  stderrWrite: ReturnType<typeof vi.fn<(text: string) => void>>;
-}>;
+  readonly stdoutWrite: ReturnType<typeof vi.fn<(text: string) => void>>;
+  readonly stderrWrite: ReturnType<typeof vi.fn<(text: string) => void>>;
+};
 
-const createDetectedProvider = (overrides: Partial<DetectedProvider> = {}): DetectedProvider => ({
-  name: 'claude',
-  available: true,
-  binaryPath: '/usr/bin/claude',
-  ...overrides,
-});
+const createDetectedProvider = (overrides: Partial<DetectedProvider> = {}): DetectedProvider => {
+  const result: DetectedProvider = {
+    name: 'claude',
+    available: true,
+    binaryPath: '/usr/bin/claude',
+    ...overrides,
+  };
+
+  return result;
+};
 
 const createDependencies = (): MockDependencies => {
   const dependencies: MockDependencies = {
-    detectInstalledProviders: vi.fn<() => Promise<readonly DetectedProvider[]>>(),
-    runCli: vi.fn<(subcommand: string, remainingArgs: readonly string[], configPath?: string) => Promise<void>>(),
+    detectInstalledProviders: vi.fn<() => Promise<DetectedProvider[]>>(),
+    runCli: vi.fn<(subcommand: string, remainingArgs: string[], configPath?: string) => Promise<void>>(),
     stdoutWrite: vi.fn<(text: string) => void>(),
     stderrWrite: vi.fn<(text: string) => void>(),
   };

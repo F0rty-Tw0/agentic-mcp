@@ -11,32 +11,56 @@ import {
   executeCommand,
   stripAnsi,
 } from '../../shared';
+import { ASK_DEFAULT_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
-  ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
-  createAskContext,
-} from '../common/stubs';
+} from '../test/stubs/ask-execution-result.stub';
+import { createAskContext } from '../test/utils/ask-context.spec.util';
 
-vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
-  buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
-}));
+vi.mock('../../cli-args/domain-logic/arg.builder', () => {
+  const result = {
+    buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
+  };
 
-vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
-  executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
-}));
+  return result;
+});
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
-  stripAnsi: vi.fn((input: string) => input),
-}));
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
+  const result = {
+    executeCommand: vi.fn(async () => Promise.resolve(ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB)),
+  };
 
-vi.mock('../../shared/provider/utils/model-error.util', () => ({
-  detectModelError: vi.fn(() => false),
-  extractAttemptedModel: vi.fn(() => undefined),
-  fetchAvailableModels: vi.fn().mockResolvedValue(undefined),
-  buildModelHint: vi.fn(() => ''),
-}));
+  return result;
+});
+
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const result = {
+    buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
+    stripAnsi: vi.fn((input: string) => input),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/provider/utils/model-error.util', () => {
+  const fetchAvailableModelsMock = vi.fn().mockResolvedValue(undefined);
+  const result = {
+    detectModelError: vi.fn(() => false),
+    extractAttemptedModel: vi.fn(() => undefined),
+    fetchAvailableModels: fetchAvailableModelsMock,
+    buildModelHint: vi.fn(() => ''),
+  };
+
+  return result;
+});
 
 describe('handleAsk – errors', () => {
   beforeEach(() => {

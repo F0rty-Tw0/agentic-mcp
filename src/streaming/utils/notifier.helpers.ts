@@ -1,4 +1,4 @@
-import type { ProgressContext, ProgressToken } from '../../shared';
+import type { ProgressContext, ProgressToken } from '../../shared/mcp-protocol/common';
 import { ASK_STREAM_EVENT_SCHEMA, MAX_STREAM_CHUNK_BYTES, TERMINAL_EVENT_GRACE_TIMEOUT_MS } from '../common';
 import type {
   AskStreamDiagnostics,
@@ -8,33 +8,37 @@ import type {
   StreamNotifier,
 } from '../common';
 
-type StreamEnabledInput = Readonly<{
-  args: { stream_live?: boolean };
-  progressToken?: ProgressToken;
-  extra?: ProgressContext;
-}>;
+type StreamLiveArgs = { readonly stream_live?: boolean };
 
-type BuildStreamDiagnosticsInput = Readonly<{
-  streamId: string;
-  sequence: number;
-  emittedChunks: number;
-  droppedChunks: number;
-  coalescedChunks: number;
-}>;
+type ProgressMeta = { readonly progressToken?: ProgressToken };
 
-type BuildExecutionSummaryInput = Readonly<{
-  exitCode: number | null;
-  signal: string | null;
-  timedOut: boolean;
-  truncated: boolean;
-  stdoutBytes: number;
-  stderrBytes: number;
-  executionTimeMs: number;
-}>;
+type StreamEnabledInput = {
+  readonly args: StreamLiveArgs;
+  readonly progressToken?: ProgressToken;
+  readonly extra?: ProgressContext;
+};
+
+type BuildStreamDiagnosticsInput = {
+  readonly streamId: string;
+  readonly sequence: number;
+  readonly emittedChunks: number;
+  readonly droppedChunks: number;
+  readonly coalescedChunks: number;
+};
+
+type BuildExecutionSummaryInput = {
+  readonly exitCode: number | null;
+  readonly signal: string | null;
+  readonly timedOut: boolean;
+  readonly truncated: boolean;
+  readonly stdoutBytes: number;
+  readonly stderrBytes: number;
+  readonly executionTimeMs: number;
+};
 
 const noop = (): void => undefined;
 
-const toMeta = (extra?: ProgressContext): Readonly<{ progressToken?: ProgressToken }> | undefined => {
+const toMeta = (extra?: ProgressContext): ProgressMeta | undefined => {
   if (!extra) return;
 
   // eslint-disable-next-line no-underscore-dangle
@@ -56,7 +60,9 @@ export const isStreamEnabled = ({ args, progressToken, extra }: StreamEnabledInp
 };
 
 export const splitChunkByBytes = (chunk: string): string[] => {
-  if (Buffer.byteLength(chunk, 'utf-8') <= MAX_STREAM_CHUNK_BYTES) return [chunk];
+  const chunkBytes = Buffer.byteLength(chunk, 'utf-8');
+
+  if (chunkBytes <= MAX_STREAM_CHUNK_BYTES) return [chunk];
 
   const parts: string[] = [];
   let current = '';
@@ -82,7 +88,7 @@ export const splitChunkByBytes = (chunk: string): string[] => {
 };
 
 export const buildStreamDiagnostics = (input: BuildStreamDiagnosticsInput): AskStreamDiagnostics => {
-  return {
+  const askStreamDiagnostics: AskStreamDiagnostics = {
     streamId: input.streamId,
     lastSequence: input.sequence - 1,
     emittedChunks: input.emittedChunks,
@@ -90,34 +96,46 @@ export const buildStreamDiagnostics = (input: BuildStreamDiagnosticsInput): AskS
     coalescedChunks: input.coalescedChunks,
     terminalEventGraceTimeoutMs: TERMINAL_EVENT_GRACE_TIMEOUT_MS,
   };
+
+  return askStreamDiagnostics;
 };
 
 export const withEventEnvelope = (event: AskStreamEventPayload, streamId: string, sequence: number): AskStreamEvent => {
-  return {
+  const askStreamEvent: AskStreamEvent = {
     schema: ASK_STREAM_EVENT_SCHEMA,
     sequence,
     streamId,
     timestamp: new Date().toISOString(),
     ...event,
   };
+
+  return askStreamEvent;
 };
 
-export const createNoopStreamNotifier = (): StreamNotifier => ({
-  onStdoutChunk: noop,
-  onStderrChunk: noop,
-  emitStart: noop,
-  emitDone: noop,
-  emitError: noop,
-  stop: noop,
-  enabled: false,
-});
+export const createNoopStreamNotifier = (): StreamNotifier => {
+  const streamNotifier: StreamNotifier = {
+    onStdoutChunk: noop,
+    onStderrChunk: noop,
+    emitStart: noop,
+    emitDone: noop,
+    emitError: noop,
+    stop: noop,
+    enabled: false,
+  };
 
-export const buildExecutionSummary = (result: BuildExecutionSummaryInput): AskStreamExecutionSummary => ({
-  exitCode: result.exitCode,
-  signal: result.signal,
-  timedOut: result.timedOut,
-  truncated: result.truncated,
-  stdoutBytes: result.stdoutBytes,
-  stderrBytes: result.stderrBytes,
-  executionTimeMs: result.executionTimeMs,
-});
+  return streamNotifier;
+};
+
+export const buildExecutionSummary = (result: BuildExecutionSummaryInput): AskStreamExecutionSummary => {
+  const askStreamExecutionSummary: AskStreamExecutionSummary = {
+    exitCode: result.exitCode,
+    signal: result.signal,
+    timedOut: result.timedOut,
+    truncated: result.truncated,
+    stdoutBytes: result.stdoutBytes,
+    stderrBytes: result.stderrBytes,
+    executionTimeMs: result.executionTimeMs,
+  };
+
+  return askStreamExecutionSummary;
+};

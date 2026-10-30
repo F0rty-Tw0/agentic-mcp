@@ -2,9 +2,23 @@ import process from 'node:process';
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-type PrintResultOptions = Readonly<{
-  includeStructuredContent?: boolean;
-}>;
+type PrintResultOptions = {
+  readonly includeStructuredContent?: boolean;
+};
+
+type ResultContentPart = CallToolResult['content'][number];
+
+type TextPartShape = {
+  readonly type: 'text';
+};
+
+type TextContentPart = Extract<ResultContentPart, TextPartShape>;
+
+const isTextPart = (part: ResultContentPart): part is TextContentPart => {
+  const result = part.type === 'text';
+
+  return result;
+};
 
 const buildStructuredContentText = (structuredContent: unknown, includeStructuredContent: boolean): string => {
   if (!structuredContent || !includeStructuredContent) return '';
@@ -16,11 +30,11 @@ const buildStructuredContentText = (structuredContent: unknown, includeStructure
 
 export const extractResultText = (result: CallToolResult, printResultOptions: PrintResultOptions = {}): string => {
   const { includeStructuredContent = true } = printResultOptions;
-  const textParts = result.content
-    .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
-    .map((part) => part.text);
+  const textContentParts = result.content.filter(isTextPart);
+  const textParts = textContentParts.map((part) => part.text);
   const structuredContentText = buildStructuredContentText(result.structuredContent, includeStructuredContent);
-  const outputParts = structuredContentText ? [...textParts, structuredContentText] : textParts;
+  const textWithStructuredParts = [...textParts, structuredContentText];
+  const outputParts = structuredContentText ? textWithStructuredParts : textParts;
   const text = outputParts.join('\n');
 
   return text;

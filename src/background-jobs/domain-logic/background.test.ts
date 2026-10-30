@@ -6,27 +6,37 @@
  * Run with: pnpm run test:integration
  */
 
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { resetBackgroundJobStoreForTests } from '../data-access';
+import { extractTextContent } from '../utils';
 
-type JobPayload = Readonly<{
-  job_id: string;
-  state: string;
-  result?: string;
-  error?: string;
-}>;
+type JobPayload = {
+  readonly job_id: string;
+  readonly state: string;
+  readonly result?: string;
+  readonly error?: string;
+};
 
-const parsePayload = (result: { content: readonly { type: string }[] }): JobPayload => {
-  const first = result.content[0] as { type: string; text: string };
-  const payload = JSON.parse(first.text) as JobPayload;
+const parsePayload = (result: CallToolResult): JobPayload => {
+  const text = extractTextContent(result);
+  const payload = JSON.parse(text) as JobPayload;
 
   return payload;
 };
 
 const createAsyncProviderContext = (script: string): ResolvedProviderEntry => {
+  const ask = {
+    args: ['-e', script],
+    flags: {},
+  };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const config: ProviderConfig = {
     enabled: true,
     description: 'Node async test provider',
@@ -34,13 +44,8 @@ const createAsyncProviderContext = (script: string): ResolvedProviderEntry => {
     timeout: 10_000,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', script],
-        flags: {},
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   };
 
   const context: ResolvedProviderEntry = {
@@ -134,7 +139,7 @@ describe('integration: async job lifecycle', () => {
 
     expect(result.isError).toBe(true);
 
-    const text = (result.content[0] as { text: string }).text;
+    const text = extractTextContent(result);
 
     expect(text).toContain('Unknown job_id');
   });

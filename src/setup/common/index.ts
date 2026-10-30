@@ -1,13 +1,12 @@
-export { CLIENT_CONFIG_PATHS, KNOWN_PROVIDER_COMMANDS } from './setup.const';
+export { CLIENT_CONFIG_PATHS, KNOWN_PROVIDER_COMMANDS, SUPPORTED_CLIENTS } from './setup.const';
 
 export { SKILL_CONTENT } from './skill-content';
-
-export { SUPPORTED_CLIENTS } from './setup.types';
 
 export type {
   ClientConfigTemplate,
   DetectedProvider,
   McpServerEntry,
+  MinimalSetupOutputInput,
   ParsedSetupArgs,
   SetupApplyResult,
   SetupBackupPolicy,
@@ -15,6 +14,7 @@ export type {
   SetupFileStat,
   SetupFs,
   SetupMergeStatus,
+  SetupMkdirOptions,
   SetupMode,
   SetupOutputMode,
   SetupPlan,
@@ -24,4 +24,4 @@ export type {
   SkillInstallDependencies,
   SkillInstallResult,
   SupportedClient,
-} from './setup.types';
+} from './setup.type';

@@ -2,19 +2,23 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAskAll } from './ask-all.handler';
+import { handleAsk } from '../../ask/domain-logic/ask.handler';
+import type { McpTextContent, ResolvedProviderEntry } from '../../shared';
+import type { AskAllToolArgs } from '../common';
+import { EXPLICIT_SHARED_MODEL } from '../test/common/ask-all-handler.const';
 import {
-  EXPLICIT_SHARED_MODEL,
   makeErrorResult,
   makeProvider,
   makeSuccessResult,
   parseResult,
   resolveExplicitModelResult,
-} from './ask-all.handler.spec.helper';
-import { handleAsk } from '../../ask/domain-logic/ask.handler';
-import type { McpTextContent, ResolvedProviderEntry } from '../../shared';
-import type { AskAllToolArgs } from '../common';
+} from '../test/utils/ask-all-handler.spec.util';
 
-vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
+vi.mock('../../ask/domain-logic/ask.handler', () => {
+  const result = { handleAsk: vi.fn() };
+
+  return result;
+});
 
 describe('handleAskAll', () => {
   let claude: ResolvedProviderEntry;
@@ -174,9 +178,10 @@ describe('handleAskAll', () => {
     });
 
     it('GIVEN some providers fail WHEN called THEN isError is false', async () => {
-      vi.mocked(handleAsk)
-        .mockResolvedValueOnce(makeSuccessResult('ok'))
-        .mockResolvedValueOnce(makeErrorResult('failed'));
+      const handleAskMock = vi.mocked(handleAsk);
+
+      handleAskMock.mockResolvedValueOnce(makeSuccessResult('ok'));
+      handleAskMock.mockResolvedValueOnce(makeErrorResult('failed'));
 
       const args: AskAllToolArgs = { prompt: 'hello' };
       const result = await handleAskAll([claude, codex], args);
@@ -189,9 +194,10 @@ describe('handleAskAll', () => {
     });
 
     it('GIVEN a provider throws WHEN called THEN that provider is counted as failed', async () => {
-      vi.mocked(handleAsk)
-        .mockResolvedValueOnce(makeSuccessResult('ok'))
-        .mockRejectedValueOnce(new Error('network error'));
+      const handleAskMock = vi.mocked(handleAsk);
+
+      handleAskMock.mockResolvedValueOnce(makeSuccessResult('ok'));
+      handleAskMock.mockRejectedValueOnce(new Error('network error'));
 
       const args: AskAllToolArgs = { prompt: 'hello' };
       const result = await handleAskAll([claude, codex], args);
@@ -238,9 +244,7 @@ describe('handleAskAll', () => {
       const parsed = parseResult(result);
       const firstResult = parsed.results[0];
 
-      if (!firstResult) {
-        throw new Error('Expected first result to be defined');
-      }
+      if (!firstResult) throw new Error('Expected first result to be defined');
 
       expect(firstResult.response).toBe('the answer');
       expect(firstResult.success).toBe(true);
@@ -284,9 +288,10 @@ describe('handleAskAll', () => {
     });
 
     it('GIVEN mixed provider outcomes WHEN called THEN text content summarizes the comparison', async () => {
-      vi.mocked(handleAsk)
-        .mockResolvedValueOnce(makeSuccessResult('ok'))
-        .mockResolvedValueOnce(makeErrorResult('failed'));
+      const handleAskMock = vi.mocked(handleAsk);
+
+      handleAskMock.mockResolvedValueOnce(makeSuccessResult('ok'));
+      handleAskMock.mockResolvedValueOnce(makeErrorResult('failed'));
 
       const args: AskAllToolArgs = { prompt: 'hello' };
       const result = await handleAskAll([claude, codex], args);

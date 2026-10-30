@@ -1,69 +1,65 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
+import {
+  buildErrorResult,
+  buildProviderFailure,
+  buildProviderSuccess,
+  buildProviderTimeoutMessage,
+} from './ask-all-result.builder';
 import { buildAskAllSummary } from './ask-all-summary.builder';
 import { handleAsk } from '../../ask';
-import type { AskToolArgs } from '../../ask';
+import type { AskToolArgs } from '../../ask/common';
 import { resolveAskTimeoutMs } from '../../ask/utils';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common';
 import { extractResponseText } from '../utils';
 
-type RunProviderAskInput = Readonly<{
-  provider: ResolvedProviderEntry;
-  args: AskAllToolArgs;
-  model?: string;
-}>;
+type RunProviderAskInput = {
+  readonly provider: ResolvedProviderEntry;
+  readonly args: AskAllToolArgs;
+  readonly model?: string;
+};
 
-type ResolvedAskAllInput = Readonly<{
-  filteredProviders: readonly ResolvedProviderEntry[];
-  model?: string;
-}>;
+type ResolvedAskAllInput = {
+  readonly filteredProviders: ResolvedProviderEntry[];
+  readonly model?: string;
+};
 
-const buildErrorResult = (text: string): CallToolResult => ({
-  isError: true,
-  content: [{ type: 'text', text }],
-});
+const buildModelArgs = (model?: string): AskToolArgs => {
+  const noModelArgs: AskToolArgs = {};
 
-const buildAskArgs = (args: AskAllToolArgs, model?: string): AskToolArgs => ({
-  prompt: args.prompt,
-  ...(model ? { model } : {}),
-  context: args.context,
-  working_directory: args.working_directory,
-  system_prompt: args.system_prompt,
-});
+  if (!model) return noModelArgs;
 
-const buildProviderFailure = (
-  provider: ResolvedProviderEntry,
-  executionTimeMs: number,
-  error: string
-): AskAllProviderResult => ({
-  provider: provider.name,
-  success: false,
-  executionTimeMs,
-  error,
-});
+  const result: AskToolArgs = { model };
 
-const buildProviderSuccess = (
-  provider: ResolvedProviderEntry,
-  executionTimeMs: number,
-  response: string
-): AskAllProviderResult => ({
-  provider: provider.name,
-  success: true,
-  executionTimeMs,
-  response,
-});
+  return result;
+};
 
-const buildProviderTimeoutMessage = (providerName: string, timeoutMs: number): string =>
-  `ask_all provider "${providerName}" timed out after ${timeoutMs}ms`;
+const buildAskArgs = (args: AskAllToolArgs, model?: string): AskToolArgs => {
+  const modelArgs = buildModelArgs(model);
+  const result: AskToolArgs = {
+    prompt: args.prompt,
+    ...modelArgs,
+    context: args.context,
+    working_directory: args.working_directory,
+    system_prompt: args.system_prompt,
+  };
 
-const createAskAllProgressContext = (signal: AbortSignal): ProgressContext => ({
-  sendNotification: async (): Promise<void> => {
-    await Promise.resolve();
-  },
-  ['_meta']: {},
-  signal,
-});
+  return result;
+};
+
+const createAskAllProgressContext = (signal: AbortSignal): ProgressContext => {
+  const result: ProgressContext = {
+    sendNotification: async (): Promise<void> => {
+      await Promise.resolve();
+    },
+    ['_meta']: {},
+    signal,
+  };
+
+  return result;
+};
 
 const runAskWithTimeout = async (provider: ResolvedProviderEntry, askArgs: AskToolArgs): Promise<CallToolResult> => {
   const controller = new AbortController();
@@ -88,10 +84,7 @@ const runAskWithTimeout = async (provider: ResolvedProviderEntry, askArgs: AskTo
   }
 };
 
-const resolveAskAllInput = (
-  resolvedProviders: readonly ResolvedProviderEntry[],
-  args: AskAllToolArgs
-): ResolvedAskAllInput => {
+const resolveAskAllInput = (resolvedProviders: ResolvedProviderEntry[], args: AskAllToolArgs): ResolvedAskAllInput => {
   if (args.providers?.length) {
     const requestedProviders = resolvedProviders.filter((provider) => args.providers?.includes(provider.name) ?? false);
     const result: ResolvedAskAllInput = {
@@ -119,20 +112,19 @@ const runProviderAsk = async (runProviderAskInput: RunProviderAskInput): Promise
     const text = extractResponseText(result);
     const executionTimeMs = Date.now() - startTime;
 
-    if (!result.isError) {
-      return buildProviderSuccess(provider, executionTimeMs, text);
-    }
+    if (!result.isError) return buildProviderSuccess(provider, executionTimeMs, text);
 
     return buildProviderFailure(provider, executionTimeMs, text);
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
+    const errorText = String(err);
+    const error = err instanceof Error ? err.message : errorText;
 
     return buildProviderFailure(provider, Date.now() - startTime, error);
   }
 };
 
 export const handleAskAll = async (
-  resolvedProviders: readonly ResolvedProviderEntry[],
+  resolvedProviders: ResolvedProviderEntry[],
   args: AskAllToolArgs
 ): Promise<CallToolResult> => {
   const resolvedInput = resolveAskAllInput(resolvedProviders, args);
@@ -143,8 +135,8 @@ export const handleAskAll = async (
 
   const wallStart = Date.now();
   const results = await Promise.all(
-    resolvedInput.filteredProviders.map(
-      async (provider): Promise<AskAllProviderResult> => runProviderAsk({ provider, args, model: resolvedInput.model })
+    resolvedInput.filteredProviders.map(async (provider): Promise<AskAllProviderResult> =>
+      runProviderAsk({ provider, args, model: resolvedInput.model })
     )
   );
   const totalExecutionTimeMs = Date.now() - wallStart;
@@ -162,9 +154,10 @@ export const handleAskAll = async (
   };
 
   const summaryText = buildAskAllSummary(askAllResult);
+  const content: TextContent[] = [{ type: 'text', text: summaryText }];
   const callToolResult: CallToolResult = {
     isError: succeeded.length === 0,
-    content: [{ type: 'text', text: summaryText }],
+    content,
     structuredContent: askAllResult,
   };
 

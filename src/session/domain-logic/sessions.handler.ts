@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
 import type { SessionRecord } from '../common';
 import { SESSION_STORE } from '../data-access';
@@ -8,9 +8,7 @@ const MAX_PREVIEW_LENGTH = 60;
 const buildLastTurnPreview = (session: SessionRecord): string => {
   const lastTurn = session.turns.at(-1);
 
-  if (lastTurn == null) {
-    return 'last_turn="(none)"';
-  }
+  if (lastTurn == null) return 'last_turn="(none)"';
 
   const normalizedText = lastTurn.text.replace(/\s+/g, ' ').trim().replaceAll('"', "'");
   const previewText =
@@ -36,9 +34,11 @@ export const handleSessions = (providerName: string): CallToolResult => {
     right.lastAccessedAt.localeCompare(left.lastAccessedAt)
   );
   const lines = sessions.map((session) => buildSessionLine(session));
-  const text = lines.length > 0 ? lines.join('\n') : '(no sessions)';
+  const joinedLines = lines.join('\n');
+  const text = lines.length > 0 ? joinedLines : '(no sessions)';
+  const content: TextContent[] = [{ type: 'text', text }];
   const callToolResult: CallToolResult = {
-    content: [{ type: 'text', text }],
+    content,
   };
 
   return callToolResult;

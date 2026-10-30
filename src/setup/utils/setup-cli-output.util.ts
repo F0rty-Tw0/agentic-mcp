@@ -1,14 +1,22 @@
-import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan } from '../common';
+import type {
+  DetectedProvider,
+  MinimalSetupOutputInput,
+  ParsedSetupArgs,
+  SetupApplyResult,
+  SetupPlan,
+} from '../common';
 import {
   buildConfiguredSummary,
   buildMinimalNextSteps,
   buildMinimalSummary,
   buildProviderBlock,
 } from './setup-cli-output-helpers.util';
-import type { MinimalSetupOutputInput } from './setup-cli-output-helpers.util';
 
-const buildSection = (title: string, values: readonly string[]): readonly string[] => {
-  return [title, ...values.map((value) => `  - ${value}`)];
+const buildSection = (title: string, values: string[]): string[] => {
+  const sectionValues = values.map((value) => `  - ${value}`);
+  const section = [title, ...sectionValues];
+
+  return section;
 };
 
 export { formatProviderSummary, formatSkillOutput } from './setup-cli-output-helpers.util';
@@ -17,9 +25,7 @@ export const readExistingConfigText = async (
   targetPath: string | undefined,
   readConfigFile: (path: string) => Promise<string>
 ): Promise<string | undefined> => {
-  if (targetPath == null) {
-    return undefined;
-  }
+  if (targetPath == null) return undefined;
 
   try {
     return await readConfigFile(targetPath);
@@ -32,7 +38,7 @@ export const formatJsonSetupOutput = (
   args: ParsedSetupArgs,
   plan: SetupPlan,
   result: SetupApplyResult,
-  detectedProviders: readonly DetectedProvider[]
+  detectedProviders: DetectedProvider[]
 ): string => {
   const summary = buildConfiguredSummary(args, result, detectedProviders);
   const payload = {
@@ -56,9 +62,11 @@ export const formatHumanSetupOutput = (
   args: ParsedSetupArgs,
   plan: SetupPlan,
   result: SetupApplyResult,
-  detectedProviders: readonly DetectedProvider[]
+  detectedProviders: DetectedProvider[]
 ): string => {
   const summary = buildConfiguredSummary(args, result, detectedProviders);
+  const completedSection = buildSection('What was done:', summary.completedSteps);
+  const unprovenSection = buildSection('What remains unproven:', summary.unproven);
   const lines = [
     'agentic-mcp setup',
     `Client: ${args.client}`,
@@ -66,19 +74,21 @@ export const formatHumanSetupOutput = (
     `Backup: ${args.backup}`,
     `Dry-run: ${String(args.dryRun)}`,
     '',
-    ...buildSection('What was done:', summary.completedSteps),
+    ...completedSection,
     '',
     'Detected providers:',
     buildProviderBlock(detectedProviders),
     '',
-    ...buildSection('What remains unproven:', summary.unproven),
+    ...unprovenSection,
     '',
     summary.nextStep.kind === 'prove' ? 'Next command to prove real use:' : 'Next diagnostic step:',
     `  ${summary.nextStep.command}`,
   ];
 
   if (plan.warnings.length > 0) {
-    lines.push('', 'Warnings:', ...plan.warnings.map((warning) => `  - ${warning}`));
+    const warningLines = plan.warnings.map((warning) => `  - ${warning}`);
+
+    lines.push('', 'Warnings:', ...warningLines);
   }
 
   return `${lines.join('\n')}\n`;
@@ -101,17 +111,19 @@ export const formatJsonMinimalSetupOutput = (input: MinimalSetupOutputInput): st
 
 export const formatHumanMinimalSetupOutput = (input: MinimalSetupOutputInput): string => {
   const summary = buildMinimalSummary(input);
+  const completedSection = buildSection('What was done:', summary.completedSteps);
+  const unprovenSection = buildSection('What remains unproven:', summary.unproven);
   const lines = [
     'agentic-mcp init',
     'Mode: minimal',
     `Suggested client: ${input.client}`,
     '',
-    ...buildSection('What was done:', summary.completedSteps),
+    ...completedSection,
     '',
     'Detected providers:',
     buildProviderBlock(input.detectedProviders),
     '',
-    ...buildSection('What remains unproven:', summary.unproven),
+    ...unprovenSection,
     '',
     'Next step:',
     `  ${summary.nextStep.command}`,

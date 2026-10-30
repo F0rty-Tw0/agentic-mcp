@@ -1,40 +1,43 @@
-import type { AskToolArgs } from './tool-args.types';
-import type { SessionMode } from '../../session';
-import type { CommandDef, OutputFormat, ResolvedProviderEntry } from '../../shared';
-import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
+import type { AskToolArgs } from './tool-args.type';
+import type { SessionMode } from '../../session/common';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
+import type { CommandDef, ResolvedProviderEntry } from '../../shared/provider/common';
+import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
 
-export type ResolvedAskCommand = Readonly<{
-  command: CommandDef;
-  outputFormat: OutputFormat;
-}>;
+export type ResolvedAskCommand = {
+  readonly command: CommandDef;
+  readonly outputFormat: OutputFormat;
+};
 
-export type ParsedProviderOutput = Readonly<{
-  text: string;
-  metadata?: Readonly<{
-    outputFormatObserved: OutputFormat;
-    parsed?: unknown;
-  }>;
-}>;
+export type ProviderOutputMetadata = {
+  readonly outputFormatObserved: OutputFormat;
+  readonly parsed?: unknown;
+};
 
-export type ProviderLiveOutputAdapter = Readonly<{
-  onStdoutChunk: (chunk: string) => void;
-  onStderrChunk: (chunk: string) => void;
-  flush: () => void;
-}>;
+export type ParsedProviderOutput = {
+  readonly text: string;
+  readonly metadata?: ProviderOutputMetadata;
+};
+
+export type ProviderLiveOutputAdapter = {
+  readonly onStdoutChunk: (chunk: string) => void;
+  readonly onStderrChunk: (chunk: string) => void;
+  readonly flush: () => void;
+};
 
 type AskEnv = Readonly<Record<string, string>>;
 
-export type SuccessResponseInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  env: AskEnv;
-  stdout: string;
-  stderr: string;
-  executionTimeMs: number;
-  truncated: boolean;
-  stdoutBytes: number;
-  outputFormat: OutputFormat;
-  streamNotifier: StreamNotifier;
-  summary: AskStreamExecutionSummary;
-  sessionMode: SessionMode;
-}>;
+export type SuccessResponseInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly env: AskEnv;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly executionTimeMs: number;
+  readonly truncated: boolean;
+  readonly stdoutBytes: number;
+  readonly outputFormat: OutputFormat;
+  readonly streamNotifier: StreamNotifier;
+  readonly summary: AskStreamExecutionSummary;
+  readonly sessionMode: SessionMode;
+};

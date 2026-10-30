@@ -1,6 +1,5 @@
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import type { ProviderQueueOptions } from '../common';
-import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from './provider-queue.util';
 import {
   buildLease,
   buildQueueAbortError,
@@ -11,12 +10,15 @@ import {
   removeAbortListener,
   startQueuedRequest,
 } from './provider-queue.util';
+import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from '../common/provider-queue.type';
 
-export type ProviderQueueStore = Readonly<{
-  acquireSlot: (options: ProviderQueueOptions) => Promise<ProviderQueueLease>;
-}>;
+type ProviderQueueStore = {
+  readonly acquireSlot: (options: ProviderQueueOptions) => Promise<ProviderQueueLease>;
+};
 
-type CreateProviderQueueStoreOptions = Readonly<{ globalMaxConcurrency?: number }>;
+type CreateProviderQueueStoreOptions = { readonly globalMaxConcurrency?: number };
+
+type QueuedRequestRef = { current?: QueuedRequest };
 
 const createDrainQueues = (
   providerStates: Map<string, ProviderQueueState>,
@@ -25,14 +27,20 @@ const createDrainQueues = (
   incrementGlobalActiveCount: () => void
 ): (() => void) => {
   return (): void => {
-    if (getGlobalActiveCount() >= globalMaxConcurrency) return;
+    const initialGlobalActiveCount = getGlobalActiveCount();
+
+    if (initialGlobalActiveCount >= globalMaxConcurrency) return;
 
     for (const [providerName, state] of providerStates.entries()) {
-      if (getGlobalActiveCount() >= globalMaxConcurrency) return;
+      const globalActiveCount = getGlobalActiveCount();
+
+      if (globalActiveCount >= globalMaxConcurrency) return;
 
       if (state.activeCount >= state.maxConcurrency) continue;
 
-      if (startQueuedRequest(providerStates, providerName, state, incrementGlobalActiveCount)) return;
+      const hasStartedRequest = startQueuedRequest(providerStates, providerName, state, incrementGlobalActiveCount);
+
+      if (hasStartedRequest) return;
     }
   };
 };
@@ -65,7 +73,7 @@ const waitForQueuedSlot = async (
   if (signal?.aborted) throw buildQueueAbortError();
 
   await new Promise<void>((resolve, reject) => {
-    const queuedRequestRef: { current?: QueuedRequest } = {};
+    const queuedRequestRef: QueuedRequestRef = {};
     const onAbort = (): void => {
       const queuedRequest = queuedRequestRef.current;
 
@@ -146,7 +154,9 @@ export const createProviderQueueStore = (options: CreateProviderQueueStoreOption
     return buildLease(() => releaseProviderSlot(normalizedOptions.providerName));
   };
 
-  return { acquireSlot };
+  const providerQueueStore: ProviderQueueStore = { acquireSlot };
+
+  return providerQueueStore;
 };
 
 export const defaultProviderQueueStore = createProviderQueueStore();

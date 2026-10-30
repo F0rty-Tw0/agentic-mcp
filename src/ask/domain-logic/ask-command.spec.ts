@@ -5,76 +5,118 @@ import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import { CommandExecutionError, TEST_MINIMAL_ENV_STUB } from '../../shared';
 import type { AskToolArgs } from '../common';
 
-const mocks = vi.hoisted(() => ({
-  validatePromptSize: vi.fn(),
-  validateModel: vi.fn(),
-  validateSessionId: vi.fn(),
-  validateWorkingDirectory: vi.fn(),
-  validateFiles: vi.fn(),
-  modelRegex: /^[a-zA-Z0-9][a-zA-Z0-9._:\-/]{0,127}$/,
-  buildMinimalEnv: vi.fn(),
-  stripAnsi: vi.fn((input: string) => input),
-  resolveProviderEnv: vi.fn(),
-  detectModelError: vi.fn(),
-  extractAttemptedModel: vi.fn(),
-  fetchAvailableModels: vi.fn(),
-  parseFirstAvailableModel: vi.fn(),
-  selectClosestAvailableModel: vi.fn(),
-  buildModelHint: vi.fn(),
-  executeCommand: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  const result = {
+    validatePromptSize: vi.fn(),
+    validateModel: vi.fn(),
+    validateSessionId: vi.fn(),
+    validateWorkingDirectory: vi.fn(),
+    validateFiles: vi.fn(),
+    modelRegex: /^[a-zA-Z0-9][a-zA-Z0-9._:\-/]{0,127}$/,
+    buildMinimalEnv: vi.fn(),
+    stripAnsi: vi.fn((input: string) => input),
+    resolveProviderEnv: vi.fn(),
+    detectModelError: vi.fn(),
+    extractAttemptedModel: vi.fn(),
+    fetchAvailableModels: vi.fn(),
+    parseFirstAvailableModel: vi.fn(),
+    selectClosestAvailableModel: vi.fn(),
+    buildModelHint: vi.fn(),
+    executeCommand: vi.fn(),
+  };
 
-vi.mock('../../shared/validation/utils/validation.util', () => ({
-  validatePromptSize: mocks.validatePromptSize,
-  validateModel: mocks.validateModel,
-  validateSessionId: mocks.validateSessionId,
-  validateWorkingDirectory: mocks.validateWorkingDirectory,
-  validateFiles: mocks.validateFiles,
-  modelRegex: mocks.modelRegex,
-}));
-
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  buildMinimalEnv: mocks.buildMinimalEnv,
-  stripAnsi: mocks.stripAnsi,
-}));
-
-vi.mock('../../shared/provider/utils/model-error.util', () => ({
-  detectModelError: mocks.detectModelError,
-  extractAttemptedModel: mocks.extractAttemptedModel,
-  fetchAvailableModels: mocks.fetchAvailableModels,
-  parseFirstAvailableModel: mocks.parseFirstAvailableModel,
-  selectClosestAvailableModel: mocks.selectClosestAvailableModel,
-  buildModelHint: mocks.buildModelHint,
-}));
-
-vi.mock('../../shared/provider/domain-logic/provider-env-resolver', () => ({
-  resolveProviderEnv: mocks.resolveProviderEnv,
-}));
-
-vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
-  executeCommand: mocks.executeCommand,
-}));
-
-const buildProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => ({
-  enabled: true,
-  description: 'test provider',
-  command: 'test-cli',
-  timeout: 30_000,
-  env: {},
-  outputFormat: 'text',
-  commands: {
-    ask: { args: [] },
-  },
-  input: { method: 'positional' },
-  ...overrides,
+  return result;
 });
 
-const buildContext = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => ({
-  name: 'test-provider',
-  binaryPath: '/usr/bin/test',
-  config: buildProviderConfig(),
-  ...overrides,
+vi.mock('../../shared/validation/utils/validation.util', () => {
+  const result = {
+    validatePromptSize: mocks.validatePromptSize,
+    validateModel: mocks.validateModel,
+    validateSessionId: mocks.validateSessionId,
+    validateWorkingDirectory: mocks.validateWorkingDirectory,
+    validateFiles: mocks.validateFiles,
+    modelRegex: mocks.modelRegex,
+  };
+
+  return result;
 });
+
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const result = {
+    buildMinimalEnv: mocks.buildMinimalEnv,
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
+    stripAnsi: mocks.stripAnsi,
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/provider/utils/model-error.util', () => {
+  const result = {
+    detectModelError: mocks.detectModelError,
+    extractAttemptedModel: mocks.extractAttemptedModel,
+    fetchAvailableModels: mocks.fetchAvailableModels,
+    parseFirstAvailableModel: mocks.parseFirstAvailableModel,
+    selectClosestAvailableModel: mocks.selectClosestAvailableModel,
+    buildModelHint: mocks.buildModelHint,
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/provider/domain-logic/provider-env-resolver', () => {
+  const result = {
+    resolveProviderEnv: mocks.resolveProviderEnv,
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
+  const result = {
+    executeCommand: mocks.executeCommand,
+  };
+
+  return result;
+});
+
+const buildProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => {
+  const ask = { args: [] };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
+  const result: ProviderConfig = {
+    enabled: true,
+    description: 'test provider',
+    command: 'test-cli',
+    timeout: 30_000,
+    env: {},
+    outputFormat: 'text',
+    commands,
+    input,
+    ...overrides,
+  };
+
+  return result;
+};
+
+const buildContext = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => {
+  const result: ResolvedProviderEntry = {
+    name: 'test-provider',
+    binaryPath: '/usr/bin/test',
+    config: buildProviderConfig(),
+    ...overrides,
+  };
+
+  return result;
+};
 
 beforeEach(() => {
   vi.clearAllMocks();

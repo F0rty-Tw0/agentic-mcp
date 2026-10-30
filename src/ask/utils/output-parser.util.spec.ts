@@ -34,11 +34,12 @@ describe('parseProviderOutput', () => {
   });
 
   it('GIVEN claude stream-json output WHEN parsing THEN extracts final result text instead of dumping every event', () => {
-    const output = [
+    const outputLines = [
       '{"type":"assistant","message":{"role":"assistant","content":[{"type":"thinking","thinking":"planning"}]}}',
       '{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Exploring repo..."}]}}',
       '{"type":"result","subtype":"success","is_error":false,"result":"final answer","session_id":"session-123"}',
-    ].join('\n');
+    ];
+    const output = outputLines.join('\n');
 
     const result = parseProviderOutput(output, 'stream-json');
 
@@ -63,12 +64,13 @@ describe('parseProviderOutput', () => {
   });
 
   it('GIVEN json output with mixed log lines WHEN parsing THEN extracts latest agent message text', () => {
-    const output = [
+    const outputLines = [
       'Initializing Shell...',
       '{"type":"item.completed","item":{"type":"agent_message","text":"first"}}',
       'Profile loaded successfully.',
       '{"type":"item.completed","item":{"type":"agent_message","text":"final answer"}}',
-    ].join('\n');
+    ];
+    const output = outputLines.join('\n');
 
     const result = parseProviderOutput(output, 'json');
 
@@ -99,16 +101,16 @@ describe('parseProviderOutput', () => {
   });
 
   it('GIVEN gemini json response envelope WHEN parsing THEN extracts top-level response text', () => {
+    const api = { totalRequests: 1 };
+    const flashLiteModel = { api };
+    const models = { 'gemini-2.5-flash-lite': flashLiteModel };
+    const stats = {
+      models,
+    };
     const output = JSON.stringify({
       session_id: 'gemini-session-123',
       response: 'hi',
-      stats: {
-        models: {
-          'gemini-2.5-flash-lite': {
-            api: { totalRequests: 1 },
-          },
-        },
-      },
+      stats,
     });
 
     const result = parseProviderOutput(output, 'json');
@@ -118,28 +120,24 @@ describe('parseProviderOutput', () => {
     expect(result.metadata?.parsed).toStrictEqual({
       session_id: 'gemini-session-123',
       response: 'hi',
-      stats: {
-        models: {
-          'gemini-2.5-flash-lite': {
-            api: { totalRequests: 1 },
-          },
-        },
-      },
+      stats,
     });
   });
 
   it('GIVEN opencode json event stream WHEN parsing THEN extracts latest text event text', () => {
-    const output = [
+    const part = {
+      type: 'text',
+      text: 'alpha\nbeta\ngamma',
+    };
+    const outputLines = [
       JSON.stringify({ type: 'step_start', sessionID: 'ses_123' }),
       JSON.stringify({
         type: 'text',
-        part: {
-          type: 'text',
-          text: 'alpha\nbeta\ngamma',
-        },
+        part,
       }),
       JSON.stringify({ type: 'step_finish', sessionID: 'ses_123', reason: 'stop' }),
-    ].join('\n');
+    ];
+    const output = outputLines.join('\n');
 
     const result = parseProviderOutput(output, 'json');
 
@@ -147,13 +145,7 @@ describe('parseProviderOutput', () => {
     expect(result.text).toBe('alpha\nbeta\ngamma');
     expect(result.metadata?.parsed).toStrictEqual([
       { type: 'step_start', sessionID: 'ses_123' },
-      {
-        type: 'text',
-        part: {
-          type: 'text',
-          text: 'alpha\nbeta\ngamma',
-        },
-      },
+      { type: 'text', part },
       { type: 'step_finish', sessionID: 'ses_123', reason: 'stop' },
     ]);
   });
@@ -168,7 +160,8 @@ describe('parseProviderOutput', () => {
   });
 
   it('GIVEN mixed JSON lines without agent messages WHEN parsing THEN returns pretty-printed parsed lines', () => {
-    const output = ['starting...', '{"type":"item.started"}', '{"type":"item.completed"}', 'done'].join('\n');
+    const outputLines = ['starting...', '{"type":"item.started"}', '{"type":"item.completed"}', 'done'];
+    const output = outputLines.join('\n');
 
     const result = parseProviderOutput(output, 'json');
 

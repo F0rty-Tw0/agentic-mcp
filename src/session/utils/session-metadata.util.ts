@@ -5,12 +5,23 @@ import type { SessionMode } from '../common';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const buildAttributionPatch = (existingAttribution: unknown, sessionMode: SessionMode): Record<string, unknown> => {
+  const emptyPatch: Record<string, unknown> = {};
+
+  if (!isRecord(existingAttribution)) return emptyPatch;
+
+  const attribution = { ...existingAttribution, sessionMode };
+  const result: Record<string, unknown> = { attribution };
+
+  return result;
+};
+
 export const appendSessionMetadata = (response: CallToolResult, sessionMode: SessionMode): CallToolResult => {
   if (sessionMode === 'none' || !isRecord(response.structuredContent)) return response;
 
   const existingStructuredContent = response.structuredContent;
   const existingAttribution = existingStructuredContent.attribution;
-  const withAttribution = isRecord(existingAttribution) ? { attribution: { ...existingAttribution, sessionMode } } : {};
+  const withAttribution = buildAttributionPatch(existingAttribution, sessionMode);
   const structuredContent = {
     ...existingStructuredContent,
     sessionMode,

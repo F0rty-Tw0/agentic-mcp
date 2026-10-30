@@ -1,23 +1,24 @@
-import type { SessionMode } from '../../session';
-import type { ExecutionResult, OutputFormat } from '../../shared';
+import type { SessionMode } from '../../session/common';
+import type { ExecutionResult } from '../../shared/command-execution/common';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ProviderAttribution } from '../common';
 
-type AttributionMetadata = Readonly<{
-  outputFormatObserved: OutputFormat;
-}>;
+type AttributionMetadata = {
+  readonly outputFormatObserved: OutputFormat;
+};
 
-type BuildAttributionInput = Readonly<{
-  provider: string;
-  model?: string;
-  result: Pick<ExecutionResult, 'executionTimeMs' | 'truncated' | 'stdoutBytes'>;
-  outputFormat: OutputFormat;
-  metadata?: AttributionMetadata;
-  sessionMode: SessionMode;
-}>;
+type BuildAttributionInput = {
+  readonly provider: string;
+  readonly model?: string;
+  readonly result: Pick<ExecutionResult, 'executionTimeMs' | 'truncated' | 'stdoutBytes'>;
+  readonly outputFormat: OutputFormat;
+  readonly metadata?: AttributionMetadata;
+  readonly sessionMode: SessionMode;
+};
 
 export const buildAttribution = (buildAttributionInput: BuildAttributionInput): ProviderAttribution => {
   const { provider, model, result, outputFormat, metadata, sessionMode } = buildAttributionInput;
-
+  const attributedSessionMode = sessionMode !== 'none' ? sessionMode : undefined;
   const attribution: ProviderAttribution = {
     provider,
     model,
@@ -25,7 +26,7 @@ export const buildAttribution = (buildAttributionInput: BuildAttributionInput): 
     outputBytes: result.stdoutBytes,
     truncated: result.truncated,
     outputFormat,
-    sessionMode: sessionMode !== 'none' ? sessionMode : undefined,
+    sessionMode: attributedSessionMode,
     outputFormatObserved: metadata?.outputFormatObserved,
   };
 

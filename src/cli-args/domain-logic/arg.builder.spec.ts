@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder';
-import type { ProviderConfig } from '../../shared';
+import type { CommandDef, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
-import { createCliArgsConfig as createConfig } from '../common/stubs';
+import { createCliArgsConfig as createConfig } from '../test/utils/cli-args-config.spec.util';
 
 describe('buildArgArray', () => {
   describe('prompt delivery', () => {
@@ -50,11 +50,9 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN leveled sandbox flag with invalid value WHEN building args THEN it throws ValidationError', () => {
-      const config = createConfig({
-        flags: {
-          sandbox: { flag: '--sandbox', values: ['read-only', 'full'] },
-        },
-      });
+      const sandbox = { flag: '--sandbox', values: ['read-only', 'full'] };
+      const flags = { sandbox };
+      const config = createConfig({ flags });
 
       expect(() => buildArgArray(config, { prompt: 'test', sandbox: 'delete-everything' })).toThrow(ValidationError);
       expect(() => buildArgArray(config, { prompt: 'test', sandbox: 'delete-everything' })).toThrow(
@@ -63,22 +61,17 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN files with non-string flag type WHEN building args THEN it throws ValidationError', () => {
-      const config = createConfig({
-        flags: {
-          file: { flag: '--file', values: ['a.txt'] },
-        },
-      });
+      const file = { flag: '--file', values: ['a.txt'] };
+      const flags = { file };
+      const config = createConfig({ flags });
 
       expect(() => buildArgArray(config, { prompt: 'test', files: ['a.txt'] })).toThrow(ValidationError);
       expect(() => buildArgArray(config, { prompt: 'test', files: ['a.txt'] })).toThrow(/File flag must be/);
     });
 
     it('GIVEN files with array flag type WHEN building args THEN it throws ValidationError', () => {
-      const config = createConfig({
-        flags: {
-          file: ['--file'],
-        },
-      });
+      const flags = { file: ['--file'] };
+      const config = createConfig({ flags });
 
       expect(() => buildArgArray(config, { prompt: 'test', files: ['a.txt'] })).toThrow(ValidationError);
     });
@@ -86,7 +79,8 @@ describe('buildArgArray', () => {
 
   describe('optional flags', () => {
     it('GIVEN model string flag and value WHEN building args THEN flag and value are appended', () => {
-      const config = createConfig({ flags: { model: '--model' } });
+      const flags = { model: '--model' };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', model: 'gpt-4' });
 
@@ -97,7 +91,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN no model arg WHEN building args THEN no model flag is appended', () => {
-      const config = createConfig({ flags: { model: '--model' } });
+      const flags = { model: '--model' };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test' });
 
@@ -105,7 +100,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN working_directory flag and value WHEN building args THEN flag and value are appended', () => {
-      const config = createConfig({ flags: { workingDir: '-C' } });
+      const flags = { workingDir: '-C' };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', working_directory: '/home/user' });
 
@@ -116,7 +112,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN files array and string flag WHEN building args THEN flag is repeated per file', () => {
-      const config = createConfig({ flags: { file: '--file' } });
+      const flags = { file: '--file' };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', files: ['a.txt', 'b.txt'] });
 
@@ -124,7 +121,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN files array and null flag WHEN building args THEN files are silently skipped', () => {
-      const config = createConfig({ flags: { file: null } });
+      const flags = { file: null };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', files: ['a.txt'] });
 
@@ -132,7 +130,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN auto_mode true and string array flag WHEN building args THEN flag elements are appended', () => {
-      const config = createConfig({ flags: { autoMode: ['--full-auto'] } });
+      const flags = { autoMode: ['--full-auto'] };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', auto_mode: true });
 
@@ -140,7 +139,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN auto_mode false WHEN building args THEN no auto flag is appended', () => {
-      const config = createConfig({ flags: { autoMode: ['--full-auto'] } });
+      const flags = { autoMode: ['--full-auto'] };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', auto_mode: false });
 
@@ -148,9 +148,9 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN sandbox string value and leveled flag WHEN building args THEN flag and value are appended', () => {
-      const config = createConfig({
-        flags: { sandbox: { flag: '--sandbox', values: ['read-only', 'full'] } },
-      });
+      const sandbox = { flag: '--sandbox', values: ['read-only', 'full'] };
+      const flags = { sandbox };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', sandbox: 'read-only' });
 
@@ -161,9 +161,9 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN sandbox boolean true and leveled flag WHEN building args THEN flag is skipped (leveled flags require a value)', () => {
-      const config = createConfig({
-        flags: { sandbox: { flag: '--sandbox', values: ['read-only', 'full'] } },
-      });
+      const sandbox = { flag: '--sandbox', values: ['read-only', 'full'] };
+      const flags = { sandbox };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', sandbox: true });
 
@@ -171,9 +171,9 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN sandbox false WHEN building args THEN no sandbox flag is appended', () => {
-      const config = createConfig({
-        flags: { sandbox: { flag: '--sandbox', values: ['read-only', 'full'] } },
-      });
+      const sandbox = { flag: '--sandbox', values: ['read-only', 'full'] };
+      const flags = { sandbox };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', sandbox: false });
 
@@ -189,7 +189,8 @@ describe('buildArgArray', () => {
     });
 
     it('GIVEN model value but model flag is null in config WHEN building args THEN silently skipped', () => {
-      const config = createConfig({ flags: { model: null } });
+      const flags = { model: null };
+      const config = createConfig({ flags });
 
       const result = buildArgArray(config, { prompt: 'test', model: 'gpt-4' });
 
@@ -199,8 +200,9 @@ describe('buildArgArray', () => {
 
   describe('trailing args', () => {
     it('GIVEN trailing args WHEN building args THEN they appear after optional flags', () => {
+      const flags = { model: '--model' };
       const config = createConfig({
-        flags: { model: '--model' },
+        flags,
         trailingArgs: ['--output-format', 'json'],
       });
 
@@ -217,17 +219,15 @@ describe('buildArgArray', () => {
         trailingArgs: ['--output-format', 'json'],
       });
 
+      const streaming: CommandDef['streaming'] = {
+        trailingArgs: ['--verbose', '--output-format', 'stream-json'],
+        outputFormat: 'stream-json',
+      };
+      const ask: CommandDef = { ...config.commands.ask, streaming };
+      const commands: ProviderConfig['commands'] = { ask };
       const streamingConfig: ProviderConfig = {
         ...config,
-        commands: {
-          ask: {
-            ...config.commands.ask,
-            streaming: {
-              trailingArgs: ['--verbose', '--output-format', 'stream-json'],
-              outputFormat: 'stream-json',
-            },
-          },
-        },
+        commands,
       };
 
       const result = buildArgArray(streamingConfig, { prompt: 'test', stream_live: true });
@@ -255,9 +255,10 @@ describe('buildArgArray', () => {
 
   describe('argument ordering', () => {
     it('GIVEN full config WHEN building args THEN order is: command args, prompt, flags, trailing', () => {
+      const flags = { model: '--model' };
       const config = createConfig({
         args: ['exec'],
-        flags: { model: '--model' },
+        flags,
         trailingArgs: ['--json'],
       });
 

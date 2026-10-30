@@ -1,10 +1,11 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
 import { runAskInvocation } from './ask-runner';
 import { createBackgroundJob } from '../../background-jobs/data-access';
 import { buildJobStatusResponse, startBackgroundInvocation } from '../../background-jobs/domain-logic';
 import { SESSION_STORE, appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../../session';
-import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskToolArgs } from '../common';
 
 const runAskInvocationResponse = async (
@@ -26,10 +27,13 @@ const handleSessionAsk = async (
 
   if (!sessionId) throw new Error('session_id is required for session-based ask');
 
-  if (!SESSION_STORE.tryAcquireLock(context.name, sessionId)) {
+  const hasAcquiredLock = SESSION_STORE.tryAcquireLock(context.name, sessionId);
+
+  if (!hasAcquiredLock) {
+    const content: TextContent[] = [{ type: 'text', text: `session in use: ${sessionId}` }];
     const callToolResult: CallToolResult = {
       isError: true,
-      content: [{ type: 'text', text: `session in use: ${sessionId}` }],
+      content,
     };
 
     return callToolResult;
@@ -61,9 +65,10 @@ export const handleAsk = async (
 ): Promise<CallToolResult> => {
   if ((args.action ?? 'run') === 'status') {
     if (!args.job_id) {
+      const content: TextContent[] = [{ type: 'text', text: 'job_id is required when action=status' }];
       const calLToolResult: CallToolResult = {
         isError: true,
-        content: [{ type: 'text', text: 'job_id is required when action=status' }],
+        content,
       };
 
       return calLToolResult;
@@ -78,16 +83,15 @@ export const handleAsk = async (
     void startBackgroundInvocation(asyncJob.id, async () => runAskInvocationResponse(context, args, extra));
     const text = JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state });
 
+    const content: TextContent[] = [{ type: 'text', text }];
     const callToolResult: CallToolResult = {
-      content: [{ type: 'text', text }],
+      content,
     };
 
     return callToolResult;
   }
 
-  if (!args.session_id) {
-    return runAskInvocationResponse(context, args, extra);
-  }
+  if (!args.session_id) return runAskInvocationResponse(context, args, extra);
 
   return handleSessionAsk(context, args, extra);
 };

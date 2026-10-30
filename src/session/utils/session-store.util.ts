@@ -19,13 +19,13 @@ export const cloneRecord = (entry: SessionRecord): SessionRecord => {
   return result;
 };
 
-export const formatTurns = (turns: readonly SessionTurn[]): string => {
+export const formatTurns = (turns: SessionTurn[]): string => {
   const result = turns.map((turn) => `${turn.role}: ${turn.text}`).join('\n');
 
   return result;
 };
 
-export const capTurnsByBytes = (turns: readonly SessionTurn[], maxContextBytes: number): readonly SessionTurn[] => {
+export const capTurnsByBytes = (turns: SessionTurn[], maxContextBytes: number): SessionTurn[] => {
   const result: SessionTurn[] = [];
 
   for (let index = turns.length - 1; index >= 0; index -= 1) {
@@ -34,8 +34,9 @@ export const capTurnsByBytes = (turns: readonly SessionTurn[], maxContextBytes: 
     if (!currentTurn) continue;
 
     const nextTurns = [currentTurn, ...result];
+    const nextTurnsBytes = Buffer.byteLength(formatTurns(nextTurns), 'utf-8');
 
-    if (Buffer.byteLength(formatTurns(nextTurns), 'utf-8') > maxContextBytes) break;
+    if (nextTurnsBytes > maxContextBytes) break;
 
     result.unshift(currentTurn);
   }

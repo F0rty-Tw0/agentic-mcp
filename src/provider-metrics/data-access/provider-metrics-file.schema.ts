@@ -17,20 +17,17 @@ export const createEmptyProviderMetricsFile = (): ProviderMetricsFile => {
 };
 
 const parseProviderCallRecord = (value: unknown): ProviderCallRecord => {
-  if (!isRecord(value)) {
-    throw new ValidationError('Stored provider metrics records must be objects.');
-  }
+  if (!isRecord(value)) throw new ValidationError('Stored provider metrics records must be objects.');
 
   const { calledAt, executionTimeMs, provider, success } = value;
 
-  if (
-    typeof provider !== 'string' ||
-    typeof executionTimeMs !== 'number' ||
-    typeof success !== 'boolean' ||
-    typeof calledAt !== 'string'
-  ) {
-    throw new ValidationError('Stored provider metrics records are invalid.');
-  }
+  const hasValidFields =
+    typeof provider === 'string' &&
+    typeof executionTimeMs === 'number' &&
+    typeof success === 'boolean' &&
+    typeof calledAt === 'string';
+
+  if (!hasValidFields) throw new ValidationError('Stored provider metrics records are invalid.');
 
   const record: ProviderCallRecord = {
     provider,
@@ -52,12 +49,10 @@ const readCollectedSince = (value: Readonly<Record<string, unknown>>): string =>
   return collectedSince;
 };
 
-const readRecords = (value: Readonly<Record<string, unknown>>): readonly ProviderCallRecord[] => {
+const readRecords = (value: Readonly<Record<string, unknown>>): ProviderCallRecord[] => {
   const records = value.records;
 
-  if (!Array.isArray(records)) {
-    throw new ValidationError('Stored provider metrics must include array key "records".');
-  }
+  if (!Array.isArray(records)) throw new ValidationError('Stored provider metrics must include array key "records".');
 
   const parsedRecords = records.map((record) => parseProviderCallRecord(record));
 
@@ -75,9 +70,7 @@ export const parseProviderMetricsFile = (content: string): ProviderMetricsFile =
     throw new ValidationError(`Stored provider metrics are invalid JSON: ${message}`);
   }
 
-  if (!isRecord(parsed)) {
-    throw new ValidationError('Stored provider metrics root must be an object.');
-  }
+  if (!isRecord(parsed)) throw new ValidationError('Stored provider metrics root must be an object.');
 
   const providerMetricsFile: ProviderMetricsFile = {
     collectedSince: readCollectedSince(parsed),

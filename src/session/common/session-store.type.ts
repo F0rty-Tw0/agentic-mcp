@@ -1,16 +1,16 @@
 type SessionRole = 'user' | 'assistant';
 
-export type SessionTurn = Readonly<{
-  role: SessionRole;
-  text: string;
-  timestamp: string;
-}>;
+export type SessionTurn = {
+  readonly role: SessionRole;
+  readonly text: string;
+  readonly timestamp: string;
+};
 
-export type SessionRecord = Readonly<{
-  id: string;
-  provider: string;
-  turns: readonly SessionTurn[];
-  createdAt: string;
-  lastAccessedAt: string;
-  nativeSessionId?: string;
-}>;
+export type SessionRecord = {
+  readonly id: string;
+  readonly provider: string;
+  readonly turns: SessionTurn[];
+  readonly createdAt: string;
+  readonly lastAccessedAt: string;
+  readonly nativeSessionId?: string;
+};

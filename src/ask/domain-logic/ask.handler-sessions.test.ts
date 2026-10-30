@@ -11,7 +11,8 @@ import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
 import { SESSION_STORE } from '../../session';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
+import { readFirstText } from '../test/utils/text-content.spec.util';
 
 let sessionCounter = 0;
 
@@ -24,6 +25,14 @@ const uniqueSessionId = (): string => {
 const createSessionProviderContext = (): ResolvedProviderEntry => {
   const script = "setTimeout(() => { process.stdout.write('session-response'); process.exit(0); }, 100);";
 
+  const ask = {
+    args: ['-e', script],
+    flags: {},
+  };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const config: ProviderConfig = {
     enabled: true,
     description: 'Node session test provider',
@@ -31,13 +40,8 @@ const createSessionProviderContext = (): ResolvedProviderEntry => {
     timeout: 10_000,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', script],
-        flags: {},
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   };
 
   const context: ResolvedProviderEntry = {
@@ -70,7 +74,7 @@ describe('integration: session lock contention', () => {
 
     if (!failure) return;
 
-    const failureText = (failure.content[0] as { text: string }).text;
+    const failureText = readFirstText(failure);
 
     expect(failureText).toContain('session in use');
     expect(failureText).toContain(sessionId);

@@ -18,9 +18,7 @@ const resolveOverrideMetricsPath = (): string | undefined => {
 const resolveWindowsMetricsDirectory = (): string => {
   const localAppData = process.env.LOCALAPPDATA;
 
-  if (localAppData != null && localAppData !== '') {
-    return path.join(localAppData, METRICS_DIRECTORY_NAME);
-  }
+  if (localAppData != null && localAppData !== '') return path.join(localAppData, METRICS_DIRECTORY_NAME);
 
   const metricsDirectory = path.join(os.homedir(), 'AppData', 'Local', METRICS_DIRECTORY_NAME);
 
@@ -30,9 +28,7 @@ const resolveWindowsMetricsDirectory = (): string => {
 const resolveLinuxMetricsDirectory = (): string => {
   const xdgStateHome = process.env.XDG_STATE_HOME;
 
-  if (xdgStateHome != null && xdgStateHome !== '') {
-    return path.join(xdgStateHome, METRICS_DIRECTORY_NAME);
-  }
+  if (xdgStateHome != null && xdgStateHome !== '') return path.join(xdgStateHome, METRICS_DIRECTORY_NAME);
 
   const metricsDirectory = path.join(os.homedir(), '.local', 'state', METRICS_DIRECTORY_NAME);
 
@@ -42,9 +38,8 @@ const resolveLinuxMetricsDirectory = (): string => {
 const resolveMetricsDirectory = (): string => {
   if (process.platform === 'win32') return resolveWindowsMetricsDirectory();
 
-  if (process.platform === 'darwin') {
+  if (process.platform === 'darwin')
     return path.join(os.homedir(), 'Library', 'Application Support', METRICS_DIRECTORY_NAME);
-  }
 
   return resolveLinuxMetricsDirectory();
 };

@@ -4,10 +4,14 @@ import crossSpawn from 'cross-spawn';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
-import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
-import { createControllableChild } from '../common/test-utils';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs';
+import { createControllableChild } from '../test/utils/controllable-child.spec.util';
 
-vi.mock('cross-spawn', () => ({ default: vi.fn() }));
+vi.mock('cross-spawn', () => {
+  const mockedModule = { default: vi.fn() };
+
+  return mockedModule;
+});
 
 type CrossSpawnResult = ChildProcess;
 

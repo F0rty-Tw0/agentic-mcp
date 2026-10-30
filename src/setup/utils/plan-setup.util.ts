@@ -6,12 +6,14 @@ import type { McpServerEntry, SetupMergeStatus, SetupPlan, SetupPlanInput } from
 
 type SetupConfigObject = Readonly<Record<string, unknown>>;
 
+type OverwriteMergeResult = {
+  readonly status: SetupMergeStatus;
+  readonly mergedConfig: SetupConfigObject;
+};
+
 const buildOverwriteConfig = (agenticServerEntry: McpServerEntry): SetupConfigObject => {
-  const overwriteConfig: SetupConfigObject = {
-    mcpServers: {
-      'agentic-mcp': agenticServerEntry,
-    },
-  };
+  const mcpServers = { 'agentic-mcp': agenticServerEntry };
+  const overwriteConfig: SetupConfigObject = { mcpServers };
 
   return overwriteConfig;
 };
@@ -52,8 +54,8 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     agenticServerEntry: input.agenticServerEntry,
   });
 
-  const overwriteConfig = {
-    status: 'created' as SetupMergeStatus,
+  const overwriteConfig: OverwriteMergeResult = {
+    status: 'created',
     mergedConfig: buildOverwriteConfig(input.agenticServerEntry),
   };
 

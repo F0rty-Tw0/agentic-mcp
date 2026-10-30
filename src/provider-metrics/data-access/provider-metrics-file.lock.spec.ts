@@ -11,12 +11,14 @@ type FsModule = typeof fs;
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<FsModule>();
 
-  return {
+  const mockedModule = {
     ...actual,
     mkdir: vi.fn(actual.mkdir),
     rm: vi.fn(actual.rm),
     stat: vi.fn(actual.stat),
   };
+
+  return mockedModule;
 });
 
 const tempDirs: string[] = [];
@@ -151,9 +153,7 @@ describe('acquireProviderMetricsFileLock', () => {
     vi.mocked(fs.mkdir).mockImplementation(async (targetPath, options) => {
       mkdirCallCount += 1;
 
-      if (mkdirCallCount === 1) {
-        return actualFs.mkdir(targetPath, options);
-      }
+      if (mkdirCallCount === 1) return actualFs.mkdir(targetPath, options);
 
       throw createSystemError('EACCES', 'permission denied');
     });
@@ -171,9 +171,7 @@ describe('acquireProviderMetricsFileLock', () => {
     vi.mocked(fs.mkdir).mockImplementation(async (targetPath, options) => {
       mkdirCallCount += 1;
 
-      if (mkdirCallCount === 1) {
-        return actualFs.mkdir(targetPath, options);
-      }
+      if (mkdirCallCount === 1) return actualFs.mkdir(targetPath, options);
 
       throw createSystemError('EEXIST', 'already exists');
     });

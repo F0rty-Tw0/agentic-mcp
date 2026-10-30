@@ -16,22 +16,27 @@ const processMocks = vi.hoisted(() => {
     isTTY: true,
   };
 
-  return {
+  const hoistedProcessMocks = {
     stderr,
     stderrWrite,
     stdin,
     stdout,
     stdoutWrite,
   };
+
+  return hoistedProcessMocks;
 });
 
-vi.mock('node:process', () => ({
-  default: {
+vi.mock('node:process', () => {
+  const processDefault = {
     stdin: processMocks.stdin,
     stdout: processMocks.stdout,
     stderr: processMocks.stderr,
-  },
-}));
+  };
+  const nodeProcessModule = { default: processDefault };
+
+  return nodeProcessModule;
+});
 
 const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
@@ -72,11 +77,12 @@ const createDependencies = (overrides: Partial<SetupCliDependencies> = {}): Part
     generateClientConfigEntry: () => TEST_SERVER_ENTRY,
     buildSetupPlan: () => createPlan(),
     applySetupPlan: async () => Promise.resolve(createApplyResult()),
-    installSkill: async () =>
-      Promise.resolve({
+    installSkill: async () => {
+      return Promise.resolve({
         status: 'installed',
         skillPath: '/home/dev/.claude/skills/using-agentic-mcp/SKILL.md',
-      }),
+      });
+    },
     homeDirectory: '/home/dev',
     readConfigFile: async () => Promise.resolve('{"mcpServers":{}}'),
     ...overrides,
@@ -85,7 +91,7 @@ const createDependencies = (overrides: Partial<SetupCliDependencies> = {}): Part
   return dependencies;
 };
 
-type RunSetup = (args: readonly string[], injectedDependencies?: Partial<SetupCliDependencies>) => Promise<void>;
+type RunSetup = (args: string[], injectedDependencies?: Partial<SetupCliDependencies>) => Promise<void>;
 
 const loadRunSetup = async (): Promise<RunSetup> => {
   const setupCliModule = await import('./setup-cli');

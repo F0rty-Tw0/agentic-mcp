@@ -1,84 +1,121 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 import type { AskExecution, AskToolArgs } from '../../ask/common';
-import type { ResolvedProviderEntry } from '../../shared';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
 const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
 const mockCreateOrGet = vi.hoisted(() => vi.fn());
 const mockGetNativeSessionId = vi.hoisted(() => vi.fn<() => string | undefined>());
 const mockGetPrependContext = vi.hoisted(() => vi.fn<() => string>());
-const mockSessionStore = vi.hoisted(() => ({
-  createOrGet: mockCreateOrGet,
-  getNativeSessionId: mockGetNativeSessionId,
-  getPrependContext: mockGetPrependContext,
-}));
+const mockSessionStore = vi.hoisted(() => {
+  const result = {
+    createOrGet: mockCreateOrGet,
+    getNativeSessionId: mockGetNativeSessionId,
+    getPrependContext: mockGetPrependContext,
+  };
 
-vi.mock('../../ask/domain-logic/ask-runner', () => ({
-  runAskInvocation: mockRunAskInvocation,
-}));
+  return result;
+});
 
-vi.mock('../utils/session-context.util', () => ({
-  buildSessionPrompt: mockBuildSessionPrompt,
-}));
+vi.mock('../../ask/domain-logic/ask-runner', () => {
+  const result = {
+    runAskInvocation: mockRunAskInvocation,
+  };
+
+  return result;
+});
+
+vi.mock('../utils/session-context.util', () => {
+  const result = {
+    buildSessionPrompt: mockBuildSessionPrompt,
+  };
+
+  return result;
+});
 
 vi.mock('../data-access', () => Object.fromEntries([['SESSION_STORE', mockSessionStore]]));
 
-const createCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => ({
-  content: [{ type: 'text', text: 'response text' }],
-  isError: false,
-  ...overrides,
-});
+const createCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => {
+  const content: TextContent[] = [{ type: 'text', text: 'response text' }];
+  const result: CallToolResult = {
+    content,
+    isError: false,
+    ...overrides,
+  };
 
-const createAskExecution = (overrides: Partial<AskExecution> = {}): AskExecution => ({
-  response: createCallToolResult(),
-  sessionMode: 'none',
-  responseText: 'response text',
-  nativeSessionId: undefined,
-  wasCancelled: false,
-  ...overrides,
-});
+  return result;
+};
 
-const createResolvedProviderEntry = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => ({
-  name: 'test-provider',
-  binaryPath: '/usr/bin/test-cli',
-  config: {
+const createAskExecution = (overrides: Partial<AskExecution> = {}): AskExecution => {
+  const result: AskExecution = {
+    response: createCallToolResult(),
+    sessionMode: 'none',
+    responseText: 'response text',
+    nativeSessionId: undefined,
+    wasCancelled: false,
+    ...overrides,
+  };
+
+  return result;
+};
+
+const createResolvedProviderEntry = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => {
+  const ask = { args: [] };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'flag' } as const;
+  const config: ProviderConfig = {
     enabled: true,
     description: 'Test provider',
     command: 'test-cli',
     timeout: 30000,
     env: {},
     outputFormat: 'text',
-    commands: {
-      ask: { args: [] },
-    },
-    input: { method: 'flag' },
-  },
-  ...overrides,
-});
+    commands,
+    input,
+  };
+  const result: ResolvedProviderEntry = {
+    name: 'test-provider',
+    binaryPath: '/usr/bin/test-cli',
+    config,
+    ...overrides,
+  };
 
-const createAskToolArgs = (overrides: Partial<AskToolArgs> = {}): AskToolArgs => ({
-  prompt: 'Hello world',
-  session_id: 'session-abc',
-  ...overrides,
-});
+  return result;
+};
 
-type SessionFlowState = Readonly<{
-  sessionId: string;
-  prompt: string;
-  nativeSessionId?: string;
-  mode: 'tier1-prepend' | 'tier2-native' | 'tier2-fallback-to-tier1';
-}>;
+const createAskToolArgs = (overrides: Partial<AskToolArgs> = {}): AskToolArgs => {
+  const result: AskToolArgs = {
+    prompt: 'Hello world',
+    session_id: 'session-abc',
+    ...overrides,
+  };
 
-const createSessionFlowState = (overrides: Partial<SessionFlowState> = {}): SessionFlowState => ({
-  sessionId: 'session-abc',
-  prompt: 'Hello world',
-  nativeSessionId: undefined,
-  mode: 'tier1-prepend',
-  ...overrides,
-});
+  return result;
+};
+
+type SessionFlowState = {
+  readonly sessionId: string;
+  readonly prompt: string;
+  readonly nativeSessionId?: string;
+  readonly mode: 'tier1-prepend' | 'tier2-native' | 'tier2-fallback-to-tier1';
+};
+
+const createSessionFlowState = (overrides: Partial<SessionFlowState> = {}): SessionFlowState => {
+  const result: SessionFlowState = {
+    sessionId: 'session-abc',
+    prompt: 'Hello world',
+    nativeSessionId: undefined,
+    mode: 'tier1-prepend',
+    ...overrides,
+  };
+
+  return result;
+};
 
 describe('executeSessionFlow', () => {
   const context = createResolvedProviderEntry();

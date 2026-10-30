@@ -33,7 +33,7 @@ describe('cloneRecord', () => {
 
 describe('formatTurns', () => {
   it('GIVEN turns WHEN formatting THEN returns line-per-turn text', () => {
-    const turns: readonly SessionTurn[] = [
+    const turns: SessionTurn[] = [
       { role: 'user', text: 'u1', timestamp: '2026-01-01T00:00:00.000Z' },
       { role: 'assistant', text: 'a1', timestamp: '2026-01-01T00:01:00.000Z' },
     ];

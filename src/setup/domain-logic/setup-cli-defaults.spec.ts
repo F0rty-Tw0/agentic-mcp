@@ -2,26 +2,38 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import type { McpServerEntry, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
+type ReadLineInterfaceMock = {
+  readonly question: (question: string, callback: (answer: string) => void) => void;
+  readonly close: () => void;
+};
+
 const mocks = vi.hoisted(() => {
   const close = vi.fn<() => void>();
   const question = vi.fn<(question: string, callback: (answer: string) => void) => void>();
-  const createInterface = vi.fn(() => ({
-    question,
-    close,
-  }));
+  const createReadLineInterface = (): ReadLineInterfaceMock => {
+    const readLineInterface: ReadLineInterfaceMock = { question, close };
 
-  return {
+    return readLineInterface;
+  };
+  const createInterface = vi.fn(createReadLineInterface);
+  const hoistedMocks = {
     close,
     question,
     createInterface,
   };
+
+  return hoistedMocks;
 });
 
-vi.mock('node:readline', () => ({
-  createInterface: mocks.createInterface,
-}));
+vi.mock('node:readline', () => {
+  const nodeReadlineModule = {
+    createInterface: mocks.createInterface,
+  };
 
-let runSetup: (args: readonly string[], injectedDependencies?: Partial<SetupCliDependencies>) => Promise<void>;
+  return nodeReadlineModule;
+});
+
+let runSetup: (args: string[], injectedDependencies?: Partial<SetupCliDependencies>) => Promise<void>;
 
 const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
@@ -62,11 +74,12 @@ const createDependencies = (overrides: Partial<SetupCliDependencies> = {}): Part
     generateClientConfigEntry: () => TEST_SERVER_ENTRY,
     buildSetupPlan: () => createPlan(),
     applySetupPlan: async () => Promise.resolve(createApplyResult()),
-    installSkill: async () =>
-      Promise.resolve({
+    installSkill: async () => {
+      return Promise.resolve({
         status: 'installed',
         skillPath: '/home/dev/.claude/skills/using-agentic-mcp/SKILL.md',
-      }),
+      });
+    },
     homeDirectory: '/home/dev',
     stdoutWrite: vi.fn<(text: string) => void>(),
     stderrWrite: vi.fn<(text: string) => void>(),

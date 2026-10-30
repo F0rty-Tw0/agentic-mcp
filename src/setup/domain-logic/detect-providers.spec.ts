@@ -2,13 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { detectInstalledProviders } from './detect-providers';
 
-const mocks = vi.hoisted(() => ({
-  resolveCliBinary: vi.fn<(command: string) => Promise<string | undefined>>(),
-}));
+const mocks = vi.hoisted(() => {
+  const mocksValue = {
+    resolveCliBinary: vi.fn<(command: string) => Promise<string | undefined>>(),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  resolveCliBinary: mocks.resolveCliBinary,
-}));
+  return mocksValue;
+});
+
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const platformUtilModule = {
+    resolveCliBinary: mocks.resolveCliBinary,
+  };
+
+  return platformUtilModule;
+});
 
 const resolveOnlyClaudeBinary = async (cmd: string): Promise<string | undefined> => {
   const binaryPath = await Promise.resolve(cmd === 'claude' ? '/usr/bin/claude' : undefined);

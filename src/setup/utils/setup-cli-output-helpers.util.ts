@@ -1,29 +1,24 @@
 import type {
   DetectedProvider,
+  MinimalSetupOutputInput,
   ParsedSetupArgs,
   SetupApplyResult,
   SkillInstallResult,
   SupportedClient,
 } from '../common';
 
-export type MinimalSetupOutputInput = Readonly<{
-  client: SupportedClient;
-  detectedProviders: readonly DetectedProvider[];
-  skillResult: SkillInstallResult;
-}>;
+type OutputNextStep = {
+  readonly command: string;
+  readonly kind: 'prove' | 'diagnostic' | 'setup';
+  readonly purpose: string;
+};
 
-export type OutputNextStep = Readonly<{
-  command: string;
-  kind: 'prove' | 'diagnostic' | 'setup';
-  purpose: string;
-}>;
-
-export type OutputSummary = Readonly<{
-  completedSteps: readonly string[];
-  unproven: readonly string[];
-  nextStep: OutputNextStep;
-  firstProofCommand?: string;
-}>;
+type OutputSummary = {
+  readonly completedSteps: string[];
+  readonly unproven: string[];
+  readonly nextStep: OutputNextStep;
+  readonly firstProofCommand?: string;
+};
 
 const buildSetupCommand = (client: SupportedClient): string => {
   return `npx agentic-mcp setup --client ${client} --yes`;
@@ -33,17 +28,15 @@ const buildFirstProofCommand = (providerName: string): string => {
   return `npx agentic-mcp prove ${providerName}`;
 };
 
-const resolveFirstProofCommand = (detectedProviders: readonly DetectedProvider[]): string | undefined => {
+const resolveFirstProofCommand = (detectedProviders: DetectedProvider[]): string | undefined => {
   const detectedProvider = detectedProviders.find((provider) => provider.available);
 
-  if (!detectedProvider) {
-    return undefined;
-  }
+  if (!detectedProvider) return undefined;
 
   return buildFirstProofCommand(detectedProvider.name);
 };
 
-export const formatProviderSummary = (detectedProviders: readonly DetectedProvider[]): string => {
+export const formatProviderSummary = (detectedProviders: DetectedProvider[]): string => {
   const lines = detectedProviders.map((provider) => {
     const status = provider.available ? `✓ ${provider.binaryPath}` : '✗ not found';
 
@@ -53,12 +46,10 @@ export const formatProviderSummary = (detectedProviders: readonly DetectedProvid
   return lines.join('\n');
 };
 
-export const buildProviderBlock = (detectedProviders: readonly DetectedProvider[]): string => {
+export const buildProviderBlock = (detectedProviders: DetectedProvider[]): string => {
   const providerSummary = formatProviderSummary(detectedProviders);
 
-  if (providerSummary !== '') {
-    return providerSummary;
-  }
+  if (providerSummary !== '') return providerSummary;
 
   return '  (none detected)';
 };
@@ -66,7 +57,7 @@ export const buildProviderBlock = (detectedProviders: readonly DetectedProvider[
 export const buildConfiguredSummary = (
   args: ParsedSetupArgs,
   result: SetupApplyResult,
-  detectedProviders: readonly DetectedProvider[]
+  detectedProviders: DetectedProvider[]
 ): OutputSummary => {
   const firstProofCommand = resolveFirstProofCommand(detectedProviders);
   const completedSteps = [`Prepared ${args.mode} setup for ${args.client}.`, `Setup result: ${result.status}.`];
@@ -84,32 +75,38 @@ export const buildConfiguredSummary = (
   }
 
   if (firstProofCommand != null) {
-    return {
+    const proveNextStep: OutputNextStep = {
+      command: firstProofCommand,
+      kind: 'prove',
+      purpose: 'Prove a real provider response through agentic-mcp.',
+    };
+    const proveSummary: OutputSummary = {
       completedSteps,
       unproven: [
         'Provider authentication has not been proven yet.',
         'A real provider response through agentic-mcp has not been proven yet.',
       ],
-      nextStep: {
-        command: firstProofCommand,
-        kind: 'prove',
-        purpose: 'Prove a real provider response through agentic-mcp.',
-      },
+      nextStep: proveNextStep,
     };
+
+    return proveSummary;
   }
 
-  return {
+  const diagnosticNextStep: OutputNextStep = {
+    command: 'npx agentic-mcp list_providers',
+    kind: 'diagnostic',
+    purpose: 'Rerun this after installing and authenticating a provider CLI.',
+  };
+  const diagnosticSummary: OutputSummary = {
     completedSteps,
     unproven: [
       'No provider CLI is currently detected.',
       'A real provider response through agentic-mcp has not been proven yet.',
     ],
-    nextStep: {
-      command: 'npx agentic-mcp list_providers',
-      kind: 'diagnostic',
-      purpose: 'Rerun this after installing and authenticating a provider CLI.',
-    },
+    nextStep: diagnosticNextStep,
   };
+
+  return diagnosticSummary;
 };
 
 export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
@@ -133,23 +130,26 @@ export const buildMinimalSummary = (input: MinimalSetupOutputInput): OutputSumma
     formatSkillOutput(input.skillResult).trimEnd(),
   ];
 
-  return {
+  const setupNextStep: OutputNextStep = {
+    command: setupCommand,
+    kind: 'setup',
+    purpose: 'Write the MCP client configuration entry.',
+  };
+  const minimalSummary: OutputSummary = {
     completedSteps,
     unproven: [
       'MCP client configuration has not been written yet.',
       'Provider authentication has not been proven yet.',
       'A real provider response through agentic-mcp has not been proven yet.',
     ],
-    nextStep: {
-      command: setupCommand,
-      kind: 'setup',
-      purpose: 'Write the MCP client configuration entry.',
-    },
+    nextStep: setupNextStep,
     firstProofCommand,
   };
+
+  return minimalSummary;
 };
 
-export const buildMinimalNextSteps = (input: MinimalSetupOutputInput): readonly string[] => {
+export const buildMinimalNextSteps = (input: MinimalSetupOutputInput): string[] => {
   const steps = [buildSetupCommand(input.client), 'npx agentic-mcp list_providers'];
   const firstProofCommand = resolveFirstProofCommand(input.detectedProviders);
 

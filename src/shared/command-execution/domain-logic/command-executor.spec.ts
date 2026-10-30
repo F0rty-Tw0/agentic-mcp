@@ -4,24 +4,33 @@ import crossSpawn from 'cross-spawn';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
+import { killProcess } from './platform';
 import { CommandExecutionError } from '../common/errors';
-import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
-import { createControllableChild } from '../common/test-utils';
-import type { ControllableChild } from '../common/test-utils';
-import { killProcess } from '../utils';
+import type { ControllableChild } from '../test/common/controllable-child.type';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs';
+import { createControllableChild } from '../test/utils/controllable-child.spec.util';
 
-vi.mock('cross-spawn', () => ({ default: vi.fn() }));
+vi.mock('cross-spawn', () => {
+  const mockedModule = { default: vi.fn() };
 
-vi.mock('../utils/platform.util', () => ({
-  killProcess: vi.fn().mockResolvedValue(true),
-}));
+  return mockedModule;
+});
 
-type AutoClosingOptions = Readonly<{
-  stdout?: string;
-  stderr?: string;
-  exitCode?: number | null;
-  signal?: string | null;
-}>;
+vi.mock('./platform', () => {
+  const killProcessMock = vi.fn().mockResolvedValue(true);
+  const mockedModule = {
+    killProcess: killProcessMock,
+  };
+
+  return mockedModule;
+});
+
+type AutoClosingOptions = {
+  readonly stdout?: string;
+  readonly stderr?: string;
+  readonly exitCode?: number | null;
+  readonly signal?: string | null;
+};
 
 type ChildProcessLike = Record<string, unknown>;
 
@@ -45,10 +54,14 @@ const defaultAutoClosingOptions: Required<AutoClosingOptions> = {
   signal: null,
 };
 
-const resolveAutoClosingOptions = (options: AutoClosingOptions): Required<AutoClosingOptions> => ({
-  ...defaultAutoClosingOptions,
-  ...options,
-});
+const resolveAutoClosingOptions = (options: AutoClosingOptions): Required<AutoClosingOptions> => {
+  const result: Required<AutoClosingOptions> = {
+    ...defaultAutoClosingOptions,
+    ...options,
+  };
+
+  return result;
+};
 
 const makeAutoClosingChild = (options: AutoClosingOptions = {}): ChildProcessLike => {
   const emitter = createControllableChild();

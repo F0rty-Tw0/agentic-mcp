@@ -1,14 +1,14 @@
-import type { ResolvedProviderEntry } from '../../shared';
 import { executeCommand, fetchAvailableModels, selectClosestAvailableModel } from '../../shared';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskToolArgs } from '../common';
 
 type ExecutionEnv = Readonly<Record<string, string>>;
 
-type ResolveRequestedModelInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  env: ExecutionEnv;
-}>;
+type ResolveRequestedModelInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly env: ExecutionEnv;
+};
 
 export const resolveRequestedModel = async (
   resolveRequestedModelInput: ResolveRequestedModelInput

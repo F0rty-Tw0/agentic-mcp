@@ -35,9 +35,9 @@ const configureMetricsHome = (homeDir: string): void => {
 
 let metricsHomeDir = '';
 
-type PersistedMetricsRecords = Readonly<{
-  records: readonly ProviderCallRecord[];
-}>;
+type PersistedMetricsRecords = {
+  readonly records: ProviderCallRecord[];
+};
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => {
   const result = typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -58,9 +58,8 @@ const resolveOverrideMetricsFilePath = (): string | undefined => {
 const resolveLinuxMetricsFilePath = (homeDir: string): string => {
   const xdgStateHome = process.env.XDG_STATE_HOME;
 
-  if (xdgStateHome != null && xdgStateHome !== '') {
+  if (xdgStateHome != null && xdgStateHome !== '')
     return path.join(xdgStateHome, 'agentic-mcp', 'provider-metrics.json');
-  }
 
   const metricsFilePath = path.join(homeDir, '.local', 'state', 'agentic-mcp', 'provider-metrics.json');
 
@@ -68,9 +67,7 @@ const resolveLinuxMetricsFilePath = (homeDir: string): string => {
 };
 
 const resolveDefaultMetricsFilePath = (homeDir: string): string => {
-  if (process.platform === 'win32') {
-    return path.join(homeDir, 'agentic-mcp', 'provider-metrics.json');
-  }
+  if (process.platform === 'win32') return path.join(homeDir, 'agentic-mcp', 'provider-metrics.json');
 
   if (process.platform === 'darwin') {
     return path.join(homeDir, 'Library', 'Application Support', 'agentic-mcp', 'provider-metrics.json');
@@ -102,7 +99,7 @@ const createPersistedRecord = function (provider: string, calledAt: string): Pro
   return record;
 };
 
-const createPersistedRecords = (provider: string, count: number): readonly ProviderCallRecord[] => {
+const createPersistedRecords = (provider: string, count: number): ProviderCallRecord[] => {
   const records: ProviderCallRecord[] = [];
 
   for (let index = 0; index < count; index++) {
@@ -126,9 +123,7 @@ const isPersistedMetricsRecords = (value: unknown): value is PersistedMetricsRec
 const parsePersistedMetricsRecords = (content: string): PersistedMetricsRecords => {
   const parsed: unknown = JSON.parse(content);
 
-  if (!isPersistedMetricsRecords(parsed)) {
-    throw new Error('Persisted metrics file must include a records array.');
-  }
+  if (!isPersistedMetricsRecords(parsed)) throw new Error('Persisted metrics file must include a records array.');
 
   return parsed;
 };
@@ -140,7 +135,7 @@ const readPersistedMetricsRecords = async (metricsFilePath: string): Promise<Per
   return persistedMetricsRecords;
 };
 
-const writeMetricsFile = async (records: readonly ProviderCallRecord[]): Promise<void> => {
+const writeMetricsFile = async (records: ProviderCallRecord[]): Promise<void> => {
   const metricsFilePath = resolveMetricsFilePath(metricsHomeDir);
   const content = JSON.stringify(
     {

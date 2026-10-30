@@ -1,4 +1,4 @@
-export const HELP_TEXT = [
+const HELP_LINES = [
   'Usage: agentic-mcp [command] [options]',
   '',
   'Commands:',
@@ -64,4 +64,6 @@ export const HELP_TEXT = [
   '',
   'When run without a command, starts as an MCP stdio server.',
   '',
-].join('\n');
+];
+
+export const HELP_TEXT = HELP_LINES.join('\n');

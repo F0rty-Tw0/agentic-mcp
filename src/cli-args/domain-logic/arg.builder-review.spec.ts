@@ -1,30 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildReviewArgArray } from './arg.builder';
-import type { ProviderConfig } from '../../shared';
+import type { CommandDef, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
 
-const createConfig = (): ProviderConfig => ({
-  enabled: true,
-  description: 'Codex review config',
-  command: 'codex',
-  timeout: 120_000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: { args: ['exec'] },
-    review: {
-      args: ['review'],
-      flags: {
-        uncommitted: ['--uncommitted'],
-        base: '--base',
-        commit: '--commit',
-        model: '-m',
-      },
-    },
-  },
-  input: { method: 'positional' },
-});
+const createConfig = (): ProviderConfig => {
+  const ask: CommandDef = { args: ['exec'] };
+  const reviewFlags: CommandDef['flags'] = {
+    uncommitted: ['--uncommitted'],
+    base: '--base',
+    commit: '--commit',
+    model: '-m',
+  };
+  const review: CommandDef = { args: ['review'], flags: reviewFlags };
+  const commands: ProviderConfig['commands'] = { ask, review };
+  const input: ProviderConfig['input'] = { method: 'positional' };
+  const config: ProviderConfig = {
+    enabled: true,
+    description: 'Codex review config',
+    command: 'codex',
+    timeout: 120_000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+  };
+
+  return config;
+};
 
 describe('buildReviewArgArray', () => {
   it('GIVEN uncommitted scope WHEN building args THEN it appends the provider uncommitted flag', () => {
@@ -57,23 +60,12 @@ describe('buildReviewArgArray', () => {
     const baseConfig = createConfig();
     const baseReview = baseConfig.commands.review;
 
-    if (!baseReview?.flags) {
-      throw new Error('Expected review flags to exist');
-    }
+    if (!baseReview?.flags) throw new Error('Expected review flags to exist');
 
-    const config: ProviderConfig = {
-      ...baseConfig,
-      commands: {
-        ...baseConfig.commands,
-        review: {
-          ...baseReview,
-          flags: {
-            ...baseReview.flags,
-            workingDir: '-C',
-          },
-        },
-      },
-    };
+    const flags: CommandDef['flags'] = { ...baseReview.flags, workingDir: '-C' };
+    const review: CommandDef = { ...baseReview, flags };
+    const commands: ProviderConfig['commands'] = { ...baseConfig.commands, review };
+    const config: ProviderConfig = { ...baseConfig, commands };
 
     const result = buildReviewArgArray(config, { scope: 'uncommitted', working_directory: '/repo' });
 

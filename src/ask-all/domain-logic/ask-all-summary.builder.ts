@@ -8,12 +8,13 @@ const buildProviderSummaryLine = (result: AskAllProviderResult): string => {
 };
 
 export const buildAskAllSummary = (askAllResult: AskAllResult): string => {
+  const providerLines = askAllResult.results.map((result) => buildProviderSummaryLine(result));
   const summaryLines = [
     `Comparison complete for ${askAllResult.totalProviders} providers in ${askAllResult.totalExecutionTimeMs}ms`,
     `Succeeded: ${askAllResult.succeeded}`,
     `Failed: ${askAllResult.failed}`,
     'Results:',
-    ...askAllResult.results.map((result) => buildProviderSummaryLine(result)),
+    ...providerLines,
   ];
   const summaryText = summaryLines.join('\n');
 

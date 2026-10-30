@@ -1,30 +1,60 @@
 import { buildExecutionEnv } from './ask-command';
 import { buildArgArray } from '../../cli-args';
-import type { ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
 import { executeCommand, registerActiveRequest } from '../../shared';
-import type { StreamNotifier } from '../../streaming';
+import type { ExecutionResult } from '../../shared/command-execution/common';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
+import type { StreamNotifier } from '../../streaming/common';
 import type { AskToolArgs } from '../common';
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
 import { createProviderLiveOutputAdapter } from '../utils/provider-live-output.util';
 import { resolveRequestedModel } from '../utils/resolve-requested-model.util';
 
-type RunCommandExecutionInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  extra?: ProgressContext;
-  tier2SessionId?: string;
-  streamNotifier: StreamNotifier;
-}>;
+type RunCommandExecutionInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly extra?: ProgressContext;
+  readonly tier2SessionId?: string;
+  readonly streamNotifier: StreamNotifier;
+};
 
-const resolveRequestId = (extra?: ProgressContext): string | undefined =>
-  extra?.requestId ? String(extra.requestId) : undefined;
+type CommandExecutionOutcome = {
+  readonly result: ExecutionResult;
+  readonly outputFormat: ResolvedProviderEntry['config']['outputFormat'];
+};
+
+type SpawnCallback = (pid: number) => void;
+
+export const resolveRequestId = (extra?: ProgressContext): string | undefined => {
+  if (!extra?.requestId) return;
+
+  const requestId = String(extra.requestId);
+
+  return requestId;
+};
+
+const resolveTier2SessionArgs = (config: ResolvedProviderEntry['config'], tier2SessionId?: string): string[] => {
+  if (!tier2SessionId) return [];
+
+  const sessionArgs = buildNativeSessionArgs(config, tier2SessionId);
+
+  return sessionArgs;
+};
+
+export const buildOnSpawned = (requestId?: string): SpawnCallback | undefined => {
+  if (!requestId) return;
+
+  const onSpawned: SpawnCallback = (pid) => registerActiveRequest(requestId, pid);
+
+  return onSpawned;
+};
 
 const buildCliArgs = (
   config: ResolvedProviderEntry['config'],
-  baseCliArgs: readonly string[],
+  baseCliArgs: string[],
   tier2SessionId?: string
 ): string[] => {
-  const tier2SessionArgs = tier2SessionId ? buildNativeSessionArgs(config, tier2SessionId) : [];
+  const tier2SessionArgs = resolveTier2SessionArgs(config, tier2SessionId);
   const cliArgs = [...baseCliArgs, ...tier2SessionArgs];
 
   return cliArgs;
@@ -32,7 +62,7 @@ const buildCliArgs = (
 
 export const runCommandExecution = async (
   runCommandExecutionInput: RunCommandExecutionInput
-): Promise<Readonly<{ result: ExecutionResult; outputFormat: ResolvedProviderEntry['config']['outputFormat'] }>> => {
+): Promise<CommandExecutionOutcome> => {
   const { context, args, extra, tier2SessionId, streamNotifier } = runCommandExecutionInput;
   const env = buildExecutionEnv(context);
   const remappedArgs = await resolveRequestedModel({ context, args, env });
@@ -48,7 +78,7 @@ export const runCommandExecution = async (
 
   streamNotifier.emitStart();
 
-  const onSpawned = requestId ? (pid: number): void => registerActiveRequest(requestId, pid) : undefined;
+  const onSpawned = buildOnSpawned(requestId);
   const commandOptions = buildCommandOptions({
     context,
     resolved,
@@ -63,7 +93,7 @@ export const runCommandExecution = async (
 
   try {
     const result = await executeCommand(commandOptions);
-    const executionResult = { result, outputFormat };
+    const executionResult: CommandExecutionOutcome = { result, outputFormat };
 
     return executionResult;
   } finally {

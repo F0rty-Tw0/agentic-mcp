@@ -14,6 +14,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer } from './create-server';
 
+type InputSchemaWithProperties = { readonly properties?: Record<string, unknown> };
+
 let server: McpServer;
 let client: Client;
 
@@ -42,7 +44,7 @@ describe('integration: ask tool input schema', () => {
     expect(askTools.length).toBeGreaterThan(0);
 
     for (const tool of askTools) {
-      const properties = (tool.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
+      const properties = (tool.inputSchema as InputSchemaWithProperties).properties ?? {};
 
       expect(properties.prompt, `${tool.name} should have inputSchema.properties.prompt`).toBeDefined();
     }
@@ -58,7 +60,7 @@ describe('integration: ask tool input schema', () => {
     const alwaysPresentFields = ['stream_live', 'mode', 'action', 'job_id'] as const;
 
     const missingFields = askTools.flatMap((tool) => {
-      const properties = (tool.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
+      const properties = (tool.inputSchema as InputSchemaWithProperties).properties ?? {};
 
       return alwaysPresentFields.filter((field) => !(field in properties)).map((field) => `${tool.name}.${field}`);
     });
