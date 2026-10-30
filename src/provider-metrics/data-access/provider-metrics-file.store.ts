@@ -35,7 +35,7 @@ const writeProviderMetricsFile = async (
   await rename(tempFilePath, metricsFilePath);
 };
 
-const limitRecords = (records: readonly ProviderCallRecord[]): readonly ProviderCallRecord[] => {
+const limitRecords = (records: ProviderCallRecord[]): ProviderCallRecord[] => {
   const limitedRecords = records.slice(-MAX_METRIC_RECORDS);
 
   return limitedRecords;
@@ -78,11 +78,12 @@ const removeTempFiles = async (metricsFilePath: string): Promise<void> => {
   try {
     const directoryEntries = await readdir(directoryPath);
 
-    await Promise.all(
-      directoryEntries
-        .filter((entry) => entry.startsWith(fileNamePrefix) && entry.endsWith(TEMP_FILE_SUFFIX))
-        .map(async (entry) => rm(path.join(directoryPath, entry), { force: true }))
-    );
+    const isTempFileEntry = (entry: string): boolean => {
+      return entry.startsWith(fileNamePrefix) && entry.endsWith(TEMP_FILE_SUFFIX);
+    };
+    const tempFileEntries = directoryEntries.filter(isTempFileEntry);
+
+    await Promise.all(tempFileEntries.map(async (entry) => rm(path.join(directoryPath, entry), { force: true })));
   } catch (error: unknown) {
     if (isSystemError(error) && error.code === 'ENOENT') return;
 

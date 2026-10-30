@@ -15,32 +15,52 @@ type ResetProviderMetricsStoreForTests = () => Promise<void>;
 type ResolveProviderMetricsFilePath = () => string;
 type NowIso = () => string;
 
-const providerMetricsStoreMocks = vi.hoisted(() => ({
-  nowIso: vi.fn<NowIso>(),
-  appendProviderCallRecord: vi.fn<AppendProviderCallRecord>(),
-  loadProviderMetricsFile: vi.fn<LoadProviderMetricsFile>(),
-  buildProviderMetricsSummary: vi.fn<BuildProviderMetricsSummary>(),
-  resetProviderMetricsStoreForTests: vi.fn<ResetProviderMetricsStoreForTests>(),
-  resolveProviderMetricsFilePath: vi.fn<ResolveProviderMetricsFilePath>(),
-}));
+const providerMetricsStoreMocks = vi.hoisted(() => {
+  const result = {
+    nowIso: vi.fn<NowIso>(),
+    appendProviderCallRecord: vi.fn<AppendProviderCallRecord>(),
+    loadProviderMetricsFile: vi.fn<LoadProviderMetricsFile>(),
+    buildProviderMetricsSummary: vi.fn<BuildProviderMetricsSummary>(),
+    resetProviderMetricsStoreForTests: vi.fn<ResetProviderMetricsStoreForTests>(),
+    resolveProviderMetricsFilePath: vi.fn<ResolveProviderMetricsFilePath>(),
+  };
 
-vi.mock('../../shared', () => ({
-  nowIso: providerMetricsStoreMocks.nowIso,
-}));
+  return result;
+});
 
-vi.mock('./provider-metrics-file.store', () => ({
-  appendProviderCallRecord: providerMetricsStoreMocks.appendProviderCallRecord,
-  loadProviderMetricsFile: providerMetricsStoreMocks.loadProviderMetricsFile,
-  resetProviderMetricsStoreForTests: providerMetricsStoreMocks.resetProviderMetricsStoreForTests,
-}));
+vi.mock('../../shared', () => {
+  const mockedModule = {
+    nowIso: providerMetricsStoreMocks.nowIso,
+  };
 
-vi.mock('./provider-metrics-file.path', () => ({
-  resolveProviderMetricsFilePath: providerMetricsStoreMocks.resolveProviderMetricsFilePath,
-}));
+  return mockedModule;
+});
 
-vi.mock('./provider-metrics-summary.builder', () => ({
-  buildProviderMetricsSummary: providerMetricsStoreMocks.buildProviderMetricsSummary,
-}));
+vi.mock('./provider-metrics-file.store', () => {
+  const mockedModule = {
+    appendProviderCallRecord: providerMetricsStoreMocks.appendProviderCallRecord,
+    loadProviderMetricsFile: providerMetricsStoreMocks.loadProviderMetricsFile,
+    resetProviderMetricsStoreForTests: providerMetricsStoreMocks.resetProviderMetricsStoreForTests,
+  };
+
+  return mockedModule;
+});
+
+vi.mock('./provider-metrics-file.path', () => {
+  const mockedModule = {
+    resolveProviderMetricsFilePath: providerMetricsStoreMocks.resolveProviderMetricsFilePath,
+  };
+
+  return mockedModule;
+});
+
+vi.mock('./provider-metrics-summary.builder', () => {
+  const mockedModule = {
+    buildProviderMetricsSummary: providerMetricsStoreMocks.buildProviderMetricsSummary,
+  };
+
+  return mockedModule;
+});
 
 const createProviderCallRecord = (): ProviderCallRecord => {
   const providerCallRecord: ProviderCallRecord = {
@@ -68,21 +88,22 @@ const createProviderMetricsSummary = (
   providerMetricsFile: ProviderMetricsFile,
   metricsFilePath: string
 ): ProviderMetricsSummary => {
+  const providers = [
+    {
+      provider: 'claude',
+      totalCalls: 1,
+      successCount: 1,
+      failureCount: 0,
+      totalExecutionTimeMs: 10,
+      avgExecutionTimeMs: 10,
+      lastCallAt: '2026-01-01T00:01:00.000Z',
+    },
+  ];
   const providerMetricsSummary: ProviderMetricsSummary = {
     collectedSince: providerMetricsFile.collectedSince,
     metricsFilePath,
     totalCalls: 1,
-    providers: [
-      {
-        provider: 'claude',
-        totalCalls: 1,
-        successCount: 1,
-        failureCount: 0,
-        totalExecutionTimeMs: 10,
-        avgExecutionTimeMs: 10,
-        lastCallAt: '2026-01-01T00:01:00.000Z',
-      },
-    ],
+    providers,
   };
 
   return providerMetricsSummary;

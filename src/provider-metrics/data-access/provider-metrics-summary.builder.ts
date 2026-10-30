@@ -1,20 +1,22 @@
 import type { ProviderCallRecord, ProviderMetricsFile, ProviderMetricsSummary, ProviderStats } from '../common';
 
-type ProviderStatsAccumulator = Readonly<{
-  provider: string;
-  totalCalls: number;
-  successCount: number;
-  failureCount: number;
-  totalExecutionTimeMs: number;
-  lastCallAt: string;
-}>;
+type ProviderStatsAccumulator = {
+  readonly provider: string;
+  readonly totalCalls: number;
+  readonly successCount: number;
+  readonly failureCount: number;
+  readonly totalExecutionTimeMs: number;
+  readonly lastCallAt: string;
+};
 
 const createProviderStatsAccumulator = (record: ProviderCallRecord): ProviderStatsAccumulator => {
+  const successCount = record.success ? 1 : 0;
+  const failureCount = record.success ? 0 : 1;
   const providerStatsAccumulator: ProviderStatsAccumulator = {
     provider: record.provider,
     totalCalls: 1,
-    successCount: record.success ? 1 : 0,
-    failureCount: record.success ? 0 : 1,
+    successCount,
+    failureCount,
     totalExecutionTimeMs: record.executionTimeMs,
     lastCallAt: record.calledAt,
   };
@@ -55,7 +57,7 @@ const toProviderStats = (providerStatsAccumulator: ProviderStatsAccumulator): Pr
   return providerStats;
 };
 
-const buildProviderStats = (records: readonly ProviderCallRecord[]): readonly ProviderStats[] => {
+const buildProviderStats = (records: ProviderCallRecord[]): ProviderStats[] => {
   const accumulators = new Map<string, ProviderStatsAccumulator>();
 
   for (const record of records) {

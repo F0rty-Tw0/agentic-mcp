@@ -1,6 +1,6 @@
-import type { ProviderCallRecord } from './provider-metrics.types';
+import type { ProviderCallRecord } from './provider-metrics.type';
 
-export type ProviderMetricsFile = Readonly<{
-  collectedSince: string;
-  records: readonly ProviderCallRecord[];
-}>;
+export type ProviderMetricsFile = {
+  readonly collectedSince: string;
+  readonly records: ProviderCallRecord[];
+};
