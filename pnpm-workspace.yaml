@@ -1,6 +1,10 @@
 packages:
   - .
 
+allowBuilds:
+  esbuild: true
+  unrs-resolver: false
+
 catalogs:
   dev:
     '@release-it/keep-a-changelog': ^8.0.1
@@ -9,13 +13,13 @@ catalogs:
     '@vitest/coverage-v8': ^5.0.5
     tsx: ^4.23.15
     typescript: ^7.0.2
-    eslint: 10.14.0
+    eslint: 10.13.0
     eslint-config-prettier: 10.1.8
     lint-suite: 3.0.2
     vitest: ^5.0.5
     esbuild: ^0.28.2
     prettier: ^3.9.10
-    release-it: ^21.1.2
+    release-it: ^21.1.1
   runtime:
     '@modelcontextprotocol/sdk': ^1.27.1
     cross-spawn: ^7.0.6

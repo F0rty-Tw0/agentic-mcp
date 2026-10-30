@@ -13,7 +13,7 @@
     "url": "https://github.com/F0rty-Tw0/agentic-mcp/issues"
   },
   "type": "module",
-  "packageManager": "pnpm@10.34.9",
+  "packageManager": "pnpm@12.16.1",
   "bin": {
     "agentic-mcp": "dist/index.js"
   },
@@ -63,14 +63,6 @@
     "tsx": "catalog:dev",
     "typescript": "catalog:dev",
     "vitest": "catalog:dev"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ],
-    "ignoredBuiltDependencies": [
-      "unrs-resolver"
-    ]
   },
   "engines": {
     "node": ">=22"
