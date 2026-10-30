@@ -3,14 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { handleListProviders } from './meta.handler';
 import type { McpPlainTextContent, ResolvedProvider } from '../../shared';
 
-const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProvider => ({
-  name: 'test-provider',
-  description: 'A test provider',
-  enabled: true,
-  available: true,
-  binaryPath: '/usr/bin/test-cli',
-  ...overrides,
-});
+const createProvider = (overrides: Partial<ResolvedProvider> = {}): ResolvedProvider => {
+  const resolvedProvider: ResolvedProvider = {
+    name: 'test-provider',
+    description: 'A test provider',
+    enabled: true,
+    available: true,
+    binaryPath: '/usr/bin/test-cli',
+    ...overrides,
+  };
+
+  return resolvedProvider;
+};
 
 describe('handleListProviders', () => {
   describe('provider status labels', () => {
@@ -45,17 +49,19 @@ describe('handleListProviders', () => {
 
       const result = handleListProviders(providers);
 
+      const content = [
+        {
+          type: 'text',
+          text:
+            'Configured providers:\n' +
+            '- claude: Anthropic Claude [binary detected | stable]\n' +
+            'Readiness: binary detection is not proof of authentication or a real response.\n' +
+            'Next: run prove claude to prove authentication and a real response.',
+        },
+      ];
+
       expect(result).toStrictEqual({
-        content: [
-          {
-            type: 'text',
-            text:
-              'Configured providers:\n' +
-              '- claude: Anthropic Claude [binary detected | stable]\n' +
-              'Readiness: binary detection is not proof of authentication or a real response.\n' +
-              'Next: run prove claude to prove authentication and a real response.',
-          },
-        ],
+        content,
       });
     });
 
@@ -133,15 +139,17 @@ describe('handleListProviders', () => {
     it('GIVEN no detected providers WHEN listing THEN explains the next recovery step', () => {
       const result = handleListProviders([]);
 
+      const content = [
+        {
+          type: 'text',
+          text:
+            'Configured providers:\n' +
+            'Next: install and authenticate a supported provider CLI, then rerun list_providers.',
+        },
+      ];
+
       expect(result).toStrictEqual({
-        content: [
-          {
-            type: 'text',
-            text:
-              'Configured providers:\n' +
-              'Next: install and authenticate a supported provider CLI, then rerun list_providers.',
-          },
-        ],
+        content,
       });
     });
   });

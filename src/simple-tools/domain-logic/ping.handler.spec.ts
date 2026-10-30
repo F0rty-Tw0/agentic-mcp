@@ -12,23 +12,38 @@ import {
 import {
   SIMPLE_TOOLS_PING_VERSION_RESULT_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
-  createSimpleToolsContext,
-} from '../common/stubs';
+} from '../test/stubs/simple-tools.stub';
+import { createSimpleToolsContext } from '../test/utils/simple-tools-context.spec.util';
 
-vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
-  executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB)),
-}));
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
+  const mockedModule = {
+    executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_PING_VERSION_RESULT_STUB)),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
-  stripAnsi: vi.fn((input: string) => input),
-}));
+  return mockedModule;
+});
 
-type VersionCheckFailure = Readonly<{
-  exitCode: number | null;
-  signal: NodeJS.Signals | null;
-  timedOut: boolean;
-}>;
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const mockedModule = {
+    buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
+  };
+
+  return mockedModule;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const mockedModule = {
+    stripAnsi: vi.fn((input: string) => input),
+  };
+
+  return mockedModule;
+});
+
+type VersionCheckFailure = {
+  readonly exitCode: number | null;
+  readonly signal: NodeJS.Signals | null;
+  readonly timedOut: boolean;
+};
 
 const createAskProofMessage = (providerName: string): string => {
   return `Run prove ${providerName} or ask_${providerName} to prove authentication and a real response.`;
@@ -64,8 +79,10 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [{ type: 'text', text: createBinaryDetectedText('test') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createBinaryDetectedText('test') }],
+        content,
       });
     });
 
@@ -80,37 +97,45 @@ describe('handlePing', () => {
 
   describe('successful version check', () => {
     it('GIVEN provider with versionCheck WHEN command succeeds THEN returns scope-limited success wording', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       const result = await handlePing(context);
 
+      const content = [{ type: 'text', text: createVersionSucceededText('test', 'v1.0.0') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createVersionSucceededText('test', 'v1.0.0') }],
+        content,
       });
     });
 
     it('GIVEN provider with versionCheck WHEN handling ping THEN calls executeCommand with correct args and 30s timeout', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       await handlePing(context);
+
+      const providerQueue = {
+        providerName: 'test',
+        maxConcurrency: 1,
+        queueTimeoutMs: 30_000,
+      };
 
       expect(executeCommand).toHaveBeenCalledWith({
         binaryPath: '/usr/bin/test-cli',
         args: ['--version'],
         env: TEST_MINIMAL_ENV_STUB,
         timeoutMs: 30_000,
-        providerQueue: {
-          providerName: 'test',
-          maxConcurrency: 1,
-          queueTimeoutMs: 30_000,
-        },
+        providerQueue,
       });
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ping THEN injects default timeout env', async () => {
+      const versionCheck = { flag: '--version' };
+      const env = { apiKey: 'secret' };
       const context = createSimpleToolsContext({
-        versionCheck: { flag: '--version' },
-        env: { apiKey: 'secret' },
+        versionCheck,
+        env,
       });
 
       await handlePing(context);
@@ -122,11 +147,14 @@ describe('handlePing', () => {
     });
 
     it('GIVEN named provider without MCP_TOOL_TIMEOUT WHEN handling ping THEN keeps the provider-specific ask step', async () => {
+      const versionCheck = { flag: '--version' };
+      const env = { apiKey: 'secret' };
+      const baseContext = createSimpleToolsContext({
+        versionCheck,
+        env,
+      });
       const context: ResolvedProviderEntry = {
-        ...createSimpleToolsContext({
-          versionCheck: { flag: '--version' },
-          env: { apiKey: 'secret' },
-        }),
+        ...baseContext,
         name: 'gemini',
       };
 
@@ -140,20 +168,24 @@ describe('handlePing', () => {
     });
 
     it('GIVEN output with ANSI codes WHEN handling ping THEN strips ANSI from output', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(stripAnsi).mockReturnValue('v2.0.0');
 
       const result = await handlePing(context);
 
       expect(stripAnsi).toHaveBeenCalledWith('v1.0.0');
+      const content = [{ type: 'text', text: createVersionSucceededText('test', 'v2.0.0') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createVersionSucceededText('test', 'v2.0.0') }],
+        content,
       });
     });
 
     it('GIVEN output with whitespace WHEN handling ping THEN trims the output', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -163,16 +195,19 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [{ type: 'text', text: createVersionSucceededText('test', 'v1.0.0') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createVersionSucceededText('test', 'v1.0.0') }],
+        content,
       });
     });
   });
 
   describe('version pattern extraction', () => {
     it('GIVEN versionCheck with pattern WHEN output matches THEN extracts first capture group', async () => {
+      const versionCheck = { flag: '--version', pattern: 'v(\\d+\\.\\d+\\.\\d+)' };
       const context = createSimpleToolsContext({
-        versionCheck: { flag: '--version', pattern: 'v(\\d+\\.\\d+\\.\\d+)' },
+        versionCheck,
       });
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -183,14 +218,17 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [{ type: 'text', text: createVersionSucceededText('test', '3.2.1') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createVersionSucceededText('test', '3.2.1') }],
+        content,
       });
     });
 
     it('GIVEN versionCheck with pattern WHEN output does not match THEN returns raw output', async () => {
+      const versionCheck = { flag: '--version', pattern: 'version (\\d+)' };
       const context = createSimpleToolsContext({
-        versionCheck: { flag: '--version', pattern: 'version (\\d+)' },
+        versionCheck,
       });
 
       vi.mocked(executeCommand).mockResolvedValue({
@@ -201,13 +239,16 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [{ type: 'text', text: createVersionSucceededText('test', 'no match here') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createVersionSucceededText('test', 'no match here') }],
+        content,
       });
     });
 
     it('GIVEN versionCheck without pattern WHEN command succeeds THEN returns full output as version', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '-V' } });
+      const versionCheck = { flag: '-V' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -217,15 +258,18 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [{ type: 'text', text: createVersionSucceededText('test', 'test-cli 4.5.6') }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: createVersionSucceededText('test', 'test-cli 4.5.6') }],
+        content,
       });
     });
   });
 
   describe('command failure', () => {
     it('GIVEN command times out WHEN handling ping THEN returns truthful failure guidance', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -238,18 +282,21 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [
+        {
+          type: 'text',
+          text: createVersionFailedText('test', { exitCode: null, signal: 'SIGTERM', timedOut: true }),
+        },
+      ];
+
       expect(result).toStrictEqual({
-        content: [
-          {
-            type: 'text',
-            text: createVersionFailedText('test', { exitCode: null, signal: 'SIGTERM', timedOut: true }),
-          },
-        ],
+        content,
       });
     });
 
     it('GIVEN command exits non-zero WHEN handling ping THEN returns truthful failure guidance', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -261,18 +308,21 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [
+        {
+          type: 'text',
+          text: createVersionFailedText('test', { exitCode: 1, signal: null, timedOut: false }),
+        },
+      ];
+
       expect(result).toStrictEqual({
-        content: [
-          {
-            type: 'text',
-            text: createVersionFailedText('test', { exitCode: 1, signal: null, timedOut: false }),
-          },
-        ],
+        content,
       });
     });
 
     it('GIVEN command killed by signal WHEN handling ping THEN returns truthful failure guidance', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(executeCommand).mockResolvedValue({
         ...SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
@@ -283,20 +333,23 @@ describe('handlePing', () => {
 
       const result = await handlePing(context);
 
+      const content = [
+        {
+          type: 'text',
+          text: createVersionFailedText('test', { exitCode: null, signal: 'SIGKILL', timedOut: false }),
+        },
+      ];
+
       expect(result).toStrictEqual({
-        content: [
-          {
-            type: 'text',
-            text: createVersionFailedText('test', { exitCode: null, signal: 'SIGKILL', timedOut: false }),
-          },
-        ],
+        content,
       });
     });
   });
 
   describe('unexpected errors', () => {
     it('GIVEN executeCommand throws WHEN handling ping THEN returns isError response', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(executeCommand).mockRejectedValue(new Error('spawn ENOENT'));
 
@@ -307,7 +360,8 @@ describe('handlePing', () => {
     });
 
     it('GIVEN buildMinimalEnv throws WHEN handling ping THEN returns isError response', async () => {
-      const context = createSimpleToolsContext({ versionCheck: { flag: '--version' } });
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
 
       vi.mocked(buildMinimalEnv).mockImplementation(() => {
         throw new Error('env construction failed');

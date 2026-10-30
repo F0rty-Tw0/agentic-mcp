@@ -12,17 +12,32 @@ import {
 import {
   SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
-  createSimpleToolsContext,
-} from '../common/stubs';
+} from '../test/stubs/simple-tools.stub';
+import { createSimpleToolsContext } from '../test/utils/simple-tools-context.spec.util';
 
-vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
-  executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB)),
-}));
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
+  const mockedModule = {
+    executeCommand: vi.fn(async () => Promise.resolve(SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB)),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
-  stripAnsi: vi.fn((input: string) => input),
-}));
+  return mockedModule;
+});
+
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const mockedModule = {
+    buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
+  };
+
+  return mockedModule;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const mockedModule = {
+    stripAnsi: vi.fn((input: string) => input),
+  };
+
+  return mockedModule;
+});
 
 // Real toMcpError — no mock (validates real error mapping)
 
@@ -42,13 +57,16 @@ describe('handleHelp', () => {
 
       const result = await handleHelp(context);
 
+      const content = [{ type: 'text', text: 'Usage: test-cli [options]' }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'Usage: test-cli [options]' }],
+        content,
       });
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling help THEN injects default timeout env', async () => {
-      const context = createSimpleToolsContext({ env: { apiKey: 'secret' } });
+      const env = { apiKey: 'secret' };
+      const context = createSimpleToolsContext({ env });
 
       await handleHelp(context);
 
@@ -60,8 +78,10 @@ describe('handleHelp', () => {
     });
 
     it('GIVEN provider without MCP_TOOL_TIMEOUT WHEN handling help THEN injects default timeout env', async () => {
+      const env = { apiKey: 'secret' };
+      const baseContext = createSimpleToolsContext({ env });
       const context: ResolvedProviderEntry = {
-        ...createSimpleToolsContext({ env: { apiKey: 'secret' } }),
+        ...baseContext,
         name: 'opencode',
       };
 
@@ -79,16 +99,18 @@ describe('handleHelp', () => {
 
       await handleHelp(context);
 
+      const providerQueue = {
+        providerName: 'test',
+        maxConcurrency: 1,
+        queueTimeoutMs: 30_000,
+      };
+
       expect(executeCommand).toHaveBeenCalledWith({
         binaryPath: '/usr/bin/test-cli',
         args: ['--help'],
         env: TEST_MINIMAL_ENV_STUB,
         timeoutMs: 30_000,
-        providerQueue: {
-          providerName: 'test',
-          maxConcurrency: 1,
-          queueTimeoutMs: 30_000,
-        },
+        providerQueue,
       });
     });
 
@@ -100,8 +122,10 @@ describe('handleHelp', () => {
       const result = await handleHelp(context);
 
       expect(stripAnsi).toHaveBeenCalledWith('Usage: test-cli [options]');
+      const content = [{ type: 'text', text: 'clean help output' }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'clean help output' }],
+        content,
       });
     });
 
@@ -112,8 +136,10 @@ describe('handleHelp', () => {
 
       const result = await handleHelp(context);
 
+      const content = [{ type: 'text', text: 'help output' }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'help output' }],
+        content,
       });
     });
   });
@@ -165,8 +191,10 @@ describe('handleHelp', () => {
       const result = await handleHelp(context);
 
       expect(result.isError).toBeUndefined();
+      const content = [{ type: 'text', text: 'Usage: stubborn-cli [options]' }];
+
       expect(result).toStrictEqual({
-        content: [{ type: 'text', text: 'Usage: stubborn-cli [options]' }],
+        content,
       });
     });
   });

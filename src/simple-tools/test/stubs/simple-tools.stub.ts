@@ -1,4 +1,5 @@
-import type { ExecutionResult, ProviderConfig, ResolvedProviderEntry } from '../../../shared';
+import type { ExecutionResult } from '../../../shared/command-execution/common';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../../shared/provider/common';
 
 export const SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB: ExecutionResult = {
   stdout: '',
@@ -24,6 +25,10 @@ export const SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB: ExecutionResult = {
   stdoutBytes: 25,
 };
 
+const ask = { args: ['exec'], flags: {} };
+const commands = { ask };
+const input: ProviderConfig['input'] = { method: 'positional' };
+
 export const SIMPLE_TOOLS_PROVIDER_CONFIG_STUB: ProviderConfig = {
   enabled: true,
   description: 'Test provider',
@@ -31,26 +36,12 @@ export const SIMPLE_TOOLS_PROVIDER_CONFIG_STUB: ProviderConfig = {
   timeout: 120_000,
   env: {},
   outputFormat: 'json',
-  commands: { ask: { args: ['exec'], flags: {} } },
-  input: { method: 'positional' },
+  commands,
+  input,
 };
 
 export const SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB: ResolvedProviderEntry = {
   name: 'test',
   binaryPath: '/usr/bin/test-cli',
   config: SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
-};
-
-export const createSimpleToolsContext = (overrides: Partial<ProviderConfig> = {}): ResolvedProviderEntry => {
-  const config: ProviderConfig = {
-    ...SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
-    ...overrides,
-  };
-
-  const context: ResolvedProviderEntry = {
-    ...SIMPLE_TOOLS_RESOLVED_PROVIDER_ENTRY_STUB,
-    config,
-  };
-
-  return context;
 };
