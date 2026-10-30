@@ -28,7 +28,8 @@ const tokenizeReviewArgs = (args: string[]): ReviewParseState => {
   for (let index = 0; index < args.length;) {
     const arg = args[index];
     const nextArg = args[index + 1];
-    const stateKey = arg ? REVIEW_VALUE_FLAGS[arg] : undefined;
+    const isValueFlag = arg !== undefined && Object.hasOwn(REVIEW_VALUE_FLAGS, arg);
+    const stateKey = isValueFlag ? REVIEW_VALUE_FLAGS[arg] : undefined;
 
     if (arg === '--stream-live') {
       state.streamLive = true;

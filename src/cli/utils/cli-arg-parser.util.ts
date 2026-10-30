@@ -43,7 +43,8 @@ const ASK_ARG_KEYS: AskArgKey[] = [
 ];
 
 const parseValueFlag = (state: ParseState, flag: string, value: string | undefined): boolean => {
-  const key = VALUE_FLAGS[flag];
+  const isValueFlag = Object.hasOwn(VALUE_FLAGS, flag);
+  const key = isValueFlag ? VALUE_FLAGS[flag] : undefined;
 
   if (!key) return false;
 
