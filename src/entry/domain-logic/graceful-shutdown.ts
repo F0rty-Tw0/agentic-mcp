@@ -16,4 +16,7 @@ export const registerGracefulShutdown = (close: CloseFn): void => {
   process.on('SIGTERM', () => {
     void handler();
   });
+  process.on('SIGHUP', () => {
+    void handler();
+  });
 };

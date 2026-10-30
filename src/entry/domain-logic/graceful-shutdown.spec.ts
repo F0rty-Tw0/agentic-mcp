@@ -29,6 +29,17 @@ describe('registerGracefulShutdown', () => {
     expect(sigtermCall).toBeDefined();
   });
 
+  it('GIVEN a close function WHEN registerGracefulShutdown is called THEN registers a SIGHUP handler so detached CLI groups are stopped on hangup', () => {
+    const onSpy = vi.spyOn(process, 'on').mockImplementation(() => process);
+    const closeFn = vi.fn().mockResolvedValue(undefined);
+
+    registerGracefulShutdown(closeFn);
+
+    const sighupCall = onSpy.mock.calls.find((call) => call[0] === 'SIGHUP');
+
+    expect(sighupCall).toBeDefined();
+  });
+
   it('GIVEN SIGINT fires WHEN handler runs THEN calls the close function', async () => {
     let sigintHandler: () => unknown | Promise<void> = () => undefined;
 
