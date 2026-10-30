@@ -2,6 +2,13 @@ import type { Readable } from 'node:stream';
 
 export type StreamChunkCallback = (chunk: string) => void;
 
+export type UntrackChildGroup = () => void;
+
+export type ChildGroupRegistry = {
+  readonly track: (pid: number) => UntrackChildGroup;
+  readonly terminateAll: () => void;
+};
+
 export type StdioReleasableChild = {
   readonly on: (event: 'exit', listener: () => void) => unknown;
   readonly stdout: Readable | null;

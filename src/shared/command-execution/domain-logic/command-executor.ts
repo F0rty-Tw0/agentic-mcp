@@ -10,8 +10,10 @@ import type {
   IdleTimeoutHandle,
   ProviderQueueOptions,
   StreamCollector,
+  UntrackChildGroup,
 } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
+import { defaultChildGroupRegistry } from './child-group-registry';
 import { setupIdleTimeout } from './command-idle-timeout';
 import { releaseStdioAfterKilledExit } from './command-stdio-release';
 import { createAbortSubscription, setupTimeout } from './command-timeout';
@@ -87,14 +89,28 @@ const acquireQueueLease = async (options: ExecuteCommandOptions): Promise<QueueL
   return lease;
 };
 
+const noopUntrack: UntrackChildGroup = () => undefined;
+
+// POSIX: lead a new process group so killProcess(-pid) also reaches descendants; Windows uses taskkill /T.
+const isDetachedPlatform = (): boolean => process.platform !== 'win32';
+
 const spawnProcess = (options: ExecuteCommandOptions): ChildProcess => {
   const { binaryPath, args, env, stdin, cwd } = options;
   const stdio: StdioOptions = [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'];
-  // POSIX: lead a new process group so killProcess(-pid) also reaches descendants; Windows uses taskkill /T.
-  const detached = process.platform !== 'win32';
+  const detached = isDetachedPlatform();
   const child = crossSpawn(binaryPath, args, { env, stdio, cwd, detached });
 
   return child;
+};
+
+const trackChildGroup = (child: ChildProcess): UntrackChildGroup => {
+  const detached = isDetachedPlatform();
+
+  if (!detached || child.pid === undefined) return noopUntrack;
+
+  const untrack = defaultChildGroupRegistry.track(child.pid);
+
+  return untrack;
 };
 
 const writeStdin = (child: ChildProcess, stdin?: string): void => {
@@ -110,6 +126,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
   return new Promise<ExecutionResult>((resolve, reject) => {
     const child = spawnProcess(options);
+    const untrackGroup = trackChildGroup(child);
 
     if (child.pid !== undefined && onSpawned) onSpawned(child.pid);
 
@@ -127,6 +144,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       idleTimeout.clear();
       abort.detach();
       cancelStdioRelease();
+      untrackGroup();
     };
 
     child.on('error', (error: Error) => {

@@ -1,4 +1,5 @@
 export type {
+  ChildGroupRegistry,
   ExecuteCommandOptions,
   ExecutionResult,
   IdleTimeoutHandle,
@@ -7,6 +8,7 @@ export type {
   StdioReleasableChild,
   StreamChunkCallback,
   StreamCollector,
+  UntrackChildGroup,
 } from './command-executor.type';
 
 export {
