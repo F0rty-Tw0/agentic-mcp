@@ -40,7 +40,8 @@ export const installSkill = async (
 
     return result;
   } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err);
+    const fallbackReason = String(err);
+    const reason = err instanceof Error ? err.message : fallbackReason;
     const result: SkillInstallResult = { status: 'error', skillPath, reason };
 
     return result;

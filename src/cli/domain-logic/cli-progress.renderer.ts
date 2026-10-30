@@ -61,7 +61,11 @@ const isAskStreamEventType = (value: string): value is AskStreamEvent['type'] =>
 };
 
 const isAskStreamEvent = (value: unknown): value is AskStreamEvent => {
-  if (!isRecord(value) || !hasBaseEventFields(value) || typeof value.type !== 'string') return false;
+  if (!isRecord(value)) return false;
+
+  const hasBaseFields = hasBaseEventFields(value);
+
+  if (!hasBaseFields || typeof value.type !== 'string') return false;
 
   if (!isAskStreamEventType(value.type)) return false;
 
@@ -86,7 +90,9 @@ const parseAskStreamEvent = (message: string): AskStreamEvent | undefined => {
 };
 
 const ensureTrailingNewline = (text: string): string => {
-  if (text.endsWith('\n')) return text;
+  const hasTrailingNewline = text.endsWith('\n');
+
+  if (hasTrailingNewline) return text;
 
   const result = `${text}\n`;
 

@@ -3,11 +3,12 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildSetupPlan } from './plan-setup.util';
+import type { McpServerEntry } from '../common';
 
-const AGENTIC_SERVER_ENTRY = {
+const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
-} as const;
+};
 
 describe('buildSetupPlan', () => {
   it('GIVEN claude-code client without path override WHEN building plan THEN resolves default client path', () => {

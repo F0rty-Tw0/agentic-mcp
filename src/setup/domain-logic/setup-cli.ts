@@ -4,16 +4,11 @@ import process from 'node:process';
 import { createInterface } from 'node:readline';
 
 import type { SetupCliDependencies } from '../common';
-import {
-  applySetupPlan,
-  buildSetupPlan,
-  installSkill,
-  parseSetupArgs,
-  runConfiguredSetup,
-  runMinimalSetup,
-} from '../utils';
+import { buildSetupPlan, parseSetupArgs, runConfiguredSetup, runMinimalSetup } from '../utils';
+import { applySetupPlan } from './apply-setup-plan';
 import { detectInstalledProviders } from './detect-providers';
 import { generateClientConfigEntry } from './generate-config';
+import { installSkill } from './install-skill';
 
 const defaultPromptConfirm = async (question: string): Promise<boolean> => {
   const readLine = createInterface({ input: process.stdin, output: process.stdout });
@@ -40,10 +35,7 @@ const defaultDependencies: SetupCliDependencies = {
   readConfigFile: async (configPath: string) => readFile(configPath, 'utf8'),
 };
 
-export const runSetup = async (
-  args: readonly string[],
-  injectedDependencies?: Partial<SetupCliDependencies>
-): Promise<void> => {
+export const runSetup = async (args: string[], injectedDependencies?: Partial<SetupCliDependencies>): Promise<void> => {
   const dependencies: SetupCliDependencies = { ...defaultDependencies, ...injectedDependencies };
   const parsedArgs = parseSetupArgs({ args, stderrWrite: dependencies.stderrWrite });
   const detectedProviders = await dependencies.detectInstalledProviders();

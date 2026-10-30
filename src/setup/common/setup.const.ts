@@ -1,4 +1,6 @@
-import type { SupportedClient } from './setup.types';
+import type { SupportedClient } from './setup.type';
+
+export const SUPPORTED_CLIENTS: SupportedClient[] = ['claude-code', 'cursor', 'windsurf', 'generic'];
 
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'opencode'] as const;
 

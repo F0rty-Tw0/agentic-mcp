@@ -3,13 +3,17 @@ import path from 'node:path';
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { AskAllProviderResult, AskAllResult } from '../../ask-all';
+import type { AskAllProviderResult, AskAllResult } from '../../ask-all/common';
 import { ValidationError } from '../../shared';
 
-type WriteAskAllReportInput = Readonly<{
-  reportPath: string;
-  result: CallToolResult;
-}>;
+type WriteAskAllReportInput = {
+  readonly reportPath: string;
+  readonly result: CallToolResult;
+};
+
+type StructuredContent = Readonly<Record<string, unknown>>;
+
+const MISSING_STRUCTURED_CONTENT_MESSAGE = 'ask_all report export requires structured comparison data';
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown']);
 
@@ -20,7 +24,7 @@ const isMarkdownReportPath = (reportPath: string): boolean => {
   return isMarkdown;
 };
 
-const buildProviderSection = (providerResult: AskAllProviderResult): readonly string[] => {
+const buildProviderSection = (providerResult: AskAllProviderResult): string[] => {
   const lines = [
     `## ${providerResult.provider}`,
     `- Status: ${providerResult.success ? 'success' : 'failed'}`,
@@ -48,10 +52,14 @@ const buildMarkdownReportContent = (structuredContent: AskAllResult): string => 
   ];
 
   for (const providerResult of structuredContent.results) {
-    lines.push(...buildProviderSection(providerResult));
+    const providerSection = buildProviderSection(providerResult);
+
+    lines.push(...providerSection);
   }
 
-  if (lines.at(-1) === '') {
+  const lastLine = lines.at(-1);
+
+  if (lastLine === '') {
     lines.pop();
   }
 
@@ -67,16 +75,36 @@ const buildJsonReportContent = (structuredContent: AskAllResult): string => {
 };
 
 const buildReportContent = (reportPath: string, structuredContent: AskAllResult): string => {
-  if (isMarkdownReportPath(reportPath)) return buildMarkdownReportContent(structuredContent);
+  const isMarkdown = isMarkdownReportPath(reportPath);
+
+  if (isMarkdown) return buildMarkdownReportContent(structuredContent);
 
   return buildJsonReportContent(structuredContent);
 };
 
-const resolveStructuredContent = (result: CallToolResult): AskAllResult => {
-  if (result.structuredContent == null)
-    throw new ValidationError('ask_all report export requires structured comparison data');
+const hasAskAllCounters = (value: StructuredContent): boolean => {
+  const result =
+    typeof value.totalProviders === 'number' &&
+    typeof value.succeeded === 'number' &&
+    typeof value.failed === 'number' &&
+    typeof value.totalExecutionTimeMs === 'number';
 
-  const structuredContent = result.structuredContent as AskAllResult;
+  return result;
+};
+
+const isAskAllResult = (value: StructuredContent): value is AskAllResult => {
+  const hasCounters = hasAskAllCounters(value);
+  const result = typeof value.prompt === 'string' && Array.isArray(value.results) && hasCounters;
+
+  return result;
+};
+
+const resolveStructuredContent = (result: CallToolResult): AskAllResult => {
+  const { structuredContent } = result;
+
+  if (structuredContent == null) throw new ValidationError(MISSING_STRUCTURED_CONTENT_MESSAGE);
+
+  if (!isAskAllResult(structuredContent)) throw new ValidationError(MISSING_STRUCTURED_CONTENT_MESSAGE);
 
   return structuredContent;
 };

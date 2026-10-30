@@ -2,26 +2,38 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import type { McpServerEntry, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
+type ReadLineInterfaceMock = {
+  readonly question: (question: string, callback: (answer: string) => void) => void;
+  readonly close: () => void;
+};
+
 const mocks = vi.hoisted(() => {
   const close = vi.fn<() => void>();
   const question = vi.fn<(question: string, callback: (answer: string) => void) => void>();
-  const createInterface = vi.fn(() => ({
-    question,
-    close,
-  }));
+  const createReadLineInterface = (): ReadLineInterfaceMock => {
+    const readLineInterface: ReadLineInterfaceMock = { question, close };
 
-  return {
+    return readLineInterface;
+  };
+  const createInterface = vi.fn(createReadLineInterface);
+  const hoistedMocks = {
     close,
     question,
     createInterface,
   };
+
+  return hoistedMocks;
 });
 
-vi.mock('node:readline', () => ({
-  createInterface: mocks.createInterface,
-}));
+vi.mock('node:readline', () => {
+  const nodeReadlineModule = {
+    createInterface: mocks.createInterface,
+  };
 
-let runSetup: (args: readonly string[], injectedDependencies?: Partial<SetupCliDependencies>) => Promise<void>;
+  return nodeReadlineModule;
+});
+
+let runSetup: (args: string[], injectedDependencies?: Partial<SetupCliDependencies>) => Promise<void>;
 
 const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',

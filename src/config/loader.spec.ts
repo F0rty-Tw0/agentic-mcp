@@ -6,7 +6,7 @@ import process from 'node:process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadConfig, warnDangerousFlags } from './loader';
-import type { ProvidersFile } from '../shared';
+import type { CommandDef, FlagValue, ProviderConfig, ProvidersFile } from '../shared';
 
 const tempDirs: string[] = [];
 
@@ -18,35 +18,43 @@ const createTempDir = async (): Promise<string> => {
   return dir;
 };
 
-const buildProvider = (
-  overrides: Partial<ProvidersFile['providers'][string]> = {}
-): ProvidersFile['providers'][string] => ({
-  enabled: true,
-  description: 'Loader test provider',
-  command: 'test-cli',
-  timeout: 120000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: {
-      args: ['run'],
-    },
-  },
-  input: {
-    method: 'positional',
-  },
-  ...overrides,
-});
+const buildProvider = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => {
+  const ask: CommandDef = { args: ['run'] };
+  const commands: ProviderConfig['commands'] = { ask };
+  const input: ProviderConfig['input'] = { method: 'positional' };
+  const provider: ProviderConfig = {
+    enabled: true,
+    description: 'Loader test provider',
+    command: 'test-cli',
+    timeout: 120000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+    ...overrides,
+  };
 
-const buildConfig = (
-  providerName: string,
-  providerOverrides: Partial<ProvidersFile['providers'][string]> = {}
-): ProvidersFile => ({
-  configVersion: 1,
-  providers: {
-    [providerName]: buildProvider(providerOverrides),
-  },
-});
+  return provider;
+};
+
+const buildConfig = (providerName: string, providerOverrides: Partial<ProviderConfig> = {}): ProvidersFile => {
+  const providers: ProvidersFile['providers'] = { [providerName]: buildProvider(providerOverrides) };
+  const config: ProvidersFile = {
+    configVersion: 1,
+    providers,
+  };
+
+  return config;
+};
+
+const buildAutoModeOverrides = (autoMode: FlagValue): Partial<ProviderConfig> => {
+  const flags: CommandDef['flags'] = { autoMode };
+  const ask: CommandDef = { args: ['run'], flags };
+  const commands: ProviderConfig['commands'] = { ask };
+  const overrides: Partial<ProviderConfig> = { commands };
+
+  return overrides;
+};
 
 const writeConfig = async (dir: string, fileName: string, config: ProvidersFile): Promise<string> => {
   const filePath = path.join(dir, fileName);
@@ -139,16 +147,7 @@ describe('loadConfig', () => {
     const configPath = await writeConfig(
       tempDir,
       'dangerous.json',
-      buildConfig('unsafe', {
-        commands: {
-          ask: {
-            args: ['run'],
-            flags: {
-              autoMode: ['--full-auto'],
-            },
-          },
-        },
-      })
+      buildConfig('unsafe', buildAutoModeOverrides(['--full-auto']))
     );
 
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
@@ -164,13 +163,9 @@ describe('loadConfig', () => {
 
   it('GIVEN dangerous flags WHEN filtering by provider name THEN only warns for matching providers', async () => {
     const tempDir = await createTempDir();
-    const configPath = await writeConfig(
-      tempDir,
-      'multi-dangerous.json',
-      buildConfig('safe', {
-        commands: { ask: { args: ['run'], flags: {} } },
-      })
-    );
+    const ask: CommandDef = { args: ['run'], flags: {} };
+    const commands: ProviderConfig['commands'] = { ask };
+    const configPath = await writeConfig(tempDir, 'multi-dangerous.json', buildConfig('safe', { commands }));
 
     const config = await loadConfig({ configPath });
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
@@ -190,16 +185,7 @@ describe('loadConfig', () => {
   });
 
   it('GIVEN autoMode is not an array WHEN calling warnDangerousFlags THEN it skips warning output', () => {
-    const config = buildConfig('safe', {
-      commands: {
-        ask: {
-          args: ['run'],
-          flags: {
-            autoMode: '--full-auto',
-          },
-        },
-      },
-    });
+    const config = buildConfig('safe', buildAutoModeOverrides('--full-auto'));
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
     warnDangerousFlags(config, ['safe']);
@@ -224,24 +210,13 @@ describe('loadConfig', () => {
   });
 
   it('GIVEN provider lacks ask command or only has safe auto-mode flags WHEN warning THEN nothing is written', () => {
+    const baseProvider = buildProvider();
+    const missingAsk: ProviderConfig = { ...baseProvider, commands: {} };
+    const safeArray = buildProvider(buildAutoModeOverrides(['--safe-flag']));
+    const providers: ProvidersFile['providers'] = { missingAsk, safeArray };
     const config: ProvidersFile = {
       configVersion: 1,
-      providers: {
-        missingAsk: {
-          ...buildProvider(),
-          commands: {},
-        } as ProvidersFile['providers'][string],
-        safeArray: buildProvider({
-          commands: {
-            ask: {
-              args: ['run'],
-              flags: {
-                autoMode: ['--safe-flag'],
-              },
-            },
-          },
-        }),
-      },
+      providers,
     };
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 

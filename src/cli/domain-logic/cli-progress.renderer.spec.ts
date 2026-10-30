@@ -2,33 +2,45 @@ import type { Progress } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
-import { renderCliProgress } from './cli-progress-renderer.util';
+import { renderCliProgress } from './cli-progress.renderer';
 import { ASK_STREAM_EVENT_SCHEMA } from '../../streaming/common';
 import type { AskStreamDiagnostics, AskStreamEvent, AskStreamExecutionSummary } from '../../streaming/common';
 
-const buildSummary = (): AskStreamExecutionSummary => ({
-  exitCode: 0,
-  signal: null,
-  timedOut: false,
-  truncated: false,
-  stdoutBytes: 1,
-  stderrBytes: 0,
-  executionTimeMs: 1,
-});
+const buildSummary = (): AskStreamExecutionSummary => {
+  const summary: AskStreamExecutionSummary = {
+    exitCode: 0,
+    signal: null,
+    timedOut: false,
+    truncated: false,
+    stdoutBytes: 1,
+    stderrBytes: 0,
+    executionTimeMs: 1,
+  };
 
-const buildDiagnostics = (): AskStreamDiagnostics => ({
-  streamId: 'stream-1',
-  lastSequence: 1,
-  emittedChunks: 1,
-  droppedChunks: 0,
-  coalescedChunks: 0,
-  terminalEventGraceTimeoutMs: 1000,
-});
+  return summary;
+};
 
-const buildProgress = (message: string): Progress => ({
-  progress: 1,
-  message,
-});
+const buildDiagnostics = (): AskStreamDiagnostics => {
+  const diagnostics: AskStreamDiagnostics = {
+    streamId: 'stream-1',
+    lastSequence: 1,
+    emittedChunks: 1,
+    droppedChunks: 0,
+    coalescedChunks: 0,
+    terminalEventGraceTimeoutMs: 1000,
+  };
+
+  return diagnostics;
+};
+
+const buildProgress = (message: string): Progress => {
+  const progress: Progress = {
+    progress: 1,
+    message,
+  };
+
+  return progress;
+};
 
 const buildEvent = (overrides: Partial<AskStreamEvent>): AskStreamEvent => {
   return {

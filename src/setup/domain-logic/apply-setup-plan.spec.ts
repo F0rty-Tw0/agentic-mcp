@@ -2,31 +2,41 @@ import path from 'node:path';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SetupApplyResult, SetupFileStat, SetupFs, SetupPlan } from '../common';
+import type { SetupApplyResult, SetupFileStat, SetupFs, SetupMkdirOptions, SetupPlan } from '../common';
 
-const nodeFsMocks = vi.hoisted(() => ({
-  mkdir: vi.fn<(targetPath: string, options: { recursive: boolean }) => Promise<void>>().mockResolvedValue(undefined),
-  readFile: vi.fn<(targetPath: string, encoding: 'utf8') => Promise<string>>().mockResolvedValue(''),
-  rename: vi.fn<(sourcePath: string, destinationPath: string) => Promise<void>>().mockResolvedValue(undefined),
-  writeFile: vi
-    .fn<(targetPath: string, content: string, encoding: 'utf8') => Promise<void>>()
-    .mockResolvedValue(undefined),
-  copyFile: vi
-    .fn<(sourcePath: string, destinationPath: string, mode?: number) => Promise<void>>()
-    .mockResolvedValue(undefined),
-  stat: vi.fn<(targetPath: string) => Promise<SetupFileStat>>().mockResolvedValue({
-    isFile: () => true,
-  }),
-}));
+const nodeFsMocks = vi.hoisted(() => {
+  const mkdir = vi.fn<(targetPath: string, options: SetupMkdirOptions) => Promise<void>>();
+  const readFile = vi.fn<(targetPath: string, encoding: 'utf8') => Promise<string>>();
+  const rename = vi.fn<(sourcePath: string, destinationPath: string) => Promise<void>>();
+  const writeFile = vi.fn<(targetPath: string, content: string, encoding: 'utf8') => Promise<void>>();
+  const copyFile = vi.fn<(sourcePath: string, destinationPath: string, mode?: number) => Promise<void>>();
+  const stat = vi.fn<(targetPath: string) => Promise<SetupFileStat>>();
+  const fileStat: SetupFileStat = { isFile: () => true };
 
-vi.mock('node:fs/promises', () => ({
-  mkdir: nodeFsMocks.mkdir,
-  readFile: nodeFsMocks.readFile,
-  rename: nodeFsMocks.rename,
-  writeFile: nodeFsMocks.writeFile,
-  copyFile: nodeFsMocks.copyFile,
-  stat: nodeFsMocks.stat,
-}));
+  mkdir.mockResolvedValue(undefined);
+  readFile.mockResolvedValue('');
+  rename.mockResolvedValue(undefined);
+  writeFile.mockResolvedValue(undefined);
+  copyFile.mockResolvedValue(undefined);
+  stat.mockResolvedValue(fileStat);
+
+  const mocks = { mkdir, readFile, rename, writeFile, copyFile, stat };
+
+  return mocks;
+});
+
+vi.mock('node:fs/promises', () => {
+  const fsModule = {
+    mkdir: nodeFsMocks.mkdir,
+    readFile: nodeFsMocks.readFile,
+    rename: nodeFsMocks.rename,
+    writeFile: nodeFsMocks.writeFile,
+    copyFile: nodeFsMocks.copyFile,
+    stat: nodeFsMocks.stat,
+  };
+
+  return fsModule;
+});
 
 let applySetupPlan: (plan: SetupPlan, fs?: SetupFs) => Promise<SetupApplyResult>;
 
@@ -49,18 +59,22 @@ const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
   return plan;
 };
 
-const createFsMocks = (): SetupFs => ({
-  mkdir: vi.fn().mockResolvedValue(undefined),
-  readFile: vi.fn().mockResolvedValue(''),
-  rename: vi.fn().mockResolvedValue(undefined),
-  writeFile: vi.fn().mockResolvedValue(undefined),
-  copyFile: vi.fn().mockResolvedValue(undefined),
-  stat: vi.fn().mockResolvedValue({ isFile: () => true }),
-});
+const createFsMocks = (): SetupFs => {
+  const fileStat: SetupFileStat = { isFile: () => true };
+  const mkdir = vi.fn().mockResolvedValue(undefined);
+  const readFile = vi.fn().mockResolvedValue('');
+  const rename = vi.fn().mockResolvedValue(undefined);
+  const writeFile = vi.fn().mockResolvedValue(undefined);
+  const copyFile = vi.fn().mockResolvedValue(undefined);
+  const stat = vi.fn().mockResolvedValue(fileStat);
+  const fsMocks: SetupFs = { mkdir, readFile, rename, writeFile, copyFile, stat };
+
+  return fsMocks;
+};
 
 describe('applySetupPlan', () => {
   beforeAll(async () => {
-    const applySetupPlanModule = await import('./apply-setup-plan.util');
+    const applySetupPlanModule = await import('./apply-setup-plan');
 
     applySetupPlan = applySetupPlanModule.applySetupPlan;
   });

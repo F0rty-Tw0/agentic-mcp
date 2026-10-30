@@ -36,12 +36,32 @@ const createApplyResult = (overrides?: Partial<SetupApplyResult>): SetupApplyRes
   return result;
 };
 
+type JsonSetupResult = {
+  readonly status: string;
+};
+
+type JsonSetupOutput = {
+  readonly mode: string;
+  readonly dryRun: boolean;
+  readonly result: JsonSetupResult;
+};
+
+const decodeWriteChunk = (chunk: string | Uint8Array): string => {
+  if (typeof chunk === 'string') return chunk;
+
+  const decodedChunk = Buffer.from(chunk).toString('utf8');
+
+  return decodedChunk;
+};
+
 const createDependencies = (overrides?: Record<string, unknown>): Record<string, unknown> => {
+  const detectInstalledProviders = vi.fn().mockResolvedValue([]);
+  const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
   const defaults = {
-    detectInstalledProviders: vi.fn().mockResolvedValue([]),
+    detectInstalledProviders,
     generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
     buildSetupPlan: vi.fn(() => createPlan()),
-    applySetupPlan: vi.fn().mockResolvedValue(createApplyResult()),
+    applySetupPlan,
     homeDirectory: '/home/dev',
     stdoutWrite: vi.fn(),
     stderrWrite: vi.fn(),
@@ -76,18 +96,19 @@ describe('runSetup', () => {
 
   it('GIVEN --output json WHEN running setup THEN prints JSON contract', async () => {
     const stdoutWrite = vi.fn<(message: string) => void>();
+    const buildSetupPlan = vi.fn(() =>
+      createPlan({ dryRun: true, writeIntent: 'skip', mergeStatusPreview: 'created' })
+    );
+    const skippedResult = createApplyResult({ status: 'skipped', path: undefined });
+    const applySetupPlan = vi.fn().mockResolvedValue(skippedResult);
 
     await runSetup(
       ['--output', 'json', '--dry-run'],
-      createDependencies({
-        buildSetupPlan: vi.fn(() => createPlan({ dryRun: true, writeIntent: 'skip', mergeStatusPreview: 'created' })),
-        applySetupPlan: vi.fn().mockResolvedValue(createApplyResult({ status: 'skipped', path: undefined })),
-        stdoutWrite,
-      })
+      createDependencies({ buildSetupPlan, applySetupPlan, stdoutWrite })
     );
 
     const output = stdoutWrite.mock.calls.map((call) => call[0]).join('');
-    const parsed = JSON.parse(output) as { mode: string; dryRun: boolean; result: { status: string } };
+    const parsed = JSON.parse(output) as JsonSetupOutput;
 
     expect(parsed.mode).toBe('merge');
     expect(parsed.dryRun).toBe(true);
@@ -174,15 +195,9 @@ describe('runSetup', () => {
 
   it('GIVEN interactive terminal without --yes WHEN user confirms prompt THEN applies the plan', async () => {
     const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+    const promptConfirm = vi.fn().mockResolvedValue(true);
 
-    await runSetup(
-      [],
-      createDependencies({
-        applySetupPlan,
-        isInteractive: true,
-        promptConfirm: vi.fn().mockResolvedValue(true),
-      })
-    );
+    await runSetup([], createDependencies({ applySetupPlan, isInteractive: true, promptConfirm }));
 
     expect(applySetupPlan).toHaveBeenCalledTimes(1);
   });
@@ -212,13 +227,12 @@ describe('runSetup', () => {
     const readConfigFile = vi.fn().mockResolvedValue('{}');
     const buildSetupPlan = vi.fn(() => createPlan({ client: 'generic', writeIntent: 'manual' }));
 
+    const manualResult = createApplyResult({ status: 'manual', path: undefined });
+    const applySetupPlan = vi.fn().mockResolvedValue(manualResult);
+
     await runSetup(
       ['--client', 'generic', '--yes'],
-      createDependencies({
-        buildSetupPlan,
-        applySetupPlan: vi.fn().mockResolvedValue(createApplyResult({ status: 'manual', path: undefined })),
-        readConfigFile,
-      })
+      createDependencies({ buildSetupPlan, applySetupPlan, readConfigFile })
     );
 
     expect(readConfigFile).not.toHaveBeenCalled();
@@ -226,19 +240,14 @@ describe('runSetup', () => {
   });
 
   it('GIVEN detected providers WHEN running setup THEN passes them to generateClientConfigEntry', async () => {
-    const providers: readonly DetectedProvider[] = [
+    const providers: DetectedProvider[] = [
       { name: 'claude', available: true, binaryPath: '/usr/bin/claude' },
       { name: 'copilot', available: false },
     ];
     const generateClientConfigEntry = vi.fn(() => TEST_SERVER_ENTRY);
+    const detectInstalledProviders = vi.fn().mockResolvedValue(providers);
 
-    await runSetup(
-      ['--yes'],
-      createDependencies({
-        detectInstalledProviders: vi.fn().mockResolvedValue(providers),
-        generateClientConfigEntry,
-      })
-    );
+    await runSetup(['--yes'], createDependencies({ detectInstalledProviders, generateClientConfigEntry }));
 
     expect(generateClientConfigEntry).toHaveBeenCalledWith('generic', providers);
   });
@@ -288,9 +297,10 @@ describe('runSetup', () => {
   it('GIVEN non-interactive write without injected stderr writer WHEN blocked THEN writes error to process stderr', async () => {
     const stderrWriteSpy = vi.spyOn(process.stderr, 'write');
     const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
+    const detectInstalledProviders = vi.fn().mockResolvedValue([]);
 
     await runSetup(['--client', 'cursor'], {
-      detectInstalledProviders: vi.fn().mockResolvedValue([]),
+      detectInstalledProviders,
       generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
       buildSetupPlan: vi.fn(() => createPlan()),
       applySetupPlan,
@@ -298,9 +308,8 @@ describe('runSetup', () => {
       isInteractive: false,
     });
 
-    const writtenText = stderrWriteSpy.mock.calls
-      .map((call) => (typeof call[0] === 'string' ? call[0] : Buffer.from(call[0]).toString('utf8')))
-      .join('');
+    const writtenChunks = stderrWriteSpy.mock.calls.map((call) => decodeWriteChunk(call[0]));
+    const writtenText = writtenChunks.join('');
 
     expect(writtenText).toContain('Use --yes to run non-interactive writes.');
     expect(applySetupPlan).not.toHaveBeenCalled();
@@ -310,19 +319,20 @@ describe('runSetup', () => {
 
   it('GIVEN write success without injected stdout writer WHEN running setup THEN writes output to process stdout', async () => {
     const stdoutWriteSpy = vi.spyOn(process.stdout, 'write');
+    const detectInstalledProviders = vi.fn().mockResolvedValue([]);
+    const applySetupPlan = vi.fn().mockResolvedValue(createApplyResult());
 
     await runSetup(['--client', 'cursor', '--yes'], {
-      detectInstalledProviders: vi.fn().mockResolvedValue([]),
+      detectInstalledProviders,
       generateClientConfigEntry: vi.fn(() => TEST_SERVER_ENTRY),
       buildSetupPlan: vi.fn(() => createPlan()),
-      applySetupPlan: vi.fn().mockResolvedValue(createApplyResult()),
+      applySetupPlan,
       homeDirectory: '/home/dev',
       isInteractive: false,
     });
 
-    const writtenText = stdoutWriteSpy.mock.calls
-      .map((call) => (typeof call[0] === 'string' ? call[0] : Buffer.from(call[0]).toString('utf8')))
-      .join('');
+    const writtenChunks = stdoutWriteSpy.mock.calls.map((call) => decodeWriteChunk(call[0]));
+    const writtenText = writtenChunks.join('');
 
     expect(writtenText).toContain('What was done:');
     expect(writtenText).toContain('Setup result: written.');

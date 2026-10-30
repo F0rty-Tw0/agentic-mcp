@@ -2,42 +2,63 @@ import path from 'node:path';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SkillInstallDependencies, SkillInstallResult } from '../common';
+import type { SetupMkdirOptions, SkillInstallDependencies, SkillInstallResult } from '../common';
 import { SKILL_CONTENT } from '../common/skill-content';
 
-const mocks = vi.hoisted(() => ({
-  homedir: vi.fn<() => string>().mockReturnValue('/home/default'),
-  mkdir: vi.fn<(path: string, options: { recursive: boolean }) => Promise<void>>().mockResolvedValue(undefined),
-  readFile: vi.fn<(path: string, encoding: 'utf8') => Promise<string>>().mockRejectedValue(new Error('ENOENT')),
-  writeFile: vi.fn<(path: string, content: string, encoding: 'utf8') => Promise<void>>().mockResolvedValue(undefined),
-}));
+const mocks = vi.hoisted(() => {
+  const homedir = vi.fn<() => string>();
+  const mkdir = vi.fn<(path: string, options: SetupMkdirOptions) => Promise<void>>();
+  const readFile = vi.fn<(path: string, encoding: 'utf8') => Promise<string>>();
+  const writeFile = vi.fn<(path: string, content: string, encoding: 'utf8') => Promise<void>>();
+  const missingFileError = new Error('ENOENT');
 
-vi.mock('node:os', () => ({
-  homedir: mocks.homedir,
-}));
+  homedir.mockReturnValue('/home/default');
+  mkdir.mockResolvedValue(undefined);
+  readFile.mockRejectedValue(missingFileError);
+  writeFile.mockResolvedValue(undefined);
 
-vi.mock('node:fs/promises', () => ({
-  mkdir: mocks.mkdir,
-  readFile: mocks.readFile,
-  writeFile: mocks.writeFile,
-}));
+  const hoistedMocks = { homedir, mkdir, readFile, writeFile };
+
+  return hoistedMocks;
+});
+
+vi.mock('node:os', () => {
+  const osModule = { homedir: mocks.homedir };
+
+  return osModule;
+});
+
+vi.mock('node:fs/promises', () => {
+  const fsModule = {
+    mkdir: mocks.mkdir,
+    readFile: mocks.readFile,
+    writeFile: mocks.writeFile,
+  };
+
+  return fsModule;
+});
 
 let installSkill: (injectedDependencies?: Partial<SkillInstallDependencies>) => Promise<SkillInstallResult>;
 
 const createDeps = (overrides?: Record<string, unknown>): Record<string, unknown> => {
+  const missingFileError = new Error('ENOENT');
+  const readFile = vi.fn<(path: string) => Promise<string>>().mockRejectedValue(missingFileError);
+  const writeFile = vi.fn<(path: string, content: string) => Promise<void>>().mockResolvedValue(undefined);
+  const mkdir = vi.fn<(path: string, opts: unknown) => Promise<void>>().mockResolvedValue(undefined);
   const defaults = {
-    readFile: vi.fn<(path: string) => Promise<string>>().mockRejectedValue(new Error('ENOENT')),
-    writeFile: vi.fn<(path: string, content: string) => Promise<void>>().mockResolvedValue(undefined),
-    mkdir: vi.fn<(path: string, opts: unknown) => Promise<void>>().mockResolvedValue(undefined),
+    readFile,
+    writeFile,
+    mkdir,
     homeDirectory: '/home/dev',
   };
+  const deps = { ...defaults, ...overrides };
 
-  return { ...defaults, ...overrides };
+  return deps;
 };
 
 describe('installSkill', () => {
   beforeAll(async () => {
-    const installSkillModule = await import('./install-skill.util');
+    const installSkillModule = await import('./install-skill');
 
     installSkill = installSkillModule.installSkill;
   });
@@ -73,12 +94,8 @@ describe('installSkill', () => {
     it('GIVEN skill content matches existing file WHEN installing skill THEN returns already-exists without writing', async () => {
       const writeFile = vi.fn().mockResolvedValue(undefined);
 
-      const result = await installSkill(
-        createDeps({
-          readFile: vi.fn().mockResolvedValue(SKILL_CONTENT),
-          writeFile,
-        })
-      );
+      const readFile = vi.fn().mockResolvedValue(SKILL_CONTENT);
+      const result = await installSkill(createDeps({ readFile, writeFile }));
 
       expect(writeFile).not.toHaveBeenCalled();
       expect(result.status).toBe('already-exists');
@@ -87,34 +104,25 @@ describe('installSkill', () => {
     it('GIVEN skill content differs from existing file WHEN installing skill THEN overwrites with new content', async () => {
       const writeFile = vi.fn().mockResolvedValue(undefined);
 
-      const result = await installSkill(
-        createDeps({
-          readFile: vi.fn().mockResolvedValue('outdated content'),
-          writeFile,
-        })
-      );
+      const readFile = vi.fn().mockResolvedValue('outdated content');
+      const result = await installSkill(createDeps({ readFile, writeFile }));
 
       expect(writeFile).toHaveBeenCalledWith(expect.any(String), SKILL_CONTENT, 'utf8');
       expect(result.status).toBe('installed');
     });
 
     it('GIVEN writeFile throws an Error WHEN installing skill THEN returns error status with message as reason', async () => {
-      const result = await installSkill(
-        createDeps({
-          writeFile: vi.fn().mockRejectedValue(new Error('EACCES: permission denied')),
-        })
-      );
+      const permissionError = new Error('EACCES: permission denied');
+      const writeFile = vi.fn().mockRejectedValue(permissionError);
+      const result = await installSkill(createDeps({ writeFile }));
 
       expect(result.status).toBe('error');
       expect(result.reason).toBe('EACCES: permission denied');
     });
 
     it('GIVEN writeFile throws a non-Error value WHEN installing skill THEN returns error status with stringified reason', async () => {
-      const result = await installSkill(
-        createDeps({
-          writeFile: vi.fn().mockRejectedValue('disk full'),
-        })
-      );
+      const writeFile = vi.fn().mockRejectedValue('disk full');
+      const result = await installSkill(createDeps({ writeFile }));
 
       expect(result.status).toBe('error');
       expect(result.reason).toBe('disk full');

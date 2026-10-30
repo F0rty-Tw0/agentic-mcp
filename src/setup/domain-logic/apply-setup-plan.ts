@@ -99,7 +99,8 @@ export const applySetupPlan = async (plan: SetupPlan, fs: SetupFs = defaultFs): 
 
   let backupPath: string | undefined = undefined;
   const targetExists = await hasExistingFile(plan.targetPath, fs);
-  const shouldBackup = plan.backup === 'always' || (plan.backup === 'if-exists' && targetExists);
+  const shouldBackupExisting = plan.backup === 'if-exists' && targetExists;
+  const shouldBackup = plan.backup === 'always' || shouldBackupExisting;
 
   if (shouldBackup) {
     backupPath = `${plan.targetPath}.bak`;

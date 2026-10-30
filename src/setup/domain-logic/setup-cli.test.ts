@@ -13,36 +13,45 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { DetectedProvider } from '../common';
+import type { DetectedProvider, SetupCliDependencies } from '../common';
 import { runSetup } from './setup-cli';
+
+type CommonDeps = Pick<
+  SetupCliDependencies,
+  'detectInstalledProviders' | 'stdoutWrite' | 'stderrWrite' | 'homeDirectory' | 'isInteractive'
+>;
 
 let tempDir: string;
 let stdoutOutput: string;
 let stderrOutput: string;
 
-const stubProviders: readonly DetectedProvider[] = [{ name: 'claude', available: true, binaryPath: '/usr/bin/claude' }];
+const stubProviders: DetectedProvider[] = [{ name: 'claude', available: true, binaryPath: '/usr/bin/claude' }];
 
-const commonDeps = (): {
-  detectInstalledProviders: () => Promise<readonly DetectedProvider[]>;
-  stdoutWrite: (text: string) => void;
-  stderrWrite: (text: string) => void;
-  homeDirectory: string;
-  isInteractive: boolean;
-} => ({
-  detectInstalledProviders: async (): Promise<readonly DetectedProvider[]> => {
-    const result = await Promise.resolve(stubProviders);
+const detectStubProviders = async (): Promise<DetectedProvider[]> => {
+  const result = await Promise.resolve(stubProviders);
 
-    return result;
-  },
-  stdoutWrite: (text: string): void => {
-    stdoutOutput += text;
-  },
-  stderrWrite: (text: string): void => {
-    stderrOutput += text;
-  },
-  homeDirectory: tempDir,
-  isInteractive: false,
-});
+  return result;
+};
+
+const captureStdout = (text: string): void => {
+  stdoutOutput += text;
+};
+
+const captureStderr = (text: string): void => {
+  stderrOutput += text;
+};
+
+const commonDeps = (): CommonDeps => {
+  const deps: CommonDeps = {
+    detectInstalledProviders: detectStubProviders,
+    stdoutWrite: captureStdout,
+    stderrWrite: captureStderr,
+    homeDirectory: tempDir,
+    isInteractive: false,
+  };
+
+  return deps;
+};
 
 beforeEach(async () => {
   tempDir = await mkdtemp(path.join(os.tmpdir(), 'setup-test-'));
@@ -74,7 +83,9 @@ describe('integration: setup fresh write', () => {
 describe('integration: setup merge with existing config', () => {
   it('GIVEN an existing config with other servers WHEN runSetup runs THEN both entries are preserved', async () => {
     const targetPath = path.join(tempDir, 'existing.json');
-    const existingConfig = JSON.stringify({ mcpServers: { 'other-server': { command: 'other' } } }, null, 2);
+    const otherServer = { command: 'other' };
+    const existingServers = { 'other-server': otherServer };
+    const existingConfig = JSON.stringify({ mcpServers: existingServers }, null, 2);
 
     await writeFile(targetPath, existingConfig, 'utf8');
 
@@ -92,7 +103,8 @@ describe('integration: setup merge with existing config', () => {
 describe('integration: setup backup creation', () => {
   it('GIVEN an existing config WHEN runSetup runs with backup THEN a .bak file is created', async () => {
     const targetPath = path.join(tempDir, 'backup-test.json');
-    const originalContent = JSON.stringify({ mcpServers: { original: {} } }, null, 2);
+    const originalServers = { original: {} };
+    const originalContent = JSON.stringify({ mcpServers: originalServers }, null, 2);
 
     await writeFile(targetPath, originalContent, 'utf8');
 

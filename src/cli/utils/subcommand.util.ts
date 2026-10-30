@@ -1,28 +1,28 @@
 import type { CliSubcommand } from '../common';
+import { GLOBAL_SUBCOMMANDS, PROVIDER_SUBCOMMAND_PREFIXES } from '../common/cli.const';
 
-const GLOBAL_SUBCOMMANDS = new Set<CliSubcommand>(['ask_all', 'list_providers', 'provider_metrics']);
-const PROVIDER_SUBCOMMAND_PREFIXES = ['ask_', 'review_', 'ping_', 'help_', 'sessions_'] as const;
+const isGlobalSubcommand = (arg: string): arg is CliSubcommand => {
+  const result = GLOBAL_SUBCOMMANDS.includes(arg);
 
-type ProviderSubcommandPrefix = (typeof PROVIDER_SUBCOMMAND_PREFIXES)[number];
+  return result;
+};
 
-const hasProviderSuffix = (arg: string, prefix: ProviderSubcommandPrefix): boolean => {
+const hasProviderSuffix = (arg: string, prefix: string): arg is CliSubcommand => {
   const result = arg.startsWith(prefix) && arg.length > prefix.length;
 
   return result;
 };
 
 export const parseSubcommand = (arg: string): CliSubcommand | undefined => {
-  const cliCommand = arg as CliSubcommand;
-
-  if (GLOBAL_SUBCOMMANDS.has(cliCommand)) {
-    const result = cliCommand;
+  if (isGlobalSubcommand(arg)) {
+    const result = arg;
 
     return result;
   }
 
   for (const prefix of PROVIDER_SUBCOMMAND_PREFIXES) {
-    if (hasProviderSuffix(cliCommand, prefix)) {
-      const result = cliCommand;
+    if (hasProviderSuffix(arg, prefix)) {
+      const result = arg;
 
       return result;
     }
@@ -32,7 +32,7 @@ export const parseSubcommand = (arg: string): CliSubcommand | undefined => {
 };
 
 export const isCliSubcommand = (arg: string): boolean => {
-  const subCommand = parseSubcommand(arg as CliSubcommand);
+  const subCommand = parseSubcommand(arg);
   const result = subCommand !== undefined;
 
   return result;

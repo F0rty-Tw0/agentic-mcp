@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import { buildArgArray } from './arg.builder';
 import type { ProviderConfig } from '../../shared';
-import { createCliArgsConfig as createConfig } from '../common/stubs';
+import { createCliArgsConfig as createConfig } from '../test/utils/cli-args-config.spec.util';
 
 describe('buildArgArray wave 3 provider patterns', () => {
   describe('wave 3a', () => {
     it('GIVEN aider style config WHEN building args THEN it uses --message with trailing yes and model flag', () => {
+      const flags = { model: '--model' };
       const config = createConfig({
         method: 'flag',
         args: ['--message'],
         trailingArgs: ['--yes'],
-        flags: { model: '--model' },
+        flags,
       });
 
       const result = buildArgArray(config, { prompt: 'refactor this', model: 'sonnet' });
@@ -21,11 +22,12 @@ describe('buildArgArray wave 3 provider patterns', () => {
     });
 
     it('GIVEN goose style config WHEN building args THEN it uses run --text with json trailing args', () => {
+      const flags = { model: '--model' };
       const config = createConfig({
         method: 'flag',
         args: ['run', '--text'],
         trailingArgs: ['--no-session', '--output-format', 'json'],
-        flags: { model: '--model' },
+        flags,
       });
 
       const result = buildArgArray(config, { prompt: 'summarize repo', model: 'goose-1' });
@@ -44,13 +46,15 @@ describe('buildArgArray wave 3 provider patterns', () => {
     });
 
     it('GIVEN amp style config WHEN building args THEN it sends prompt on stdin and appends execute flags', () => {
+      const flags = { autoMode: ['--dangerously-allow-all'] };
+      const baseConfig = createConfig({
+        method: 'stdin',
+        args: ['--execute'],
+        trailingArgs: ['--stream-json'],
+        flags,
+      });
       const config: ProviderConfig = {
-        ...createConfig({
-          method: 'stdin',
-          args: ['--execute'],
-          trailingArgs: ['--stream-json'],
-          flags: { autoMode: ['--dangerously-allow-all'] },
-        }),
+        ...baseConfig,
         outputFormat: 'stream-json',
       };
 
@@ -64,13 +68,14 @@ describe('buildArgArray wave 3 provider patterns', () => {
 
   describe('wave 3b', () => {
     it('GIVEN cline style config WHEN building args THEN it keeps positional prompt between headless and json flags', () => {
+      const baseConfig = createConfig({
+        method: 'positional',
+        args: ['-y'],
+        trailingArgs: ['--json'],
+        flags: {},
+      });
       const config: ProviderConfig = {
-        ...createConfig({
-          method: 'positional',
-          args: ['-y'],
-          trailingArgs: ['--json'],
-          flags: {},
-        }),
+        ...baseConfig,
         outputFormat: 'stream-json',
       };
 
@@ -81,15 +86,17 @@ describe('buildArgArray wave 3 provider patterns', () => {
     });
 
     it('GIVEN cursor style config WHEN building args THEN it uses print mode with model, workspace, and sandbox flags', () => {
+      const sandbox = { flag: '--sandbox', values: ['enabled', 'disabled'] };
+      const flags = {
+        model: '--model',
+        workingDir: '--workspace',
+        sandbox,
+      };
       const config = createConfig({
         method: 'flag',
         args: ['-p'],
         trailingArgs: ['--output-format', 'json'],
-        flags: {
-          model: '--model',
-          workingDir: '--workspace',
-          sandbox: { flag: '--sandbox', values: ['enabled', 'disabled'] },
-        },
+        flags,
       });
 
       const result = buildArgArray(config, {
@@ -114,11 +121,12 @@ describe('buildArgArray wave 3 provider patterns', () => {
     });
 
     it('GIVEN droid style config WHEN building args THEN it uses exec with model and cwd flags', () => {
+      const flags = { model: '-m', workingDir: '--cwd' };
       const config = createConfig({
         method: 'positional',
         args: ['exec'],
         trailingArgs: ['--output-format', 'json'],
-        flags: { model: '-m', workingDir: '--cwd' },
+        flags,
       });
 
       const result = buildArgArray(config, {

@@ -1,35 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { DetectedProvider } from '../common';
+import { runMinimalSetup } from './setup-cli-runner.util';
+import { DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
+import type { MinimalJsonOutput } from '../test/common/setup.type';
 import {
-  DEFAULT_SKILL_PATH,
-  TEST_PROVIDERS,
   createParsedSetupArgs,
   createSetupCliDependencies,
   readStdoutCallOutput,
   readStdoutOutput,
-} from './setup-cli-runner.spec.helper';
-import { runMinimalSetup } from './setup-cli-runner.util';
-
-type MinimalJsonOutput = Readonly<{
-  client: string;
-  mode: string;
-  nextSteps: readonly string[];
-  providers: readonly DetectedProvider[];
-  skillResult: Readonly<{
-    status: string;
-    skillPath: string;
-  }>;
-  summary: Readonly<{
-    nextStep: Readonly<{
-      command: string;
-      kind: string;
-      purpose: string;
-    }>;
-    firstProofCommand?: string;
-    unproven: readonly string[];
-  }>;
-}>;
+} from '../test/utils/setup-cli-runner.spec.util';
 
 const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
 
