@@ -205,8 +205,8 @@ catalogs:
       version: 5.0.5
   runtime:
     '@modelcontextprotocol/sdk':
-      specifier: ~1.28.0
-      version: 1.28.0
+      specifier: ^1.32.0
+      version: 1.32.2
     cross-spawn:
       specifier: ^7.0.6
       version: 7.0.6
@@ -225,7 +225,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: catalog:runtime
-        version: 1.28.0(supports-color@10.2.2)(zod@4.6.7)
+        version: 1.32.2(supports-color@10.2.2)(zod@4.6.7)
       cross-spawn:
         specifier: catalog:runtime
         version: 7.0.6
@@ -916,8 +916,8 @@ packages:
     peerDependencies:
       stylelint: 17.16.0
 
-  '@modelcontextprotocol/sdk@1.28.0':
-    resolution: {integrity: sha512-gmloF+i+flI8ouQK7MWW4mOwuMh4RePBuPFAEPC6+pdqyWOUMDOixb6qZ69owLJpz6XmyllCouc4t8YWO+E2Nw==}
+  '@modelcontextprotocol/sdk@1.32.2':
+    resolution: {integrity: sha512-SWsVtH/0vULSQStoZ6xxH2K09Li8fXYTMC64ZeogCdpZ3XSi1eCPOByV1OpuJxuI3OcmHhosDWYyii07tpPsLw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -4034,7 +4034,7 @@ snapshots:
       stylelint: 17.16.0(supports-color@10.2.2)
       typescript: 6.0.3
 
-  '@modelcontextprotocol/sdk@1.28.0(supports-color@10.2.2)(zod@4.6.7)':
+  '@modelcontextprotocol/sdk@1.32.2(supports-color@10.2.2)(zod@4.6.7)':
     dependencies:
       '@hono/node-server': 1.19.17(hono@4.13.14)
       ajv: 8.20.0
