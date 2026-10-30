@@ -1,87 +1,16 @@
 import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
 
-import {
-  buildErrorResult,
-  buildProviderFailure,
-  buildProviderSuccess,
-  buildProviderTimeoutMessage,
-} from './ask-all-result.builder';
+import { buildErrorResult } from './ask-all-result.builder';
+import { runProviderAsk } from './ask-all-runner';
 import { buildAskAllSummary } from './ask-all-summary.builder';
-import { handleAsk } from '../../ask';
-import type { AskToolArgs } from '../../ask/common';
-import { resolveAskTimeoutMs } from '../../ask/utils';
+import { startHeartbeat } from '../../shared';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common';
-import { extractResponseText } from '../utils';
-
-type RunProviderAskInput = {
-  readonly provider: ResolvedProviderEntry;
-  readonly args: AskAllToolArgs;
-  readonly model?: string;
-};
 
 type ResolvedAskAllInput = {
   readonly filteredProviders: ResolvedProviderEntry[];
   readonly model?: string;
-};
-
-const buildModelArgs = (model?: string): AskToolArgs => {
-  const noModelArgs: AskToolArgs = {};
-
-  if (!model) return noModelArgs;
-
-  const result: AskToolArgs = { model };
-
-  return result;
-};
-
-const buildAskArgs = (args: AskAllToolArgs, model?: string): AskToolArgs => {
-  const modelArgs = buildModelArgs(model);
-  const result: AskToolArgs = {
-    prompt: args.prompt,
-    ...modelArgs,
-    context: args.context,
-    working_directory: args.working_directory,
-    system_prompt: args.system_prompt,
-  };
-
-  return result;
-};
-
-const createAskAllProgressContext = (signal: AbortSignal): ProgressContext => {
-  const result: ProgressContext = {
-    sendNotification: async (): Promise<void> => {
-      await Promise.resolve();
-    },
-    ['_meta']: {},
-    signal,
-  };
-
-  return result;
-};
-
-const runAskWithTimeout = async (provider: ResolvedProviderEntry, askArgs: AskToolArgs): Promise<CallToolResult> => {
-  const controller = new AbortController();
-  const progressContext = createAskAllProgressContext(controller.signal);
-  const timeoutMs = resolveAskTimeoutMs(provider.config.timeout);
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
-  const timeoutPromise = new Promise<CallToolResult>((resolve) => {
-    timeoutId = setTimeout(() => {
-      controller.abort();
-      resolve(buildErrorResult(buildProviderTimeoutMessage(provider.name, timeoutMs)));
-    }, timeoutMs);
-  });
-
-  try {
-    const askPromise = handleAsk(provider, askArgs, progressContext);
-    const result = await Promise.race([askPromise, timeoutPromise]);
-
-    return result;
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
 };
 
 const resolveAskAllInput = (resolvedProviders: ResolvedProviderEntry[], args: AskAllToolArgs): ResolvedAskAllInput => {
@@ -103,29 +32,29 @@ const resolveAskAllInput = (resolvedProviders: ResolvedProviderEntry[], args: As
   return result;
 };
 
-const runProviderAsk = async (runProviderAskInput: RunProviderAskInput): Promise<AskAllProviderResult> => {
-  const { provider, args, model } = runProviderAskInput;
-  const startTime = Date.now();
+const runAllProviderAsks = async (
+  resolvedInput: ResolvedAskAllInput,
+  args: AskAllToolArgs,
+  extra?: ProgressContext
+): Promise<AskAllProviderResult[]> => {
+  const callerSignal = extra?.signal;
+  const stopHeartbeat = startHeartbeat(extra);
+  const runForProvider = async (provider: ResolvedProviderEntry): Promise<AskAllProviderResult> =>
+    runProviderAsk({ provider, args, model: resolvedInput.model, callerSignal });
 
   try {
-    const result = await runAskWithTimeout(provider, buildAskArgs(args, model));
-    const text = extractResponseText(result);
-    const executionTimeMs = Date.now() - startTime;
+    const results = await Promise.all(resolvedInput.filteredProviders.map(runForProvider));
 
-    if (!result.isError) return buildProviderSuccess(provider, executionTimeMs, text);
-
-    return buildProviderFailure(provider, executionTimeMs, text);
-  } catch (err: unknown) {
-    const errorText = String(err);
-    const error = err instanceof Error ? err.message : errorText;
-
-    return buildProviderFailure(provider, Date.now() - startTime, error);
+    return results;
+  } finally {
+    stopHeartbeat();
   }
 };
 
 export const handleAskAll = async (
   resolvedProviders: ResolvedProviderEntry[],
-  args: AskAllToolArgs
+  args: AskAllToolArgs,
+  extra?: ProgressContext
 ): Promise<CallToolResult> => {
   const resolvedInput = resolveAskAllInput(resolvedProviders, args);
 
@@ -134,11 +63,7 @@ export const handleAskAll = async (
   }
 
   const wallStart = Date.now();
-  const results = await Promise.all(
-    resolvedInput.filteredProviders.map(async (provider): Promise<AskAllProviderResult> =>
-      runProviderAsk({ provider, args, model: resolvedInput.model })
-    )
-  );
+  const results = await runAllProviderAsks(resolvedInput, args, extra);
   const totalExecutionTimeMs = Date.now() - wallStart;
 
   const succeeded = results.filter((result) => result.success);
