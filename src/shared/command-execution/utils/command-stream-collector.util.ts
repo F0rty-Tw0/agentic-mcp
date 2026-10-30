@@ -1,4 +1,5 @@
 import type { Readable } from 'node:stream';
+import { StringDecoder } from 'node:string_decoder';
 
 import type { StreamChunkCallback, StreamCollector } from '../common';
 
@@ -26,8 +27,19 @@ const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): C
   return streamResults;
 };
 
+const emitDecodedText = (text: string, onChunk?: StreamChunkCallback): void => {
+  if (!onChunk || text.length === 0) return;
+
+  try {
+    onChunk(text);
+  } catch {
+    /* empty */
+  }
+};
+
 export const attachStreamCollector = (stream: Readable | null, onChunk?: StreamChunkCallback): StreamCollector => {
   const chunks: Buffer[] = [];
+  const decoder = new StringDecoder('utf-8');
   let currentBytes = 0;
   let isTruncated = false;
 
@@ -38,13 +50,11 @@ export const attachStreamCollector = (stream: Readable | null, onChunk?: StreamC
 
     if (result.truncated) isTruncated = true;
 
-    if (onChunk) {
-      try {
-        onChunk(chunk.toString('utf-8'));
-      } catch {
-        /* empty */
-      }
-    }
+    emitDecodedText(decoder.write(chunk), onChunk);
+  });
+
+  stream?.on('end', () => {
+    emitDecodedText(decoder.end(), onChunk);
   });
 
   const streamCollector: StreamCollector = {
