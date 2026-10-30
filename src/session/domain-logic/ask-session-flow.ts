@@ -22,10 +22,8 @@ type SessionFlowResult = {
   readonly nativeSessionId?: string;
   readonly sessionMode: SessionMode;
   readonly wasCancelled: boolean;
+  readonly wasStopped?: boolean;
 };
-
-// Wording from CommandExecutionError.toMcpResponse: AskExecution carries no timedOut or signal field.
-const STOPPED_RUN_MARKERS = ['Process timed out.', 'Killed by signal: '];
 
 type SessionExecutionInput = {
   readonly context: ResolvedProviderEntry;
@@ -60,14 +58,6 @@ const buildTier1Prompt = (context: ResolvedProviderEntry, args: AskToolArgs, ses
   return prompt;
 };
 
-const isStoppedByTimeoutOrSignal = (response: CallToolResult): boolean => {
-  const texts = response.content.map((item) => (item.type === 'text' ? item.text : ''));
-  const responseText = texts.join('\n');
-  const result = STOPPED_RUN_MARKERS.some((marker) => responseText.includes(marker));
-
-  return result;
-};
-
 const canFallBackToTier1 = (
   execution: SessionFlowResult,
   state: SessionFlowState,
@@ -77,10 +67,8 @@ const canFallBackToTier1 = (
 
   const isAborted = extra?.signal?.aborted ?? false;
 
-  if (execution.wasCancelled || isAborted) return false;
-
-  const stoppedByTimeoutOrSignal = isStoppedByTimeoutOrSignal(execution.response);
-  const result = !stoppedByTimeoutOrSignal;
+  const wasStopped = execution.wasStopped ?? false;
+  const result = !execution.wasCancelled && !isAborted && !wasStopped;
 
   return result;
 };

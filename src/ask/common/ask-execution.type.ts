@@ -8,4 +8,5 @@ export type AskExecution = {
   readonly responseText: string;
   readonly nativeSessionId?: string;
   readonly wasCancelled: boolean;
+  readonly wasStopped?: boolean;
 };

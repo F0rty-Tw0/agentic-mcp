@@ -186,9 +186,13 @@ describe('executeSessionFlow', () => {
   });
 });
 
-const createFailedExecution = (error: CommandExecutionError, wasCancelled = false): AskExecution => {
+const createFailedExecution = (
+  error: CommandExecutionError,
+  wasCancelled = false,
+  wasStopped = false
+): AskExecution => {
   const response = error.toMcpResponse();
-  const result = createAskExecution({ response, wasCancelled });
+  const result = createAskExecution({ response, wasCancelled, wasStopped });
 
   return result;
 };
@@ -227,7 +231,7 @@ describe('executeSessionFlow tier2 fallback', () => {
   it('GIVEN tier2 times out WHEN executeSessionFlow called THEN it returns the timeout without a fallback run', async () => {
     const timeout = new CommandExecutionError('failed', { exitCode: null, signal: 'SIGTERM', timedOut: true });
 
-    mockRunAskInvocation.mockResolvedValue(createFailedExecution(timeout));
+    mockRunAskInvocation.mockResolvedValue(createFailedExecution(timeout, false, true));
 
     const result = await executeSessionFlow({ context, args, state: TIER2_STATE });
 
@@ -238,7 +242,7 @@ describe('executeSessionFlow tier2 fallback', () => {
   it('GIVEN tier2 is killed by a signal WHEN executeSessionFlow called THEN no fallback run starts', async () => {
     const killed = new CommandExecutionError('failed', { exitCode: null, signal: 'SIGKILL', timedOut: false });
 
-    mockRunAskInvocation.mockResolvedValue(createFailedExecution(killed));
+    mockRunAskInvocation.mockResolvedValue(createFailedExecution(killed, false, true));
 
     await executeSessionFlow({ context, args, state: TIER2_STATE });
 
