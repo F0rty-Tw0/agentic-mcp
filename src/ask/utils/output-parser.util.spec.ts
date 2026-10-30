@@ -194,6 +194,33 @@ describe('parseProviderOutput', () => {
     expect(result.text).toContain('"type": "item.completed"');
   });
 
+  it('GIVEN json-mode plain text with bare number, boolean and null lines WHEN parsing THEN returns the raw text', () => {
+    const outputLines = ['Failing tests:', '42', 'true', 'null', 'All other suites pass.'];
+    const output = outputLines.join('\n');
+
+    const result = parseProviderOutput(output, 'json');
+
+    expect(result.text).toBe(output);
+    expect(result.metadata).toBeUndefined();
+  });
+
+  it('GIVEN json-mode text with an array line WHEN parsing THEN returns the parsed array line', () => {
+    const output = 'log line\n[1,2]';
+
+    const result = parseProviderOutput(output, 'json');
+
+    expect(result.metadata?.parsed).toStrictEqual([[1, 2]]);
+  });
+
+  it('GIVEN stream-json with a stray bare number line WHEN parsing THEN the number is not kept as an event', () => {
+    const output = '{"type":"result","result":"final answer"}\n42';
+
+    const result = parseProviderOutput(output, 'stream-json');
+    const parsedLine = { type: 'result', result: 'final answer' };
+
+    expect(result.metadata?.parsed).toStrictEqual([parsedLine]);
+  });
+
   it('GIVEN text output with ansi WHEN parsing THEN strips ansi and marks text format metadata', () => {
     const result = parseProviderOutput('\u001b[33mplain text\u001b[39m', 'text');
 
