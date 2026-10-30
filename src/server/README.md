@@ -1,13 +1,13 @@
 # server
 
-MCP server factory — creates and configures the Model Context Protocol server instance with all registered tools, transport handling, and cancellation notification support.
+MCP server factory — creates and configures the Model Context Protocol server instance with all registered tools and transport handling.
 
 ## What It Does
 
 - Loads provider configuration and resolves which CLI binaries are detected on the system
 - Creates an `McpServer` instance with the application name and version
 - Registers all MCP tools (per-provider ask/ping/help/sessions + global ask_all/list_providers/provider_metrics)
-- Handles MCP `CancelledNotification` by killing the associated child process
+- Leaves MCP `notifications/cancelled` to the SDK, which aborts the request's `extra.signal`: a queued call leaves the provider queue without spawning, a running CLI is killed, and no response is sent
 - Connects to stdio transport for communication with MCP clients
 
 ## Structure
@@ -16,11 +16,10 @@ MCP server factory — creates and configures the Model Context Protocol server 
 | --------------- | -------------------------------------------------- |
 | `common/`       | Server name constant, no-providers warning message |
 | `domain-logic/` | Server creation and wiring                         |
-| `utils/`        | Request ID string conversion                       |
 
 ## Key Files
 
-- `domain-logic/create-server.ts` — `createServer()` — loads config, resolves providers, creates McpServer, registers tools, sets up cancellation handler
+- `domain-logic/create-server.ts` — `createServer()` — loads config, resolves providers, creates McpServer, registers tools
 - `common/server.constants.ts` — `SERVER_NAME` and `NO_PROVIDERS_WARNING`
 
 ## Integration Tests
@@ -41,6 +40,15 @@ Exercises the full MCP server wiring end-to-end using `InMemoryTransport` (no ne
 | list_providers returns provider status | Calling `list_providers` returns text mentioning at least one known provider                              | Text matches provider name pattern                                                           |
 | list_providers shows truthful labels   | Each provider in the output has a truthful status label                                                   | Text matches `binary detected\|binary missing\|disabled`                                     |
 
+### `create-server-cancellation.test.ts`
+
+Starts a server from a temporary `providers.json` whose only provider is a Node script that logs each spawn and then sleeps (`maxConcurrency: 1`). The client cancels calls with an `AbortSignal`.
+
+| Test                  | What It Verifies                                                         | Expected Output                                                       |
+| --------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Cancel a queued call  | A call cancelled while it waits for the provider slot never runs the CLI | Spawn log holds only the first call; no response for the cancelled id |
+| Cancel a running call | A running call's CLI is killed and the server sends no response          | Logged pid is gone; no response for the cancelled id                  |
+
 ### `create-server-schema.test.ts`
 
 Verifies config-to-tool-schema fidelity — ensures the tool definitions generated from `providers.json` have correct input schemas, descriptions, and completeness.
@@ -58,4 +66,4 @@ Verifies config-to-tool-schema fidelity — ensures the tool definitions generat
 
 ## Unit Tests
 
-1 `.spec.ts` file covering server creation logic and a request ID utility spec.
+`.spec.ts` files covering server creation logic and dangerous-flag warnings.
