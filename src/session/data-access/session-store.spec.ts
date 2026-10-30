@@ -114,22 +114,67 @@ describe('InMemorySessionStore', () => {
     expect(listedSession.turns).not.toBe(storedSession?.turns);
   });
 
-  it('GIVEN expired locked session WHEN cleanupExpired runs THEN it removes the session and releases the lock', () => {
+  it('GIVEN expired unlocked session WHEN cleanupExpired runs THEN it removes the session', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
 
     const store = new InMemorySessionStore();
 
     store.createOrGet('claude', 's1');
-
-    expect(store.tryAcquireLock('claude', 's1')).toBe(true);
-
     vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z').getTime() + SESSION_TTL_MS + 1);
+
     store.cleanupExpired();
 
     expect(store.get('claude', 's1')).toBeUndefined();
-    expect(store.tryAcquireLock('claude', 's1')).toBe(true);
   });
+
+  it('GIVEN expired locked session WHEN cleanupExpired runs THEN it keeps the session and the lock', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+
+    const store = new InMemorySessionStore();
+
+    store.createOrGet('claude', 's1');
+    store.tryAcquireLock('claude', 's1');
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z').getTime() + SESSION_TTL_MS + 1);
+
+    store.cleanupExpired();
+
+    expect(store.get('claude', 's1')).toBeDefined();
+    expect(store.tryAcquireLock('claude', 's1')).toBe(false);
+  });
+
+  it('GIVEN a lock taken on an expired session WHEN createOrGet runs THEN a concurrent caller cannot acquire the lock', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+
+    const store = new InMemorySessionStore();
+
+    store.createOrGet('claude', 's1');
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z').getTime() + SESSION_TTL_MS + 1);
+    store.tryAcquireLock('claude', 's1');
+
+    store.createOrGet('claude', 's1');
+
+    expect(store.tryAcquireLock('claude', 's1')).toBe(false);
+  });
+
+  it('GIVEN store at capacity with the oldest session locked WHEN a new session is created THEN the oldest unlocked session is evicted', () => {
+    const store = new InMemorySessionStore();
+
+    for (let i = 0; i < MAX_SESSIONS; i++) {
+      store.createOrGet('claude', `s${i}`);
+    }
+
+    store.tryAcquireLock('claude', 's0');
+
+    store.createOrGet('claude', 'overflow');
+
+    expect(store.get('claude', 's0')).toBeDefined();
+    expect(store.get('claude', 's1')).toBeUndefined();
+    expect(store.tryAcquireLock('claude', 's0')).toBe(false);
+  });
+
   it('GIVEN existing session WHEN getPrependContext uses default budget THEN it returns stored turns', () => {
     const store = new InMemorySessionStore();
 
