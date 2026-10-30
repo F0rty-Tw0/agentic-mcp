@@ -51,9 +51,7 @@ describe('buildReviewToolDefinition', () => {
 
     expect(scopeSchema).toBeDefined();
 
-    if (!scopeSchema) {
-      throw new Error('Expected review scope schema to exist');
-    }
+    if (!scopeSchema) throw new Error('Expected review scope schema to exist');
 
     expect(scopeSchema.parse('uncommitted')).toBe('uncommitted');
     expect(scopeSchema.parse('commit')).toBe('commit');
@@ -69,9 +67,7 @@ describe('buildReviewToolDefinition', () => {
     const baseConfig = createConfig();
     const baseReview = baseConfig.commands.review;
 
-    if (!baseReview?.flags) {
-      throw new Error('Expected review flags to exist');
-    }
+    if (!baseReview?.flags) throw new Error('Expected review flags to exist');
 
     const config: ProviderConfig = {
       ...baseConfig,

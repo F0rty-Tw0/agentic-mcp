@@ -57,9 +57,7 @@ describe('buildReviewArgArray', () => {
     const baseConfig = createConfig();
     const baseReview = baseConfig.commands.review;
 
-    if (!baseReview?.flags) {
-      throw new Error('Expected review flags to exist');
-    }
+    if (!baseReview?.flags) throw new Error('Expected review flags to exist');
 
     const config: ProviderConfig = {
       ...baseConfig,

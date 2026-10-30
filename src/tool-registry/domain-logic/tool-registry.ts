@@ -43,10 +43,8 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
       annotations: reviewDef.annotations,
     };
 
-    server.registerTool(
-      reviewDef.name,
-      reviewConfig,
-      async (args, extra): Promise<CallToolResult> => handleReview(provider, args as ReviewToolArgs, extra)
+    server.registerTool(reviewDef.name, reviewConfig, async (args, extra): Promise<CallToolResult> =>
+      handleReview(provider, args as ReviewToolArgs, extra)
     );
   }
 
@@ -95,10 +93,8 @@ export const registerAllTools = (
     annotations: askAllDef.annotations,
   };
 
-  server.registerTool(
-    askAllDef.name,
-    askAllConfig,
-    async (args): Promise<CallToolResult> => handleAskAll(resolvedProviders, args as AskAllToolArgs)
+  server.registerTool(askAllDef.name, askAllConfig, async (args): Promise<CallToolResult> =>
+    handleAskAll(resolvedProviders, args as AskAllToolArgs)
   );
 
   const metricsDef = buildProviderMetricsToolDefinition();

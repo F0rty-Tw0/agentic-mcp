@@ -30,13 +30,9 @@ const resolveTargetPath = (
   client: SupportedClient,
   pathOverride?: string
 ): string | undefined => {
-  if (pathOverride != null) {
-    return pathOverride;
-  }
+  if (pathOverride != null) return pathOverride;
 
-  if (client === 'generic') {
-    return undefined;
-  }
+  if (client === 'generic') return undefined;
 
   const targetPath = path.join(homeDirectory, CLIENT_CONFIG_PATHS[client] as string);
 
@@ -44,9 +40,7 @@ const resolveTargetPath = (
 };
 
 const resolveSuggestedClient = (client: SupportedClient): SupportedClient => {
-  if (client === 'generic') {
-    return 'claude-code';
-  }
+  if (client === 'generic') return 'claude-code';
 
   return client;
 };
@@ -57,9 +51,7 @@ const buildConfiguredOutput = (
   result: SetupApplyResult,
   detectedProviders: readonly DetectedProvider[]
 ): string => {
-  if (parsedArgs.output === 'json') {
-    return formatJsonSetupOutput(parsedArgs, plan, result, detectedProviders);
-  }
+  if (parsedArgs.output === 'json') return formatJsonSetupOutput(parsedArgs, plan, result, detectedProviders);
 
   return formatHumanSetupOutput(parsedArgs, plan, result, detectedProviders);
 };

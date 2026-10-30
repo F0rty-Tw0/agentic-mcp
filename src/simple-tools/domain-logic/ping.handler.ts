@@ -55,9 +55,7 @@ const resolveVersion = (output: string, pattern?: string): string => {
 
 export const handlePing = async (context: ResolvedProviderEntry): Promise<CallToolResult> => {
   try {
-    if (!context.config.versionCheck) {
-      return createPingResponse(createBinaryDetectedText(context));
-    }
+    if (!context.config.versionCheck) return createPingResponse(createBinaryDetectedText(context));
 
     const providerEnv = resolveProviderEnv(context);
     const env = buildMinimalEnv(providerEnv);

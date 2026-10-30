@@ -82,9 +82,7 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
     const result = (await client.callTool({ name: tool.name })) as CallToolResult;
     const text = (result.content[0] as McpTextContent).text;
 
-    if (isSuccessfulPingText(text)) {
-      return tool.name.replace('ping_', '');
-    }
+    if (isSuccessfulPingText(text)) return tool.name.replace('ping_', '');
   }
 
   return;

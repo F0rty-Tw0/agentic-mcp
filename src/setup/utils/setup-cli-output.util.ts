@@ -17,9 +17,7 @@ export const readExistingConfigText = async (
   targetPath: string | undefined,
   readConfigFile: (path: string) => Promise<string>
 ): Promise<string | undefined> => {
-  if (targetPath == null) {
-    return undefined;
-  }
+  if (targetPath == null) return undefined;
 
   try {
     return await readConfigFile(targetPath);

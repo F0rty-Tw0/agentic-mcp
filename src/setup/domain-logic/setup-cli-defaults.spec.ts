@@ -62,11 +62,12 @@ const createDependencies = (overrides: Partial<SetupCliDependencies> = {}): Part
     generateClientConfigEntry: () => TEST_SERVER_ENTRY,
     buildSetupPlan: () => createPlan(),
     applySetupPlan: async () => Promise.resolve(createApplyResult()),
-    installSkill: async () =>
-      Promise.resolve({
+    installSkill: async () => {
+      return Promise.resolve({
         status: 'installed',
         skillPath: '/home/dev/.claude/skills/using-agentic-mcp/SKILL.md',
-      }),
+      });
+    },
     homeDirectory: '/home/dev',
     stdoutWrite: vi.fn<(text: string) => void>(),
     stderrWrite: vi.fn<(text: string) => void>(),

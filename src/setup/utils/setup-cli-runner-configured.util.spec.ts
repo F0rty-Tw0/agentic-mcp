@@ -99,13 +99,13 @@ describe('runConfiguredSetup', () => {
         backupPath: '/tmp/override.json.bak',
       })
     );
-    const buildSetupPlan = vi.fn(() =>
-      createSetupPlan({
+    const buildSetupPlan = vi.fn(() => {
+      return createSetupPlan({
         client: 'cursor',
         targetPath: '/tmp/override.json',
         warnings: ['existing config found'],
-      })
-    );
+      });
+    });
     const readConfigFile = vi.fn().mockResolvedValue(existingConfigText);
     const installSkill = vi.fn().mockResolvedValue({
       status: 'installed',

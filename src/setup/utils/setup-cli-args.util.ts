@@ -29,25 +29,19 @@ const isSupportedClient = (value: string): value is SupportedClient => {
 };
 
 const parseMode = (value: string): SetupMode | undefined => {
-  if (value === 'merge' || value === 'overwrite') {
-    return value;
-  }
+  if (value === 'merge' || value === 'overwrite') return value;
 
   return undefined;
 };
 
 const parseBackupPolicy = (value: string): SetupBackupPolicy | undefined => {
-  if (value === 'if-exists' || value === 'always' || value === 'never') {
-    return value;
-  }
+  if (value === 'if-exists' || value === 'always' || value === 'never') return value;
 
   return undefined;
 };
 
 const parseOutputMode = (value: string): SetupOutputMode | undefined => {
-  if (value === 'human' || value === 'json') {
-    return value;
-  }
+  if (value === 'human' || value === 'json') return value;
 
   return undefined;
 };
@@ -152,15 +146,11 @@ export const parseSetupArgs = ({ args, stderrWrite }: ParseSetupArgsInput): Pars
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg == null || consumeBooleanFlag(arg, parsed) || !isValueFlag(arg)) {
-      continue;
-    }
+    if (arg == null || consumeBooleanFlag(arg, parsed) || !isValueFlag(arg)) continue;
 
     const value = args[i + 1];
 
-    if (value == null) {
-      continue;
-    }
+    if (value == null) continue;
 
     parseValueFlag(arg, value, parsed, stderrWrite);
     i++;

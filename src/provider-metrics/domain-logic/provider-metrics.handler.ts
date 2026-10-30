@@ -22,9 +22,7 @@ const buildProviderSummaryLine = (providerStats: ProviderStats): string => {
 };
 
 const buildNextStepLine = (summary: ProviderMetricsSummary): string => {
-  if (summary.totalCalls === 0) {
-    return 'Next: run prove or ask_<provider> to start collecting provider metrics.';
-  }
+  if (summary.totalCalls === 0) return 'Next: run prove or ask_<provider> to start collecting provider metrics.';
 
   return 'Next: run ask_all --report <path> when you want a saved comparison artifact.';
 };

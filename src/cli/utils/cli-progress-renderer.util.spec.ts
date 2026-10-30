@@ -30,8 +30,8 @@ const buildProgress = (message: string): Progress => ({
   message,
 });
 
-const buildEvent = (overrides: Partial<AskStreamEvent>): AskStreamEvent =>
-  ({
+const buildEvent = (overrides: Partial<AskStreamEvent>): AskStreamEvent => {
+  return {
     schema: ASK_STREAM_EVENT_SCHEMA,
     type: 'chunk',
     streamId: 'stream-1',
@@ -40,7 +40,8 @@ const buildEvent = (overrides: Partial<AskStreamEvent>): AskStreamEvent =>
     channel: 'stdout',
     chunk: 'hello',
     ...overrides,
-  }) as AskStreamEvent;
+  } as AskStreamEvent;
+};
 
 describe('renderCliProgress', () => {
   let stdoutSpy: MockInstance;

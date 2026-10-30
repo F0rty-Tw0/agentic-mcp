@@ -56,9 +56,7 @@ const getRegisteredNames = (server: MockServer): string[] => {
 const getHandler = (server: MockServer, toolName: string): ((...args: unknown[]) => unknown) => {
   const call = server.registerTool.mock.calls.find((candidate: unknown[]) => candidate[0] === toolName);
 
-  if (!call) {
-    throw new Error(`Tool ${toolName} was not registered`);
-  }
+  if (!call) throw new Error(`Tool ${toolName} was not registered`);
 
   return call[2] as (...args: unknown[]) => unknown;
 };

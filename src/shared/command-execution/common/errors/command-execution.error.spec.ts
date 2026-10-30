@@ -99,9 +99,7 @@ const getFirstText = (error: CommandExecutionError): string => {
   const result = error.toMcpResponse();
   const firstContent = result.content[0];
 
-  if (!firstContent) {
-    throw new Error('Expected a single text response');
-  }
+  if (!firstContent) throw new Error('Expected a single text response');
 
   return firstContent.text;
 };

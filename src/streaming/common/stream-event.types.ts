@@ -109,8 +109,4 @@ type AskStreamErrorEvent = AskStreamEventBase &
   }>;
 
 export type AskStreamEvent =
-  | AskStreamStartEvent
-  | AskStreamChunkEvent
-  | AskStreamHeartbeatEvent
-  | AskStreamDoneEvent
-  | AskStreamErrorEvent;
+  AskStreamStartEvent | AskStreamChunkEvent | AskStreamHeartbeatEvent | AskStreamDoneEvent | AskStreamErrorEvent;

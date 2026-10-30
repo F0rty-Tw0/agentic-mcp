@@ -20,9 +20,7 @@ const REVIEW_UNCOMMITTED_FLAG_KEY = 'uncommitted';
 const resolveFlagToArgs = (flagValue?: FlagValue, argValue?: string): string[] => {
   if (!flagValue) return [];
 
-  if (typeof flagValue === 'string') {
-    return argValue ? [flagValue, argValue] : [flagValue];
-  }
+  if (typeof flagValue === 'string') return argValue ? [flagValue, argValue] : [flagValue];
 
   if (Array.isArray(flagValue)) return [...flagValue];
 
@@ -100,9 +98,7 @@ const appendOptionalFlags = (cliArgs: string[], askCmd: CommandDef, args: AskToo
 const appendRequiredReviewFlag = (cliArgs: string[], reviewCmd: CommandDef, flagKey: string, value?: string): void => {
   const flag = getFlag(reviewCmd, flagKey);
 
-  if (flag == null) {
-    throw new ValidationError(`Provider review command missing required "${flagKey}" flag`);
-  }
+  if (flag == null) throw new ValidationError(`Provider review command missing required "${flagKey}" flag`);
 
   const flagArgs = resolveFlagToArgs(flag, value);
 

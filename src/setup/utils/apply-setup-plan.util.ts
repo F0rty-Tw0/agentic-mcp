@@ -54,15 +54,12 @@ const verifyWrittenConfig = (content: string): SetupApplyResult => {
     return createFailedVerificationResult(reason);
   }
 
-  if (!isRecord(parsed)) {
-    return createFailedVerificationResult('Written config root must be an object.');
-  }
+  if (!isRecord(parsed)) return createFailedVerificationResult('Written config root must be an object.');
 
   const mcpServers = parsed.mcpServers;
 
-  if (!isRecord(mcpServers)) {
+  if (!isRecord(mcpServers))
     return createFailedVerificationResult('Written config must include object key mcpServers.');
-  }
 
   if (mcpServers['agentic-mcp'] == null) {
     return createFailedVerificationResult('Written config must include mcpServers["agentic-mcp"].');

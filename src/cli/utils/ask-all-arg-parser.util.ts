@@ -25,17 +25,19 @@ const buildUnsupportedAskAllFlagMessage = (flag: string): string =>
 const buildAskAllMultipleModelsMessage = (): string =>
   'ask_all accepts exactly one shared --model value. Use --providers for provider selection or quote the model name.';
 
-const splitCsvValues = (value: string): readonly string[] =>
-  value
+const splitCsvValues = (value: string): readonly string[] => {
+  return value
     .split(',')
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
+};
 
-const splitWhitespaceValues = (value: string): readonly string[] =>
-  value
+const splitWhitespaceValues = (value: string): readonly string[] => {
+  return value
     .split(/\s+/)
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
+};
 
 const collectTrailingValues = (args: readonly string[], startIndex: number): readonly string[] => {
   const values: string[] = [];
@@ -66,9 +68,7 @@ const normalizeModelValues = (values: readonly string[]): string | undefined => 
 
   if (!normalizedValues.length) return;
 
-  if (normalizedValues.length > 1) {
-    throw new ValidationError(buildAskAllMultipleModelsMessage());
-  }
+  if (normalizedValues.length > 1) throw new ValidationError(buildAskAllMultipleModelsMessage());
 
   return normalizedValues[0];
 };
@@ -105,7 +105,7 @@ export const normalizeAskAllArgs = (args: readonly string[]): readonly string[] 
 };
 
 export const validateAskAllFlags = (args: readonly string[]): void => {
-  for (let i = 0; i < args.length; ) {
+  for (let i = 0; i < args.length;) {
     const arg = args[i];
 
     if (!arg?.startsWith('--')) {

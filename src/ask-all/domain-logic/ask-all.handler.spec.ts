@@ -238,9 +238,7 @@ describe('handleAskAll', () => {
       const parsed = parseResult(result);
       const firstResult = parsed.results[0];
 
-      if (!firstResult) {
-        throw new Error('Expected first result to be defined');
-      }
+      if (!firstResult) throw new Error('Expected first result to be defined');
 
       expect(firstResult.response).toBe('the answer');
       expect(firstResult.success).toBe(true);

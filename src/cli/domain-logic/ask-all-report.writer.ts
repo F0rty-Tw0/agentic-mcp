@@ -67,17 +67,14 @@ const buildJsonReportContent = (structuredContent: AskAllResult): string => {
 };
 
 const buildReportContent = (reportPath: string, structuredContent: AskAllResult): string => {
-  if (isMarkdownReportPath(reportPath)) {
-    return buildMarkdownReportContent(structuredContent);
-  }
+  if (isMarkdownReportPath(reportPath)) return buildMarkdownReportContent(structuredContent);
 
   return buildJsonReportContent(structuredContent);
 };
 
 const resolveStructuredContent = (result: CallToolResult): AskAllResult => {
-  if (result.structuredContent == null) {
+  if (result.structuredContent == null)
     throw new ValidationError('ask_all report export requires structured comparison data');
-  }
 
   const structuredContent = result.structuredContent as AskAllResult;
 

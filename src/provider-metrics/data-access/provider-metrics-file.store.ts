@@ -63,9 +63,7 @@ const readMetricsFile = async (metricsFilePath: string): Promise<ProviderMetrics
   } catch (error: unknown) {
     if (error instanceof ValidationError) throw error;
 
-    if (isSystemError(error) && error.code === 'ENOENT') {
-      return createEmptyProviderMetricsFile();
-    }
+    if (isSystemError(error) && error.code === 'ENOENT') return createEmptyProviderMetricsFile();
 
     const message = error instanceof Error ? error.message : 'Unknown read error';
 
@@ -100,9 +98,7 @@ const readMetricsFileForAppend = async (metricsFilePath: string): Promise<Provid
 
     return providerMetricsFile;
   } catch (error: unknown) {
-    if (error instanceof ValidationError) {
-      return createEmptyProviderMetricsFile();
-    }
+    if (error instanceof ValidationError) return createEmptyProviderMetricsFile();
 
     throw error;
   }

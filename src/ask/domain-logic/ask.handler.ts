@@ -85,9 +85,7 @@ export const handleAsk = async (
     return callToolResult;
   }
 
-  if (!args.session_id) {
-    return runAskInvocationResponse(context, args, extra);
-  }
+  if (!args.session_id) return runAskInvocationResponse(context, args, extra);
 
   return handleSessionAsk(context, args, extra);
 };

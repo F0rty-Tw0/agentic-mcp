@@ -49,18 +49,19 @@ const extractTopLevelTextEventText = (value: unknown): string | undefined => {
 
   const part = value.part;
 
-  if (isJsonRecord(part) && typeof part.text === 'string') {
-    return part.text;
-  }
+  if (isJsonRecord(part) && typeof part.text === 'string') return part.text;
 
   return typeof value.text === 'string' ? value.text : undefined;
 };
 
-const extractParsedText = (value: unknown): string | undefined =>
-  extractTopLevelResultText(value) ??
-  extractTopLevelResponseText(value) ??
-  extractAgentMessageText(value) ??
-  extractTopLevelTextEventText(value);
+const extractParsedText = (value: unknown): string | undefined => {
+  return (
+    extractTopLevelResultText(value) ??
+    extractTopLevelResponseText(value) ??
+    extractAgentMessageText(value) ??
+    extractTopLevelTextEventText(value)
+  );
+};
 
 const extractLatestParsedText = (parsedLines: readonly unknown[]): string | undefined => {
   const parsedTexts = parsedLines.map((parsedLine) => extractParsedText(parsedLine)).filter(isDefined);

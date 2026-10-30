@@ -82,7 +82,7 @@ const parseSpecialFlags = (state: ParseState, arg: string, nextArg: string | und
 const tokenizeArgs = (args: readonly string[]): ParseState => {
   const state: ParseState = { files: [] };
 
-  for (let i = 0; i < args.length; ) {
+  for (let i = 0; i < args.length;) {
     const arg = args[i] as string;
     const nextArg = args[i + 1] as string;
 

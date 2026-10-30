@@ -17,9 +17,7 @@ export const createEmptyProviderMetricsFile = (): ProviderMetricsFile => {
 };
 
 const parseProviderCallRecord = (value: unknown): ProviderCallRecord => {
-  if (!isRecord(value)) {
-    throw new ValidationError('Stored provider metrics records must be objects.');
-  }
+  if (!isRecord(value)) throw new ValidationError('Stored provider metrics records must be objects.');
 
   const { calledAt, executionTimeMs, provider, success } = value;
 
@@ -55,9 +53,7 @@ const readCollectedSince = (value: Readonly<Record<string, unknown>>): string =>
 const readRecords = (value: Readonly<Record<string, unknown>>): readonly ProviderCallRecord[] => {
   const records = value.records;
 
-  if (!Array.isArray(records)) {
-    throw new ValidationError('Stored provider metrics must include array key "records".');
-  }
+  if (!Array.isArray(records)) throw new ValidationError('Stored provider metrics must include array key "records".');
 
   const parsedRecords = records.map((record) => parseProviderCallRecord(record));
 
@@ -75,9 +71,7 @@ export const parseProviderMetricsFile = (content: string): ProviderMetricsFile =
     throw new ValidationError(`Stored provider metrics are invalid JSON: ${message}`);
   }
 
-  if (!isRecord(parsed)) {
-    throw new ValidationError('Stored provider metrics root must be an object.');
-  }
+  if (!isRecord(parsed)) throw new ValidationError('Stored provider metrics root must be an object.');
 
   const providerMetricsFile: ProviderMetricsFile = {
     collectedSince: readCollectedSince(parsed),

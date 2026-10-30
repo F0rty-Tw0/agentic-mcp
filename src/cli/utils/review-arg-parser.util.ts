@@ -21,7 +21,7 @@ const REVIEW_VALUE_FLAGS: Readonly<Record<string, keyof ReviewParseState>> = {
 const tokenizeReviewArgs = (args: readonly string[]): ReviewParseState => {
   const state: Record<string, string | boolean> = {};
 
-  for (let index = 0; index < args.length; ) {
+  for (let index = 0; index < args.length;) {
     const arg = args[index];
     const nextArg = args[index + 1];
     const stateKey = arg ? REVIEW_VALUE_FLAGS[arg] : undefined;

@@ -54,9 +54,7 @@ export const executeSessionFlow = async ({
 }: SessionExecutionInput): Promise<SessionFlowResult> => {
   const firstExecution = await runSessionExecution(context, args, extra, state);
 
-  if (!firstExecution.response.isError || state.mode !== 'tier2-native') {
-    return firstExecution;
-  }
+  if (!firstExecution.response.isError || state.mode !== 'tier2-native') return firstExecution;
 
   const fallbackState: SessionFlowState = {
     ...state,

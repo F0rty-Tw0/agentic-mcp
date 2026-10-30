@@ -37,9 +37,7 @@ const resolveProviderNames = (toolName: string): readonly string[] | undefined =
 const buildUnknownToolErrorMessage = (toolName: string): string => {
   const providerNames = resolveProviderNames(toolName);
 
-  if (providerNames?.length === 1) {
-    return `Provider "${providerNames[0]}" not found`;
-  }
+  if (providerNames?.length === 1) return `Provider "${providerNames[0]}" not found`;
 
   return `CLI tool "${toolName}" is not registered`;
 };
@@ -49,9 +47,7 @@ const resolveToolProperties = async (client: Client, toolName: string): Promise<
   const listedTools = tools as readonly ListedTool[];
   const tool = listedTools.find((candidate) => candidate.name === toolName);
 
-  if (!tool) {
-    throw new ValidationError(buildUnknownToolErrorMessage(toolName));
-  }
+  if (!tool) throw new ValidationError(buildUnknownToolErrorMessage(toolName));
 
   const result = tool.inputSchema?.properties ?? {};
 

@@ -8,9 +8,7 @@ const MAX_PREVIEW_LENGTH = 60;
 const buildLastTurnPreview = (session: SessionRecord): string => {
   const lastTurn = session.turns.at(-1);
 
-  if (lastTurn == null) {
-    return 'last_turn="(none)"';
-  }
+  if (lastTurn == null) return 'last_turn="(none)"';
 
   const normalizedText = lastTurn.text.replace(/\s+/g, ' ').trim().replaceAll('"', "'");
   const previewText =

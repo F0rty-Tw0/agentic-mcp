@@ -36,9 +36,7 @@ const buildFirstProofCommand = (providerName: string): string => {
 const resolveFirstProofCommand = (detectedProviders: readonly DetectedProvider[]): string | undefined => {
   const detectedProvider = detectedProviders.find((provider) => provider.available);
 
-  if (!detectedProvider) {
-    return undefined;
-  }
+  if (!detectedProvider) return undefined;
 
   return buildFirstProofCommand(detectedProvider.name);
 };
@@ -56,9 +54,7 @@ export const formatProviderSummary = (detectedProviders: readonly DetectedProvid
 export const buildProviderBlock = (detectedProviders: readonly DetectedProvider[]): string => {
   const providerSummary = formatProviderSummary(detectedProviders);
 
-  if (providerSummary !== '') {
-    return providerSummary;
-  }
+  if (providerSummary !== '') return providerSummary;
 
   return '  (none detected)';
 };

@@ -39,9 +39,7 @@ export const makeErrorResult = (text: string): CallToolResult => {
 export const parseResult = (result: CallToolResult): AskAllResult => {
   const structuredContent = result.structuredContent;
 
-  if (!structuredContent) {
-    throw new Error('Expected structuredContent to be defined');
-  }
+  if (!structuredContent) throw new Error('Expected structuredContent to be defined');
 
   return structuredContent as AskAllResult;
 };

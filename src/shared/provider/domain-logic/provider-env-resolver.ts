@@ -4,9 +4,7 @@ import type { ProviderEnv, ResolvedProviderEntry } from '../common';
 const MCP_TOOL_TIMEOUT_ENV_KEY = 'MCP_TOOL_TIMEOUT';
 
 const withDefaultMcpToolTimeout = (providerEnv: ProviderEnv): ProviderEnv => {
-  if (providerEnv[MCP_TOOL_TIMEOUT_ENV_KEY] != null) {
-    return providerEnv;
-  }
+  if (providerEnv[MCP_TOOL_TIMEOUT_ENV_KEY] != null) return providerEnv;
 
   const resolvedProviderEnv: ProviderEnv = {
     ...providerEnv,

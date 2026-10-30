@@ -56,9 +56,7 @@ const readBundledProviders = async (): Promise<Providers> => {
 const getRequiredProvider = (providers: Providers, providerName: string): Providers[string] => {
   const provider = providers[providerName];
 
-  if (provider == null) {
-    throw new Error(`Expected provider "${providerName}" to exist in bundled config`);
-  }
+  if (provider == null) throw new Error(`Expected provider "${providerName}" to exist in bundled config`);
 
   return provider;
 };
@@ -66,9 +64,7 @@ const getRequiredProvider = (providers: Providers, providerName: string): Provid
 const getRequiredAskCommand = (provider: Providers[string]): NonNullable<Providers[string]['commands']['ask']> => {
   const askCommand = provider.commands.ask;
 
-  if (askCommand == null) {
-    throw new Error(`Expected provider "${provider.command}" to declare an ask command`);
-  }
+  if (askCommand == null) throw new Error(`Expected provider "${provider.command}" to declare an ask command`);
 
   return askCommand;
 };
@@ -78,9 +74,7 @@ const getRequiredAskFlags = (
 ): NonNullable<Providers[string]['commands']['ask']['flags']> => {
   const { flags } = getRequiredAskCommand(provider);
 
-  if (flags == null) {
-    throw new Error(`Expected provider "${provider.command}" to declare ask flags`);
-  }
+  if (flags == null) throw new Error(`Expected provider "${provider.command}" to declare ask flags`);
 
   const askFlags = flags as NonNullable<Providers[string]['commands']['ask']['flags']>;
 
@@ -113,9 +107,7 @@ describe('providers config', () => {
 
     expect(parsed.success).toBe(false);
 
-    if (parsed.success) {
-      throw new Error('Expected provider config without outputFormat to fail validation');
-    }
+    if (parsed.success) throw new Error('Expected provider config without outputFormat to fail validation');
 
     const outputFormatIssue = parsed.error.issues.find(
       (issue) => issue.path.join('.') === 'providers.example.outputFormat'
@@ -137,9 +129,7 @@ describe('providers config', () => {
 
     expect(parsed.success).toBe(false);
 
-    if (parsed.success) {
-      throw new Error('Expected provider config without ask command to fail validation');
-    }
+    if (parsed.success) throw new Error('Expected provider config without ask command to fail validation');
 
     const askIssue = parsed.error.issues.find((issue) => issue.path.join('.') === 'providers.example.commands');
 

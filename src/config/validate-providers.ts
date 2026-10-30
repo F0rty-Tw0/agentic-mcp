@@ -8,19 +8,13 @@ const providersUrl = new URL('./providers.json', import.meta.url);
 const providersPath = fileURLToPath(providersUrl);
 
 const formatIssuePath = (pathSegments: PropertyKey[]): string => {
-  if (pathSegments.length === 0) {
-    return '(root)';
-  }
+  if (pathSegments.length === 0) return '(root)';
 
   return pathSegments
     .map((segment) => {
-      if (typeof segment === 'number') {
-        return `[${segment}]`;
-      }
+      if (typeof segment === 'number') return `[${segment}]`;
 
-      if (typeof segment === 'symbol') {
-        return String(segment);
-      }
+      if (typeof segment === 'symbol') return String(segment);
 
       return segment;
     })

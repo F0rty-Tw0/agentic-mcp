@@ -11,9 +11,7 @@ afterEach(() => {
 const getListedSession = (listed: readonly SessionRecord[]): SessionRecord => {
   const listedSession = listed[0];
 
-  if (listedSession == null) {
-    throw new Error('listed session missing');
-  }
+  if (listedSession == null) throw new Error('listed session missing');
 
   return listedSession;
 };

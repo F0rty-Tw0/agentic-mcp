@@ -39,9 +39,7 @@ const resolveModelAlias = (providerName: string | undefined, model: string | und
 const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
   if (!files?.length) return [];
 
-  if (!workingDir) {
-    throw new ValidationError('working_directory is required when files are specified');
-  }
+  if (!workingDir) throw new ValidationError('working_directory is required when files are specified');
 
   return validateFiles(files, workingDir);
 };

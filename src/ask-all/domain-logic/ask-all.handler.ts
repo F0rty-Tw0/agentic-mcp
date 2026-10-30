@@ -119,9 +119,7 @@ const runProviderAsk = async (runProviderAskInput: RunProviderAskInput): Promise
     const text = extractResponseText(result);
     const executionTimeMs = Date.now() - startTime;
 
-    if (!result.isError) {
-      return buildProviderSuccess(provider, executionTimeMs, text);
-    }
+    if (!result.isError) return buildProviderSuccess(provider, executionTimeMs, text);
 
     return buildProviderFailure(provider, executionTimeMs, text);
   } catch (err: unknown) {
@@ -143,8 +141,8 @@ export const handleAskAll = async (
 
   const wallStart = Date.now();
   const results = await Promise.all(
-    resolvedInput.filteredProviders.map(
-      async (provider): Promise<AskAllProviderResult> => runProviderAsk({ provider, args, model: resolvedInput.model })
+    resolvedInput.filteredProviders.map(async (provider): Promise<AskAllProviderResult> =>
+      runProviderAsk({ provider, args, model: resolvedInput.model })
     )
   );
   const totalExecutionTimeMs = Date.now() - wallStart;

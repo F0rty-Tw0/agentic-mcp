@@ -48,9 +48,7 @@ export const runSetup = async (
   const parsedArgs = parseSetupArgs({ args, stderrWrite: dependencies.stderrWrite });
   const detectedProviders = await dependencies.detectInstalledProviders();
 
-  if (parsedArgs.minimal) {
-    return runMinimalSetup({ parsedArgs, dependencies, detectedProviders });
-  }
+  if (parsedArgs.minimal) return runMinimalSetup({ parsedArgs, dependencies, detectedProviders });
 
   return runConfiguredSetup({ parsedArgs, dependencies, detectedProviders });
 };

@@ -38,12 +38,13 @@ const stubStreamNotifier = (): SuccessResponseInput['streamNotifier'] => ({
   enabled: false,
 });
 
-const stubSummary = (): SuccessResponseInput['summary'] =>
-  ({
+const stubSummary = (): SuccessResponseInput['summary'] => {
+  return {
     executionTimeMs: 1500,
     truncated: false,
     stdoutBytes: 100,
-  }) as unknown as SuccessResponseInput['summary'];
+  } as unknown as SuccessResponseInput['summary'];
+};
 
 const buildInput = (overrides?: Partial<SuccessResponseInput>): SuccessResponseInput => ({
   context: stubContext(),

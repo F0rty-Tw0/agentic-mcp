@@ -41,15 +41,11 @@ const extractAskAllCliOptions = (remainingArgs: readonly string[]): AskAllCliOpt
       continue;
     }
 
-    if (reportPath != null) {
-      throw new ValidationError(buildDuplicateReportPathMessage());
-    }
+    if (reportPath != null) throw new ValidationError(buildDuplicateReportPathMessage());
 
     const nextArg = remainingArgs[i + 1];
 
-    if (nextArg == null || nextArg.startsWith('--')) {
-      throw new ValidationError(buildMissingReportPathMessage());
-    }
+    if (nextArg == null || nextArg.startsWith('--')) throw new ValidationError(buildMissingReportPathMessage());
 
     reportPath = nextArg;
     i += 1;

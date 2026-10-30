@@ -35,9 +35,7 @@ const buildReviewScopes = (reviewCmd: CommandDef): [ReviewScope, ...ReviewScope[
 
   const [firstScope, ...otherScopes] = scopes;
 
-  if (firstScope == null) {
-    throw new Error('Review tool requires at least one supported review scope');
-  }
+  if (firstScope == null) throw new Error('Review tool requires at least one supported review scope');
 
   return [firstScope, ...otherScopes];
 };

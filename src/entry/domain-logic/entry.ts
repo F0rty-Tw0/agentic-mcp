@@ -27,13 +27,9 @@ export const entry = async (): Promise<void> => {
 
   const [firstArg] = args;
 
-  if (firstArg === 'setup') {
-    return runSetup(args.slice(1));
-  }
+  if (firstArg === 'setup') return runSetup(args.slice(1));
 
-  if (firstArg === 'init') {
-    return runSetup(['--minimal', ...args.slice(1)]);
-  }
+  if (firstArg === 'init') return runSetup(['--minimal', ...args.slice(1)]);
 
   if (firstArg === 'prove') {
     const configPath = parseConfigPath(process.argv);
