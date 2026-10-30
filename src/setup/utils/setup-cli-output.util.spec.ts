@@ -92,14 +92,26 @@ describe('setup-cli-output utilities', () => {
     expect(readConfigFile).not.toHaveBeenCalled();
   });
 
-  it('GIVEN read failure WHEN reading existing config THEN returns undefined', async () => {
+  it('GIVEN a missing file WHEN reading existing config THEN returns undefined', async () => {
+    const missingFileError = Object.assign(new Error('missing file'), { code: 'ENOENT' });
     const readConfigFile = vi.fn(() => {
-      throw new Error('missing file');
+      throw missingFileError;
     });
 
     const result = await readExistingConfigText('/tmp/mcp.json', readConfigFile);
 
     expect(result).toBeUndefined();
+  });
+
+  it('GIVEN a read failure other than a missing file WHEN reading existing config THEN it rethrows', async () => {
+    const permissionError = Object.assign(new Error('permission denied'), { code: 'EACCES' });
+    const readConfigFile = vi.fn(() => {
+      throw permissionError;
+    });
+
+    const readResult = readExistingConfigText('/tmp/mcp.json', readConfigFile);
+
+    await expect(readResult).rejects.toThrow('permission denied');
   });
 
   it('GIVEN setup args plan and result WHEN formatting json output THEN returns parseable truthful summary fields', () => {

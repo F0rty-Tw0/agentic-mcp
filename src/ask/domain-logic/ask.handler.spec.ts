@@ -137,7 +137,11 @@ describe('handleAsk', () => {
 
       await handleAsk(context, { prompt: 'test prompt' });
 
-      expect(buildArgArray).toHaveBeenCalledWith(context.config, expect.objectContaining({ prompt: 'test prompt' }));
+      expect(buildArgArray).toHaveBeenCalledWith(
+        context.config,
+        expect.objectContaining({ prompt: 'test prompt' }),
+        []
+      );
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ask THEN injects default timeout env', async () => {
@@ -244,7 +248,8 @@ describe('handleAsk', () => {
 
       expect(buildArgArray).toHaveBeenCalledWith(
         context.config,
-        expect.objectContaining({ files: [expect.stringContaining('')] })
+        expect.objectContaining({ files: [expect.stringContaining('')] }),
+        []
       );
     });
 

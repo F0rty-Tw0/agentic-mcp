@@ -84,6 +84,7 @@ describe('buildFailureExecution', () => {
       sessionMode: 'none',
       responseText: '',
       wasCancelled: false,
+      wasStopped: false,
     });
   });
 
@@ -93,6 +94,14 @@ describe('buildFailureExecution', () => {
     const result = buildFailureExecution(response, true);
 
     expect(result.wasCancelled).toBe(true);
+  });
+
+  it('GIVEN a run stopped by timeout or signal WHEN building THEN marks the execution as stopped', () => {
+    const response = textResponse('stopped');
+
+    const result = buildFailureExecution(response, false, true);
+
+    expect(result.wasStopped).toBe(true);
   });
 
   it('GIVEN any response WHEN building THEN responseText is always empty', () => {

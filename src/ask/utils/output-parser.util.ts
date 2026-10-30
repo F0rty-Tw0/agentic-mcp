@@ -8,9 +8,13 @@ const isJsonRecord = (value: unknown): value is JsonRecord => typeof value === '
 
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;
 
-const parseJsonLine = (line: string): unknown | undefined => {
+const parseStructuredLine = (line: string): JsonRecord | undefined => {
   try {
-    return JSON.parse(line);
+    const parsed: unknown = JSON.parse(line);
+
+    if (!isJsonRecord(parsed)) return;
+
+    return parsed;
   } catch {
     return;
   }
@@ -90,7 +94,7 @@ const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefi
 
   if (!lines.length) return;
 
-  const parsedLines = lines.map((line) => parseJsonLine(line)).filter(isDefined);
+  const parsedLines = lines.map((line) => parseStructuredLine(line)).filter(isDefined);
 
   if (!parsedLines.length) return;
 
@@ -157,16 +161,12 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
     return parsedProviderOutput;
   }
 
-  const parsedLines: unknown[] = [];
+  const parsedLines = lines.map((line) => parseStructuredLine(line)).filter(isDefined);
 
-  for (const line of lines) {
-    try {
-      parsedLines.push(JSON.parse(line));
-    } catch {
-      const parsedProviderOutput: ParsedProviderOutput = { text: stdout };
+  if (!parsedLines.length) {
+    const parsedProviderOutput: ParsedProviderOutput = { text: stdout };
 
-      return parsedProviderOutput;
-    }
+    return parsedProviderOutput;
   }
 
   const parsedText = extractLatestParsedText(parsedLines) ?? JSON.stringify(parsedLines, null, 2);

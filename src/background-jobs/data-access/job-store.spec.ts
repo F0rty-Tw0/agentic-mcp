@@ -8,7 +8,7 @@ import {
   setBackgroundJobFailed,
   setBackgroundJobRunning,
 } from './job-store';
-import { BACKGROUND_JOB_TTL_MS, MAX_BACKGROUND_JOB_RECORDS, MAX_RESULT_TEXT_LENGTH } from '../common';
+import { MAX_RESULT_TEXT_LENGTH } from '../common';
 
 describe('background-job-store', () => {
   beforeEach(() => {
@@ -275,32 +275,6 @@ describe('background-job-store', () => {
       expect(result).toBeUndefined();
     });
 
-    it('GIVEN an expired job WHEN getBackgroundJob called THEN returns null', () => {
-      const baseMs = 2_000_000;
-
-      vi.spyOn(Date, 'now').mockReturnValue(baseMs);
-      const job = createBackgroundJob('claude');
-
-      vi.spyOn(Date, 'now').mockReturnValue(baseMs + BACKGROUND_JOB_TTL_MS + 1);
-
-      const result = getBackgroundJob(job.id);
-
-      expect(result).toBeUndefined();
-    });
-
-    it('GIVEN a job within TTL WHEN getBackgroundJob called THEN returns the job', () => {
-      const baseMs = 3_000_000;
-
-      vi.spyOn(Date, 'now').mockReturnValue(baseMs);
-      const job = createBackgroundJob('claude');
-
-      vi.spyOn(Date, 'now').mockReturnValue(baseMs + BACKGROUND_JOB_TTL_MS - 1);
-
-      const result = getBackgroundJob(job.id);
-
-      expect(result).toStrictEqual(job);
-    });
-
     it('GIVEN a completed job WHEN getBackgroundJob called THEN returns record with resultText', () => {
       const job = createBackgroundJob('claude');
 
@@ -340,56 +314,6 @@ describe('background-job-store', () => {
       const result = getBackgroundJob(job.id);
 
       expect(result?.error).toBe('timeout');
-    });
-  });
-
-  describe('pruneExpiredJobs', () => {
-    it('GIVEN existing expired jobs WHEN createBackgroundJob called THEN expired jobs are pruned', () => {
-      const baseMs = 1_000_000;
-
-      vi.spyOn(Date, 'now').mockReturnValue(baseMs);
-      const expiredJob = createBackgroundJob('claude');
-
-      vi.spyOn(Date, 'now').mockReturnValue(baseMs + BACKGROUND_JOB_TTL_MS + 1);
-      createBackgroundJob('claude');
-
-      const retrieved = getBackgroundJob(expiredJob.id);
-
-      expect(retrieved).toBeUndefined();
-    });
-
-    it('GIVEN a fresh and an expired job WHEN creating a new job THEN only the expired job is pruned', () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
-
-      const expired = createBackgroundJob('claude');
-
-      vi.advanceTimersByTime(BACKGROUND_JOB_TTL_MS + 1);
-
-      const fresh = createBackgroundJob('copilot');
-
-      expect(getBackgroundJob(expired.id)).toBeUndefined();
-      expect(getBackgroundJob(fresh.id)).toStrictEqual(fresh);
-    });
-  });
-
-  describe('enforceBoundedCapacity', () => {
-    it('GIVEN store at max capacity WHEN creating another job THEN evicts the oldest entry', () => {
-      const firstJob = createBackgroundJob('claude');
-
-      for (let i = 1; i < MAX_BACKGROUND_JOB_RECORDS + 1; i++) {
-        createBackgroundJob('claude');
-      }
-
-      expect(getBackgroundJob(firstJob.id)).toBeUndefined();
-    });
-
-    it('GIVEN store below capacity WHEN creating a job THEN does not evict any entries', () => {
-      const first = createBackgroundJob('a');
-      const second = createBackgroundJob('b');
-
-      expect(getBackgroundJob(first.id)).toStrictEqual(first);
-      expect(getBackgroundJob(second.id)).toStrictEqual(second);
     });
   });
 

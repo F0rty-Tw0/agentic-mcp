@@ -23,7 +23,7 @@ describe('buildSetupPlan', () => {
       backup: 'if-exists',
     });
 
-    expect(result.targetPath).toBe(path.join('/home/dev', '.claude/claude_desktop_config.json'));
+    expect(result.targetPath).toBe(path.join('/home/dev', '.claude.json'));
     expect(result.writeIntent).toBe('write');
   });
 
@@ -107,5 +107,49 @@ describe('buildSetupPlan', () => {
     expect(result.mode).toBe('overwrite');
     expect(result.mergeStatusPreview).toBe('created');
     expect(result.warnings).toContain('Overwrite mode replaces existing config content.');
+  });
+  it('GIVEN merge mode and an existing config that is not valid JSON WHEN building plan THEN it does not write and warns', () => {
+    const result = buildSetupPlan({
+      client: 'cursor',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: '{ "mcpServers": { "github": {} }, // comment\n}',
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.writeIntent).toBe('manual');
+    expect(result.warnings).toContainEqual(expect.stringContaining('is not valid JSON'));
+  });
+  it('GIVEN claude-code with an existing ~/.claude.json WHEN overwrite mode is requested THEN it does not write and warns', () => {
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'overwrite',
+      dryRun: false,
+      existingConfigText: '{"oauthAccount":{},"mcpServers":{}}',
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.writeIntent).toBe('manual');
+    expect(result.warnings).toContainEqual(expect.stringContaining('use --mode merge'));
+  });
+  it('GIVEN claude-code with an explicit --path WHEN overwrite mode is requested THEN the user-chosen file is written', () => {
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: '/tmp/mcp.json',
+      mode: 'overwrite',
+      dryRun: false,
+      existingConfigText: '{"mcpServers":{}}',
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.writeIntent).toBe('write');
   });
 });

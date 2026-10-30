@@ -6,6 +6,7 @@ import { buildJobStatusResponse, startBackgroundInvocation } from '../../backgro
 import { SESSION_STORE, appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../../session';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
+import { ValidationError } from '../../shared/validation/common';
 import type { AskToolArgs } from '../common';
 
 const runAskInvocationResponse = async (
@@ -58,6 +59,23 @@ const handleSessionAsk = async (
   }
 };
 
+const startAsyncAsk = (context: ResolvedProviderEntry, args: AskToolArgs): CallToolResult => {
+  if (args.session_id) throw new ValidationError('session_id is not supported with mode=async; use mode=sync');
+
+  const asyncJob = createBackgroundJob(context.name);
+
+  // The job outlives the request, so it must not use the request's progress token or signal.
+  void startBackgroundInvocation(asyncJob.id, async () => runAskInvocationResponse(context, args));
+
+  const text = JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state });
+  const content: TextContent[] = [{ type: 'text', text }];
+  const callToolResult: CallToolResult = {
+    content,
+  };
+
+  return callToolResult;
+};
+
 export const handleAsk = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
@@ -77,19 +95,7 @@ export const handleAsk = async (
     return buildJobStatusResponse(args.job_id);
   }
 
-  if ((args.mode ?? 'sync') === 'async') {
-    const asyncJob = createBackgroundJob(context.name);
-
-    void startBackgroundInvocation(asyncJob.id, async () => runAskInvocationResponse(context, args, extra));
-    const text = JSON.stringify({ job_id: asyncJob.id, state: asyncJob.state });
-
-    const content: TextContent[] = [{ type: 'text', text }];
-    const callToolResult: CallToolResult = {
-      content,
-    };
-
-    return callToolResult;
-  }
+  if ((args.mode ?? 'sync') === 'async') return startAsyncAsk(context, args);
 
   if (!args.session_id) return runAskInvocationResponse(context, args, extra);
 

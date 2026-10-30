@@ -90,6 +90,52 @@ describe('attachStreamCollector', () => {
       expect(collector.output()).toBe('hello');
     });
 
+    it('GIVEN a multi-byte character split across reads WHEN streamed THEN the callback chunks join into intact text', () => {
+      const stream = new PassThrough();
+      const onChunk = vi.fn<(chunk: string) => void>();
+      const encoded = Buffer.from('h\u00e9llo', 'utf-8');
+
+      attachStreamCollector(stream, onChunk);
+      stream.emit('data', encoded.subarray(0, 2));
+      stream.emit('data', encoded.subarray(2));
+
+      expect(onChunk.mock.calls.join('')).toBe('h\u00e9llo');
+    });
+
+    it('GIVEN a read holding only part of a character WHEN streamed THEN no empty chunk reaches the callback', () => {
+      const stream = new PassThrough();
+      const onChunk = vi.fn<(chunk: string) => void>();
+      const encoded = Buffer.from('\u00e9', 'utf-8');
+
+      attachStreamCollector(stream, onChunk);
+      stream.emit('data', encoded.subarray(0, 1));
+
+      expect(onChunk).not.toHaveBeenCalled();
+    });
+
+    it('GIVEN a stream ending mid-character WHEN it ends THEN the dangling bytes are flushed as a replacement character', () => {
+      const stream = new PassThrough();
+      const onChunk = vi.fn<(chunk: string) => void>();
+      const encoded = Buffer.from('\u00e9', 'utf-8');
+
+      attachStreamCollector(stream, onChunk);
+      stream.emit('data', encoded.subarray(0, 1));
+      stream.emit('end');
+
+      expect(onChunk).toHaveBeenCalledWith('\ufffd');
+    });
+
+    it('GIVEN a stream ending on a character boundary WHEN it ends THEN no extra chunk is emitted', () => {
+      const stream = new PassThrough();
+      const onChunk = vi.fn<(chunk: string) => void>();
+
+      attachStreamCollector(stream, onChunk);
+      stream.emit('data', Buffer.from('hello'));
+      stream.emit('end');
+
+      expect(onChunk).toHaveBeenCalledTimes(1);
+    });
+
     it('GIVEN an onChunk callback that throws WHEN data arrives THEN collection continues without error', () => {
       const stream = new PassThrough();
       const onChunk = vi.fn().mockImplementation(() => {

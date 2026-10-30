@@ -26,6 +26,16 @@ describe('buildMergedClientConfig', () => {
     expect(result.mergedConfig).toStrictEqual(AGENTIC_ONLY_CONFIG);
   });
 
+  it('GIVEN a whitespace-only existing config WHEN merging THEN returns created status, not invalid-json', () => {
+    const result = buildMergedClientConfig({
+      existingConfigText: '  \n',
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+    });
+
+    expect(result.status).toBe('created');
+    expect(result.mergedConfig).toStrictEqual(AGENTIC_ONLY_CONFIG);
+  });
+
   it('GIVEN valid existing config WHEN merging THEN returns merged status and preserves unrelated keys', () => {
     const existing = { command: 'node', args: ['server.js'] };
     const existingServers = { existing };

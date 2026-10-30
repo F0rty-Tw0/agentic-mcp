@@ -84,6 +84,7 @@ describe('buildFailureExecution', () => {
       sessionMode: 'none',
       responseText: '',
       wasCancelled: false,
+      wasStopped: false,
     });
   });
 

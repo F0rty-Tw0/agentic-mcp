@@ -161,6 +161,29 @@ describe('loadConfig', () => {
     );
   });
 
+  it.each([
+    [['--auto'], '--auto'],
+    [['--approval-mode', 'yolo'], 'yolo'],
+  ])(
+    'GIVEN auto-mode flags %j WHEN calling warnDangerousFlags THEN it warns about %s',
+    async (autoModeFlags, dangerousFlag) => {
+      const tempDir = await createTempDir();
+      const configPath = await writeConfig(
+        tempDir,
+        'dangerous-current.json',
+        buildConfig('unsafe', buildAutoModeOverrides(autoModeFlags))
+      );
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      const config = await loadConfig({ configPath });
+
+      warnDangerousFlags(config);
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`uses dangerous auto-mode flag "${dangerousFlag}"`)
+      );
+    }
+  );
+
   it('GIVEN dangerous flags WHEN filtering by provider name THEN only warns for matching providers', async () => {
     const tempDir = await createTempDir();
     const ask: CommandDef = { args: ['run'], flags: {} };

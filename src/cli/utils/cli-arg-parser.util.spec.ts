@@ -81,6 +81,15 @@ describe('parseAskArgs', () => {
     expect(result).toStrictEqual({ prompt: 'prompt' });
   });
 
+  it.each(['constructor', 'toString', '__proto__'])(
+    'GIVEN the prompt %s WHEN parsed THEN it stays the prompt, not an inherited flag lookup',
+    (prompt) => {
+      const result = parseAskArgs([prompt]);
+
+      expect(result).toStrictEqual({ prompt });
+    }
+  );
+
   it('GIVEN --stream-live flag WHEN parsed THEN it maps to stream_live', () => {
     const result = parseAskArgs(['prompt', '--stream-live']);
 
@@ -231,6 +240,12 @@ describe('parseReviewArgs', () => {
 
     expect(run).toThrow(ValidationError);
     expect(run).toThrow('review commands require --scope');
+  });
+
+  it('GIVEN a prototype key before a review flag WHEN parsed THEN the next flag is still read', () => {
+    const result = parseReviewArgs(['constructor', '--scope', 'uncommitted']);
+
+    expect(result).toStrictEqual({ scope: 'uncommitted', stream_live: true });
   });
 
   it('GIVEN review args without explicit stream flag WHEN parsed THEN it enables stream_live by default', () => {

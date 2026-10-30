@@ -1,8 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { CancelledNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { loadConfig, warnDangerousFlags } from '../../config/loader';
-import { APP_VERSION, getActiveRequest, killProcess, resolveCliBinary, unregisterActiveRequest } from '../../shared';
+import { APP_VERSION, resolveCliBinary } from '../../shared';
 import type {
   ConfigPathOptions,
   ProviderConfig,
@@ -11,7 +10,6 @@ import type {
 } from '../../shared/provider/common';
 import { registerAllTools } from '../../tool-registry';
 import { NO_PROVIDERS_WARNING, SERVER_NAME } from '../common';
-import { toRequestIdString } from '../utils';
 
 type ProviderMetadata = Pick<ResolvedProvider, 'supportLevel' | 'prerequisites'>;
 
@@ -114,19 +112,6 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
   });
 
   registerAllTools(server, resolvedProviders, allProviders);
-
-  server.server.setNotificationHandler(CancelledNotificationSchema, async (notification): Promise<void> => {
-    const requestId = toRequestIdString(notification.params.requestId);
-
-    if (!requestId) return;
-
-    const active = getActiveRequest(requestId);
-
-    if (!active) return;
-
-    await killProcess(active.pid);
-    unregisterActiveRequest(requestId);
-  });
 
   return server;
 };

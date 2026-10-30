@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 import type { AskExecution, AskToolArgs } from '../../ask/common';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import { CommandExecutionError } from '../../shared';
+import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
 const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
@@ -182,6 +183,121 @@ describe('executeSessionFlow', () => {
     expect(result.responseText).toBe('fallback response');
     expect(result.nativeSessionId).toBe('new-native-id');
     expect(result.wasCancelled).toBe(false);
+  });
+});
+
+const createFailedExecution = (
+  error: CommandExecutionError,
+  wasCancelled = false,
+  wasStopped = false
+): AskExecution => {
+  const response = error.toMcpResponse();
+  const result = createAskExecution({ response, wasCancelled, wasStopped });
+
+  return result;
+};
+
+const TIER2_STATE = createSessionFlowState({ mode: 'tier2-native', nativeSessionId: 'native-1', prompt: 'raw' });
+
+describe('executeSessionFlow tier2 fallback', () => {
+  const context = createResolvedProviderEntry();
+  const args = createAskToolArgs({ prompt: 'what is my name?', context: 'user ctx' });
+  const exitFailure = new CommandExecutionError('failed', { exitCode: 1, signal: null, timedOut: false });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('GIVEN tier2 fails with an exit code WHEN falling back THEN the retry prompt carries the session history', async () => {
+    mockRunAskInvocation.mockResolvedValueOnce(createFailedExecution(exitFailure));
+    mockRunAskInvocation.mockResolvedValueOnce(createAskExecution());
+    mockGetPrependContext.mockReturnValue('user: my name is ZED');
+    mockBuildSessionPrompt.mockReturnValue('tier1 prompt with history');
+    const fallbackArgs: AskToolArgs = { ...args, prompt: 'tier1 prompt with history' };
+
+    await executeSessionFlow({ context, args, state: TIER2_STATE });
+
+    expect(mockGetPrependContext).toHaveBeenCalledWith('test-provider', 'session-abc');
+    expect(mockBuildSessionPrompt).toHaveBeenCalledWith({
+      sessionTurnsText: 'user: my name is ZED',
+      userContext: 'user ctx',
+      prompt: 'what is my name?',
+    });
+    expect(mockRunAskInvocation).toHaveBeenLastCalledWith(
+      expect.objectContaining({ args: fallbackArgs, tier2SessionId: undefined })
+    );
+  });
+
+  it('GIVEN tier2 times out WHEN executeSessionFlow called THEN it returns the timeout without a fallback run', async () => {
+    const timeout = new CommandExecutionError('failed', { exitCode: null, signal: 'SIGTERM', timedOut: true });
+
+    mockRunAskInvocation.mockResolvedValue(createFailedExecution(timeout, false, true));
+
+    const result = await executeSessionFlow({ context, args, state: TIER2_STATE });
+
+    expect(mockRunAskInvocation).toHaveBeenCalledTimes(1);
+    expect(result.sessionMode).toBe('tier2-native');
+  });
+
+  it('GIVEN tier2 is killed by a signal WHEN executeSessionFlow called THEN no fallback run starts', async () => {
+    const killed = new CommandExecutionError('failed', { exitCode: null, signal: 'SIGKILL', timedOut: false });
+
+    mockRunAskInvocation.mockResolvedValue(createFailedExecution(killed, false, true));
+
+    await executeSessionFlow({ context, args, state: TIER2_STATE });
+
+    expect(mockRunAskInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN tier2 failed after a cancel WHEN executeSessionFlow called THEN no fallback run starts', async () => {
+    mockRunAskInvocation.mockResolvedValue(createFailedExecution(exitFailure, true));
+
+    const result = await executeSessionFlow({ context, args, state: TIER2_STATE });
+
+    expect(mockRunAskInvocation).toHaveBeenCalledTimes(1);
+    expect(result.wasCancelled).toBe(true);
+  });
+
+  it('GIVEN the request signal is aborted WHEN tier2 fails THEN no fallback run starts', async () => {
+    const controller = new AbortController();
+    const extra: ProgressContext = { sendNotification: vi.fn(), signal: controller.signal };
+
+    controller.abort();
+    mockRunAskInvocation.mockResolvedValue(createFailedExecution(exitFailure));
+
+    await executeSessionFlow({ context, args, extra, state: TIER2_STATE });
+
+    expect(mockRunAskInvocation).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('executeSessionFlow prompt validation', () => {
+  const context = createResolvedProviderEntry();
+  const state = createSessionFlowState();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockRunAskInvocation.mockResolvedValue(createAskExecution());
+  });
+
+  it('GIVEN a session ask without a prompt WHEN executeSessionFlow called THEN it returns a validation error without running', async () => {
+    const args = createAskToolArgs({ prompt: undefined });
+
+    const result = await executeSessionFlow({ context, args, state });
+
+    const content = [{ type: 'text', text: 'Validation error: Prompt is required' }];
+
+    expect(mockRunAskInvocation).not.toHaveBeenCalled();
+    expect(result.response).toStrictEqual({ isError: true, content });
+  });
+
+  it('GIVEN a session ask with an empty prompt WHEN executeSessionFlow called THEN it returns a validation error', async () => {
+    const args = createAskToolArgs({ prompt: '' });
+
+    const result = await executeSessionFlow({ context, args, state });
+
+    expect(mockRunAskInvocation).not.toHaveBeenCalled();
+    expect(result.response.isError).toBe(true);
   });
 });
 

@@ -1,7 +1,8 @@
 import { constants as fsConstants } from 'node:fs';
-import { copyFile, mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, realpath, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { resolveBackupPath, resolveFileMode, resolveWriteTarget } from './setup-write-target';
 import type { SetupApplyResult, SetupFs, SetupPlan } from '../common';
 
 type JsonRecord = Readonly<Record<string, unknown>>;
@@ -15,6 +16,7 @@ const defaultFs: SetupFs = {
   writeFile,
   copyFile,
   stat: async (targetPath) => stat(targetPath),
+  realpath: async (targetPath) => realpath(targetPath),
 };
 
 const hasExistingFile = async (targetPath: string, fs: SetupFs): Promise<boolean> => {
@@ -103,14 +105,17 @@ export const applySetupPlan = async (plan: SetupPlan, fs: SetupFs = defaultFs): 
   const shouldBackup = plan.backup === 'always' || shouldBackupExisting;
 
   if (shouldBackup) {
-    backupPath = `${plan.targetPath}.bak`;
+    backupPath = await resolveBackupPath(plan.targetPath, fs);
     await fs.copyFile(plan.targetPath, backupPath, fsConstants.COPYFILE_FICLONE);
   }
 
-  const tempPath = `${plan.targetPath}.tmp`;
+  const writeTarget = await resolveWriteTarget(plan.targetPath, fs);
+  const mode = await resolveFileMode(writeTarget, fs);
+  // A fresh name per run: writeFile only applies `mode` when it creates the file.
+  const tempPath = `${writeTarget}.${String(process.pid)}.${String(Date.now())}.tmp`;
 
-  await fs.writeFile(tempPath, plan.configText, 'utf8');
-  await fs.rename(tempPath, plan.targetPath);
+  await fs.writeFile(tempPath, plan.configText, { encoding: 'utf8', mode });
+  await fs.rename(tempPath, writeTarget);
 
   const writtenContent = await fs.readFile(plan.targetPath, 'utf8');
   const verification = verifyWrittenConfig(writtenContent);

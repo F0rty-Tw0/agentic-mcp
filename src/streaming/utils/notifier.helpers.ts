@@ -60,6 +60,8 @@ export const isStreamEnabled = ({ args, progressToken, extra }: StreamEnabledInp
 };
 
 export const splitChunkByBytes = (chunk: string): string[] => {
+  if (chunk.length === 0) return [];
+
   const chunkBytes = Buffer.byteLength(chunk, 'utf-8');
 
   if (chunkBytes <= MAX_STREAM_CHUNK_BYTES) return [chunk];

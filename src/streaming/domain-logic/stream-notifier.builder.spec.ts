@@ -109,6 +109,19 @@ describe('createStreamNotifier', () => {
       notifier.stop();
     });
 
+    it('WHEN the client progress token is 0 THEN streaming stays enabled', () => {
+      vi.mocked(resolveProgressToken).mockReturnValue(0);
+      const args = { stream_live: true };
+      const notifier = createStreamNotifier({
+        providerName: 'test',
+        args,
+        extra,
+      });
+
+      expect(notifier.enabled).toBe(true);
+      notifier.stop();
+    });
+
     it('WHEN onStdoutChunk called THEN delegates to queueChunk with stdout channel', () => {
       const args = { stream_live: true };
       const notifier = createStreamNotifier({

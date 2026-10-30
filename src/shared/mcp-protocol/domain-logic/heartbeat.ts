@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-
 import type { ProgressContext, ProgressToken } from '../common';
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
@@ -10,9 +8,7 @@ const resolveProgressToken = (extra?: ProgressContext): ProgressToken | undefine
   // eslint-disable-next-line no-underscore-dangle
   const providedToken = extra._meta?.progressToken;
 
-  if (providedToken != null) return providedToken;
-
-  return `agentic-mcp-heartbeat-${randomUUID()}`;
+  return providedToken;
 };
 
 const sendHeartbeat = (
@@ -38,7 +34,7 @@ const sendHeartbeat = (
 export const startHeartbeat = (extra?: ProgressContext): (() => void) => {
   const progressToken = resolveProgressToken(extra);
 
-  if (!progressToken || !extra?.sendNotification) {
+  if (progressToken == null || !extra?.sendNotification) {
     return () => {
       /* empty */
     };

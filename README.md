@@ -197,16 +197,16 @@ If you are using MCP mode, restart your client after setup and confirm that tool
 
 ## Supported MCP clients
 
-| Client       | Setup command                                                           | Default config path                    |
-| ------------ | ----------------------------------------------------------------------- | -------------------------------------- |
-| Claude Code  | `npx agentic-mcp setup --client claude-code --yes`                      | `~/.claude/claude_desktop_config.json` |
-| Cursor       | `npx agentic-mcp setup --client cursor --yes`                           | `~/.cursor/mcp.json`                   |
-| Windsurf     | `npx agentic-mcp setup --client windsurf --yes`                         | `~/.codeium/windsurf/mcp_config.json`  |
-| Generic JSON | `npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes` | user-supplied                          |
+| Client       | Setup command                                                           | Default config path                   |
+| ------------ | ----------------------------------------------------------------------- | ------------------------------------- |
+| Claude Code  | `npx agentic-mcp setup --client claude-code --yes`                      | `~/.claude.json`                      |
+| Cursor       | `npx agentic-mcp setup --client cursor --yes`                           | `~/.cursor/mcp.json`                  |
+| Windsurf     | `npx agentic-mcp setup --client windsurf --yes`                         | `~/.codeium/windsurf/mcp_config.json` |
+| Generic JSON | `npx agentic-mcp setup --client generic --path /path/to/mcp.json --yes` | user-supplied                         |
 
-Setup uses merge mode by default, preserves existing MCP servers, creates backups when appropriate, and verifies writes after updating the file.
+Setup uses merge mode by default, preserves existing MCP servers, creates backups when appropriate, and verifies writes after updating the file. If the existing file is not strict JSON (comments, trailing commas), merge mode leaves it unchanged and prints the entry to add by hand.
 
-For Claude tooling, the setup target name is `claude-code`, but the config file it updates is `~/.claude/claude_desktop_config.json`. That filename comes from the client-side config convention, not from this package.
+For Claude Code, setup adds the server to the user-scope `mcpServers` in `~/.claude.json`, the same place `claude mcp add --scope user` writes. Check it with `claude mcp get agentic-mcp`.
 
 ## Common workflows
 

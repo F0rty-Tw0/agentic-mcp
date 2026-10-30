@@ -15,6 +15,8 @@ const DANGEROUS_FLAGS: string[] = [
   '--full-auto',
   '--yes-always',
   '--yolo',
+  '--auto',
+  'yolo',
 ];
 
 const userLocalConfigPath = (): string | undefined => {

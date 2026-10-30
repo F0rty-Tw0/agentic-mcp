@@ -5,6 +5,7 @@ type ChildProcessLike = Record<string, unknown>;
 export type ControllableChildStdin = {
   readonly write: Mock;
   readonly end: Mock;
+  readonly on: Mock;
 };
 
 export type ControllableChild = {

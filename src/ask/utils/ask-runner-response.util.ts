@@ -6,12 +6,17 @@ import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskExecution } from '../common';
 
-export const buildFailureExecution = (response: CallToolResult, wasCancelled: boolean): AskExecution => {
+export const buildFailureExecution = (
+  response: CallToolResult,
+  wasCancelled: boolean,
+  wasStopped = false
+): AskExecution => {
   const result: AskExecution = {
     response,
     sessionMode: 'none',
     responseText: '',
     wasCancelled,
+    wasStopped,
   };
 
   return result;

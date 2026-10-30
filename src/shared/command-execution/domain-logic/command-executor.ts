@@ -1,3 +1,6 @@
+import type { ChildProcess, StdioOptions } from 'node:child_process';
+import process from 'node:process';
+
 import crossSpawn from 'cross-spawn';
 
 import { defaultProviderQueueStore } from './provider-queue';
@@ -7,9 +10,12 @@ import type {
   IdleTimeoutHandle,
   ProviderQueueOptions,
   StreamCollector,
+  UntrackChildGroup,
 } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
+import { defaultChildGroupRegistry } from './child-group-registry';
 import { setupIdleTimeout } from './command-idle-timeout';
+import { releaseStdioAfterKilledExit } from './command-stdio-release';
 import { createAbortSubscription, setupTimeout } from './command-timeout';
 import { CommandExecutionError } from '../common/errors';
 import type { ProviderQueueLease } from '../common/provider-queue.type';
@@ -54,6 +60,9 @@ const wrapChunkCallback = (
   };
 };
 
+// A CLI that exits before reading stdin fails the write with EPIPE; its exit code already reports the failure.
+const ignoreStdinError = (): void => undefined;
+
 const resolveProviderQueueOptions = (options: ExecuteCommandOptions): ProviderQueueOptions => {
   const providerQueue = options.providerQueue;
 
@@ -80,23 +89,44 @@ const acquireQueueLease = async (options: ExecuteCommandOptions): Promise<QueueL
   return lease;
 };
 
+const noopUntrack: UntrackChildGroup = () => undefined;
+
+// POSIX: lead a new process group so killProcess(-pid) also reaches descendants; Windows uses taskkill /T.
+const isDetachedPlatform = (): boolean => process.platform !== 'win32';
+
+const spawnProcess = (options: ExecuteCommandOptions): ChildProcess => {
+  const { binaryPath, args, env, stdin, cwd } = options;
+  const stdio: StdioOptions = [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'];
+  const detached = isDetachedPlatform();
+  const child = crossSpawn(binaryPath, args, { env, stdio, cwd, detached });
+
+  return child;
+};
+
+const trackChildGroup = (child: ChildProcess): UntrackChildGroup => {
+  const detached = isDetachedPlatform();
+
+  if (!detached || child.pid === undefined) return noopUntrack;
+
+  const untrack = defaultChildGroupRegistry.track(child.pid);
+
+  return untrack;
+};
+
+const writeStdin = (child: ChildProcess, stdin?: string): void => {
+  if (!stdin || !child.stdin) return;
+
+  child.stdin.on('error', ignoreStdinError);
+  child.stdin.write(stdin);
+  child.stdin.end();
+};
+
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
-  const {
-    binaryPath,
-    args,
-    env,
-    timeoutMs,
-    idleTimeoutMs,
-    stdin,
-    cwd,
-    onStdoutChunk,
-    onStderrChunk,
-    signal,
-    onSpawned,
-  } = options;
+  const { binaryPath, timeoutMs, idleTimeoutMs, stdin, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
 
   return new Promise<ExecutionResult>((resolve, reject) => {
-    const child = crossSpawn(binaryPath, args, { env, stdio: [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'], cwd });
+    const child = spawnProcess(options);
+    const untrackGroup = trackChildGroup(child);
 
     if (child.pid !== undefined && onSpawned) onSpawned(child.pid);
 
@@ -105,11 +135,16 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
     const stdout = attachStreamCollector(child.stdout, wrapChunkCallback(idleTimeout, onStdoutChunk));
     const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
     const abort = createAbortSubscription(signal, child.pid);
+    const wasKillRequested = (): boolean =>
+      timeout.markTimedOut() || idleTimeout.timedOut() || signal?.aborted === true;
+    const cancelStdioRelease = releaseStdioAfterKilledExit(child, wasKillRequested);
 
     const cleanup = (): void => {
       clearTimeout(timeout.timer);
       idleTimeout.clear();
       abort.detach();
+      cancelStdioRelease();
+      untrackGroup();
     };
 
     child.on('error', (error: Error) => {
@@ -125,15 +160,12 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     child.on('close', (exitCode, closeSignal) => {
       cleanup();
-      resolve(
-        resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut: timeout.markTimedOut(), startTime })
-      );
+      const timedOut = timeout.markTimedOut() || idleTimeout.timedOut();
+
+      resolve(resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut, startTime }));
     });
 
-    if (stdin && child.stdin) {
-      child.stdin.write(stdin);
-      child.stdin.end();
-    }
+    writeStdin(child, stdin);
   });
 };
 

@@ -1,4 +1,19 @@
+import type { Readable } from 'node:stream';
+
 export type StreamChunkCallback = (chunk: string) => void;
+
+export type UntrackChildGroup = () => void;
+
+export type ChildGroupRegistry = {
+  readonly track: (pid: number) => UntrackChildGroup;
+  readonly terminateAll: () => void;
+};
+
+export type StdioReleasableChild = {
+  readonly on: (event: 'exit', listener: () => void) => unknown;
+  readonly stdout: Readable | null;
+  readonly stderr: Readable | null;
+};
 
 export type StreamCollector = {
   readonly output: () => string;
@@ -10,7 +25,11 @@ type CommandEnv = Readonly<Record<string, string>>;
 
 type RetryOperation<T> = () => Promise<T> | T;
 
-export type IdleTimeoutHandle = { readonly reset: () => void; readonly clear: () => void };
+export type IdleTimeoutHandle = {
+  readonly reset: () => void;
+  readonly clear: () => void;
+  readonly timedOut: () => boolean;
+};
 
 export type RetryWithExponentialBackoffInput<T> = {
   readonly operation: RetryOperation<T>;

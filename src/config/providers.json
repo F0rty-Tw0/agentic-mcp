@@ -20,11 +20,11 @@
             "model": "--model",
             "autoMode": {
               "flag": "--permission-mode",
-              "values": ["acceptEdits", "bypassPermissions", "default", "delegate", "dontAsk", "plan"]
+              "values": ["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "manual", "plan"]
             },
             "effort": {
               "flag": "--effort",
-              "values": ["low", "medium", "high"]
+              "values": ["low", "medium", "high", "xhigh", "max"]
             },
             "maxBudget": "--max-budget-usd",
             "systemPrompt": "--system-prompt",
@@ -58,7 +58,7 @@
       "commands": {
         "ask": {
           "args": ["exec"],
-          "trailingArgs": ["--full-auto", "--json"],
+          "trailingArgs": ["--json"],
           "flags": {
             "model": "-m",
             "workingDir": "-C",
@@ -80,9 +80,9 @@
           }
         },
         "sessions": {
+          "placement": "beforePrompt",
           "flags": {
-            "resume": ["exec", "resume"],
-            "continue": ["exec", "resume", "--last"]
+            "resume": ["resume"]
           }
         }
       },
@@ -114,7 +114,11 @@
           "flags": {
             "model": "--model",
             "autoMode": ["--yolo"],
-            "workingDir": "--add-dir"
+            "workingDir": "--add-dir",
+            "effort": {
+              "flag": "--reasoning-effort",
+              "values": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
+            }
           }
         },
         "sessions": {
@@ -142,7 +146,12 @@
           "trailingArgs": ["--output-format", "json"],
           "flags": {
             "model": "-m",
-            "autoMode": ["-y"]
+            "autoMode": ["--approval-mode", "yolo"]
+          }
+        },
+        "sessions": {
+          "flags": {
+            "resume": ["--resume"]
           }
         }
       },
@@ -164,7 +173,8 @@
           "trailingArgs": ["--format", "json"],
           "flags": {
             "model": "-m",
-            "file": "--file"
+            "file": "--file",
+            "autoMode": ["--auto"]
           }
         },
         "models": {
@@ -172,7 +182,7 @@
         },
         "sessions": {
           "flags": {
-            "continue": ["--continue"]
+            "resume": ["--session"]
           }
         }
       },

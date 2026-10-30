@@ -59,8 +59,9 @@ const handleFailedExecution = async (
   streamNotifier.emitError(firstContent?.type === 'text' ? firstContent.text : error.message, summary);
   await recordCall(context.name, result.executionTimeMs, false);
   const wasCancelled = extra?.signal?.aborted ?? false;
+  const wasStopped = result.timedOut || result.signal !== null;
 
-  return buildFailureExecution(errorResponse, wasCancelled);
+  return buildFailureExecution(errorResponse, wasCancelled, wasStopped);
 };
 
 const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = false): Promise<AskExecution> => {

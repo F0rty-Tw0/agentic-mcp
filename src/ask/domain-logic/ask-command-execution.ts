@@ -49,17 +49,6 @@ export const buildOnSpawned = (requestId?: string): SpawnCallback | undefined =>
   return onSpawned;
 };
 
-const buildCliArgs = (
-  config: ResolvedProviderEntry['config'],
-  baseCliArgs: string[],
-  tier2SessionId?: string
-): string[] => {
-  const tier2SessionArgs = resolveTier2SessionArgs(config, tier2SessionId);
-  const cliArgs = [...baseCliArgs, ...tier2SessionArgs];
-
-  return cliArgs;
-};
-
 export const runCommandExecution = async (
   runCommandExecutionInput: RunCommandExecutionInput
 ): Promise<CommandExecutionOutcome> => {
@@ -67,9 +56,9 @@ export const runCommandExecution = async (
   const env = buildExecutionEnv(context);
   const remappedArgs = await resolveRequestedModel({ context, args, env });
   const resolved = validateAndResolveArgs(remappedArgs, context.name);
-  const { args: baseCliArgs, stdinInput, outputFormat } = buildArgArray(context.config, resolved);
+  const tier2SessionArgs = resolveTier2SessionArgs(context.config, tier2SessionId);
+  const { args: cliArgs, stdinInput, outputFormat } = buildArgArray(context.config, resolved, tier2SessionArgs);
   const requestId = resolveRequestId(extra);
-  const cliArgs = buildCliArgs(context.config, baseCliArgs, tier2SessionId);
   const liveOutputAdapter = createProviderLiveOutputAdapter({
     providerName: context.name,
     outputFormat,

@@ -267,7 +267,8 @@ describe('runSetup', () => {
   });
 
   it('GIVEN config file does not exist WHEN running setup THEN existingConfigText is undefined', async () => {
-    const readConfigFile = vi.fn().mockRejectedValue(new Error('ENOENT'));
+    const missingFileError = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    const readConfigFile = vi.fn().mockRejectedValue(missingFileError);
     const buildSetupPlan = vi.fn(() => createPlan());
 
     await runSetup(['--client', 'cursor', '--yes'], createDependencies({ buildSetupPlan, readConfigFile }));

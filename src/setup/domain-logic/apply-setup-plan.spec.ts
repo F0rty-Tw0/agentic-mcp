@@ -2,25 +2,30 @@ import path from 'node:path';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SetupApplyResult, SetupFileStat, SetupFs, SetupMkdirOptions, SetupPlan } from '../common';
+import type {
+  SetupApplyResult,
+  SetupFileStat,
+  SetupFs,
+  SetupMkdirOptions,
+  SetupPlan,
+  SetupWriteOptions,
+} from '../common';
 
 const nodeFsMocks = vi.hoisted(() => {
   const mkdir = vi.fn<(targetPath: string, options: SetupMkdirOptions) => Promise<void>>();
   const readFile = vi.fn<(targetPath: string, encoding: 'utf8') => Promise<string>>();
   const rename = vi.fn<(sourcePath: string, destinationPath: string) => Promise<void>>();
-  const writeFile = vi.fn<(targetPath: string, content: string, encoding: 'utf8') => Promise<void>>();
+  const writeFile = vi.fn<(targetPath: string, content: string, options: SetupWriteOptions) => Promise<void>>();
   const copyFile = vi.fn<(sourcePath: string, destinationPath: string, mode?: number) => Promise<void>>();
   const stat = vi.fn<(targetPath: string) => Promise<SetupFileStat>>();
-  const fileStat: SetupFileStat = { isFile: () => true };
+  const realpath = vi.fn(async (targetPath: string) => Promise.resolve(targetPath));
 
   mkdir.mockResolvedValue(undefined);
   readFile.mockResolvedValue('');
   rename.mockResolvedValue(undefined);
   writeFile.mockResolvedValue(undefined);
   copyFile.mockResolvedValue(undefined);
-  stat.mockResolvedValue(fileStat);
-
-  const mocks = { mkdir, readFile, rename, writeFile, copyFile, stat };
+  const mocks = { mkdir, readFile, rename, writeFile, copyFile, stat, realpath };
 
   return mocks;
 });
@@ -33,12 +38,15 @@ vi.mock('node:fs/promises', () => {
     writeFile: nodeFsMocks.writeFile,
     copyFile: nodeFsMocks.copyFile,
     stat: nodeFsMocks.stat,
+    realpath: nodeFsMocks.realpath,
   };
 
   return fsModule;
 });
 
 let applySetupPlan: (plan: SetupPlan, fs?: SetupFs) => Promise<SetupApplyResult>;
+
+const TEMP_FILE_PATTERN = /\.\d+\.\d+\.tmp$/;
 
 const VALID_WRITTEN_CONFIG = '{"mcpServers":{"agentic-mcp":{"command":"npx","args":["-y","agentic-mcp"]}}}';
 
@@ -59,15 +67,26 @@ const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
   return plan;
 };
 
+const FILE_STAT: SetupFileStat = { mode: 0o644, isFile: () => true };
+
+// Every path exists except backups, so a fresh `.bak` name is chosen.
+const statExceptBackups = async (targetPath: string): Promise<SetupFileStat> => {
+  const isBackup = targetPath.endsWith('.bak');
+
+  if (isBackup) throw new Error('ENOENT');
+
+  return Promise.resolve(FILE_STAT);
+};
+
 const createFsMocks = (): SetupFs => {
-  const fileStat: SetupFileStat = { isFile: () => true };
   const mkdir = vi.fn().mockResolvedValue(undefined);
   const readFile = vi.fn().mockResolvedValue('');
   const rename = vi.fn().mockResolvedValue(undefined);
   const writeFile = vi.fn().mockResolvedValue(undefined);
   const copyFile = vi.fn().mockResolvedValue(undefined);
-  const stat = vi.fn().mockResolvedValue(fileStat);
-  const fsMocks: SetupFs = { mkdir, readFile, rename, writeFile, copyFile, stat };
+  const stat = vi.fn(statExceptBackups);
+  const realpath = vi.fn(async (targetPath: string) => Promise.resolve(targetPath));
+  const fsMocks: SetupFs = { mkdir, readFile, rename, writeFile, copyFile, stat, realpath };
 
   return fsMocks;
 };
@@ -92,9 +111,7 @@ describe('applySetupPlan', () => {
     nodeFsMocks.rename.mockResolvedValue(undefined);
     nodeFsMocks.writeFile.mockResolvedValue(undefined);
     nodeFsMocks.copyFile.mockResolvedValue(undefined);
-    nodeFsMocks.stat.mockResolvedValue({
-      isFile: () => true,
-    });
+    nodeFsMocks.stat.mockImplementation(statExceptBackups);
   });
 
   afterEach(() => {
@@ -122,8 +139,11 @@ describe('applySetupPlan', () => {
 
     await applySetupPlan(plan, fs);
 
-    expect(fs.writeFile).toHaveBeenCalledWith(`${plan.targetPath}.tmp`, plan.configText, 'utf8');
-    expect(fs.rename).toHaveBeenCalledWith(`${plan.targetPath}.tmp`, plan.targetPath);
+    expect(fs.writeFile).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), plan.configText, {
+      encoding: 'utf8',
+      mode: 0o644,
+    });
+    expect(fs.rename).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), plan.targetPath);
   });
 
   it('GIVEN write operation WHEN applying THEN verifies written config by read-back', async () => {
@@ -279,8 +299,11 @@ describe('applySetupPlan', () => {
     expect(nodeFsMocks.mkdir).toHaveBeenCalledWith(path.dirname(targetPath), { recursive: true });
     expect(nodeFsMocks.stat).toHaveBeenCalledWith(targetPath);
     expect(nodeFsMocks.copyFile).toHaveBeenCalledWith(targetPath, `${targetPath}.bak`, expect.any(Number));
-    expect(nodeFsMocks.writeFile).toHaveBeenCalledWith(`${targetPath}.tmp`, plan.configText, 'utf8');
-    expect(nodeFsMocks.rename).toHaveBeenCalledWith(`${targetPath}.tmp`, targetPath);
+    expect(nodeFsMocks.writeFile).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), plan.configText, {
+      encoding: 'utf8',
+      mode: 0o644,
+    });
+    expect(nodeFsMocks.rename).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), targetPath);
     expect(nodeFsMocks.readFile).toHaveBeenCalledWith(targetPath, 'utf8');
     expect(result).toStrictEqual({
       status: 'written',

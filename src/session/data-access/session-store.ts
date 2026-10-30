@@ -135,11 +135,10 @@ export class InMemorySessionStore {
 
     for (const [key, entry] of this.entries) {
       const lastAccessedMs = Date.parse(entry.lastAccessedAt);
+      const isLocked = this.locks.has(key);
+      const isExpired = nowMs - lastAccessedMs > SESSION_TTL_MS;
 
-      if (nowMs - lastAccessedMs > SESSION_TTL_MS) {
-        this.entries.delete(key);
-        this.locks.delete(key);
-      }
+      if (isExpired && !isLocked) this.entries.delete(key);
     }
   }
 
@@ -147,8 +146,9 @@ export class InMemorySessionStore {
     for (const oldestKey of this.entries.keys()) {
       if (this.entries.size < MAX_SESSIONS) break;
 
-      this.entries.delete(oldestKey);
-      this.locks.delete(oldestKey);
+      const isLocked = this.locks.has(oldestKey);
+
+      if (!isLocked) this.entries.delete(oldestKey);
     }
   }
 }

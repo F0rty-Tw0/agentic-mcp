@@ -84,7 +84,7 @@ const addAutoModeField = (schema: MutableToolInputSchema, askCmd: CommandDef): v
 const addStreamingAndAsyncFields = (schema: MutableToolInputSchema): void => {
   const actionDescription = 'Request action: run a prompt or poll status for a prior async job (default: run)';
   const modeDescription =
-    'Execution mode: sync waits for completion; async returns a job_id for polling (default: sync)';
+    'Execution mode: sync waits for completion; async returns a job_id for polling and does not accept session_id (default: sync)';
 
   schema.action = z.enum(['run', 'status']).optional().describe(actionDescription);
 
