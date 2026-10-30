@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { registerGracefulShutdown } from './graceful-shutdown.util';
+import { registerGracefulShutdown } from './graceful-shutdown';
 
 describe('registerGracefulShutdown', () => {
   afterEach(() => {

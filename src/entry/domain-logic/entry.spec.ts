@@ -3,13 +3,18 @@ import process from 'node:process';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entry } from './entry';
+import type { ProveCliInput } from '../../prove/common';
 import type { ConfigPathOptions } from '../../shared';
 
-type MockServer = Readonly<{
-  connect: (transport: unknown) => Promise<void>;
-}>;
+type MockServer = {
+  readonly connect: (transport: unknown) => Promise<void>;
+};
 
 type ExitFn = (code?: string | number | null) => never;
+
+type MockTransport = {
+  readonly transport: string;
+};
 
 const mocks = vi.hoisted(() => {
   const transportInstance = {
@@ -17,13 +22,13 @@ const mocks = vi.hoisted(() => {
   };
   const connect = vi.fn<(transport: unknown) => Promise<void>>();
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
-  const runSetup = vi.fn<(args: readonly string[]) => Promise<void>>();
-  const runProve = vi.fn<(input: Readonly<{ args: readonly string[]; configPath?: string }>) => Promise<void>>();
-  const runCli = vi.fn<(subcommand: string, remainingArgs: readonly string[], configPath?: string) => Promise<void>>();
+  const runSetup = vi.fn<(args: string[]) => Promise<void>>();
+  const runProve = vi.fn<(input: ProveCliInput) => Promise<void>>();
+  const runCli = vi.fn<(subcommand: string, remainingArgs: string[], configPath?: string) => Promise<void>>();
   const isCliSubcommand = vi.fn<(arg: string) => boolean>();
   const stdioServerTransport = vi.fn();
 
-  return {
+  const result = {
     connect,
     createServer,
     isCliSubcommand,
@@ -33,36 +38,56 @@ const mocks = vi.hoisted(() => {
     stdioServerTransport,
     transportInstance,
   };
+
+  return result;
 });
 
-vi.mock('../../server', () => ({
-  createServer: mocks.createServer,
-}));
+vi.mock('../../server', () => {
+  const result = {
+    createServer: mocks.createServer,
+  };
 
-vi.mock('../../cli', () => ({
-  isCliSubcommand: mocks.isCliSubcommand,
-  runCli: mocks.runCli,
-}));
+  return result;
+});
 
-vi.mock('../../setup', () => ({
-  runSetup: mocks.runSetup,
-}));
+vi.mock('../../cli', () => {
+  const result = {
+    isCliSubcommand: mocks.isCliSubcommand,
+    runCli: mocks.runCli,
+  };
 
-vi.mock('../../prove', () => ({
-  runProve: mocks.runProve,
-}));
+  return result;
+});
 
-vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
-  StdioServerTransport: mocks.stdioServerTransport,
-}));
+vi.mock('../../setup', () => {
+  const result = {
+    runSetup: mocks.runSetup,
+  };
+
+  return result;
+});
+
+vi.mock('../../prove', () => {
+  const result = {
+    runProve: mocks.runProve,
+  };
+
+  return result;
+});
+
+vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => {
+  const result = {
+    StdioServerTransport: mocks.stdioServerTransport,
+  };
+
+  return result;
+});
 
 const resetArgv = (): void => {
   process.argv = ['node', ''];
 };
 
-function createMockTransport(): {
-  transport: string;
-} {
+function createMockTransport(): MockTransport {
   return mocks.transportInstance;
 }
 
