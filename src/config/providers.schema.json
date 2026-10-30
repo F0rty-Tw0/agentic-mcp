@@ -86,7 +86,7 @@
         "trailingArgs": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Static trailing arguments — placed after dynamic inputs. Typically output format flags. Examples: [\"--output-format\", \"json\"], [\"--full-auto\", \"--json\"]."
+          "description": "Static trailing arguments — placed after dynamic inputs. Typically output format flags. Examples: [\"--output-format\", \"json\"], [\"--json\"]."
         },
         "flags": {
           "type": "object",
@@ -110,6 +110,10 @@
               "description": "Output format produced when the streaming override is active."
             }
           }
+        },
+        "placement": {
+          "enum": ["end", "beforePrompt"],
+          "description": "sessions command only: where native session args go. \"end\" (default) appends them after everything else. \"beforePrompt\" puts them after the dynamic flags and right before a positional prompt, for CLIs whose resume is a subcommand (codex: exec [options] resume <id> <prompt>)."
         }
       }
     },

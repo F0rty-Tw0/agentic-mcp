@@ -12,6 +12,7 @@ import type { AskToolArgs, BuiltArgs, ReviewToolArgs } from '../../ask/common';
 import { getFlag, getReviewCommand, resolveAskCommand } from '../../ask/utils';
 import { ValidationError } from '../../shared';
 import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/provider/common';
+import { guardPromptArg, placesSessionArgsBeforePrompt } from '../utils';
 
 const REVIEW_BASE_FLAG_KEY = 'base';
 const REVIEW_COMMIT_FLAG_KEY = 'commit';
@@ -135,29 +136,49 @@ const appendReviewScopeArgs = (cliArgs: string[], reviewCmd: CommandDef, args: R
   appendRequiredReviewFlag(cliArgs, reviewCmd, REVIEW_BASE_FLAG_KEY, args.base);
 };
 
-export const buildArgArray = (config: ProviderConfig, args: AskToolArgs): BuiltArgs => {
+type AppendPromptThenFlagsInput = {
+  readonly cliArgs: string[];
+  readonly askCmd: CommandDef;
+  readonly args: AskToolArgs;
+  readonly promptArg: string;
+  readonly isStdinInput: boolean;
+};
+
+const appendPromptThenFlags = (appendPromptThenFlagsInput: AppendPromptThenFlagsInput): void => {
+  const { cliArgs, askCmd, args, promptArg, isStdinInput } = appendPromptThenFlagsInput;
+
+  if (!isStdinInput) cliArgs.push(promptArg);
+
+  appendOptionalFlags(cliArgs, askCmd, args);
+};
+
+export const buildArgArray = (config: ProviderConfig, args: AskToolArgs, sessionArgs: string[] = []): BuiltArgs => {
   const cliArgs: string[] = [];
-  let stdinInput: string | undefined;
 
   if (!args.prompt) throw new ValidationError('Missing required "prompt" argument');
 
   const { command: askCmd, outputFormat } = resolveAskCommand(config, args.stream_live === true);
+  const isStdinInput = config.input.method === 'stdin';
+  const stdinInput = isStdinInput ? args.prompt : undefined;
+  const promptArg = guardPromptArg(args.prompt);
+  const sessionArgsBeforePrompt = placesSessionArgsBeforePrompt(config, sessionArgs);
 
   if (askCmd.args?.length) {
     cliArgs.push(...askCmd.args);
   }
 
-  if (config.input.method === 'stdin') {
-    stdinInput = args.prompt;
+  if (sessionArgsBeforePrompt) {
+    appendOptionalFlags(cliArgs, askCmd, args);
+    cliArgs.push(...sessionArgs, promptArg);
   } else {
-    cliArgs.push(args.prompt);
+    appendPromptThenFlags({ cliArgs, askCmd, args, promptArg, isStdinInput });
   }
-
-  appendOptionalFlags(cliArgs, askCmd, args);
 
   if (askCmd.trailingArgs?.length) {
     cliArgs.push(...askCmd.trailingArgs);
   }
+
+  if (!sessionArgsBeforePrompt) cliArgs.push(...sessionArgs);
 
   const builtArgs: BuiltArgs = { args: cliArgs, stdinInput, outputFormat };
 

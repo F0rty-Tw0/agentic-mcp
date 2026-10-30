@@ -35,6 +35,7 @@ const commandDefSchema = z.object({
   trailingArgs: z.array(z.string()).optional(),
   flags: z.record(z.string(), flagValueSchema).optional(),
   streaming: streamingCommandSchema.optional(),
+  placement: z.enum(['end', 'beforePrompt']).optional(),
 });
 
 const commandsSchema = z.record(z.string(), commandDefSchema).refine((commands) => 'ask' in commands, {
