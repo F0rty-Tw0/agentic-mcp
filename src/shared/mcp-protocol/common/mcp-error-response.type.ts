@@ -1,6 +1,6 @@
 import type { McpTextContent } from './mcp-content.type';
 
-export type McpErrorResponse = Readonly<{
-  isError: true;
-  content: Array<McpTextContent>;
-}>;
+export type McpErrorResponse = {
+  readonly isError: true;
+  readonly content: Array<McpTextContent>;
+};

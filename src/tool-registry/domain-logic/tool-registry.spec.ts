@@ -8,42 +8,52 @@ import { handleAsk } from '../../ask/domain-logic/ask.handler';
 import { handleAskAll } from '../../ask-all/domain-logic/ask-all.handler';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from '../../provider-metrics';
 import { handleSessions } from '../../session';
-import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import type { ResolvedProvider, ResolvedProviderEntry } from '../../shared';
+import { ValidationError } from '../../shared';
 import { handleHelp, handleListProviders, handlePing } from '../../simple-tools';
 import {
-  TOOL_REGISTRY_PROVIDER_CONFIG_STUB,
   TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB,
-  TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
-  TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
   TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
-} from '../common/stubs';
+} from '../test/stubs/tool-registry.stub';
+import { makeConfig, makeProvider, makeResolvedProvider } from '../test/utils/tool-registry.spec.util';
 
 vi.mock('../../provider-metrics');
-vi.mock('../../ask/domain-logic/ask.handler', () => ({ handleAsk: vi.fn() }));
-vi.mock('../../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
-vi.mock('../../session', () => ({ handleSessions: vi.fn() }));
-vi.mock('../../ask-all/domain-logic/ask-all.handler', () => ({ handleAskAll: vi.fn() }));
-vi.mock('../../simple-tools/domain-logic/help.handler', () => ({ handleHelp: vi.fn() }));
-vi.mock('../../simple-tools/domain-logic/meta.handler', () => ({ handleListProviders: vi.fn() }));
-vi.mock('../../simple-tools/domain-logic/ping.handler', () => ({ handlePing: vi.fn() }));
+vi.mock('../../ask/domain-logic/ask.handler', () => {
+  const mockedModule = { handleAsk: vi.fn() };
 
-const makeConfig = (): ProviderConfig => ({ ...TOOL_REGISTRY_PROVIDER_CONFIG_STUB });
-const makeProvider = (name = 'claude'): ResolvedProviderEntry => ({
-  ...TOOL_REGISTRY_RESOLVED_PROVIDER_ENTRY_STUB,
-  name,
-  binaryPath: `/usr/bin/${name}`,
-  config: makeConfig(),
+  return mockedModule;
 });
-const makeResolvedProvider = (name = 'claude'): ResolvedProvider => ({
-  ...TOOL_REGISTRY_RESOLVED_PROVIDER_STUB,
-  name,
-  description: `${name} provider`,
-  binaryPath: `/usr/bin/${name}`,
+vi.mock('../../ask-all/domain-logic/ask-all.handler', () => {
+  const mockedModule = { handleAskAll: vi.fn() };
+
+  return mockedModule;
 });
+vi.mock('../../session', () => {
+  const mockedModule = { handleSessions: vi.fn() };
+
+  return mockedModule;
+});
+vi.mock('../../simple-tools/domain-logic/help.handler', () => {
+  const mockedModule = { handleHelp: vi.fn() };
+
+  return mockedModule;
+});
+vi.mock('../../simple-tools/domain-logic/meta.handler', () => {
+  const mockedModule = { handleListProviders: vi.fn() };
+
+  return mockedModule;
+});
+vi.mock('../../simple-tools/domain-logic/ping.handler', () => {
+  const mockedModule = { handlePing: vi.fn() };
+
+  return mockedModule;
+});
+
 const SUCCESS_RESULT: CallToolResult = TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB;
 
-type MockServer = Readonly<{ registerTool: MockInstance }>;
+type MockServer = { readonly registerTool: MockInstance };
 type ToolMetadata = Readonly<Record<string, unknown>>;
+type ToolMetadataWithOutputSchema = { readonly outputSchema?: unknown };
 const getRegisteredNames = (server: MockServer): string[] =>
   server.registerTool.mock.calls.map(([call]: unknown[]) => call as string);
 const getHandler = (server: MockServer, toolName: string): ((...args: unknown[]) => unknown) => {
@@ -63,10 +73,7 @@ const getMetadata = (server: MockServer, toolName: string): ToolMetadata => {
 
 describe('registerAllTools', () => {
   let server: MockServer;
-  let register: (
-    resolvedProviders?: readonly ResolvedProviderEntry[],
-    allProviders?: readonly ResolvedProvider[]
-  ) => void;
+  let register: (resolvedProviders?: ResolvedProviderEntry[], allProviders?: ResolvedProvider[]) => void;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -91,16 +98,13 @@ describe('registerAllTools', () => {
     });
 
     it('GIVEN provider with sessions command WHEN called THEN registers 7 tools', () => {
-      const providerWithSessions: ResolvedProviderEntry = {
-        ...makeProvider(),
-        config: {
-          ...makeConfig(),
-          commands: {
-            ...makeConfig().commands,
-            sessions: { flags: { resume: '--resume' } },
-          },
-        },
-      };
+      const baseProvider = makeProvider();
+      const baseConfig = makeConfig();
+      const flags = { resume: '--resume' };
+      const sessions = { flags };
+      const commands = { ...baseConfig.commands, sessions };
+      const config = { ...baseConfig, commands };
+      const providerWithSessions: ResolvedProviderEntry = { ...baseProvider, config };
 
       register([providerWithSessions], [makeResolvedProvider()]);
 
@@ -162,7 +166,7 @@ describe('registerAllTools', () => {
     it('GIVEN ask tool WHEN registered THEN it omits outputSchema to allow default text-only responses', () => {
       register([makeProvider('claude')]);
 
-      const metadata = getMetadata(server, 'ask_claude') as { outputSchema?: unknown };
+      const metadata = getMetadata(server, 'ask_claude') as ToolMetadataWithOutputSchema;
 
       expect(metadata.outputSchema).toBeUndefined();
     });
@@ -257,16 +261,13 @@ describe('registerAllTools', () => {
     });
 
     it('GIVEN sessions handler WHEN invoked THEN delegates to handleSessions with provider name', async () => {
-      const providerWithSessions: ResolvedProviderEntry = {
-        ...makeProvider('claude'),
-        config: {
-          ...makeConfig(),
-          commands: {
-            ...makeConfig().commands,
-            sessions: { flags: { continue: '--continue' } },
-          },
-        },
-      };
+      const baseProvider = makeProvider('claude');
+      const baseConfig = makeConfig();
+      const flags = { continue: '--continue' };
+      const sessions = { flags };
+      const commands = { ...baseConfig.commands, sessions };
+      const config = { ...baseConfig, commands };
+      const providerWithSessions: ResolvedProviderEntry = { ...baseProvider, config };
 
       vi.mocked(handleSessions).mockReturnValue(SUCCESS_RESULT);
 
@@ -338,6 +339,15 @@ describe('registerAllTools', () => {
 
       expect(handleAskAll).toHaveBeenCalledWith([claude, codex], args);
       expect(result).toBe(SUCCESS_RESULT);
+    });
+
+    it('GIVEN ask_all handler WHEN invoked without a prompt THEN rejects with ValidationError and skips handleAskAll', async () => {
+      register([makeProvider('claude')]);
+
+      const handler = getHandler(server, 'ask_all');
+
+      await expect(handler({})).rejects.toThrow(ValidationError);
+      expect(handleAskAll).not.toHaveBeenCalled();
     });
   });
 

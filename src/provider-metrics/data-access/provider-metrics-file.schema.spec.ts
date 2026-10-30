@@ -23,30 +23,33 @@ describe('createEmptyProviderMetricsFile', () => {
 
 describe('parseProviderMetricsFile', () => {
   it('GIVEN valid persisted metrics JSON WHEN parsed THEN returns the stored metrics file', () => {
+    const records = [
+      {
+        provider: 'claude',
+        executionTimeMs: 123,
+        success: true,
+        calledAt: '2026-01-01T00:01:00.000Z',
+      },
+    ];
     const content = JSON.stringify({
       collectedSince: '2026-01-01T00:00:00.000Z',
-      records: [
-        {
-          provider: 'claude',
-          executionTimeMs: 123,
-          success: true,
-          calledAt: '2026-01-01T00:01:00.000Z',
-        },
-      ],
+      records,
     });
 
     const result = parseProviderMetricsFile(content);
 
+    const expectedRecords = [
+      {
+        provider: 'claude',
+        executionTimeMs: 123,
+        success: true,
+        calledAt: '2026-01-01T00:01:00.000Z',
+      },
+    ];
+
     expect(result).toStrictEqual({
       collectedSince: '2026-01-01T00:00:00.000Z',
-      records: [
-        {
-          provider: 'claude',
-          executionTimeMs: 123,
-          success: true,
-          calledAt: '2026-01-01T00:01:00.000Z',
-        },
-      ],
+      records: expectedRecords,
     });
   });
 
@@ -88,12 +91,14 @@ describe('parseProviderMetricsFile', () => {
 
   it('GIVEN an invalid stored record WHEN parsed THEN throws a ValidationError', () => {
     const parseContent = (): void => {
+      const records = [
+        { provider: 'claude', executionTimeMs: 'slow', success: true, calledAt: '2026-01-01T00:01:00.000Z' },
+      ];
+
       parseProviderMetricsFile(
         JSON.stringify({
           collectedSince: '2026-01-01T00:00:00.000Z',
-          records: [
-            { provider: 'claude', executionTimeMs: 'slow', success: true, calledAt: '2026-01-01T00:01:00.000Z' },
-          ],
+          records,
         })
       );
     };

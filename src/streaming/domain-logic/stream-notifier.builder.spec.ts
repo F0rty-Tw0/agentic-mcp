@@ -4,12 +4,16 @@ import { createStreamNotifier } from './stream-notifier.builder';
 import type { ProgressContext } from '../../shared';
 import { HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
 import type { StreamNotifier } from '../common';
-import { emitDone, emitError, emitSystemEvent, queueChunk } from '../utils/notifier-runtime.util';
+import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime';
 import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
 
-vi.mock('../utils/notifier-runtime.util');
+vi.mock('./notifier-runtime');
 vi.mock('../utils/notifier.helpers');
-vi.mock('node:crypto', () => ({ randomUUID: (): string => 'test-uuid-1234' }));
+vi.mock('node:crypto', () => {
+  const mockedModule = { randomUUID: (): string => 'test-uuid-1234' };
+
+  return mockedModule;
+});
 
 const noopNotifier: StreamNotifier = {
   onStdoutChunk: vi.fn(),
@@ -21,11 +25,17 @@ const noopNotifier: StreamNotifier = {
   enabled: false,
 };
 
-const makeExtra = (): ProgressContext => ({
-  sendNotification: vi.fn().mockResolvedValue(undefined),
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  _meta: { progressToken: 42 },
-});
+const makeExtra = (): ProgressContext => {
+  const sendNotification = vi.fn().mockResolvedValue(undefined);
+  const meta = { progressToken: 42 };
+  const progressContext: ProgressContext = {
+    sendNotification,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    _meta: meta,
+  };
+
+  return progressContext;
+};
 
 describe('createStreamNotifier', () => {
   beforeEach(() => {
@@ -51,9 +61,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN called with stream_live=false THEN returns noop notifier', () => {
+      const args = { stream_live: false };
       const result = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: false },
+        args,
         extra: makeExtra(),
       });
 
@@ -66,9 +77,10 @@ describe('createStreamNotifier', () => {
       vi.mocked(resolveProgressToken).mockReturnValue(42);
       vi.mocked(isStreamEnabled).mockReturnValue(false);
 
+      const args = { stream_live: false };
       const result = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: false },
+        args,
         extra: makeExtra(),
       });
 
@@ -86,9 +98,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN called THEN returns notifier with enabled=true', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
 
@@ -97,9 +110,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN onStdoutChunk called THEN delegates to queueChunk with stdout channel', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
 
@@ -115,9 +129,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN onStderrChunk called THEN delegates to queueChunk with stderr channel', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
 
@@ -133,9 +148,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN emitStart called THEN delegates to emitSystemEvent with start type', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
 
@@ -150,9 +166,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN emitDone called THEN delegates to runtime emitDone with summary', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
       const summary = {
@@ -176,9 +193,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN emitError called THEN delegates to runtime emitError', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
       const summary = {
@@ -203,9 +221,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN stop called THEN does not emit heartbeat after idle threshold', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
 
@@ -216,9 +235,10 @@ describe('createStreamNotifier', () => {
     });
 
     it('WHEN idle time exceeds heartbeat threshold THEN emits heartbeat event', () => {
+      const args = { stream_live: true };
       const notifier = createStreamNotifier({
         providerName: 'test',
-        args: { stream_live: true },
+        args,
         extra,
       });
 

@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server';
 import type { ProvidersFile, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
-import type { AsyncViFn, SyncViFn } from '../../shared/command-execution/common/test-utils';
+import type { AsyncViFn, SyncViFn } from '../../shared/command-execution/test/common/vi-fn.type';
 
-type LoadConfigMock = AsyncViFn<[options?: { configPath?: string }], ProvidersFile>;
+type LoadConfigOptions = { readonly configPath?: string };
+
+type LoadConfigMock = AsyncViFn<[options?: LoadConfigOptions], ProvidersFile>;
 type ResolveCliBinaryMock = AsyncViFn<[command: string], string | undefined>;
 type McpServerEntry = [server: McpServer, resolvedProviders: ResolvedProviderEntry[], allProviders: ResolvedProvider[]];
 type RegisterAllToolsMock = SyncViFn<McpServerEntry, void>;
@@ -15,46 +17,69 @@ const mocks = vi.hoisted(() => {
   const resolveCliBinary = vi.fn<ResolveCliBinaryMock>();
   const registerAllTools = vi.fn<RegisterAllToolsMock>();
 
-  return {
+  const result = {
     loadConfig,
     resolveCliBinary,
     registerAllTools,
   };
+
+  return result;
 });
 
-vi.mock('../../config/loader', () => ({
-  loadConfig: mocks.loadConfig,
-  warnDangerousFlags: vi.fn(),
-}));
+vi.mock('../../config/loader', () => {
+  const mockedModule = {
+    loadConfig: mocks.loadConfig,
+    warnDangerousFlags: vi.fn(),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  resolveCliBinary: mocks.resolveCliBinary,
-  killProcess: vi.fn(),
-}));
+  return mockedModule;
+});
 
-vi.mock('../../tool-registry', () => ({
-  registerAllTools: mocks.registerAllTools,
-}));
+vi.mock('../../shared/command-execution/domain-logic/platform', () => {
+  const mockedModule = {
+    resolveCliBinary: mocks.resolveCliBinary,
+    killProcess: vi.fn(),
+  };
+
+  return mockedModule;
+});
+
+vi.mock('../../tool-registry', () => {
+  const mockedModule = {
+    registerAllTools: mocks.registerAllTools,
+  };
+
+  return mockedModule;
+});
+
+type ProviderInput = ProvidersFile['providers'][string]['input'];
 
 const buildProvider = (
   overrides: Partial<ProvidersFile['providers'][string]> = {}
-): ProvidersFile['providers'][string] => ({
-  enabled: true,
-  description: 'Server test provider',
-  command: 'test-cli',
-  timeout: 120000,
-  env: {},
-  outputFormat: 'json',
-  commands: {
-    ask: {
-      args: ['run'],
-    },
-  },
-  input: {
+): ProvidersFile['providers'][string] => {
+  const ask = {
+    args: ['run'],
+  };
+  const commands = {
+    ask,
+  };
+  const input: ProviderInput = {
     method: 'positional',
-  },
-  ...overrides,
-});
+  };
+  const result: ProvidersFile['providers'][string] = {
+    enabled: true,
+    description: 'Server test provider',
+    command: 'test-cli',
+    timeout: 120000,
+    env: {},
+    outputFormat: 'json',
+    commands,
+    input,
+    ...overrides,
+  };
+
+  return result;
+};
 
 describe('createServer', () => {
   beforeEach(() => {
@@ -78,13 +103,14 @@ describe('createServer', () => {
       description: 'Disabled provider',
       command: 'disabled-cli',
     });
+    const providers = {
+      available: availableProvider,
+      missing: missingProvider,
+      disabled: disabledProvider,
+    };
     const config: ProvidersFile = {
       configVersion: 1,
-      providers: {
-        available: availableProvider,
-        missing: missingProvider,
-        disabled: disabledProvider,
-      },
+      providers,
     };
 
     mocks.loadConfig.mockResolvedValue(config);
@@ -141,11 +167,12 @@ describe('createServer', () => {
       description: 'Disabled provider',
       command: 'disabled-cli',
     });
+    const providers = {
+      disabled: disabledProvider,
+    };
     const config: ProvidersFile = {
       configVersion: 1,
-      providers: {
-        disabled: disabledProvider,
-      },
+      providers,
     };
 
     mocks.loadConfig.mockResolvedValue(config);

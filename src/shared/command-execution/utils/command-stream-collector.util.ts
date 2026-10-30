@@ -4,7 +4,7 @@ import type { StreamChunkCallback, StreamCollector } from '../common';
 
 const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
 
-type CollectStreamResult = Readonly<{ bytes: number; truncated: boolean }>;
+type CollectStreamResult = { readonly bytes: number; readonly truncated: boolean };
 
 const collectStream = (chunks: Buffer[], chunk: Buffer, currentBytes: number): CollectStreamResult => {
   const newBytes = currentBytes + chunk.length;

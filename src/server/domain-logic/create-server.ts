@@ -2,18 +2,47 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CancelledNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { loadConfig, warnDangerousFlags } from '../../config/loader';
-import type { ConfigPathOptions, ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import { APP_VERSION, getActiveRequest, killProcess, resolveCliBinary, unregisterActiveRequest } from '../../shared';
+import type {
+  ConfigPathOptions,
+  ProviderConfig,
+  ResolvedProvider,
+  ResolvedProviderEntry,
+} from '../../shared/provider/common';
 import { registerAllTools } from '../../tool-registry';
 import { NO_PROVIDERS_WARNING, SERVER_NAME } from '../common';
 import { toRequestIdString } from '../utils';
 
-const buildProviderMetadata = (
-  providerConfig: ProviderConfig
-): Pick<ResolvedProvider, 'supportLevel' | 'prerequisites'> => {
-  const supportLevel = providerConfig.supportLevel != null ? { supportLevel: providerConfig.supportLevel } : {};
-  const prerequisites = providerConfig.prerequisites != null ? { prerequisites: providerConfig.prerequisites } : {};
-  const providerMetadata: Pick<ResolvedProvider, 'supportLevel' | 'prerequisites'> = {
+type ProviderMetadata = Pick<ResolvedProvider, 'supportLevel' | 'prerequisites'>;
+
+type ConfigOptions = Pick<ConfigPathOptions, 'configPath'>;
+
+const buildSupportLevelMetadata = (providerConfig: ProviderConfig): ProviderMetadata => {
+  const { supportLevel } = providerConfig;
+  const noMetadata: ProviderMetadata = {};
+
+  if (supportLevel == null) return noMetadata;
+
+  const supportLevelMetadata: ProviderMetadata = { supportLevel };
+
+  return supportLevelMetadata;
+};
+
+const buildPrerequisitesMetadata = (providerConfig: ProviderConfig): ProviderMetadata => {
+  const { prerequisites } = providerConfig;
+  const noMetadata: ProviderMetadata = {};
+
+  if (prerequisites == null) return noMetadata;
+
+  const prerequisitesMetadata: ProviderMetadata = { prerequisites };
+
+  return prerequisitesMetadata;
+};
+
+const buildProviderMetadata = (providerConfig: ProviderConfig): ProviderMetadata => {
+  const supportLevel = buildSupportLevelMetadata(providerConfig);
+  const prerequisites = buildPrerequisitesMetadata(providerConfig);
+  const providerMetadata: ProviderMetadata = {
     ...supportLevel,
     ...prerequisites,
   };
@@ -21,8 +50,26 @@ const buildProviderMetadata = (
   return providerMetadata;
 };
 
+const buildConfigOptions = (options?: ConfigPathOptions): ConfigOptions | undefined => {
+  const configPath = options?.configPath;
+
+  if (!configPath) return undefined;
+
+  const configOptions: ConfigOptions = { configPath };
+
+  return configOptions;
+};
+
+const resolveProviderBinary = async (providerConfig: ProviderConfig): Promise<string | undefined> => {
+  if (!providerConfig.enabled) return undefined;
+
+  const binaryPath = await resolveCliBinary(providerConfig.command);
+
+  return binaryPath;
+};
+
 export const createServer = async (options?: ConfigPathOptions): Promise<McpServer> => {
-  const configOptions = options?.configPath ? { configPath: options.configPath } : undefined;
+  const configOptions = buildConfigOptions(options);
   const config = await loadConfig(configOptions);
 
   if (options?.warnDangerousFlags) {
@@ -33,7 +80,7 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
   const allProviders: ResolvedProvider[] = [];
 
   for (const [name, providerConfig] of Object.entries(config.providers)) {
-    const binaryPath = providerConfig.enabled ? await resolveCliBinary(providerConfig.command) : undefined;
+    const binaryPath = await resolveProviderBinary(providerConfig);
     const providerMetadata = buildProviderMetadata(providerConfig);
     const provider: ResolvedProvider = {
       name,

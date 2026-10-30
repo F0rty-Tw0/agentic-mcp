@@ -13,7 +13,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer } from './create-server';
-import type { McpTextContent } from '../../shared';
+import type { McpTextContent } from '../../shared/mcp-protocol/common';
 
 let server: McpServer;
 let client: Client;
@@ -82,7 +82,9 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
     const result = (await client.callTool({ name: tool.name })) as CallToolResult;
     const text = (result.content[0] as McpTextContent).text;
 
-    if (isSuccessfulPingText(text)) return tool.name.replace('ping_', '');
+    const isSuccessfulPing = isSuccessfulPingText(text);
+
+    if (isSuccessfulPing) return tool.name.replace('ping_', '');
   }
 
   return;

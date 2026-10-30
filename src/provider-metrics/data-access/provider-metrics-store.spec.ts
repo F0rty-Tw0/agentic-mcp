@@ -35,9 +35,9 @@ const configureMetricsHome = (homeDir: string): void => {
 
 let metricsHomeDir = '';
 
-type PersistedMetricsRecords = Readonly<{
-  records: readonly ProviderCallRecord[];
-}>;
+type PersistedMetricsRecords = {
+  readonly records: ProviderCallRecord[];
+};
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => {
   const result = typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -99,7 +99,7 @@ const createPersistedRecord = function (provider: string, calledAt: string): Pro
   return record;
 };
 
-const createPersistedRecords = (provider: string, count: number): readonly ProviderCallRecord[] => {
+const createPersistedRecords = (provider: string, count: number): ProviderCallRecord[] => {
   const records: ProviderCallRecord[] = [];
 
   for (let index = 0; index < count; index++) {
@@ -135,7 +135,7 @@ const readPersistedMetricsRecords = async (metricsFilePath: string): Promise<Per
   return persistedMetricsRecords;
 };
 
-const writeMetricsFile = async (records: readonly ProviderCallRecord[]): Promise<void> => {
+const writeMetricsFile = async (records: ProviderCallRecord[]): Promise<void> => {
   const metricsFilePath = resolveMetricsFilePath(metricsHomeDir);
   const content = JSON.stringify(
     {

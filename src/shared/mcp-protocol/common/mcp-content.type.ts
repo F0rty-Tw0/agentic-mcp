@@ -1,8 +1,8 @@
-export type McpTextContent = Readonly<{
-  type: 'text';
-  text: string;
-}>;
+export type McpTextContent = {
+  readonly type: 'text';
+  readonly text: string;
+};
 
-export type McpPlainTextContent = Readonly<{
-  text: string;
-}>;
+export type McpPlainTextContent = {
+  readonly text: string;
+};

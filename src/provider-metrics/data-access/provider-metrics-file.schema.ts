@@ -21,14 +21,13 @@ const parseProviderCallRecord = (value: unknown): ProviderCallRecord => {
 
   const { calledAt, executionTimeMs, provider, success } = value;
 
-  if (
-    typeof provider !== 'string' ||
-    typeof executionTimeMs !== 'number' ||
-    typeof success !== 'boolean' ||
-    typeof calledAt !== 'string'
-  ) {
-    throw new ValidationError('Stored provider metrics records are invalid.');
-  }
+  const hasValidFields =
+    typeof provider === 'string' &&
+    typeof executionTimeMs === 'number' &&
+    typeof success === 'boolean' &&
+    typeof calledAt === 'string';
+
+  if (!hasValidFields) throw new ValidationError('Stored provider metrics records are invalid.');
 
   const record: ProviderCallRecord = {
     provider,
@@ -50,7 +49,7 @@ const readCollectedSince = (value: Readonly<Record<string, unknown>>): string =>
   return collectedSince;
 };
 
-const readRecords = (value: Readonly<Record<string, unknown>>): readonly ProviderCallRecord[] => {
+const readRecords = (value: Readonly<Record<string, unknown>>): ProviderCallRecord[] => {
   const records = value.records;
 
   if (!Array.isArray(records)) throw new ValidationError('Stored provider metrics must include array key "records".');

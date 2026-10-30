@@ -21,7 +21,8 @@ describe('resolveProgressToken', () => {
   });
 
   it('GIVEN extra without sendNotification WHEN called THEN returns undefined', () => {
-    const extra = { _meta: { progressToken: 42 } } as ProgressContext;
+    const meta = { progressToken: 42 };
+    const extra = { _meta: meta } as ProgressContext;
 
     const result = resolveProgressToken(extra);
 
@@ -37,9 +38,10 @@ describe('resolveProgressToken', () => {
   });
 
   it('GIVEN extra with sendNotification and numeric progressToken WHEN called THEN returns the token', () => {
+    const meta = { progressToken: 7 };
     const extra = {
       sendNotification: async () => {},
-      _meta: { progressToken: 7 },
+      _meta: meta,
     } as ProgressContext;
 
     const result = resolveProgressToken(extra);
@@ -48,9 +50,10 @@ describe('resolveProgressToken', () => {
   });
 
   it('GIVEN extra with sendNotification and string progressToken WHEN called THEN returns the token', () => {
+    const meta = { progressToken: 'tok-abc' };
     const extra = {
       sendNotification: async () => {},
-      _meta: { progressToken: 'tok-abc' },
+      _meta: meta,
     } as ProgressContext;
 
     const result = resolveProgressToken(extra);
@@ -63,7 +66,8 @@ describe('isStreamEnabled', () => {
   it('GIVEN stream_live=true and valid progressToken and sendNotification WHEN called THEN returns true', () => {
     const extra = { sendNotification: async () => {}, _meta: {} } as ProgressContext;
 
-    const result = isStreamEnabled({ args: { stream_live: true }, progressToken: 1, extra });
+    const args = { stream_live: true };
+    const result = isStreamEnabled({ args, progressToken: 1, extra });
 
     expect(result).toBe(true);
   });
@@ -71,7 +75,8 @@ describe('isStreamEnabled', () => {
   it('GIVEN stream_live=false WHEN called THEN returns false', () => {
     const extra = { sendNotification: async () => {}, _meta: {} } as ProgressContext;
 
-    const result = isStreamEnabled({ args: { stream_live: false }, progressToken: 1, extra });
+    const args = { stream_live: false };
+    const result = isStreamEnabled({ args, progressToken: 1, extra });
 
     expect(result).toBe(false);
   });
@@ -79,7 +84,8 @@ describe('isStreamEnabled', () => {
   it('GIVEN stream_live=true but undefined progressToken WHEN called THEN returns false', () => {
     const extra = { sendNotification: async () => {}, _meta: {} } as ProgressContext;
 
-    const result = isStreamEnabled({ args: { stream_live: true }, progressToken: undefined, extra });
+    const args = { stream_live: true };
+    const result = isStreamEnabled({ args, progressToken: undefined, extra });
 
     expect(result).toBe(false);
   });
@@ -87,7 +93,8 @@ describe('isStreamEnabled', () => {
   it('GIVEN stream_live=true but no sendNotification WHEN called THEN returns false', () => {
     const extra = { _meta: {} } as ProgressContext;
 
-    const result = isStreamEnabled({ args: { stream_live: true }, progressToken: 1, extra });
+    const args = { stream_live: true };
+    const result = isStreamEnabled({ args, progressToken: 1, extra });
 
     expect(result).toBe(false);
   });

@@ -3,9 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildProviderMetricsToolDefinition, handleProviderMetrics } from './provider-metrics.handler';
 import { getProviderMetrics } from '../data-access/provider-metrics-store';
 
-vi.mock('../data-access/provider-metrics-store', () => ({
-  getProviderMetrics: vi.fn(),
-}));
+vi.mock('../data-access/provider-metrics-store', () => {
+  const mockedModule = {
+    getProviderMetrics: vi.fn(),
+  };
+
+  return mockedModule;
+});
 
 describe('handleProviderMetrics', () => {
   beforeEach(() => {
@@ -17,21 +21,22 @@ describe('handleProviderMetrics', () => {
   });
 
   it('GIVEN a provider metrics summary WHEN called THEN returns summary text plus structured content', async () => {
+    const providers = [
+      {
+        provider: 'claude',
+        totalCalls: 3,
+        successCount: 2,
+        failureCount: 1,
+        totalExecutionTimeMs: 600,
+        avgExecutionTimeMs: 200,
+        lastCallAt: '2026-01-01T00:01:00.000Z',
+      },
+    ];
     const fakeSummary = {
       collectedSince: '2026-01-01T00:00:00.000Z',
       metricsFilePath: '/tmp/provider-metrics.json',
       totalCalls: 3,
-      providers: [
-        {
-          provider: 'claude',
-          totalCalls: 3,
-          successCount: 2,
-          failureCount: 1,
-          totalExecutionTimeMs: 600,
-          avgExecutionTimeMs: 200,
-          lastCallAt: '2026-01-01T00:01:00.000Z',
-        },
-      ],
+      providers,
     };
 
     vi.mocked(getProviderMetrics).mockResolvedValue(fakeSummary);
@@ -41,16 +46,18 @@ describe('handleProviderMetrics', () => {
 
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toStrictEqual(fakeSummary);
+    const expectedLines = [
+      'Provider usage since 2026-01-01T00:00:00.000Z',
+      'Metrics file: /tmp/provider-metrics.json',
+      'Total calls: 3',
+      'Providers:',
+      '- claude: 3 calls, 2 succeeded, 1 failed, success 67%, avg 200ms, last 2026-01-01T00:01:00.000Z',
+      'Next: run ask_all --report <path> when you want a saved comparison artifact.',
+    ];
+
     expect(textContent).toStrictEqual({
       type: 'text',
-      text: [
-        'Provider usage since 2026-01-01T00:00:00.000Z',
-        'Metrics file: /tmp/provider-metrics.json',
-        'Total calls: 3',
-        'Providers:',
-        '- claude: 3 calls, 2 succeeded, 1 failed, success 67%, avg 200ms, last 2026-01-01T00:01:00.000Z',
-        'Next: run ask_all --report <path> when you want a saved comparison artifact.',
-      ].join('\n'),
+      text: expectedLines.join('\n'),
     });
   });
 
@@ -72,9 +79,11 @@ describe('handleProviderMetrics', () => {
 
     const result = await handleProviderMetrics();
 
+    const content = [{ type: 'text', text: 'Error: metrics unavailable' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Error: metrics unavailable' }],
+      content,
     });
   });
 });

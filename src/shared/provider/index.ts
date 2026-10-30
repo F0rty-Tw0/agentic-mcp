@@ -1,6 +1,6 @@
 export * from './common';
 
-export * from './common/stubs';
+export * from './test/stubs';
 
 export * from './domain-logic';
 

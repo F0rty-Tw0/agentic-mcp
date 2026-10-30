@@ -11,9 +11,11 @@ describe('toMcpError', () => {
 
     const result = toMcpError(error);
 
+    const content = [{ type: 'text', text: 'Validation error: field is required' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Validation error: field is required' }],
+      content,
     });
   });
 
@@ -22,9 +24,11 @@ describe('toMcpError', () => {
 
     const result = toMcpError(error);
 
+    const content = [{ type: 'text', text: 'command failed Exit code: 1.' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'command failed Exit code: 1.' }],
+      content,
     });
   });
 
@@ -52,45 +56,55 @@ describe('toMcpError', () => {
 
     const result = toMcpError(error);
 
+    const content = [{ type: 'text', text: 'Error: something broke' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Error: something broke' }],
+      content,
     });
   });
 
   it('GIVEN a string WHEN converted THEN wraps string with Error prefix', () => {
     const result = toMcpError('raw string error');
 
+    const content = [{ type: 'text', text: 'Error: raw string error' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Error: raw string error' }],
+      content,
     });
   });
 
   it('GIVEN an unknown value WHEN converted THEN returns generic error message', () => {
     const result = toMcpError(42);
 
+    const content = [{ type: 'text', text: 'Error: An unexpected error occurred.' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Error: An unexpected error occurred.' }],
+      content,
     });
   });
 
   it('GIVEN null WHEN converted THEN returns generic error message', () => {
     const result = toMcpError(null);
 
+    const content = [{ type: 'text', text: 'Error: An unexpected error occurred.' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Error: An unexpected error occurred.' }],
+      content,
     });
   });
 
   it('GIVEN undefined WHEN converted THEN returns generic error message', () => {
     const result = toMcpError(undefined);
 
+    const content = [{ type: 'text', text: 'Error: An unexpected error occurred.' }];
+
     expect(result).toStrictEqual({
       isError: true,
-      content: [{ type: 'text', text: 'Error: An unexpected error occurred.' }],
+      content,
     });
   });
 

@@ -6,7 +6,7 @@ export type {
   RetryWithExponentialBackoffInput,
   StreamChunkCallback,
   StreamCollector,
-} from './command-executor.types';
+} from './command-executor.type';
 
 export {
   DEFAULT_PROVIDER_MAX_CONCURRENCY,

@@ -1,3 +1,7 @@
+import type { AskStreamEventSchema } from './stream-event.type';
+
+export const ASK_STREAM_EVENT_SCHEMA: AskStreamEventSchema = 'agentic-mcp.ask.stream.v1';
+
 export const HEARTBEAT_IDLE_INTERVAL_MS = 30_000;
 
 export const MAX_STREAM_CHUNK_BYTES = 4_096;

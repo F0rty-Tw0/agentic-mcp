@@ -17,7 +17,7 @@ type FsModule = typeof fs;
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<FsModule>();
 
-  return {
+  const mockedModule = {
     ...actual,
     mkdir: vi.fn(actual.mkdir),
     readFile: vi.fn(actual.readFile),
@@ -27,6 +27,8 @@ vi.mock('node:fs/promises', async (importOriginal) => {
     stat: vi.fn(actual.stat),
     writeFile: vi.fn(actual.writeFile),
   };
+
+  return mockedModule;
 });
 
 const tempDirs: string[] = [];

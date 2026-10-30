@@ -1,21 +1,8 @@
 import type { ProviderQueueOptions } from '../common';
 import { CommandExecutionError, QueueTimeoutError } from '../common/errors';
+import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from '../common/provider-queue.type';
 
-export type QueuedRequest = Readonly<{
-  enqueuedAtMs: number;
-  timer: ReturnType<typeof setTimeout>;
-  resolve: () => void;
-}>;
-
-export type ProviderQueueState = {
-  activeCount: number;
-  maxConcurrency: number;
-  waitQueue: QueuedRequest[];
-};
-
-export type ProviderQueueLease = Readonly<{ release: () => void }>;
-
-export const removeQueuedRequest = (waitQueue: QueuedRequest[], queuedRequest: QueuedRequest): boolean => {
+const removeQueuedRequest = (waitQueue: QueuedRequest[], queuedRequest: QueuedRequest): boolean => {
   const index = waitQueue.indexOf(queuedRequest);
 
   if (index === -1) return false;
@@ -74,16 +61,16 @@ export const buildLease = (release: () => void): ProviderQueueLease => {
   return lease;
 };
 
-export type RejectQueuedRequestInput = Readonly<{
-  state: ProviderQueueState;
-  providerStates: Map<string, ProviderQueueState>;
-  options: ProviderQueueOptions;
-  queuedRequest: QueuedRequest;
-  signal: AbortSignal | undefined;
-  onAbort: () => void;
-  reject: (reason?: unknown) => void;
-  error: Error;
-}>;
+type RejectQueuedRequestInput = {
+  readonly state: ProviderQueueState;
+  readonly providerStates: Map<string, ProviderQueueState>;
+  readonly options: ProviderQueueOptions;
+  readonly queuedRequest: QueuedRequest;
+  readonly signal: AbortSignal | undefined;
+  readonly onAbort: () => void;
+  readonly reject: (reason?: unknown) => void;
+  readonly error: Error;
+};
 
 export const buildQueueAbortError = (): CommandExecutionError => {
   const error = new CommandExecutionError('Command cancelled while waiting for provider queue slot', {});

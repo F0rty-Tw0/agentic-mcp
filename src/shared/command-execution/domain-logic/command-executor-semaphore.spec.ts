@@ -5,11 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
 import type { ExecutionResult } from '../common';
-import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../common/stubs';
-import { createControllableChild } from '../common/test-utils';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs';
+import { createControllableChild } from '../test/utils/controllable-child.spec.util';
 
-vi.mock('cross-spawn', () => ({ default: vi.fn() }));
-vi.mock('../utils/platform.util', () => ({ killProcess: vi.fn().mockResolvedValue(true) }));
+vi.mock('cross-spawn', () => {
+  const mockedModule = { default: vi.fn() };
+
+  return mockedModule;
+});
+vi.mock('./platform', () => {
+  const killProcessMock = vi.fn().mockResolvedValue(true);
+  const mockedModule = { killProcess: killProcessMock };
+
+  return mockedModule;
+});
 
 type CrossSpawnResult = ChildProcess;
 

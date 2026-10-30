@@ -1,6 +1,5 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ResolvedProviderEntry } from '../../shared';
 import {
   buildMinimalEnv,
   buildProviderQueueOptions,
@@ -9,6 +8,7 @@ import {
   stripAnsi,
   toMcpError,
 } from '../../shared';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 
 const HELP_TIMEOUT_MS = 30_000;
 
@@ -26,8 +26,11 @@ export const handleHelp = async (context: ResolvedProviderEntry): Promise<CallTo
     });
 
     if (result.timedOut) {
+      const content: CallToolResult['content'] = [
+        { type: 'text', text: `${context.name}: help timed out after ${HELP_TIMEOUT_MS}ms` },
+      ];
       const helpTimeout: CallToolResult = {
-        content: [{ type: 'text', text: `${context.name}: help timed out after ${HELP_TIMEOUT_MS}ms` }],
+        content,
         isError: true,
       };
 
@@ -39,20 +42,22 @@ export const handleHelp = async (context: ResolvedProviderEntry): Promise<CallTo
     const output = stripAnsi(result.stdout || result.stderr).trim();
 
     if (!output) {
+      const content: CallToolResult['content'] = [
+        {
+          type: 'text',
+          text: `${context.name}: no help output (exit ${result.exitCode}, signal: ${result.signal})`,
+        },
+      ];
       const helpEmpty: CallToolResult = {
-        content: [
-          {
-            type: 'text',
-            text: `${context.name}: no help output (exit ${result.exitCode}, signal: ${result.signal})`,
-          },
-        ],
+        content,
         isError: true,
       };
 
       return helpEmpty;
     }
 
-    const helpResponse: CallToolResult = { content: [{ type: 'text', text: output }] };
+    const content: CallToolResult['content'] = [{ type: 'text', text: output }];
+    const helpResponse: CallToolResult = { content };
 
     return helpResponse;
   } catch (error) {

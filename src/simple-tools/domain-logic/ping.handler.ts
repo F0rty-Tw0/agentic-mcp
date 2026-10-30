@@ -8,20 +8,22 @@ import {
   stripAnsi,
   toMcpError,
 } from '../../shared';
-import type { ExecutionResult, ResolvedProviderEntry } from '../../shared';
+import type { ExecutionResult } from '../../shared/command-execution/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 
 const PING_TIMEOUT_MS = 30_000;
 
 type PingFailureResult = Pick<ExecutionResult, 'exitCode' | 'signal' | 'timedOut'>;
 
 const createPingResponse = (text: string): CallToolResult => {
+  const content: CallToolResult['content'] = [
+    {
+      type: 'text',
+      text,
+    },
+  ];
   const pingResponse: CallToolResult = {
-    content: [
-      {
-        type: 'text',
-        text,
-      },
-    ],
+    content,
   };
 
   return pingResponse;

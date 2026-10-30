@@ -22,7 +22,7 @@ MCP progress notifications — manages live output streaming from provider CLI p
 
 - `domain-logic/notifier.util.ts` — `createStreamNotifier()` and `buildExecutionSummary()`
 - `domain-logic/notifier.helpers.ts` — Stream event type definitions and factory functions
-- `domain-logic/notifier-runtime.util.ts` — Runtime state management for active streams
+- `domain-logic/notifier-runtime.ts` — Runtime state management for active streams
 
 ## Integration Tests
 
