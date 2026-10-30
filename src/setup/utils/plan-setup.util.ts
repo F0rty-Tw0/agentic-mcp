@@ -66,7 +66,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
 
   if (isInvalidMerge) {
     warnings.push(
-      `Existing config at ${String(targetPath)} is not valid JSON and was left unchanged (${String(mergedConfig.reason)}). Add the entry by hand or rerun with --mode overwrite.`
+      `Existing config at ${String(targetPath)} is not valid JSON and was left unchanged (${String(mergedConfig.reason)}). Add the agentic-mcp entry by hand.`
     );
   }
 

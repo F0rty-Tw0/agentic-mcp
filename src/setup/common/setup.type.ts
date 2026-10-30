@@ -16,7 +16,13 @@ export type McpServerEntry = {
 };
 
 export type SetupFileStat = {
+  readonly mode: number;
   isFile(): boolean;
+};
+
+export type SetupWriteOptions = {
+  readonly encoding: 'utf8';
+  readonly mode: number;
 };
 
 export type SetupMkdirOptions = {
@@ -27,7 +33,8 @@ export type SetupFs = {
   readonly mkdir: (targetPath: string, options: SetupMkdirOptions) => Promise<void>;
   readonly readFile: (targetPath: string, encoding: 'utf8') => Promise<string>;
   readonly rename: (sourcePath: string, destinationPath: string) => Promise<void>;
-  readonly writeFile: (targetPath: string, content: string, encoding: 'utf8') => Promise<void>;
+  readonly writeFile: (targetPath: string, content: string, options: SetupWriteOptions) => Promise<void>;
+  readonly realpath: (targetPath: string) => Promise<string>;
   readonly copyFile: (sourcePath: string, destinationPath: string, mode?: number) => Promise<void>;
   readonly stat: (targetPath: string) => Promise<SetupFileStat>;
 };

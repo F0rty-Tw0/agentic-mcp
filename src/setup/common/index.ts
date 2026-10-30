@@ -12,6 +12,7 @@ export type {
   SetupBackupPolicy,
   SetupCliDependencies,
   SetupFileStat,
+  SetupWriteOptions,
   SetupFs,
   SetupMergeStatus,
   SetupMkdirOptions,
