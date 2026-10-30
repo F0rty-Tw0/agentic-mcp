@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import { describe, expect, it, vi } from 'vitest';
 
 import { buildExecution, buildFailureExecution } from './ask-runner-response.util';
@@ -6,36 +6,62 @@ import type { ResolvedProviderEntry } from '../../shared';
 import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
 import type { AskExecution } from '../common';
 
-vi.mock('../../session', () => ({
-  extractNativeSessionId: vi.fn((_name: string, stdout: string) => {
-    const match = /session-(.+)/.exec(stdout);
+vi.mock('../../session', () => {
+  const result = {
+    extractNativeSessionId: vi.fn((_name: string, stdout: string) => {
+      const match = /session-(.+)/.exec(stdout);
 
-    return match?.[1];
-  }),
-}));
+      return match?.[1];
+    }),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  stripAnsi: vi.fn((s: string) => s),
-}));
-
-const textResponse = (text: string): CallToolResult => ({
-  content: [{ type: 'text', text }],
+  return result;
 });
 
-const imageResponse = (): CallToolResult => ({
-  content: [{ type: 'image', data: 'abc', mimeType: 'image/png' }],
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
+    stripAnsi: vi.fn((s: string) => s),
+  };
+
+  return result;
 });
 
-const emptyResponse = (): CallToolResult => ({
-  content: [],
-});
+const textResponse = (text: string): CallToolResult => {
+  const content: TextContent[] = [{ type: 'text', text }];
+  const result: CallToolResult = {
+    content,
+  };
 
-const stubContext = (overrides?: Partial<ResolvedProviderEntry>): ResolvedProviderEntry => ({
-  name: 'test-provider',
-  binaryPath: '/usr/bin/test',
-  config: TEST_PROVIDER_CONFIG_STUB,
-  ...overrides,
-});
+  return result;
+};
+
+const imageResponse = (): CallToolResult => {
+  const content: ContentBlock[] = [{ type: 'image', data: 'abc', mimeType: 'image/png' }];
+  const result: CallToolResult = {
+    content,
+  };
+
+  return result;
+};
+
+const emptyResponse = (): CallToolResult => {
+  const result: CallToolResult = {
+    content: [],
+  };
+
+  return result;
+};
+
+const stubContext = (overrides?: Partial<ResolvedProviderEntry>): ResolvedProviderEntry => {
+  const result: ResolvedProviderEntry = {
+    name: 'test-provider',
+    binaryPath: '/usr/bin/test',
+    config: TEST_PROVIDER_CONFIG_STUB,
+    ...overrides,
+  };
+
+  return result;
+};
 
 const buildExecutionWithContext = (
   response: CallToolResult,

@@ -1,8 +1,8 @@
-import type { ProviderAttribution } from './attribution.types';
+import type { ProviderAttribution } from './attribution.type';
 
-export type AskToolStructuredContent = Readonly<{
-  response: string;
-  attribution: ProviderAttribution;
-  parsed?: unknown;
-  sessionMode?: string;
-}>;
+export type AskToolStructuredContent = {
+  readonly response: string;
+  readonly attribution: ProviderAttribution;
+  readonly parsed?: unknown;
+  readonly sessionMode?: string;
+};

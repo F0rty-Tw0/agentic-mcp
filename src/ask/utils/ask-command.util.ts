@@ -1,4 +1,3 @@
-import type { ExecuteCommandOptions, FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import {
   DEFAULT_MCP_TOOL_TIMEOUT_MS,
   ValidationError,
@@ -9,20 +8,22 @@ import {
   validateSessionId,
   validateWorkingDirectory,
 } from '../../shared';
+import type { ExecuteCommandOptions } from '../../shared/command-execution/common';
+import type { FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common';
 import type { AskToolArgs } from '../common';
 
-type BuildCommandOptionsInput = Readonly<{
-  context: ResolvedProviderEntry;
-  resolved: AskToolArgs;
-  cliArgs: readonly string[];
-  stdinInput?: string;
-  env: Readonly<Record<string, string>>;
-  onStdoutChunk?: (chunk: string) => void;
-  onStderrChunk?: (chunk: string) => void;
-  signal?: AbortSignal;
-  onSpawned?: (pid: number) => void;
-}>;
+type BuildCommandOptionsInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly resolved: AskToolArgs;
+  readonly cliArgs: string[];
+  readonly stdinInput?: string;
+  readonly env: Readonly<Record<string, string>>;
+  readonly onStdoutChunk?: (chunk: string) => void;
+  readonly onStderrChunk?: (chunk: string) => void;
+  readonly signal?: AbortSignal;
+  readonly onSpawned?: (pid: number) => void;
+};
 
 const COPILOT_MODEL_ALIASES: Readonly<Record<string, string>> = {
   'codex 5.3': 'gpt-5.3-codex',
@@ -36,7 +37,7 @@ const resolveModelAlias = (providerName: string | undefined, model: string | und
   return COPILOT_MODEL_ALIASES[model.toLowerCase()] ?? model;
 };
 
-const resolveFilesArg = (files?: readonly string[], workingDir?: string): string[] => {
+const resolveFilesArg = (files?: string[], workingDir?: string): string[] => {
   if (!files?.length) return [];
 
   if (!workingDir) throw new ValidationError('working_directory is required when files are specified');
@@ -61,12 +62,17 @@ export const validateAndResolveArgs = (args: AskToolArgs, providerName?: string)
 
   const resolvedWorkingDir = args.working_directory && validateWorkingDirectory(args.working_directory);
   const resolvedFiles = resolveFilesArg(args.files, resolvedWorkingDir);
-  const workingDir = resolvedWorkingDir ? { working_directory: resolvedWorkingDir } : {};
-  const files = resolvedFiles.length ? { files: resolvedFiles } : {};
+  const noArgs: AskToolArgs = {};
+  const modelArgs: AskToolArgs = { model };
+  const workingDirectoryArgs: AskToolArgs = { working_directory: resolvedWorkingDir };
+  const filesArgs: AskToolArgs = { files: resolvedFiles };
+  const modelPatch = model ? modelArgs : noArgs;
+  const workingDir = resolvedWorkingDir ? workingDirectoryArgs : noArgs;
+  const files = resolvedFiles.length ? filesArgs : noArgs;
 
   const resolvedArgs: AskToolArgs = {
     ...args,
-    ...(model ? { model } : {}),
+    ...modelPatch,
     ...workingDir,
     ...files,
   };
@@ -105,7 +111,9 @@ const resolveSessionFlagArgs = (flagValue: FlagValue | undefined, value: string)
 
   if (Array.isArray(flagValue)) return [...flagValue, value];
 
-  if (!flagValue.values.includes(value)) return [];
+  const isAllowedValue = flagValue.values.includes(value);
+
+  if (!isAllowedValue) return [];
 
   return [flagValue.flag, value];
 };

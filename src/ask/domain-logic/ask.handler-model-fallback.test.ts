@@ -12,7 +12,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
+import { readFirstText } from '../test/utils/text-content.spec.util';
 
 const MODEL_FALLBACK_SCRIPT = `
   const args = process.argv.slice(2);
@@ -32,6 +33,21 @@ const MODELS_LIST_SCRIPT = `
 `;
 
 const createFallbackContext = (): ResolvedProviderEntry => {
+  const flags = {
+    model: '-m',
+  };
+  const ask = {
+    args: ['-e', MODEL_FALLBACK_SCRIPT],
+    flags,
+  };
+  const models = {
+    args: ['-e', MODELS_LIST_SCRIPT],
+  };
+  const commands = {
+    ask,
+    models,
+  };
+  const input = { method: 'positional' } as const;
   const config: ProviderConfig = {
     enabled: true,
     description: 'Node model-fallback test provider',
@@ -39,18 +55,8 @@ const createFallbackContext = (): ResolvedProviderEntry => {
     timeout: 15_000,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', MODEL_FALLBACK_SCRIPT],
-        flags: {
-          model: '-m',
-        },
-      },
-      models: {
-        args: ['-e', MODELS_LIST_SCRIPT],
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   };
 
   const context: ResolvedProviderEntry = {
@@ -63,6 +69,17 @@ const createFallbackContext = (): ResolvedProviderEntry => {
 };
 
 const createFallbackContextWithoutModelsCommand = (): ResolvedProviderEntry => {
+  const flags = {
+    model: '-m',
+  };
+  const ask = {
+    args: ['-e', MODEL_FALLBACK_SCRIPT],
+    flags,
+  };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const config: ProviderConfig = {
     enabled: true,
     description: 'Node model-fallback test provider (no models command)',
@@ -70,15 +87,8 @@ const createFallbackContextWithoutModelsCommand = (): ResolvedProviderEntry => {
     timeout: 15_000,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', MODEL_FALLBACK_SCRIPT],
-        flags: {
-          model: '-m',
-        },
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   };
 
   const context: ResolvedProviderEntry = {
@@ -98,7 +108,7 @@ describe('integration: model fallback retry', () => {
 
     expect(result.isError).not.toBe(true);
 
-    const { text } = result.content[0] as { type: 'text'; text: string };
+    const text = readFirstText(result);
 
     expect(text).toContain('model-alpha');
     expect(text).toContain('success');
@@ -111,7 +121,7 @@ describe('integration: model fallback retry', () => {
 
     expect(result.isError).not.toBe(true);
 
-    const text = (result.content[0] as { type: 'text'; text: string }).text;
+    const text = readFirstText(result);
 
     expect(text).toContain('explicit-model');
   });
@@ -123,7 +133,7 @@ describe('integration: model fallback retry', () => {
 
     expect(result.isError).toBe(true);
 
-    const { text } = result.content[0] as { type: 'text'; text: string };
+    const text = readFirstText(result);
 
     expect(text).toContain('Model error');
   });

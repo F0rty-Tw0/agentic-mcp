@@ -5,42 +5,59 @@ import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } fro
 import { TEST_MINIMAL_ENV_STUB, ValidationError } from '../../shared';
 import type { AskToolArgs } from '../common';
 
-const mocks = vi.hoisted(() => ({
-  validatePromptSize: vi.fn(),
-  validateModel: vi.fn(),
-  validateSessionId: vi.fn(),
-  validateWorkingDirectory: vi.fn(),
-  validateFiles: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  const result = {
+    validatePromptSize: vi.fn(),
+    validateModel: vi.fn(),
+    validateSessionId: vi.fn(),
+    validateWorkingDirectory: vi.fn(),
+    validateFiles: vi.fn(),
+  };
 
-vi.mock('../../shared/validation/utils/validation.util', () => ({
-  validatePromptSize: mocks.validatePromptSize,
-  validateModel: mocks.validateModel,
-  validateSessionId: mocks.validateSessionId,
-  validateWorkingDirectory: mocks.validateWorkingDirectory,
-  validateFiles: mocks.validateFiles,
-}));
-
-const buildProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => ({
-  enabled: true,
-  description: 'test provider',
-  command: 'test-cli',
-  timeout: 30_000,
-  env: {},
-  outputFormat: 'text',
-  commands: {
-    ask: { args: [] },
-  },
-  input: { method: 'positional' },
-  ...overrides,
+  return result;
 });
 
-const buildContext = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => ({
-  name: 'test-provider',
-  binaryPath: '/usr/bin/test',
-  config: buildProviderConfig(),
-  ...overrides,
+vi.mock('../../shared/validation/utils/validation.util', () => {
+  const result = {
+    validatePromptSize: mocks.validatePromptSize,
+    validateModel: mocks.validateModel,
+    validateSessionId: mocks.validateSessionId,
+    validateWorkingDirectory: mocks.validateWorkingDirectory,
+    validateFiles: mocks.validateFiles,
+  };
+
+  return result;
 });
+
+const buildProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => {
+  const ask = { args: [] };
+  const input = { method: 'positional' } as const;
+  const commands = { ask };
+  const result: ProviderConfig = {
+    enabled: true,
+    description: 'test provider',
+    command: 'test-cli',
+    timeout: 30_000,
+    env: {},
+    outputFormat: 'text',
+    commands,
+    input,
+    ...overrides,
+  };
+
+  return result;
+};
+
+const buildContext = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => {
+  const result: ResolvedProviderEntry = {
+    name: 'test-provider',
+    binaryPath: '/usr/bin/test',
+    config: buildProviderConfig(),
+    ...overrides,
+  };
+
+  return result;
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -235,11 +252,13 @@ describe('buildNativeSessionArgs', () => {
   });
 
   it('GIVEN config with sessions command but no flags WHEN called THEN returns empty array', () => {
+    const ask = { args: [] };
+    const commands = {
+      ask,
+      sessions: {},
+    };
     const config = buildProviderConfig({
-      commands: {
-        ask: { args: [] },
-        sessions: {},
-      },
+      commands,
     });
 
     const result = buildNativeSessionArgs(config, 'session-123');
@@ -248,15 +267,12 @@ describe('buildNativeSessionArgs', () => {
   });
 
   it('GIVEN config with resume flag as string WHEN called THEN returns resume flag and session id', () => {
+    const flags = { resume: '--resume' };
+    const sessions = { flags };
+    const ask = { args: [] };
+    const commands = { ask, sessions };
     const config = buildProviderConfig({
-      commands: {
-        ask: { args: [] },
-        sessions: {
-          flags: {
-            resume: '--resume',
-          },
-        },
-      },
+      commands,
     });
 
     const result = buildNativeSessionArgs(config, 'session-123');
@@ -265,15 +281,14 @@ describe('buildNativeSessionArgs', () => {
   });
 
   it('GIVEN config with resume flag as array WHEN called THEN returns all flag parts and session id', () => {
+    const ask = { args: [] };
+    const flags = {
+      resume: ['--resume', '--session'],
+    };
+    const sessions = { flags };
+    const commands = { ask, sessions };
     const config = buildProviderConfig({
-      commands: {
-        ask: { args: [] },
-        sessions: {
-          flags: {
-            resume: ['--resume', '--session'],
-          },
-        },
-      },
+      commands,
     });
 
     const result = buildNativeSessionArgs(config, 'session-123');
@@ -282,15 +297,12 @@ describe('buildNativeSessionArgs', () => {
   });
 
   it('GIVEN config with continue flag but no resume flag WHEN called THEN returns continue flag args', () => {
+    const ask = { args: [] };
+    const flags = { continue: '--continue' };
+    const sessions = { flags };
+    const commands = { ask, sessions };
     const config = buildProviderConfig({
-      commands: {
-        ask: { args: [] },
-        sessions: {
-          flags: {
-            continue: '--continue',
-          },
-        },
-      },
+      commands,
     });
 
     const result = buildNativeSessionArgs(config, 'session-456');
@@ -299,15 +311,13 @@ describe('buildNativeSessionArgs', () => {
   });
 
   it('GIVEN config with leveled resume flag where session id is in values WHEN called THEN returns flag and session id', () => {
+    const resume = { flag: '--resume', values: ['session-789', 'other-session'] };
+    const ask = { args: [] };
+    const flags = { resume };
+    const sessions = { flags };
+    const commands = { ask, sessions };
     const config = buildProviderConfig({
-      commands: {
-        ask: { args: [] },
-        sessions: {
-          flags: {
-            resume: { flag: '--resume', values: ['session-789', 'other-session'] },
-          },
-        },
-      },
+      commands,
     });
 
     const result = buildNativeSessionArgs(config, 'session-789');
@@ -316,15 +326,13 @@ describe('buildNativeSessionArgs', () => {
   });
 
   it('GIVEN config with leveled resume flag where session id is not in values WHEN called THEN returns empty array', () => {
+    const ask = { args: [] };
+    const resume = { flag: '--resume', values: ['other-session'] };
+    const flags = { resume };
+    const sessions = { flags };
+    const commands = { ask, sessions };
     const config = buildProviderConfig({
-      commands: {
-        ask: { args: [] },
-        sessions: {
-          flags: {
-            resume: { flag: '--resume', values: ['other-session'] },
-          },
-        },
-      },
+      commands,
     });
 
     const result = buildNativeSessionArgs(config, 'session-789');

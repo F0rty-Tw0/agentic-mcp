@@ -6,40 +6,56 @@ import { resetBackgroundJobStoreForTests } from '../../background-jobs/data-acce
 import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import { SESSION_STORE } from '../../session';
 import type { SessionRecord, SessionTurn } from '../../session';
-import type { McpPlainTextContent, ProgressContext } from '../../shared';
+import type { McpPlainTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared';
 import { TEST_MINIMAL_ENV_STUB, executeCommand } from '../../shared';
 import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../../streaming/common';
 import type { AskStreamEvent } from '../../streaming/common';
 import type { AskToolArgs, ProgressNotification } from '../common';
+import { ASK_DEFAULT_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
-  ASK_DEFAULT_ARG_ARRAY_STUB,
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
-  createAskContext,
-} from '../common/stubs';
+} from '../test/stubs/ask-execution-result.stub';
+import { createAskContext } from '../test/utils/ask-context.spec.util';
 
-vi.mock('../../cli-args/domain-logic/arg.builder', () => ({
-  buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
-}));
+vi.mock('../../cli-args/domain-logic/arg.builder', () => {
+  const result = {
+    buildArgArray: vi.fn(() => ASK_DEFAULT_ARG_ARRAY_STUB),
+  };
 
-vi.mock('../../shared/command-execution/domain-logic/command-executor', () => ({
-  executeCommand: vi.fn(async () => {
-    await Promise.resolve();
+  return result;
+});
 
-    return ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB;
-  }),
-}));
+vi.mock('../../shared/command-execution/domain-logic/command-executor', () => {
+  const result = {
+    executeCommand: vi.fn(async () => {
+      await Promise.resolve();
 
-vi.mock('../../provider-metrics', () => ({
-  recordCall: vi.fn(async () => {
-    await Promise.resolve();
-  }),
-}));
+      return ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB;
+    }),
+  };
 
-vi.mock('../../shared/command-execution/utils/platform.util', () => ({
-  buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
-  stripAnsi: vi.fn((input: string) => input),
-}));
+  return result;
+});
+
+vi.mock('../../provider-metrics', () => {
+  const result = {
+    recordCall: vi.fn(async () => {
+      await Promise.resolve();
+    }),
+  };
+
+  return result;
+});
+
+vi.mock('../../shared/command-execution/utils/platform.util', () => {
+  const result = {
+    buildMinimalEnv: vi.fn(() => TEST_MINIMAL_ENV_STUB),
+    stripAnsi: vi.fn((input: string) => input),
+  };
+
+  return result;
+});
 
 type AsyncJobPayload = Readonly<Record<string, unknown>>;
 
@@ -49,16 +65,17 @@ const createProgressContext = (notifications: ProgressNotification[]): ProgressC
     notifications.push(notification);
   }) as unknown as ProgressContext['sendNotification'];
 
+  const progressMeta = { progressToken: 'token-1' };
   const context: ProgressContext = {
     sendNotification,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    _meta: { progressToken: 'token-1' },
+    _meta: progressMeta,
   };
 
   return context;
 };
 
-const parseEvents = (notifications: readonly ProgressNotification[]): AskStreamEvent[] =>
+const parseEvents = (notifications: ProgressNotification[]): AskStreamEvent[] =>
   notifications.map((notification) => JSON.parse(notification.params.message) as AskStreamEvent);
 
 const readTextContent = (result: CallToolResult): string => {
@@ -97,25 +114,20 @@ const delay = async (durationMs: number): Promise<void> => {
   await new Promise<void>((resolve) => setTimeout(resolve, durationMs));
 };
 
-const fetchAsyncJobStatus = async (
-  context: ReturnType<typeof createAskContext>,
-  jobId: string
-): Promise<AsyncJobPayload> => {
+const fetchAsyncJobStatus = async (context: ResolvedProviderEntry, jobId: string): Promise<AsyncJobPayload> => {
   const statusResult = await handleAsk(context, { action: 'status', job_id: jobId });
   const statusPayload = readAsyncJobPayload(statusResult);
 
   return statusPayload;
 };
 
-const pollAsyncJobStatus = async (
-  context: ReturnType<typeof createAskContext>,
-  jobId: string
-): Promise<AsyncJobPayload> => {
+const pollAsyncJobStatus = async (context: ResolvedProviderEntry, jobId: string): Promise<AsyncJobPayload> => {
   for (let attempt = 0; attempt < ASYNC_JOB_MAX_POLL_ATTEMPTS; attempt++) {
     const statusPayload = await fetchAsyncJobStatus(context, jobId);
     const state = readAsyncJobState(statusPayload);
+    const isTerminal = isTerminalAsyncJobState(state);
 
-    if (isTerminalAsyncJobState(state)) return statusPayload;
+    if (isTerminal) return statusPayload;
 
     await delay(ASYNC_JOB_POLL_DELAY_MS);
   }
@@ -142,11 +154,11 @@ describe('handleAsk', () => {
       SESSION_STORE.addTurn(context.name, sessionId, { role: 'user', text: 'old question' });
 
       const result = await handleAsk(context, { prompt: 'test prompt', session_id: sessionId });
-      const resolvedArgs = vi.mocked(buildArgArray).mock.calls[0]?.[1] as { prompt: string };
+      const resolvedPrompt = vi.mocked(buildArgArray).mock.calls[0]?.[1]?.prompt;
 
       expect(result.content[0]).toStrictEqual({ type: 'text', text: 'command output' });
-      expect(resolvedArgs.prompt).toContain('Previous context:\nuser: old question');
-      expect(resolvedArgs.prompt).toContain('Current request:\ntest prompt');
+      expect(resolvedPrompt).toContain('Previous context:\nuser: old question');
+      expect(resolvedPrompt).toContain('Current request:\ntest prompt');
       expect(result.structuredContent).toBeUndefined();
     });
 
@@ -163,16 +175,18 @@ describe('handleAsk', () => {
         include_structured: true,
       });
 
+      const attribution = {
+        provider: 'test',
+        executionTimeMs: 100,
+        outputBytes: 14,
+        truncated: false,
+        outputFormat: 'json',
+        sessionMode: 'tier1-prepend',
+      };
+
       expect(result.structuredContent).toMatchObject({
         response: 'command output',
-        attribution: {
-          provider: 'test',
-          executionTimeMs: 100,
-          outputBytes: 14,
-          truncated: false,
-          outputFormat: 'json',
-          sessionMode: 'tier1-prepend',
-        },
+        attribution,
         sessionMode: 'tier1-prepend',
       });
     });
@@ -311,15 +325,17 @@ describe('handleAsk', () => {
       const statusPayload = await pollAsyncJobStatus(context, jobId);
 
       expect(statusPayload.state).toBe('completed');
+      const attribution = {
+        provider: 'test',
+        executionTimeMs: 100,
+        outputBytes: 16,
+        truncated: false,
+        outputFormat: 'json',
+      };
+
       expect(statusPayload.structuredContent).toMatchObject({
         response: 'completed output',
-        attribution: {
-          provider: 'test',
-          executionTimeMs: 100,
-          outputBytes: 16,
-          truncated: false,
-          outputFormat: 'json',
-        },
+        attribution,
       });
     });
   });
@@ -334,11 +350,9 @@ describe('handleAsk', () => {
         await Promise.resolve();
         options.onStdoutChunk?.('hello');
 
-        return {
-          ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
-          stdout: 'hello',
-          stdoutBytes: 5,
-        };
+        const result = { ...ASK_SUCCESS_EXECUTION_RESULT_STUB, stdout: 'hello', stdoutBytes: 5 };
+
+        return result;
       });
 
       await handleAsk(context, { prompt: 'x', stream_live: true }, extra);
@@ -366,11 +380,9 @@ describe('handleAsk', () => {
         await Promise.resolve();
         options.onStdoutChunk?.('hello');
 
-        return {
-          ...ASK_SUCCESS_EXECUTION_RESULT_STUB,
-          stdout: 'hello',
-          stdoutBytes: 5,
-        };
+        const result = { ...ASK_SUCCESS_EXECUTION_RESULT_STUB, stdout: 'hello', stdoutBytes: 5 };
+
+        return result;
       });
 
       const args: AskToolArgs = { prompt: 'x', stream_live: true };

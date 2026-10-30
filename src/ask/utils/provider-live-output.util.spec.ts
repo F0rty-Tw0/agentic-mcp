@@ -4,11 +4,11 @@ import type { MockInstance } from 'vitest';
 import { createProviderLiveOutputAdapter } from './provider-live-output.util';
 import type { StreamNotifier } from '../../streaming';
 
-type StreamNotifierStub = Readonly<{
-  notifier: StreamNotifier;
-  stdoutSpy: MockInstance;
-  stderrSpy: MockInstance;
-}>;
+type StreamNotifierStub = {
+  readonly notifier: StreamNotifier;
+  readonly stdoutSpy: MockInstance;
+  readonly stderrSpy: MockInstance;
+};
 
 const createStreamNotifierStub = (): StreamNotifierStub => {
   const stdoutSpy = vi.fn();
@@ -34,24 +34,26 @@ const createStreamNotifierStub = (): StreamNotifierStub => {
 };
 
 const createAssistantLine = (item: Record<string, unknown>): string => {
+  const message = {
+    role: 'assistant',
+    content: [item],
+  };
   const line = JSON.stringify({
     type: 'assistant',
-    message: {
-      role: 'assistant',
-      content: [item],
-    },
+    message,
   });
 
   return line;
 };
 
-const createAssistantMessageLine = (content: ReadonlyArray<Record<string, unknown>>): string => {
+const createAssistantMessageLine = (content: Record<string, unknown>[]): string => {
+  const message = {
+    role: 'assistant',
+    content,
+  };
   const line = JSON.stringify({
     type: 'assistant',
-    message: {
-      role: 'assistant',
-      content,
-    },
+    message,
   });
 
   return line;
@@ -82,10 +84,11 @@ describe('createProviderLiveOutputAdapter', () => {
       streamNotifier: notifier,
     });
     const thinkingLine = `${createAssistantLine({ type: 'thinking', thinking: 'planning' })}\n`;
+    const input = { command: 'pwd' };
     const toolUseLine = createAssistantLine({
       type: 'tool_use',
       name: 'bash',
-      input: { command: 'pwd' },
+      input,
     });
     const textLine = `${createAssistantLine({ type: 'text', text: '  done  ' })}\n`;
 
@@ -106,10 +109,11 @@ describe('createProviderLiveOutputAdapter', () => {
       outputFormat: 'stream-json',
       streamNotifier: notifier,
     });
+    const input = { file_path: 'src/ask/utils/provider-live-output.util.ts' };
     const toolUseLine = createAssistantLine({
       type: 'tool_use',
       name: 'write',
-      input: { file_path: 'src/ask/utils/provider-live-output.util.ts' },
+      input,
     });
 
     adapter.onStdoutChunk(toolUseLine);
@@ -157,14 +161,15 @@ describe('createProviderLiveOutputAdapter', () => {
       outputFormat: 'stream-json',
       streamNotifier: notifier,
     });
+    const input = {
+      description: 'Reading target file',
+      file_path: 'ignored.ts',
+      command: 'ignored command',
+    };
     const toolUseLine = `${createAssistantLine({
       type: 'tool_use',
       name: 'read',
-      input: {
-        description: 'Reading target file',
-        file_path: 'ignored.ts',
-        command: 'ignored command',
-      },
+      input,
     })}\n`;
 
     adapter.onStdoutChunk(toolUseLine);
@@ -197,10 +202,11 @@ describe('createProviderLiveOutputAdapter', () => {
       outputFormat: 'stream-json',
       streamNotifier: notifier,
     });
+    const input = { command: 'pwd' };
     const toolUseLine = `${createAssistantLine({
       type: 'tool_use',
       name: 'bash',
-      input: { command: 'pwd' },
+      input,
     })}\n`;
 
     adapter.onStdoutChunk(toolUseLine);
@@ -215,10 +221,11 @@ describe('createProviderLiveOutputAdapter', () => {
       outputFormat: 'stream-json',
       streamNotifier: notifier,
     });
+    const input = { command: 123 };
     const toolUseLine = `${createAssistantLine({
       type: 'tool_use',
       name: 'bash',
-      input: { command: 123 },
+      input,
     })}\n`;
 
     adapter.onStdoutChunk(toolUseLine);
@@ -233,10 +240,11 @@ describe('createProviderLiveOutputAdapter', () => {
       outputFormat: 'stream-json',
       streamNotifier: notifier,
     });
+    const input = { command: 'pwd' };
     const assistantLine = `${createAssistantMessageLine([
       { type: 'text', text: '   ' },
       { type: 'image', url: 'ignored' },
-      { type: 'tool_use', input: { command: 'pwd' } },
+      { type: 'tool_use', input },
       {},
       { type: 'text', text: ' kept ' },
     ])}\n`;
@@ -253,9 +261,10 @@ describe('createProviderLiveOutputAdapter', () => {
       outputFormat: 'stream-json',
       streamNotifier: notifier,
     });
+    const message = { role: 'assistant', content: 'not-an-array' };
     const invalidAssistantLine = `${JSON.stringify({
       type: 'assistant',
-      message: { role: 'assistant', content: 'not-an-array' },
+      message,
     })}\n`;
 
     adapter.onStdoutChunk(invalidAssistantLine);

@@ -9,11 +9,21 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
+import { readFirstText } from '../test/utils/text-content.spec.util';
 
 const createLongRunningContext = (timeoutMs = 10_000): ResolvedProviderEntry => {
   const script = "setTimeout(() => { process.stdout.write('done'); process.exit(0); }, 5000);";
 
+  const ask = {
+    args: ['-e', script],
+    flags: {},
+  };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const config: ProviderConfig = {
     enabled: true,
     description: 'Node long-running test provider',
@@ -21,13 +31,8 @@ const createLongRunningContext = (timeoutMs = 10_000): ResolvedProviderEntry => 
     timeout: timeoutMs,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', script],
-        flags: {},
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   };
 
   const context: ResolvedProviderEntry = {
@@ -60,7 +65,7 @@ describe('integration: handleAsk timeout', () => {
     const result = await handleAsk(context, { prompt: 'ignored' });
 
     expect(result.isError).toBe(true);
-    const text = (result.content[0] as { text: string }).text;
+    const text = readFirstText(result);
 
     expect(text.toLowerCase()).toMatch(/timed?\s*out|timeout|killed/i);
   });

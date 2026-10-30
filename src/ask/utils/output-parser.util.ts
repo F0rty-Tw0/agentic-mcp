@@ -1,6 +1,6 @@
-import type { OutputFormat } from '../../shared';
 import { stripAnsi } from '../../shared';
-import type { ParsedProviderOutput } from '../common';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
+import type { ParsedProviderOutput, ProviderOutputMetadata } from '../common';
 
 type JsonRecord = Readonly<Record<string, unknown>>;
 
@@ -63,17 +63,30 @@ const extractParsedText = (value: unknown): string | undefined => {
   );
 };
 
-const extractLatestParsedText = (parsedLines: readonly unknown[]): string | undefined => {
+const splitTrimmedLines = (stdout: string): string[] => {
+  const rawLines = stdout.split(/\r?\n/);
+  const trimmedLines = rawLines.map((line) => line.trim());
+  const lines = trimmedLines.filter((line) => line.length);
+
+  return lines;
+};
+
+const stringifyParsed = (parsed: unknown): string => {
+  if (typeof parsed === 'string') return parsed;
+
+  const text = JSON.stringify(parsed, null, 2);
+
+  return text;
+};
+
+const extractLatestParsedText = (parsedLines: unknown[]): string | undefined => {
   const parsedTexts = parsedLines.map((parsedLine) => extractParsedText(parsedLine)).filter(isDefined);
 
   return parsedTexts.at(-1);
 };
 
 const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefined => {
-  const lines = stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length);
+  const lines = splitTrimmedLines(stdout);
 
   if (!lines.length) return;
 
@@ -84,23 +97,25 @@ const parseJsonFromMixedOutput = (stdout: string): ParsedProviderOutput | undefi
   const latestMessage = extractLatestParsedText(parsedLines);
 
   if (latestMessage != null) {
+    const metadata: ProviderOutputMetadata = {
+      outputFormatObserved: 'json',
+      parsed: parsedLines,
+    };
     const parsedProviderOutput: ParsedProviderOutput = {
       text: latestMessage,
-      metadata: {
-        outputFormatObserved: 'json',
-        parsed: parsedLines,
-      },
+      metadata,
     };
 
     return parsedProviderOutput;
   }
 
+  const fallbackMetadata: ProviderOutputMetadata = {
+    outputFormatObserved: 'json',
+    parsed: parsedLines,
+  };
   const parsedProviderOutput: ParsedProviderOutput = {
     text: JSON.stringify(parsedLines, null, 2),
-    metadata: {
-      outputFormatObserved: 'json',
-      parsed: parsedLines,
-    },
+    metadata: fallbackMetadata,
   };
 
   return parsedProviderOutput;
@@ -110,14 +125,15 @@ const parseJson = (stdout: string): ParsedProviderOutput => {
   try {
     const parsed: unknown = JSON.parse(stdout);
     const extractedText = extractParsedText(parsed);
-    const parsedText = typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
+    const parsedText = stringifyParsed(parsed);
     const text = extractedText ?? parsedText;
+    const metadata: ProviderOutputMetadata = {
+      outputFormatObserved: 'json',
+      parsed,
+    };
     const parsedProviderOutput: ParsedProviderOutput = {
       text,
-      metadata: {
-        outputFormatObserved: 'json',
-        parsed,
-      },
+      metadata,
     };
 
     return parsedProviderOutput;
@@ -133,10 +149,7 @@ const parseJson = (stdout: string): ParsedProviderOutput => {
 };
 
 const parseNdjson = (stdout: string): ParsedProviderOutput => {
-  const lines = stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length);
+  const lines = splitTrimmedLines(stdout);
 
   if (!lines.length) {
     const parsedProviderOutput: ParsedProviderOutput = { text: '' };
@@ -157,12 +170,13 @@ const parseNdjson = (stdout: string): ParsedProviderOutput => {
   }
 
   const parsedText = extractLatestParsedText(parsedLines) ?? JSON.stringify(parsedLines, null, 2);
+  const metadata: ProviderOutputMetadata = {
+    outputFormatObserved: 'stream-json',
+    parsed: parsedLines,
+  };
   const parsedProviderOutput: ParsedProviderOutput = {
     text: parsedText,
-    metadata: {
-      outputFormatObserved: 'stream-json',
-      parsed: parsedLines,
-    },
+    metadata,
   };
 
   return parsedProviderOutput;
@@ -175,11 +189,12 @@ export const parseProviderOutput = (stdout: string, outputFormat: OutputFormat):
 
   if (outputFormat === 'stream-json') return parseNdjson(cleanOutput);
 
+  const metadata: ProviderOutputMetadata = {
+    outputFormatObserved: 'text',
+  };
   const parsedProviderOutput: ParsedProviderOutput = {
     text: cleanOutput,
-    metadata: {
-      outputFormatObserved: 'text',
-    },
+    metadata,
   };
 
   return parsedProviderOutput;

@@ -1,5 +1,5 @@
-import type { CommandDef, FlagValue, ProviderConfig } from '../../shared';
 import { ValidationError } from '../../shared';
+import type { CommandDef, FlagValue, ProviderConfig } from '../../shared/provider/common';
 import type { ResolvedAskCommand } from '../common';
 
 export const getAskCommand = (config: ProviderConfig): CommandDef => {
@@ -21,7 +21,9 @@ export const getReviewCommand = (config: ProviderConfig): CommandDef => {
 export const resolveAskCommand = (config: ProviderConfig, streamLive = false): ResolvedAskCommand => {
   const ask = getAskCommand(config);
   const streaming = streamLive ? ask.streaming : undefined;
-  const command: CommandDef = streaming ? { ...ask, trailingArgs: streaming.trailingArgs ?? ask.trailingArgs } : ask;
+  const streamingTrailingArgs = streaming?.trailingArgs ?? ask.trailingArgs;
+  const streamingCommand: CommandDef = { ...ask, trailingArgs: streamingTrailingArgs };
+  const command: CommandDef = streaming ? streamingCommand : ask;
   const outputFormat = streaming?.outputFormat ?? config.outputFormat;
   const result: ResolvedAskCommand = { command, outputFormat };
 

@@ -1,12 +1,12 @@
-import type { OutputFormat } from '../../shared';
-import type { StreamNotifier } from '../../streaming';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
+import type { StreamNotifier } from '../../streaming/common';
 import type { ProviderLiveOutputAdapter } from '../common';
 
-type CreateProviderLiveOutputAdapterInput = Readonly<{
-  providerName: string;
-  outputFormat: OutputFormat;
-  streamNotifier: StreamNotifier;
-}>;
+type CreateProviderLiveOutputAdapterInput = {
+  readonly providerName: string;
+  readonly outputFormat: OutputFormat;
+  readonly streamNotifier: StreamNotifier;
+};
 
 type JsonRecord = Readonly<Record<string, unknown>>;
 
@@ -27,7 +27,9 @@ const parseJsonLine = (line: string): unknown | undefined => {
 };
 
 const ensureTrailingNewline = (text: string): string => {
-  if (text.endsWith('\n')) return text;
+  const hasTrailingNewline = text.endsWith('\n');
+
+  if (hasTrailingNewline) return text;
 
   const result = `${text}\n`;
 
@@ -96,11 +98,11 @@ const collectAssistantLines = (value: JsonRecord): string[] => {
 
   if (!message) return [];
 
-  const content = Array.isArray(message.content) ? message.content : [];
-  const lines = content
-    .filter(isJsonRecord)
-    .map((item) => resolveAssistantLine(item))
-    .filter((item): item is string => item !== undefined);
+  const noContent: unknown[] = [];
+  const content = Array.isArray(message.content) ? message.content : noContent;
+  const records = content.filter(isJsonRecord);
+  const resolvedLines = records.map((item) => resolveAssistantLine(item));
+  const lines = resolvedLines.filter((item): item is string => item !== undefined);
 
   return lines;
 };

@@ -1,8 +1,8 @@
-export type ProgressNotificationParams = Readonly<{
-  message: string;
-}>;
+export type ProgressNotificationParams = {
+  readonly message: string;
+};
 
-export type ProgressNotification = Readonly<{
-  method: string;
-  params: ProgressNotificationParams;
-}>;
+export type ProgressNotification = {
+  readonly method: string;
+  readonly params: ProgressNotificationParams;
+};

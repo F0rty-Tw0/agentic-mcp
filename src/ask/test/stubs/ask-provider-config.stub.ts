@@ -1,5 +1,9 @@
 import type { ProviderConfig } from '../../../shared';
 
+const ask = { args: ['exec'], flags: {} };
+const commands = { ask };
+const input = { method: 'positional' } as const;
+
 export const ASK_PROVIDER_CONFIG_STUB: ProviderConfig = {
   enabled: true,
   description: 'Test provider',
@@ -7,6 +11,6 @@ export const ASK_PROVIDER_CONFIG_STUB: ProviderConfig = {
   timeout: 120_000,
   env: {},
   outputFormat: 'json',
-  commands: { ask: { args: ['exec'], flags: {} } },
-  input: { method: 'positional' },
+  commands,
+  input,
 };

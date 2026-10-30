@@ -18,15 +18,14 @@ export type { AskExecution } from './ask-execution.type';
 export type {
   ParsedProviderOutput,
   ProviderLiveOutputAdapter,
+  ProviderOutputMetadata,
   ResolvedAskCommand,
   SuccessResponseInput,
 } from './ask-runtime-contracts.type';
 
-export type { AskToolArgs, BuiltArgs, ReviewScope, ReviewToolArgs } from './tool-args.types';
+export type { AskToolArgs, BuiltArgs, ReviewScope, ReviewToolArgs } from './tool-args.type';
 
-export { isLeveledFlag } from './tool-args.types';
-
-export type { ProviderAttribution } from './attribution.types';
+export type { ProviderAttribution } from './attribution.type';
 
 export type { AskToolStructuredContent } from './ask-tool-result.schema';
 

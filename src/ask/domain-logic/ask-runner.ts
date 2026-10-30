@@ -1,29 +1,49 @@
 import { buildCommandFailure, buildExecutionEnv, resolveModelFallback } from './ask-command';
+import { resolveRequestId, runCommandExecution } from './ask-command-execution';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { recordCall } from '../../provider-metrics';
-import type { ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
 import { CommandExecutionError, startHeartbeat, toMcpError, unregisterActiveRequest } from '../../shared';
+import type { ExecutionResult } from '../../shared/command-execution/common';
+import type { McpErrorResponse, ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
-import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
+import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
 import { noop } from '../common';
 import type { AskExecution, AskToolArgs } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils';
-import { runCommandExecution } from './ask-command-execution';
 
-type RunInvocationInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  extra?: ProgressContext;
-  tier2SessionId?: string;
-}>;
+type RunInvocationInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly extra?: ProgressContext;
+  readonly tier2SessionId?: string;
+};
 
-type ExecuteInput = Readonly<{
-  context: ResolvedProviderEntry;
-  args: AskToolArgs;
-  extra?: ProgressContext;
-  tier2SessionId?: string;
-  streamNotifier: StreamNotifier;
-}>;
+type ExecuteInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly extra?: ProgressContext;
+  readonly tier2SessionId?: string;
+  readonly streamNotifier: StreamNotifier;
+};
+
+type StopHeartbeat = () => void;
+
+const resolveStopHeartbeat = (streamNotifier: StreamNotifier, extra?: ProgressContext): StopHeartbeat => {
+  if (streamNotifier.enabled) return noop;
+
+  const stopHeartbeat = startHeartbeat(extra);
+
+  return stopHeartbeat;
+};
+
+const toErrorResponse = (error: unknown): McpErrorResponse => {
+  if (error instanceof CommandExecutionError) return error.toMcpResponse();
+
+  const errorResponse = toMcpError(error);
+
+  return errorResponse;
+};
 
 const handleFailedExecution = async (
   executeInput: ExecuteInput,
@@ -60,7 +80,8 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
       });
 
       if (fallbackModel) {
-        const retryInput: ExecuteInput = { ...executeInput, args: { ...args, model: fallbackModel } };
+        const retryArgs: AskToolArgs = { ...args, model: fallbackModel };
+        const retryInput: ExecuteInput = { ...executeInput, args: retryArgs };
 
         return executeAndBuildResponse(retryInput, true);
       }
@@ -95,8 +116,8 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
   const { context, args, extra, tier2SessionId } = runInvocationInput;
   const input = { providerName: context.name, args, extra };
   const streamNotifier = createStreamNotifier(input);
-  const stopHeartbeat = streamNotifier.enabled ? noop : startHeartbeat(extra);
-  const requestId = extra?.requestId ? String(extra.requestId) : undefined;
+  const stopHeartbeat = resolveStopHeartbeat(streamNotifier, extra);
+  const requestId = resolveRequestId(extra);
 
   try {
     const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, streamNotifier };
@@ -104,7 +125,7 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
     return await executeAndBuildResponse(executeInput);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorResponse = error instanceof CommandExecutionError ? error.toMcpResponse() : toMcpError(error);
+    const errorResponse = toErrorResponse(error);
     const [firstContent] = errorResponse.content;
 
     streamNotifier.emitError(firstContent?.type === 'text' ? firstContent.text : errorMessage);

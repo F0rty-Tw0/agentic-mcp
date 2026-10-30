@@ -1,8 +1,8 @@
-type AskArgArray = Readonly<{
-  args: readonly string[];
-  stdinInput?: string;
-  outputFormat: 'json' | 'stream-json' | 'text';
-}>;
+type AskArgArray = {
+  readonly args: string[];
+  readonly stdinInput?: string;
+  readonly outputFormat: 'json' | 'stream-json' | 'text';
+};
 
 export const ASK_DEFAULT_ARG_ARRAY_STUB: AskArgArray = {
   args: ['exec', 'test prompt'],

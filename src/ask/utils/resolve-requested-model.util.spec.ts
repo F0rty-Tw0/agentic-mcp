@@ -7,6 +7,11 @@ import * as modelErrorUtil from '../../shared/provider/utils/model-error.util';
 import type { AskToolArgs } from '../common';
 
 const buildProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderConfig => {
+  const ask = { args: [] };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const providerConfig: ProviderConfig = {
     enabled: true,
     description: 'test provider',
@@ -14,10 +19,8 @@ const buildProviderConfig = (overrides: Partial<ProviderConfig> = {}): ProviderC
     timeout: 30_000,
     env: {},
     outputFormat: 'text',
-    commands: {
-      ask: { args: [] },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
     ...overrides,
   };
 

@@ -1,61 +1,72 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { buildReviewArgArray } from '../../cli-args';
-import type { ExecuteCommandOptions, ExecutionResult, ProgressContext, ResolvedProviderEntry } from '../../shared';
-import { executeCommand, registerActiveRequest, unregisterActiveRequest } from '../../shared';
-import { createStreamNotifier } from '../../streaming';
-import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming';
-import type { AskToolArgs, BuiltArgs, ReviewToolArgs } from '../common';
 import { buildCommandFailure, buildExecutionEnv } from './ask-command';
+import { buildOnSpawned, resolveRequestId } from './ask-command-execution';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
+import { buildReviewArgArray } from '../../cli-args';
+import { executeCommand, unregisterActiveRequest } from '../../shared';
+import type { ExecuteCommandOptions, ExecutionResult } from '../../shared/command-execution/common';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
+import { createStreamNotifier } from '../../streaming';
+import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
+import type { AskToolArgs, BuiltArgs, ReviewToolArgs } from '../common';
 import { buildCommandOptions } from '../utils/ask-command.util';
 
-const buildExecutionSummary = (result: ExecutionResult): AskStreamExecutionSummary => ({
-  exitCode: result.exitCode,
-  signal: result.signal,
-  timedOut: result.timedOut,
-  truncated: result.truncated,
-  stdoutBytes: result.stdoutBytes,
-  stderrBytes: result.stderrBytes,
-  executionTimeMs: result.executionTimeMs,
-});
+const buildExecutionSummary = (result: ExecutionResult): AskStreamExecutionSummary => {
+  const summary: AskStreamExecutionSummary = {
+    exitCode: result.exitCode,
+    signal: result.signal,
+    timedOut: result.timedOut,
+    truncated: result.truncated,
+    stdoutBytes: result.stdoutBytes,
+    stderrBytes: result.stderrBytes,
+    executionTimeMs: result.executionTimeMs,
+  };
+
+  return summary;
+};
 
 const buildResponseArgs = (args: ReviewToolArgs): AskToolArgs => {
+  const noArgs: AskToolArgs = {};
+  const modelArgs: AskToolArgs = { model: args.model };
+  const workingDirectoryArgs: AskToolArgs = { working_directory: args.working_directory };
+  const streamLiveArgs: AskToolArgs = { stream_live: true };
+  const modelPatch = args.model ? modelArgs : noArgs;
+  const workingDirectoryPatch = args.working_directory ? workingDirectoryArgs : noArgs;
+  const streamLivePatch = args.stream_live === true ? streamLiveArgs : noArgs;
   const responseArgs: AskToolArgs = {
     include_structured: args.include_structured,
-    ...(args.model ? { model: args.model } : {}),
-    ...(args.working_directory ? { working_directory: args.working_directory } : {}),
-    ...(args.stream_live === true ? { stream_live: true } : {}),
+    ...modelPatch,
+    ...workingDirectoryPatch,
+    ...streamLivePatch,
   };
 
   return responseArgs;
 };
 
-const resolveRequestId = (extra?: ProgressContext): string | undefined =>
-  extra?.requestId ? String(extra.requestId) : undefined;
+type BuildReviewCommandOptionsInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly responseArgs: AskToolArgs;
+  readonly builtArgs: BuiltArgs;
+  readonly env: Readonly<Record<string, string>>;
+  readonly extra?: ProgressContext;
+  readonly streamNotifier: StreamNotifier;
+  readonly requestId?: string;
+};
 
-type BuildReviewCommandOptionsInput = Readonly<{
-  context: ResolvedProviderEntry;
-  responseArgs: AskToolArgs;
-  builtArgs: BuiltArgs;
-  env: Readonly<Record<string, string>>;
-  extra?: ProgressContext;
-  streamNotifier: StreamNotifier;
-  requestId?: string;
-}>;
-
-type HandleReviewFailureInput = Readonly<{
-  context: ResolvedProviderEntry;
-  responseArgs: AskToolArgs;
-  env: Readonly<Record<string, string>>;
-  result: ExecutionResult;
-  summary: AskStreamExecutionSummary;
-  streamNotifier: StreamNotifier;
-}>;
+type HandleReviewFailureInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly responseArgs: AskToolArgs;
+  readonly env: Readonly<Record<string, string>>;
+  readonly result: ExecutionResult;
+  readonly summary: AskStreamExecutionSummary;
+  readonly streamNotifier: StreamNotifier;
+};
 
 const buildReviewCommandOptions = (input: BuildReviewCommandOptionsInput): ExecuteCommandOptions => {
   const { context, responseArgs, builtArgs, env, extra, streamNotifier, requestId } = input;
-  const onSpawned = requestId ? (pid: number): void => registerActiveRequest(requestId, pid) : undefined;
+  const onSpawned = buildOnSpawned(requestId);
   const commandOptions = buildCommandOptions({
     context,
     resolved: responseArgs,

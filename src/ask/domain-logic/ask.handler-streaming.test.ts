@@ -1,19 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import type { ProgressNotification } from '../common';
 
 type StreamEvent = Readonly<Record<string, unknown>>;
 
 const createStreamingProviderContext = (): ResolvedProviderEntry => {
-  const inlineScript = [
+  const scriptLines = [
     "process.stdout.write('out-1\\n');",
     "process.stderr.write('err-1\\n');",
     "setTimeout(() => { process.stdout.write('out-2\\n'); process.stderr.write('err-2\\n'); }, 20);",
     'setTimeout(() => process.exit(0), 40);',
-  ].join('');
+  ];
+  const inlineScript = scriptLines.join('');
 
+  const ask = {
+    args: ['-e', inlineScript],
+    flags: {},
+  };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const config: ProviderConfig = {
     enabled: true,
     description: 'Node streaming test provider',
@@ -21,13 +31,8 @@ const createStreamingProviderContext = (): ResolvedProviderEntry => {
     timeout: 10_000,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', inlineScript],
-        flags: {},
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   };
 
   const context: ResolvedProviderEntry = {
@@ -60,7 +65,7 @@ const parseEvents = (notifications: ProgressNotification[]): StreamEvent[] => {
 };
 
 const createClaudeStreamingProviderContext = (): ResolvedProviderEntry => {
-  const inlineScript = [
+  const scriptLines = [
     "const isStreaming = process.argv.includes('--verbose') && process.argv.includes('stream-json');",
     'const emit = (line, delay) => setTimeout(() => process.stdout.write(`${line}\\n`), delay);',
     'if (!isStreaming) {',
@@ -72,8 +77,23 @@ const createClaudeStreamingProviderContext = (): ResolvedProviderEntry => {
     "  emit(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, result: 'final answer', session_id: 'session-1' }), 30);",
     '  setTimeout(() => process.exit(0), 50);',
     '}',
-  ].join('');
+  ];
+  const inlineScript = scriptLines.join('');
 
+  const streaming = {
+    trailingArgs: ['--verbose', '--output-format', 'stream-json'],
+    outputFormat: 'stream-json',
+  };
+  const ask = {
+    args: ['-e', inlineScript],
+    trailingArgs: ['--output-format', 'json'],
+    flags: {},
+    streaming,
+  };
+  const commands = {
+    ask,
+  };
+  const input = { method: 'positional' } as const;
   const config = {
     enabled: true,
     description: 'Claude-style streaming test provider',
@@ -81,18 +101,8 @@ const createClaudeStreamingProviderContext = (): ResolvedProviderEntry => {
     timeout: 10_000,
     env: {},
     outputFormat: 'json',
-    commands: {
-      ask: {
-        args: ['-e', inlineScript],
-        trailingArgs: ['--output-format', 'json'],
-        flags: {},
-        streaming: {
-          trailingArgs: ['--verbose', '--output-format', 'stream-json'],
-          outputFormat: 'stream-json',
-        },
-      },
-    },
-    input: { method: 'positional' },
+    commands,
+    input,
   } as ProviderConfig;
 
   const context: ResolvedProviderEntry = {
@@ -112,14 +122,13 @@ describe('handleAsk live streaming integration', () => {
 
     const result = await handleAsk(context, { prompt: 'ignored', stream_live: true }, extra);
     const events = parseEvents(notifications);
-    const stderrChunks = events
-      .filter((event) => event.type === 'chunk' && event.channel === 'stderr')
-      .map((event) => String(event.chunk))
-      .join('');
-    const leakedJsonChunks = events
-      .filter((event) => event.type === 'chunk')
-      .map((event) => String(event.chunk))
-      .filter((chunk) => chunk.includes('"type":"assistant"') || chunk.includes('"type":"result"'));
+    const stderrEvents = events.filter((event) => event.type === 'chunk' && event.channel === 'stderr');
+    const stderrChunks = stderrEvents.map((event) => String(event.chunk)).join('');
+    const chunkEvents = events.filter((event) => event.type === 'chunk');
+    const chunkTexts = chunkEvents.map((event) => String(event.chunk));
+    const leakedJsonChunks = chunkTexts.filter(
+      (chunk) => chunk.includes('"type":"assistant"') || chunk.includes('"type":"result"')
+    );
 
     expect(stderrChunks).toContain('Thinking...');
     expect(stderrChunks).toContain('Using Read: README.md');
