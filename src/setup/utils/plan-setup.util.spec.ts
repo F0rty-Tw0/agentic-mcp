@@ -123,4 +123,19 @@ describe('buildSetupPlan', () => {
     expect(result.writeIntent).toBe('manual');
     expect(result.warnings).toContainEqual(expect.stringContaining('is not valid JSON'));
   });
+  it('GIVEN claude-code with an existing ~/.claude.json WHEN overwrite mode is requested THEN it does not write and warns', () => {
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'overwrite',
+      dryRun: false,
+      existingConfigText: '{"oauthAccount":{},"mcpServers":{}}',
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.writeIntent).toBe('manual');
+    expect(result.warnings).toContainEqual(expect.stringContaining('use --mode merge'));
+  });
 });
