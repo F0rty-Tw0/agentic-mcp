@@ -19,11 +19,11 @@ import {
   readExistingConfigText,
 } from './setup-cli-output.util';
 
-type SetupCliFlowInput = Readonly<{
-  parsedArgs: ParsedSetupArgs;
-  dependencies: SetupCliDependencies;
-  detectedProviders: readonly DetectedProvider[];
-}>;
+type SetupCliFlowInput = {
+  readonly parsedArgs: ParsedSetupArgs;
+  readonly dependencies: SetupCliDependencies;
+  readonly detectedProviders: DetectedProvider[];
+};
 
 const resolveTargetPath = (
   homeDirectory: string,
@@ -34,7 +34,11 @@ const resolveTargetPath = (
 
   if (client === 'generic') return undefined;
 
-  const targetPath = path.join(homeDirectory, CLIENT_CONFIG_PATHS[client] as string);
+  const clientConfigPath = CLIENT_CONFIG_PATHS[client];
+
+  if (clientConfigPath == null) return undefined;
+
+  const targetPath = path.join(homeDirectory, clientConfigPath);
 
   return targetPath;
 };
@@ -49,7 +53,7 @@ const buildConfiguredOutput = (
   parsedArgs: ParsedSetupArgs,
   plan: SetupPlan,
   result: SetupApplyResult,
-  detectedProviders: readonly DetectedProvider[]
+  detectedProviders: DetectedProvider[]
 ): string => {
   if (parsedArgs.output === 'json') return formatJsonSetupOutput(parsedArgs, plan, result, detectedProviders);
 
@@ -90,7 +94,9 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   const { parsedArgs, dependencies, detectedProviders } = input;
   const plan = await buildSetupPlanFromArgs({ parsedArgs, dependencies, detectedProviders });
 
-  if (isNonInteractiveWriteBlocked(parsedArgs, plan, dependencies.isInteractive)) {
+  const isWriteBlocked = isNonInteractiveWriteBlocked(parsedArgs, plan, dependencies.isInteractive);
+
+  if (isWriteBlocked) {
     dependencies.stderrWrite(
       'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
     );

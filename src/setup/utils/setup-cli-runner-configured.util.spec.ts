@@ -2,44 +2,17 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { DetectedProvider } from '../common';
+import { runConfiguredSetup } from './setup-cli-runner.util';
+import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
+import type { ConfiguredJsonOutput } from '../test/common/setup.type';
 import {
-  DEFAULT_CLAUDE_PATH,
-  DEFAULT_SKILL_PATH,
-  TEST_PROVIDERS,
   createParsedSetupArgs,
   createSetupApplyResult,
   createSetupCliDependencies,
   createSetupPlan,
   readStdoutCallOutput,
   readStdoutOutput,
-} from './setup-cli-runner.spec.helper';
-import { runConfiguredSetup } from './setup-cli-runner.util';
-
-type ConfiguredJsonOutput = Readonly<{
-  backup: string;
-  client: string;
-  dryRun: boolean;
-  mergeStatusPreview: string;
-  mode: string;
-  providers: readonly DetectedProvider[];
-  result: Readonly<{
-    path?: string;
-    status: string;
-  }>;
-  summary: Readonly<{
-    completedSteps: readonly string[];
-    nextStep: Readonly<{
-      command: string;
-      kind: string;
-      purpose: string;
-    }>;
-    unproven: readonly string[];
-  }>;
-  targetPath?: string;
-  warnings: readonly string[];
-  writeIntent: string;
-}>;
+} from '../test/utils/setup-cli-runner.spec.util';
 
 const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
 

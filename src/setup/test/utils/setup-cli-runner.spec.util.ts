@@ -1,33 +1,22 @@
-import path from 'node:path';
-
 import { vi } from 'vitest';
 import type { Mock } from 'vitest';
 
 import type {
-  DetectedProvider,
   McpServerEntry,
   ParsedSetupArgs,
   SetupApplyResult,
   SetupCliDependencies,
   SetupPlan,
-} from '../common';
+  SkillInstallResult,
+} from '../../common';
+import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../common/setup.const';
 
-export const TEST_SERVER_ENTRY: McpServerEntry = {
+const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
 };
 
-export const TEST_PROVIDERS: readonly DetectedProvider[] = [
-  {
-    name: 'claude',
-    available: true,
-    binaryPath: '/usr/bin/claude',
-  },
-];
-
-export const DEFAULT_SKILL_PATH = '/home/dev/.claude/skills/using-agentic-mcp/SKILL.md';
-
-export const DEFAULT_CLAUDE_PATH = path.join('/home/dev', '.claude', 'claude_desktop_config.json');
+const INSTALLED_SKILL_RESULT: SkillInstallResult = { status: 'installed', skillPath: DEFAULT_SKILL_PATH };
 
 type TextWriterMock = Mock<(text: string) => void>;
 
@@ -81,7 +70,7 @@ export const createSetupCliDependencies = (overrides: Partial<SetupCliDependenci
     generateClientConfigEntry: () => TEST_SERVER_ENTRY,
     buildSetupPlan: () => createSetupPlan(),
     applySetupPlan: async () => Promise.resolve(createSetupApplyResult()),
-    installSkill: async () => Promise.resolve({ status: 'installed', skillPath: DEFAULT_SKILL_PATH }),
+    installSkill: async () => Promise.resolve(INSTALLED_SKILL_RESULT),
     homeDirectory: '/home/dev',
     stdoutWrite: vi.fn<(text: string) => void>(),
     stderrWrite: vi.fn<(text: string) => void>(),

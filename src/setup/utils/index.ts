@@ -1,7 +1,3 @@
-export { applySetupPlan } from './apply-setup-plan.util';
-
-export { installSkill } from './install-skill.util';
-
 export { buildMergedClientConfig } from './merge-client-config.util';
 
 export { buildSetupPlan } from './plan-setup.util';

@@ -3,11 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { generateClientConfigEntry } from './generate-config';
 import type { DetectedProvider, SupportedClient } from '../common';
 
-const makeProvider = (name: string, available: boolean, binaryPath?: string): DetectedProvider => ({
-  name,
-  available,
-  binaryPath,
-});
+const makeProvider = (name: string, available: boolean, binaryPath?: string): DetectedProvider => {
+  const provider: DetectedProvider = {
+    name,
+    available,
+    binaryPath,
+  };
+
+  return provider;
+};
 
 describe('generateClientConfigEntry', () => {
   it('GIVEN any client and providers WHEN generating entry THEN returns deterministic agentic-mcp entry', () => {

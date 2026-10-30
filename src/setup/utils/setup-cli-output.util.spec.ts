@@ -10,37 +10,12 @@ import {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
-import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan } from '../common';
+import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan, SkillInstallResult } from '../common';
+import type { ConfiguredJsonOutput, MinimalJsonOutput } from '../test/common/setup.type';
 
 const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
 
-type OutputSummary = Readonly<{
-  completedSteps: readonly string[];
-  unproven: readonly string[];
-  nextStep: Readonly<{
-    command: string;
-    kind: string;
-    purpose: string;
-  }>;
-  firstProofCommand?: string;
-}>;
-
-type ConfiguredJsonOutput = Readonly<{
-  backup: string;
-  client: string;
-  providers: readonly { name: string }[];
-  result: Readonly<{ backupPath?: string }>;
-  summary: OutputSummary;
-  warnings: readonly string[];
-}>;
-
-type MinimalJsonOutput = Readonly<{
-  client: string;
-  mode: string;
-  nextSteps: readonly string[];
-  skillResult: Readonly<{ status: string }>;
-  summary: OutputSummary;
-}>;
+const SKILL_PATH = '/home/.claude/skills/using-agentic-mcp/SKILL.md';
 
 const createArgs = (overrides: Partial<ParsedSetupArgs> = {}): ParsedSetupArgs => {
   const args: ParsedSetupArgs = {
@@ -177,13 +152,11 @@ describe('setup-cli-output utilities', () => {
   });
 
   it('GIVEN minimal setup inputs WHEN formatting human output THEN it includes unproven work and the first real-answer command', () => {
+    const skillResult: SkillInstallResult = { status: 'installed', skillPath: SKILL_PATH };
     const output = formatHumanMinimalSetupOutput({
       client: 'claude-code',
       detectedProviders: [createProvider({ name: 'claude' })],
-      skillResult: {
-        status: 'installed',
-        skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
-      },
+      skillResult,
     });
 
     expect(output).toContain('agentic-mcp init');
@@ -196,13 +169,11 @@ describe('setup-cli-output utilities', () => {
   });
 
   it('GIVEN minimal setup inputs WHEN formatting json output THEN it returns parseable truthful guidance fields', () => {
+    const skillResult: SkillInstallResult = { status: 'already-exists', skillPath: SKILL_PATH };
     const output = formatJsonMinimalSetupOutput({
       client: 'cursor',
       detectedProviders: [createProvider({ name: 'claude' })],
-      skillResult: {
-        status: 'already-exists',
-        skillPath: '/home/.claude/skills/using-agentic-mcp/SKILL.md',
-      },
+      skillResult,
     });
 
     const parsed = JSON.parse(output) as MinimalJsonOutput;

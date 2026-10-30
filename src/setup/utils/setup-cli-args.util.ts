@@ -6,26 +6,20 @@ const DEFAULT_OUTPUT: SetupOutputMode = 'human';
 const DEFAULT_MODE: SetupMode = 'merge';
 const DEFAULT_BACKUP: SetupBackupPolicy = 'if-exists';
 
-type ParseSetupArgsInput = Readonly<{
-  args: readonly string[];
-  stderrWrite: (text: string) => void;
-}>;
+type ParseSetupArgsInput = {
+  readonly args: string[];
+  readonly stderrWrite: (text: string) => void;
+};
 
 type ValueFlag = '--client' | '--output' | '--mode' | '--path' | '--backup';
 
-type MutableParsedSetupArgs = {
-  client: SupportedClient;
-  dryRun: boolean;
-  yes: boolean;
-  output: SetupOutputMode;
-  mode: SetupMode;
-  pathOverride?: string;
-  backup: SetupBackupPolicy;
-  minimal: boolean;
-};
+type MutableParsedSetupArgs = { -readonly [TKey in keyof ParsedSetupArgs]: ParsedSetupArgs[TKey] };
 
 const isSupportedClient = (value: string): value is SupportedClient => {
-  return SUPPORTED_CLIENTS.includes(value as SupportedClient);
+  const supportedClientNames: string[] = SUPPORTED_CLIENTS;
+  const result = supportedClientNames.includes(value);
+
+  return result;
 };
 
 const parseMode = (value: string): SetupMode | undefined => {
@@ -146,7 +140,11 @@ export const parseSetupArgs = ({ args, stderrWrite }: ParseSetupArgsInput): Pars
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg == null || consumeBooleanFlag(arg, parsed) || !isValueFlag(arg)) continue;
+    if (arg == null) continue;
+
+    const isBooleanFlag = consumeBooleanFlag(arg, parsed);
+
+    if (isBooleanFlag || !isValueFlag(arg)) continue;
 
     const value = args[i + 1];
 
