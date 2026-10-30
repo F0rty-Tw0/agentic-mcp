@@ -111,7 +111,8 @@ export const applySetupPlan = async (plan: SetupPlan, fs: SetupFs = defaultFs): 
 
   const writeTarget = await resolveWriteTarget(plan.targetPath, fs);
   const mode = await resolveFileMode(writeTarget, fs);
-  const tempPath = `${writeTarget}.tmp`;
+  // A fresh name per run: writeFile only applies `mode` when it creates the file.
+  const tempPath = `${writeTarget}.${String(process.pid)}.${String(Date.now())}.tmp`;
 
   await fs.writeFile(tempPath, plan.configText, { encoding: 'utf8', mode });
   await fs.rename(tempPath, writeTarget);

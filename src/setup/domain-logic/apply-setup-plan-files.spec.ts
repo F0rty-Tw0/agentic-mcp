@@ -100,4 +100,19 @@ describe('applySetupPlan on a real filesystem', () => {
     expect(backups).toHaveLength(2);
     expect(result.backupPath).not.toBe(backupPath);
   });
+
+  it('GIVEN a stale world-readable temp file WHEN setup writes an owner-only config THEN the result stays owner-only', async () => {
+    const targetPath = path.join(directory, '.claude.json');
+
+    await writeFile(targetPath, '{}\n', 'utf8');
+    await chmod(targetPath, OWNER_ONLY_MODE);
+    await writeFile(`${targetPath}.tmp`, 'stale', 'utf8');
+    await chmod(`${targetPath}.tmp`, 0o644);
+
+    await applySetupPlan(createPlan(targetPath));
+
+    const mode = await readMode(targetPath);
+
+    expect(mode).toBe(OWNER_ONLY_MODE);
+  });
 });

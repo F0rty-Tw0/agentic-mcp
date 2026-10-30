@@ -46,6 +46,8 @@ vi.mock('node:fs/promises', () => {
 
 let applySetupPlan: (plan: SetupPlan, fs?: SetupFs) => Promise<SetupApplyResult>;
 
+const TEMP_FILE_PATTERN = /\.\d+\.\d+\.tmp$/;
+
 const VALID_WRITTEN_CONFIG = '{"mcpServers":{"agentic-mcp":{"command":"npx","args":["-y","agentic-mcp"]}}}';
 
 const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
@@ -137,11 +139,11 @@ describe('applySetupPlan', () => {
 
     await applySetupPlan(plan, fs);
 
-    expect(fs.writeFile).toHaveBeenCalledWith(`${plan.targetPath}.tmp`, plan.configText, {
+    expect(fs.writeFile).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), plan.configText, {
       encoding: 'utf8',
       mode: 0o644,
     });
-    expect(fs.rename).toHaveBeenCalledWith(`${plan.targetPath}.tmp`, plan.targetPath);
+    expect(fs.rename).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), plan.targetPath);
   });
 
   it('GIVEN write operation WHEN applying THEN verifies written config by read-back', async () => {
@@ -297,11 +299,11 @@ describe('applySetupPlan', () => {
     expect(nodeFsMocks.mkdir).toHaveBeenCalledWith(path.dirname(targetPath), { recursive: true });
     expect(nodeFsMocks.stat).toHaveBeenCalledWith(targetPath);
     expect(nodeFsMocks.copyFile).toHaveBeenCalledWith(targetPath, `${targetPath}.bak`, expect.any(Number));
-    expect(nodeFsMocks.writeFile).toHaveBeenCalledWith(`${targetPath}.tmp`, plan.configText, {
+    expect(nodeFsMocks.writeFile).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), plan.configText, {
       encoding: 'utf8',
       mode: 0o644,
     });
-    expect(nodeFsMocks.rename).toHaveBeenCalledWith(`${targetPath}.tmp`, targetPath);
+    expect(nodeFsMocks.rename).toHaveBeenCalledWith(expect.stringMatching(TEMP_FILE_PATTERN), targetPath);
     expect(nodeFsMocks.readFile).toHaveBeenCalledWith(targetPath, 'utf8');
     expect(result).toStrictEqual({
       status: 'written',
