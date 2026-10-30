@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { nowIso } from './date-time.util';
+import { nowIso } from './date-time';
 
 describe('nowIso', () => {
   afterEach(() => {

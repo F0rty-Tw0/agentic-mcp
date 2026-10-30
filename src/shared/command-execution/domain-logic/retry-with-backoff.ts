@@ -11,8 +11,9 @@ const sleep = async (delayMs: number): Promise<void> => {
 };
 
 const validateInputNumber = (name: string, value: number): void => {
-  if (!Number.isInteger(value) || value < MIN_ALLOWED_VALUE)
-    throw new ValidationError(`${name} must be a non-negative integer.`);
+  const isInteger = Number.isInteger(value);
+
+  if (!isInteger || value < MIN_ALLOWED_VALUE) throw new ValidationError(`${name} must be a non-negative integer.`);
 };
 
 const validateRetryInput = <T>(input: RetryWithExponentialBackoffInput<T>): void => {

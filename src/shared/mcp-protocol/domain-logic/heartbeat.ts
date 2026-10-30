@@ -28,14 +28,11 @@ const sendHeartbeat = (
     message,
   };
 
-  extra
-    .sendNotification({
-      method: 'notifications/progress',
-      params,
-    })
-    .catch(() => {
-      /* notification failures are non-fatal */
-    });
+  const notificationSent = extra.sendNotification({ method: 'notifications/progress', params });
+
+  notificationSent.catch(() => {
+    /* notification failures are non-fatal */
+  });
 };
 
 export const startHeartbeat = (extra?: ProgressContext): (() => void) => {

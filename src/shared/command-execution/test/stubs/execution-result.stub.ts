@@ -1,4 +1,4 @@
-import type { ExecutionResult } from '../command-executor.types';
+import type { ExecutionResult } from '../../common/command-executor.type';
 
 export const SUCCESS_EXECUTION_RESULT_STUB: ExecutionResult = {
   stdout: '',

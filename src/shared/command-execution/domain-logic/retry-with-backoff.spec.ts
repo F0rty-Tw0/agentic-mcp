@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { retryWithExponentialBackoff } from './retry-with-backoff';
 import { ValidationError } from '../../validation/common';
-
-import { retryWithExponentialBackoff } from '.';
 
 describe('retryWithExponentialBackoff', () => {
   afterEach(() => {
@@ -27,11 +26,11 @@ describe('retryWithExponentialBackoff', () => {
   it('GIVEN transient failures WHEN retries succeed THEN uses exponential delays', async () => {
     vi.useFakeTimers();
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
-    const operation = vi
-      .fn<() => Promise<string>>()
-      .mockRejectedValueOnce(new Error('first'))
-      .mockRejectedValueOnce(new Error('second'))
-      .mockResolvedValueOnce('ok');
+    const operation = vi.fn<() => Promise<string>>();
+
+    operation.mockRejectedValueOnce(new Error('first'));
+    operation.mockRejectedValueOnce(new Error('second'));
+    operation.mockResolvedValueOnce('ok');
     const retryPromise = retryWithExponentialBackoff({
       operation,
       maxRetries: 3,

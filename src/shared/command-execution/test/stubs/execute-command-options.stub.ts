@@ -1,5 +1,5 @@
-import type { ExecuteCommandOptions } from '../command-executor.types';
 import { TEST_MINIMAL_ENV_STUB } from './env.stub';
+import type { ExecuteCommandOptions } from '../../common/command-executor.type';
 
 export const TEST_EXECUTE_COMMAND_OPTIONS_STUB: Pick<
   ExecuteCommandOptions,

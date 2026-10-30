@@ -1,14 +1,32 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { startHeartbeat } from './heartbeat.util';
+import { startHeartbeat } from './heartbeat';
 import type { ProgressContext } from '../common';
 
 type ProgressNotificationPayload = Readonly<Record<string, unknown>>;
 
-const createExtra = (token?: string | number): ProgressContext => ({
-  sendNotification: vi.fn().mockResolvedValue(undefined),
-  ['_meta']: token != null ? { progressToken: token } : {},
-});
+type ProgressMeta = ProgressContext['_meta'];
+
+const createMeta = (token?: string | number): ProgressMeta => {
+  const emptyMeta: ProgressMeta = {};
+
+  if (token == null) return emptyMeta;
+
+  const meta: ProgressMeta = { progressToken: token };
+
+  return meta;
+};
+
+const createExtra = (token?: string | number): ProgressContext => {
+  const sendNotification = vi.fn().mockResolvedValue(undefined);
+  const meta = createMeta(token);
+  const progressContext: ProgressContext = {
+    sendNotification,
+    ['_meta']: meta,
+  };
+
+  return progressContext;
+};
 
 describe('startHeartbeat', () => {
   beforeEach(() => {
@@ -41,13 +59,15 @@ describe('startHeartbeat', () => {
       startHeartbeat(extra);
 
       expect(extra.sendNotification).toHaveBeenCalledTimes(1);
+      const params = {
+        progressToken: 'tok-1',
+        progress: 0,
+        message: 'Processing… (0s elapsed)',
+      };
+
       expect(extra.sendNotification).toHaveBeenCalledWith({
         method: 'notifications/progress',
-        params: {
-          progressToken: 'tok-1',
-          progress: 0,
-          message: 'Processing… (0s elapsed)',
-        },
+        params,
       });
     });
 
@@ -56,13 +76,15 @@ describe('startHeartbeat', () => {
 
       startHeartbeat(extra);
 
+      const params = {
+        progressToken: 42,
+        progress: 0,
+        message: 'Processing… (0s elapsed)',
+      };
+
       expect(extra.sendNotification).toHaveBeenCalledWith({
         method: 'notifications/progress',
-        params: {
-          progressToken: 42,
-          progress: 0,
-          message: 'Processing… (0s elapsed)',
-        },
+        params,
       });
     });
 
@@ -88,13 +110,15 @@ describe('startHeartbeat', () => {
       await vi.advanceTimersByTimeAsync(30_000);
 
       expect(extra.sendNotification).toHaveBeenCalledTimes(2);
+      const params = {
+        progressToken: 'tok-1',
+        progress: 1,
+        message: 'Processing… (30s elapsed)',
+      };
+
       expect(extra.sendNotification).toHaveBeenLastCalledWith({
         method: 'notifications/progress',
-        params: {
-          progressToken: 'tok-1',
-          progress: 1,
-          message: 'Processing… (30s elapsed)',
-        },
+        params,
       });
     });
 
@@ -107,10 +131,15 @@ describe('startHeartbeat', () => {
 
       expect(extra.sendNotification).toHaveBeenCalledTimes(4);
 
-      const notification = (progress: number, seconds: number): ProgressNotificationPayload => ({
-        method: 'notifications/progress',
-        params: { progressToken: 'tok-1', progress, message: `Processing… (${seconds}s elapsed)` },
-      });
+      const notification = (progress: number, seconds: number): ProgressNotificationPayload => {
+        const params = { progressToken: 'tok-1', progress, message: `Processing… (${seconds}s elapsed)` };
+        const progressNotificationPayload: ProgressNotificationPayload = {
+          method: 'notifications/progress',
+          params,
+        };
+
+        return progressNotificationPayload;
+      };
 
       expect(extra.sendNotification).toHaveBeenNthCalledWith(1, notification(0, 0));
       expect(extra.sendNotification).toHaveBeenNthCalledWith(2, notification(1, 30));

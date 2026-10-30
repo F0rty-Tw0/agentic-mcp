@@ -1,8 +1,8 @@
-import { killProcess } from './platform.util';
+import { killProcess } from './platform';
 
-type TimeoutHandle = Readonly<{ timer: NodeJS.Timeout; markTimedOut: () => boolean }>;
+type TimeoutHandle = { readonly timer: NodeJS.Timeout; readonly markTimedOut: () => boolean };
 
-type AbortSubscription = Readonly<{ abortHandler: () => void; detach: () => void }>;
+type AbortSubscription = { readonly abortHandler: () => void; readonly detach: () => void };
 
 export const createAbortSubscription = (signal?: AbortSignal, childPid?: number): AbortSubscription => {
   const abortHandler = (): void => {
@@ -42,8 +42,10 @@ export const setupTimeout = (timeoutMs: number, pid?: number): TimeoutHandle => 
     void killProcess(pid);
   }, timeoutMs);
 
-  return {
+  const timeoutHandle: TimeoutHandle = {
     timer,
     markTimedOut: () => timedOut,
   };
+
+  return timeoutHandle;
 };

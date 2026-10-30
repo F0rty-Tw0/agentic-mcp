@@ -1,5 +1,5 @@
 import type { IdleTimeoutHandle } from '../common';
-import { killProcess } from './platform.util';
+import { killProcess } from './platform';
 
 const NOOP_HANDLE: IdleTimeoutHandle = { reset: () => undefined, clear: () => undefined };
 
@@ -24,5 +24,7 @@ export const setupIdleTimeout = (idleTimeoutMs: number | undefined, pid: number 
     if (timer) clearTimeout(timer);
   };
 
-  return { reset, clear };
+  const idleTimeoutHandle: IdleTimeoutHandle = { reset, clear };
+
+  return idleTimeoutHandle;
 };

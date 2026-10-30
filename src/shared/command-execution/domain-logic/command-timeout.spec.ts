@@ -1,11 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createAbortSubscription, setupTimeout } from './command-timeout.util';
-import { killProcess } from './platform.util';
+import { createAbortSubscription, setupTimeout } from './command-timeout';
+import { killProcess } from './platform';
 
-vi.mock('./platform.util', () => ({
-  killProcess: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock('./platform', () => {
+  const killProcessMock = vi.fn().mockResolvedValue(undefined);
+  const mockedModule = {
+    killProcess: killProcessMock,
+  };
+
+  return mockedModule;
+});
 
 const killProcessMock = vi.mocked(killProcess);
 
