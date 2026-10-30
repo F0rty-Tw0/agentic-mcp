@@ -13,6 +13,7 @@ import type {
 } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import { setupIdleTimeout } from './command-idle-timeout';
+import { releaseStdioAfterKilledExit } from './command-stdio-release';
 import { createAbortSubscription, setupTimeout } from './command-timeout';
 import { CommandExecutionError } from '../common/errors';
 import type { ProviderQueueLease } from '../common/provider-queue.type';
@@ -96,6 +97,14 @@ const spawnProcess = (options: ExecuteCommandOptions): ChildProcess => {
   return child;
 };
 
+const writeStdin = (child: ChildProcess, stdin?: string): void => {
+  if (!stdin || !child.stdin) return;
+
+  child.stdin.on('error', ignoreStdinError);
+  child.stdin.write(stdin);
+  child.stdin.end();
+};
+
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
   const { binaryPath, timeoutMs, idleTimeoutMs, stdin, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
 
@@ -109,11 +118,15 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
     const stdout = attachStreamCollector(child.stdout, wrapChunkCallback(idleTimeout, onStdoutChunk));
     const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
     const abort = createAbortSubscription(signal, child.pid);
+    const wasKillRequested = (): boolean =>
+      timeout.markTimedOut() || idleTimeout.timedOut() || signal?.aborted === true;
+    const cancelStdioRelease = releaseStdioAfterKilledExit(child, wasKillRequested);
 
     const cleanup = (): void => {
       clearTimeout(timeout.timer);
       idleTimeout.clear();
       abort.detach();
+      cancelStdioRelease();
     };
 
     child.on('error', (error: Error) => {
@@ -134,11 +147,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       resolve(resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut, startTime }));
     });
 
-    if (stdin && child.stdin) {
-      child.stdin.on('error', ignoreStdinError);
-      child.stdin.write(stdin);
-      child.stdin.end();
-    }
+    writeStdin(child, stdin);
   });
 };
 
