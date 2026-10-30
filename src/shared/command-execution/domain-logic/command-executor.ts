@@ -128,9 +128,9 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     child.on('close', (exitCode, closeSignal) => {
       cleanup();
-      resolve(
-        resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut: timeout.markTimedOut(), startTime })
-      );
+      const timedOut = timeout.markTimedOut() || idleTimeout.timedOut();
+
+      resolve(resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut, startTime }));
     });
 
     if (stdin && child.stdin) {

@@ -29,4 +29,14 @@ describe('FEATURE: executeCommand with real child processes', () => {
       expect(result.exitCode).toBe(0);
     });
   });
+
+  describe('GIVEN a child that never writes any output', () => {
+    it('WHEN idleTimeoutMs elapses THEN the child is killed and the result reports a timeout', async () => {
+      const options = buildNodeOptions('setTimeout(() => undefined, 20_000)', { idleTimeoutMs: 300 });
+
+      const result = await executeCommand(options);
+
+      expect(result.timedOut).toBe(true);
+    });
+  });
 });

@@ -10,7 +10,11 @@ type CommandEnv = Readonly<Record<string, string>>;
 
 type RetryOperation<T> = () => Promise<T> | T;
 
-export type IdleTimeoutHandle = { readonly reset: () => void; readonly clear: () => void };
+export type IdleTimeoutHandle = {
+  readonly reset: () => void;
+  readonly clear: () => void;
+  readonly timedOut: () => boolean;
+};
 
 export type RetryWithExponentialBackoffInput<T> = {
   readonly operation: RetryOperation<T>;

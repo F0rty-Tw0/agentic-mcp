@@ -230,6 +230,31 @@ describe('executeCommand', () => {
     });
   });
 
+  describe('idle timeout', () => {
+    it('GIVEN a silent process and idleTimeoutMs WHEN the idle period elapses THEN timedOut is true', async () => {
+      vi.useFakeTimers();
+
+      const { child, emitClose } = createControllableChild(2468);
+
+      vi.mocked(crossSpawn).mockReturnValue(child as unknown as ChildProcess);
+
+      const resultPromise = executeCommand({
+        ...TEST_EXECUTE_COMMAND_OPTIONS_STUB,
+        idleTimeoutMs: 1_000,
+        bypassSemaphore: true,
+      });
+
+      vi.advanceTimersByTime(1_001);
+      emitClose(null, 'SIGTERM');
+
+      vi.useRealTimers();
+
+      const result = await resultPromise;
+
+      expect(result.timedOut).toBe(true);
+    });
+  });
+
   describe('spawn errors', () => {
     it('GIVEN crossSpawn emits error WHEN executed THEN rejects with CommandExecutionError', async () => {
       const { child, emitError } = createControllableChild();
