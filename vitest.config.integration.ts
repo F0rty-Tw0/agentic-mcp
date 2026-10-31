@@ -11,5 +11,6 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     env: { AGENTIC_MCP_METRICS_PATH: testMetricsPath },
+    globalSetup: ['src/provider-metrics/test/utils/vitest-metrics-dir.spec.util.ts'],
   },
 });
