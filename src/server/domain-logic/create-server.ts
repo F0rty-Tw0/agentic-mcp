@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 
 import { loadConfig, warnDangerousFlags } from '../../config/loader';
 import { APP_VERSION, resolveCliBinary } from '../../shared';
@@ -102,7 +102,9 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
     }
   }
 
-  if (!resolvedProviders.length) {
+  const shouldWarnNoProviders = options?.warnNoProviders !== false;
+
+  if (!resolvedProviders.length && shouldWarnNoProviders) {
     process.stderr.write(NO_PROVIDERS_WARNING);
   }
 

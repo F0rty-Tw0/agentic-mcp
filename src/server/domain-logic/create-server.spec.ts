@@ -1,4 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './create-server';
@@ -194,5 +194,18 @@ describe('createServer', () => {
         },
       ]
     );
+  });
+  it('GIVEN no usable providers and warnNoProviders false WHEN creating a server THEN no warning is written', async () => {
+    const disabledProvider = buildProvider({ enabled: false, description: 'Disabled', command: 'disabled-cli' });
+    const providers = { disabled: disabledProvider };
+    const config: ProvidersFile = { configVersion: 1, providers };
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    mocks.loadConfig.mockResolvedValue(config);
+
+    await createServer({ warnNoProviders: false });
+
+    expect(stderrSpy).not.toHaveBeenCalled();
+    stderrSpy.mockRestore();
   });
 });

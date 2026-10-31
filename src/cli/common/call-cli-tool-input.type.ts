@@ -1,4 +1,4 @@
-import type { Progress } from '@modelcontextprotocol/sdk/types.js';
+import type { Progress } from '@modelcontextprotocol/server';
 
 import type { AskToolArgs, ReviewToolArgs } from '../../ask/common';
 import type { AskAllToolArgs } from '../../ask-all/common';

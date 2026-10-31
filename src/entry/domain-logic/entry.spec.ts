@@ -7,36 +7,38 @@ import type { ProveCliInput } from '../../prove/common';
 import type { ConfigPathOptions } from '../../shared';
 
 type MockServer = {
-  readonly connect: (transport: unknown) => Promise<void>;
+  readonly name: string;
 };
+
+type MockStdioServerHandle = {
+  readonly close: () => Promise<void>;
+};
+
+type ServerFactory = () => Promise<MockServer>;
 
 type ExitFn = (code?: string | number | null) => never;
 
-type MockTransport = {
-  readonly transport: string;
-};
+type SignalHandler = () => void;
 
 const mocks = vi.hoisted(() => {
-  const transportInstance = {
-    transport: 'stdio',
-  };
-  const connect = vi.fn<(transport: unknown) => Promise<void>>();
+  const startupServer = { name: 'startup' };
+  const stdioClose = vi.fn<() => Promise<void>>();
+  const serveStdio = vi.fn<(factory: ServerFactory) => MockStdioServerHandle>();
   const createServer = vi.fn<(options?: ConfigPathOptions) => Promise<MockServer>>();
   const runSetup = vi.fn<(args: string[]) => Promise<void>>();
   const runProve = vi.fn<(input: ProveCliInput) => Promise<void>>();
   const runCli = vi.fn<(subcommand: string, remainingArgs: string[], configPath?: string) => Promise<void>>();
   const isCliSubcommand = vi.fn<(arg: string) => boolean>();
-  const stdioServerTransport = vi.fn();
 
   const result = {
-    connect,
     createServer,
     isCliSubcommand,
     runCli,
     runProve,
     runSetup,
-    stdioServerTransport,
-    transportInstance,
+    serveStdio,
+    startupServer,
+    stdioClose,
   };
 
   return result;
@@ -75,9 +77,9 @@ vi.mock('../../prove', () => {
   return result;
 });
 
-vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => {
+vi.mock('@modelcontextprotocol/server/stdio', () => {
   const result = {
-    StdioServerTransport: mocks.stdioServerTransport,
+    serveStdio: mocks.serveStdio,
   };
 
   return result;
@@ -87,22 +89,37 @@ const resetArgv = (): void => {
   process.argv = ['node', ''];
 };
 
-function createMockTransport(): MockTransport {
-  return mocks.transportInstance;
-}
+const resolveServedFactory = (): ServerFactory => {
+  const [firstCall] = mocks.serveStdio.mock.calls;
+
+  if (!firstCall) throw new Error('serveStdio was not called');
+
+  const [serverFactory] = firstCall;
+
+  return serverFactory;
+};
+
+const captureSignalHandler = (signal: string): (() => SignalHandler | undefined) => {
+  const handlers = new Map<string | symbol, SignalHandler>();
+
+  vi.spyOn(process, 'on').mockImplementation((event: string | symbol, handler: SignalHandler) => {
+    handlers.set(event, handler);
+
+    return process;
+  });
+
+  const readHandler = (): SignalHandler | undefined => handlers.get(signal);
+
+  return readHandler;
+};
 
 describe('main', () => {
   beforeEach(() => {
     vi.resetModules();
     resetArgv();
 
-    mocks.connect.mockReset();
-    mocks.connect.mockResolvedValue(undefined);
-
     mocks.createServer.mockReset();
-    mocks.createServer.mockResolvedValue({
-      connect: mocks.connect,
-    });
+    mocks.createServer.mockResolvedValue(mocks.startupServer);
 
     mocks.isCliSubcommand.mockReset();
     mocks.isCliSubcommand.mockReturnValue(false);
@@ -114,8 +131,10 @@ describe('main', () => {
     mocks.runProve.mockReset();
     mocks.runProve.mockResolvedValue(undefined);
 
-    mocks.stdioServerTransport.mockReset();
-    mocks.stdioServerTransport.mockImplementation(createMockTransport);
+    mocks.stdioClose.mockReset();
+    mocks.stdioClose.mockResolvedValue(undefined);
+    mocks.serveStdio.mockReset();
+    mocks.serveStdio.mockReturnValue({ close: mocks.stdioClose });
   });
 
   afterEach(() => {
@@ -163,20 +182,38 @@ describe('main', () => {
     expect(mocks.createServer).not.toHaveBeenCalled();
   });
 
-  it('GIVEN a --config argument WHEN main() is called THEN it passes configPath to createServer and connects via stdio transport', async () => {
+  it('GIVEN a --config argument WHEN main() is called THEN it passes configPath to createServer and serves stdio from a factory', async () => {
     process.argv = ['node', '', '--config', '/tmp/providers.json'];
 
     await entry();
 
-    await vi.waitFor(() => {
-      expect(mocks.connect).toHaveBeenCalledTimes(1);
-    });
-
     expect(mocks.createServer).toHaveBeenCalledWith({
       configPath: '/tmp/providers.json',
     });
-    expect(mocks.stdioServerTransport).toHaveBeenCalledTimes(1);
-    expect(mocks.connect).toHaveBeenCalledWith(mocks.transportInstance);
+    expect(mocks.serveStdio).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN the MCP server started WHEN the stdio entry asks its factory for a server THEN it gets the server built at startup', async () => {
+    await entry();
+
+    const serverFactory = resolveServedFactory();
+    const server = await serverFactory();
+
+    expect(server).toBe(mocks.startupServer);
+  });
+
+  it('GIVEN the MCP server started WHEN SIGTERM arrives THEN it closes the stdio entry before exiting', async () => {
+    const readSigtermHandler = captureSignalHandler('SIGTERM');
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as ExitFn);
+
+    await entry();
+
+    readSigtermHandler()?.();
+
+    await vi.waitFor(() => {
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+    expect(mocks.stdioClose).toHaveBeenCalledTimes(1);
   });
 
   it('GIVEN createServer throws WHEN main() is called THEN it rejects with the error', async () => {
@@ -263,7 +300,7 @@ describe('main', () => {
 
       expect(mocks.runCli).not.toHaveBeenCalled();
       expect(mocks.createServer).toHaveBeenCalled();
-      expect(mocks.connect).toHaveBeenCalled();
+      expect(mocks.serveStdio).toHaveBeenCalled();
     });
 
     it('GIVEN no args WHEN main() is called THEN it starts the MCP server', async () => {
@@ -273,7 +310,7 @@ describe('main', () => {
 
       expect(mocks.runCli).not.toHaveBeenCalled();
       expect(mocks.createServer).toHaveBeenCalled();
-      expect(mocks.connect).toHaveBeenCalled();
+      expect(mocks.serveStdio).toHaveBeenCalled();
     });
   });
 });

@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';

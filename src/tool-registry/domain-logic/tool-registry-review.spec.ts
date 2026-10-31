@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -6,6 +6,7 @@ import { registerAllTools } from './tool-registry';
 import { handleReview } from '../../ask/domain-logic/review.handler';
 import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../shared';
 import { ValidationError } from '../../shared';
+import { makeExpectedProgressContext, makeToolRequestContext } from '../test/utils/tool-registry.spec.util';
 
 vi.mock('../../ask/domain-logic/review.handler', () => {
   const mockedModule = { handleReview: vi.fn() };
@@ -111,16 +112,18 @@ describe('registerAllTools review support', () => {
     expect(getRegisteredNames(server)).not.toContain('review_claude');
   });
 
-  it('GIVEN registered review handler WHEN invoked THEN it delegates to handleReview with provider and args', async () => {
+  it('GIVEN registered review handler WHEN invoked THEN it delegates to handleReview with provider, args and the progress context of the request', async () => {
     const provider = createProviderEntry('codex', true);
     const args = { scope: 'uncommitted' };
 
     registerAllTools(server as never, [provider], [createResolvedProvider('codex')]);
 
     const handler = getHandler(server, 'review_codex');
-    const result = await handler(args);
+    const ctx = makeToolRequestContext();
+    const result = await handler(args, ctx);
+    const expectedProgressContext = makeExpectedProgressContext(ctx);
 
-    expect(handleReview).toHaveBeenCalledWith(provider, args, undefined);
+    expect(handleReview).toHaveBeenCalledWith(provider, args, expectedProgressContext);
     expect(result).toBe(successResult);
   });
 

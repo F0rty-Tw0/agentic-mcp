@@ -1,5 +1,7 @@
+import type { CallToolResult } from '@modelcontextprotocol/server';
+
 type BackgroundJobState = 'pending' | 'running' | 'completed' | 'failed';
-type BackgroundJobStructuredContent = Readonly<Record<string, unknown>>;
+type BackgroundJobStructuredContent = CallToolResult['structuredContent'];
 
 export type BackgroundJobCompletionInput = {
   readonly resultText: string;

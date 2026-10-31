@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import { buildErrorResult } from './ask-all-result.builder';
 import { runProviderAsk } from './ask-all-runner';

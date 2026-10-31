@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import type { SessionRecord } from '../common';
 import { SESSION_STORE } from '../data-access';

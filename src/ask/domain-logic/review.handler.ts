@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import { buildCommandFailure, buildExecutionEnv } from './ask-command';
 import { buildOnSpawned, resolveRequestId } from './ask-command-execution';

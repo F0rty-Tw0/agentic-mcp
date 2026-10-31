@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import { resolveModelHint } from './ask-command';
 import { buildAttribution } from './attribution.builder';

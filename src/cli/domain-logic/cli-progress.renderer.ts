@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import type { Progress } from '@modelcontextprotocol/sdk/types.js';
+import type { Progress } from '@modelcontextprotocol/server';
 
 import { ASK_STREAM_EVENT_SCHEMA } from '../../streaming/common';
 import type { AskStreamEvent } from '../../streaming/common';

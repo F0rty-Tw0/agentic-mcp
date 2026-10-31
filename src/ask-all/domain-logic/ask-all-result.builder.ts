@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskAllProviderResult } from '../common';

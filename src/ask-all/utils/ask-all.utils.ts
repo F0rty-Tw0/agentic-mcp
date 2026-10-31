@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/spec.types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 
 export const extractResponseText = (result: CallToolResult): string => {
   const [first] = result.content;

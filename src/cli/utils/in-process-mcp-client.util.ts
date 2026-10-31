@@ -1,7 +1,5 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Client, InMemoryTransport } from '@modelcontextprotocol/client';
+import type { CallToolResult } from '@modelcontextprotocol/client';
 
 import { createServer } from '../../server';
 import { APP_VERSION, DEFAULT_MCP_TOOL_TIMEOUT_MS, ValidationError } from '../../shared';
@@ -90,13 +88,6 @@ const buildRequestOptions = (onProgress: CallCliToolInput['onProgress']): CliReq
   return result;
 };
 
-const isCallToolResult = (value: unknown): value is CallToolResult => {
-  const parsed = CallToolResultSchema.safeParse(value);
-  const result = parsed.success;
-
-  return result;
-};
-
 const shouldWarnDangerousFlags = (toolName: string): boolean => {
   const result = toolName === 'ask_all' || toolName.startsWith('ask_');
 
@@ -118,9 +109,7 @@ export const callCliTool = async (input: CallCliToolInput): Promise<CallToolResu
     await validateSupportedArgs(client, input);
 
     const requestOptions = buildRequestOptions(onProgress);
-    const result = await client.callTool({ name: toolName, arguments: args }, undefined, requestOptions);
-
-    if (!isCallToolResult(result)) throw new ValidationError(`CLI tool "${toolName}" returned an unexpected result`);
+    const result = await client.callTool({ name: toolName, arguments: args }, requestOptions);
 
     return result;
   } finally {

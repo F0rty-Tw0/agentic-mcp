@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import { ASK_PROVIDER_CONFIG_STUB } from '../../../ask/test/stubs/ask-provider-config.stub';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../../shared/provider/common';

@@ -8,7 +8,7 @@ CLI entry point — the first code that runs when the `agentic-mcp` binary is ex
 - `--help` — prints usage information and exits
 - `setup` subcommand — delegates to the setup CLI for configuring MCP clients
 - `init` subcommand — delegates to the setup CLI in minimal mode for skill installation and suggested MCP setup
-- Default — starts the MCP server on stdio transport for normal operation
+- Default — builds the MCP server once at startup (so a bad config still fails before any client connects), then serves it over stdio with `serveStdio`, which answers both 2025-era and 2026-07-28 clients
 
 ## Structure
 
@@ -21,6 +21,7 @@ CLI entry point — the first code that runs when the `agentic-mcp` binary is ex
 ## Key Files
 
 - `domain-logic/entry.ts` — `entry()` — the main async entry point that parses process.argv and routes accordingly
+- `domain-logic/server-factory.ts` — `createServerFactory()` — builds the startup server and hands it to the first stdio connection; later instances (e.g. after a version probe) are built fresh
 
 ## Integration Tests
 
