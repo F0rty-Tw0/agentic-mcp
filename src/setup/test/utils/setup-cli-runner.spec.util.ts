@@ -47,6 +47,7 @@ export const createSetupPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan =
     mergeStatusPreview: 'merged',
     configText: '{"mcpServers":{"agentic-mcp":{"command":"npx","args":["-y","agentic-mcp"]}}}\n',
     warnings: [],
+    notes: [],
     ...overrides,
   };
 

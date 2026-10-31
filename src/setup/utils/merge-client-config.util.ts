@@ -1,8 +1,12 @@
-import type { McpServerEntry } from '../common';
+import { isDeepStrictEqual } from 'node:util';
+
+import { mergeAgenticServerEntry } from './merge-server-entry.util';
+import type { ClientTarget, McpServerEntry } from '../common';
 
 type MergeClientConfigInput = {
   readonly existingConfigText?: string;
   readonly agenticServerEntry: McpServerEntry;
+  readonly target: ClientTarget;
 };
 
 type MergeResultStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json';
@@ -12,6 +16,7 @@ type JsonRecord = Readonly<Record<string, unknown>>;
 type MergeClientConfigResult = {
   readonly status: MergeResultStatus;
   readonly mergedConfig: JsonRecord;
+  readonly notes: string[];
   readonly reason?: string;
 };
 
@@ -41,13 +46,6 @@ const normalizeMcpServers = (value: unknown): JsonRecord => {
   return servers;
 };
 
-const createBaseConfig = (agenticServerEntry: McpServerEntry): JsonRecord => {
-  const mcpServers = { 'agentic-mcp': agenticServerEntry };
-  const result: JsonRecord = { mcpServers };
-
-  return result;
-};
-
 const parseExistingConfig = (existingConfigText: string): ParsedConfigResult => {
   try {
     const parsedConfig: unknown = JSON.parse(existingConfigText);
@@ -62,35 +60,25 @@ const parseExistingConfig = (existingConfigText: string): ParsedConfigResult => 
   }
 };
 
-const createUnchangedConfig = (parsedRoot: JsonRecord, currentServers: JsonRecord): JsonRecord => {
+const createServersConfig = (parsedRoot: JsonRecord, serversKey: string, servers: JsonRecord): JsonRecord => {
   const result: JsonRecord = {
     ...parsedRoot,
-    mcpServers: currentServers,
-  };
-
-  return result;
-};
-
-const createMergedConfig = (
-  parsedRoot: JsonRecord,
-  currentServers: JsonRecord,
-  agenticServerEntry: McpServerEntry
-): JsonRecord => {
-  const mcpServers = { ...currentServers, 'agentic-mcp': agenticServerEntry };
-  const result: JsonRecord = {
-    ...parsedRoot,
-    mcpServers,
+    [serversKey]: servers,
   };
 
   return result;
 };
 
 export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeClientConfigResult => {
-  const { existingConfigText } = input;
-  const createdConfig = createBaseConfig(input.agenticServerEntry);
+  const { existingConfigText, agenticServerEntry, target } = input;
+  const emptyRoot: JsonRecord = {};
+  const createdEntry = mergeAgenticServerEntry({ existingEntry: undefined, agenticServerEntry, target });
+  const createdServers = { 'agentic-mcp': createdEntry.entry };
+  const createdConfig = createServersConfig(emptyRoot, target.serversKey, createdServers);
   const createdResult: MergeClientConfigResult = {
     status: 'created',
     mergedConfig: createdConfig,
+    notes: createdEntry.notes,
   };
 
   if (existingConfigText == null) return createdResult;
@@ -105,33 +93,25 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
     const invalidJsonResult: MergeClientConfigResult = {
       status: 'invalid-json',
       mergedConfig: createdConfig,
+      notes: [],
       reason: parseResult.reason,
     };
 
     return invalidJsonResult;
   }
 
-  const emptyRoot: JsonRecord = {};
   const parsedRoot = isRecord(parseResult.parsedConfig) ? parseResult.parsedConfig : emptyRoot;
-  const currentServers = normalizeMcpServers(parsedRoot.mcpServers);
+  const currentServers = normalizeMcpServers(parsedRoot[target.serversKey]);
   const currentAgentic = currentServers['agentic-mcp'];
-  const currentAgenticJson = JSON.stringify(currentAgentic);
-  const agenticServerEntryJson = JSON.stringify(input.agenticServerEntry);
-
-  if (currentAgenticJson === agenticServerEntryJson) {
-    const unchangedResult: MergeClientConfigResult = {
-      status: 'unchanged',
-      mergedConfig: createUnchangedConfig(parsedRoot, currentServers),
-    };
-
-    return unchangedResult;
-  }
-
-  const mergedConfig = createMergedConfig(parsedRoot, currentServers, input.agenticServerEntry);
-
+  const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
+  const mergedServers = { ...currentServers, 'agentic-mcp': mergedEntry.entry };
+  const mergedConfig = createServersConfig(parsedRoot, target.serversKey, mergedServers);
+  const isUnchanged = isDeepStrictEqual(currentAgentic, mergedEntry.entry);
+  const status: MergeResultStatus = isUnchanged ? 'unchanged' : 'merged';
   const mergedResult: MergeClientConfigResult = {
-    status: 'merged',
+    status,
     mergedConfig,
+    notes: mergedEntry.notes,
   };
 
   return mergedResult;

@@ -10,6 +10,8 @@ const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   args: ['-y', 'agentic-mcp'],
 };
 
+const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 3_660_000 };
+
 describe('buildSetupPlan', () => {
   it('GIVEN claude-code client without path override WHEN building plan THEN resolves default client path', () => {
     const result = buildSetupPlan({
@@ -151,5 +153,44 @@ describe('buildSetupPlan', () => {
     });
 
     expect(result.writeIntent).toBe('write');
+  });
+
+  it('GIVEN claude-code merge with a lower agentic-mcp timeout WHEN building plan THEN the plan raises it and says so', () => {
+    const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 3660000.']);
+    expect(result.configText).toContain('"timeout": 3660000');
+  });
+
+  it('GIVEN overwrite mode with a higher agentic-mcp timeout WHEN building plan THEN the generated timeout is written', () => {
+    const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 7_200_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'cursor',
+      homeDirectory: '/home/dev',
+      pathOverride: '/tmp/mcp.json',
+      mode: 'overwrite',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.configText).not.toContain('7200000');
   });
 });

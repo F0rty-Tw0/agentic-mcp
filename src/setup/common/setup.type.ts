@@ -13,6 +13,14 @@ export type SetupOutputMode = 'human' | 'json';
 export type McpServerEntry = {
   readonly command: string;
   readonly args: string[];
+  readonly timeout?: number;
+};
+
+export type ClientTarget = {
+  readonly configPath?: string;
+  readonly serversKey: string;
+  readonly timeoutKeys: string[];
+  readonly preservedKeys: string[];
 };
 
 export type SetupFileStat = {
@@ -61,6 +69,7 @@ export type SetupPlan = {
   readonly mergeStatusPreview: SetupMergeStatus;
   readonly configText: string;
   readonly warnings: string[];
+  readonly notes: string[];
 };
 
 export type SetupPlanInput = {

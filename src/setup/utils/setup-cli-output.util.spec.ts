@@ -44,6 +44,7 @@ const createPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan => {
     mergeStatusPreview: 'merged',
     configText: '{"mcpServers":{"agentic-mcp":{"command":"npx","args":["-y","agentic-mcp"]}}}\n',
     warnings: [],
+    notes: [],
     ...overrides,
   };
 
@@ -153,6 +154,29 @@ describe('setup-cli-output utilities', () => {
     expect(output).toContain(FIRST_PROOF_COMMAND);
     expect(output).toContain('Warnings:');
     expect(output).toContain('Reason: Written config must include mcpServers');
+  });
+
+  it('GIVEN plan notes about the timeout WHEN formatting human output THEN they are listed under Tool-call timeout', () => {
+    const note = 'agentic-mcp timeout: raised from 600000 to 3660000.';
+
+    const output = formatHumanSetupOutput(createArgs(), createPlan({ notes: [note] }), createApplyResult(), []);
+
+    expect(output).toContain(`Tool-call timeout:\n  - ${note}`);
+  });
+
+  it('GIVEN no plan notes WHEN formatting human output THEN there is no Tool-call timeout section', () => {
+    const output = formatHumanSetupOutput(createArgs(), createPlan(), createApplyResult(), []);
+
+    expect(output).not.toContain('Tool-call timeout:');
+  });
+
+  it('GIVEN plan notes WHEN formatting json output THEN they are included as notes', () => {
+    const note = 'agentic-mcp timeout: set to 3660000 (was not set).';
+
+    const output = formatJsonSetupOutput(createArgs(), createPlan({ notes: [note] }), createApplyResult(), []);
+    const parsed = JSON.parse(output) as ConfiguredJsonOutput;
+
+    expect(parsed.notes).toStrictEqual([note]);
   });
 
   it('GIVEN no detected providers WHEN formatting human output THEN it points to the next diagnostic step', () => {

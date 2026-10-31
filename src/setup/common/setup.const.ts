@@ -1,14 +1,42 @@
-import type { SupportedClient } from './setup.type';
+import type { ClientTarget, SupportedClient } from './setup.type';
 
 export const SUPPORTED_CLIENTS: SupportedClient[] = ['claude-code', 'cursor', 'windsurf', 'generic'];
 
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;
 
-type ClientConfigPathMap = Readonly<Record<SupportedClient, string | undefined>>;
+type ClientTargetMap = Readonly<Record<SupportedClient, ClientTarget>>;
 
-export const CLIENT_CONFIG_PATHS: ClientConfigPathMap = {
-  'claude-code': '.claude.json',
-  cursor: '.cursor/mcp.json',
-  windsurf: '.codeium/windsurf/mcp_config.json',
-  generic: undefined,
+const CLAUDE_CODE_TARGET: ClientTarget = {
+  configPath: '.claude.json',
+  serversKey: 'mcpServers',
+  timeoutKeys: ['timeout'],
+  preservedKeys: [],
+};
+
+const CURSOR_TARGET: ClientTarget = {
+  configPath: '.cursor/mcp.json',
+  serversKey: 'mcpServers',
+  timeoutKeys: [],
+  preservedKeys: [],
+};
+
+const WINDSURF_TARGET: ClientTarget = {
+  configPath: '.codeium/windsurf/mcp_config.json',
+  serversKey: 'mcpServers',
+  timeoutKeys: [],
+  preservedKeys: [],
+};
+
+const GENERIC_TARGET: ClientTarget = {
+  configPath: undefined,
+  serversKey: 'mcpServers',
+  timeoutKeys: [],
+  preservedKeys: [],
+};
+
+export const CLIENT_TARGETS: ClientTargetMap = {
+  'claude-code': CLAUDE_CODE_TARGET,
+  cursor: CURSOR_TARGET,
+  windsurf: WINDSURF_TARGET,
+  generic: GENERIC_TARGET,
 };

@@ -60,6 +60,7 @@ export const formatJsonSetupOutput = (
     writeIntent: plan.writeIntent,
     targetPath: plan.targetPath,
     mergeStatusPreview: plan.mergeStatusPreview,
+    notes: plan.notes,
     warnings: plan.warnings,
     providers: detectedProviders,
     result,
@@ -95,6 +96,12 @@ export const formatHumanSetupOutput = (
     summary.nextStep.kind === 'prove' ? 'Next command to prove real use:' : 'Next diagnostic step:',
     `  ${summary.nextStep.command}`,
   ];
+
+  if (plan.notes.length > 0) {
+    const noteLines = plan.notes.map((note) => `  - ${note}`);
+
+    lines.push('', 'Tool-call timeout:', ...noteLines);
+  }
 
   if (plan.warnings.length > 0) {
     const warningLines = plan.warnings.map((warning) => `  - ${warning}`);

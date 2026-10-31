@@ -1,27 +1,13 @@
 import path from 'node:path';
 
 import { buildMergedClientConfig } from './merge-client-config.util';
-import { CLIENT_CONFIG_PATHS } from '../common';
-import type { McpServerEntry, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
-
-type SetupConfigObject = Readonly<Record<string, unknown>>;
-
-type OverwriteMergeResult = {
-  readonly status: SetupMergeStatus;
-  readonly mergedConfig: SetupConfigObject;
-};
-
-const buildOverwriteConfig = (agenticServerEntry: McpServerEntry): SetupConfigObject => {
-  const mcpServers = { 'agentic-mcp': agenticServerEntry };
-  const overwriteConfig: SetupConfigObject = { mcpServers };
-
-  return overwriteConfig;
-};
+import { CLIENT_TARGETS } from '../common';
+import type { SetupPlan, SetupPlanInput } from '../common';
 
 const resolveTargetPath = (input: SetupPlanInput): string | undefined => {
   if (input.pathOverride != null) return input.pathOverride;
 
-  const clientPath = CLIENT_CONFIG_PATHS[input.client];
+  const clientPath = CLIENT_TARGETS[input.client].configPath;
 
   if (clientPath == null) return undefined;
 
@@ -54,18 +40,16 @@ const isClaudeCodeStateOverwrite = (input: SetupPlanInput): boolean => {
   return isStateOverwrite;
 };
 
-export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
-  const targetPath = resolveTargetPath(input);
-  const mergedConfig = buildMergedClientConfig({
-    existingConfigText: input.existingConfigText,
-    agenticServerEntry: input.agenticServerEntry,
-  });
-  const isMergeMode = input.mode === 'merge';
-  const isInvalidJson = mergedConfig.status === 'invalid-json';
-  const isInvalidMerge = isMergeMode && isInvalidJson;
-  const isClaudeStateOverwrite = isClaudeCodeStateOverwrite(input);
-  const isWriteBlocked = isInvalidMerge || isClaudeStateOverwrite;
-  const writeIntent = resolveWriteIntent(input, targetPath, isWriteBlocked);
+type PlanWarningsInput = {
+  readonly input: SetupPlanInput;
+  readonly targetPath: string | undefined;
+  readonly isClaudeStateOverwrite: boolean;
+  readonly isInvalidMerge: boolean;
+  readonly mergeReason: string | undefined;
+};
+
+const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
+  const { input, targetPath, isClaudeStateOverwrite, isInvalidMerge, mergeReason } = planWarningsInput;
   const warnings: string[] = [];
 
   if (input.client === 'generic' && targetPath == null) {
@@ -84,15 +68,40 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
 
   if (isInvalidMerge) {
     warnings.push(
-      `Existing config at ${String(targetPath)} is not valid JSON and was left unchanged (${String(mergedConfig.reason)}). Add the agentic-mcp entry by hand.`
+      `Existing config at ${String(targetPath)} is not valid JSON and was left unchanged (${String(mergeReason)}). Add the agentic-mcp entry by hand.`
     );
   }
 
-  const overwriteConfig: OverwriteMergeResult = {
-    status: 'created',
-    mergedConfig: buildOverwriteConfig(input.agenticServerEntry),
-  };
+  return warnings;
+};
 
+export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
+  const targetPath = resolveTargetPath(input);
+  const target = CLIENT_TARGETS[input.client];
+  const mergedConfig = buildMergedClientConfig({
+    existingConfigText: input.existingConfigText,
+    agenticServerEntry: input.agenticServerEntry,
+    target,
+  });
+  const isMergeMode = input.mode === 'merge';
+  const isInvalidJson = mergedConfig.status === 'invalid-json';
+  const isInvalidMerge = isMergeMode && isInvalidJson;
+  const isClaudeStateOverwrite = isClaudeCodeStateOverwrite(input);
+  const isWriteBlocked = isInvalidMerge || isClaudeStateOverwrite;
+  const writeIntent = resolveWriteIntent(input, targetPath, isWriteBlocked);
+  const warnings = buildPlanWarnings({
+    input,
+    targetPath,
+    isClaudeStateOverwrite,
+    isInvalidMerge,
+    mergeReason: mergedConfig.reason,
+  });
+
+  const overwriteConfig = buildMergedClientConfig({
+    existingConfigText: undefined,
+    agenticServerEntry: input.agenticServerEntry,
+    target,
+  });
   const mergeResult = isMergeMode ? mergedConfig : overwriteConfig;
 
   const result: SetupPlan = {
@@ -105,6 +114,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     mergeStatusPreview: mergeResult.status,
     configText: `${JSON.stringify(mergeResult.mergedConfig, null, 2)}\n`,
     warnings,
+    notes: mergeResult.notes,
   };
 
   return result;

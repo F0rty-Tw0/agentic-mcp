@@ -1,9 +1,10 @@
-export { CLIENT_CONFIG_PATHS, KNOWN_PROVIDER_COMMANDS, SUPPORTED_CLIENTS } from './setup.const';
+export { CLIENT_TARGETS, KNOWN_PROVIDER_COMMANDS, SUPPORTED_CLIENTS } from './setup.const';
 
 export { SKILL_CONTENT } from './skill-content';
 
 export type {
   ClientConfigTemplate,
+  ClientTarget,
   DetectedProvider,
   McpServerEntry,
   MinimalSetupOutputInput,

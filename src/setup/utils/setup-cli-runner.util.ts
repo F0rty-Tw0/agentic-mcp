@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { CLIENT_CONFIG_PATHS } from '../common';
+import { CLIENT_TARGETS } from '../common';
 import type {
   DetectedProvider,
   ParsedSetupArgs,
@@ -34,7 +34,7 @@ const resolveTargetPath = (
 
   if (client === 'generic') return undefined;
 
-  const clientConfigPath = CLIENT_CONFIG_PATHS[client];
+  const clientConfigPath = CLIENT_TARGETS[client].configPath;
 
   if (clientConfigPath == null) return undefined;
 

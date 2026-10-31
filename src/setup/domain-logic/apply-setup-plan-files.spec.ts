@@ -22,6 +22,7 @@ const createPlan = (targetPath: string): SetupPlan => {
     mergeStatusPreview: 'merged',
     configText: CONFIG_TEXT,
     warnings: [],
+    notes: [],
   };
 
   return plan;

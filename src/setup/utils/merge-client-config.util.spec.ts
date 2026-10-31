@@ -1,12 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildMergedClientConfig } from './merge-client-config.util';
-import type { McpServerEntry } from '../common';
+import type { ClientTarget, McpServerEntry } from '../common';
 
 const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
 };
+
+const MCP_SERVERS_TARGET: ClientTarget = {
+  configPath: '.client.json',
+  serversKey: 'mcpServers',
+  timeoutKeys: ['timeout'],
+  preservedKeys: [],
+};
+
+const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 3_660_000 };
 
 const AGENTIC_ONLY_SERVERS = { 'agentic-mcp': AGENTIC_SERVER_ENTRY };
 
@@ -20,6 +29,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: undefined,
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('created');
@@ -30,6 +40,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: '  \n',
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('created');
@@ -43,6 +54,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(existingConfig, null, 2),
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
     const expectedServers = { existing, 'agentic-mcp': AGENTIC_SERVER_ENTRY };
 
@@ -54,6 +66,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(AGENTIC_ONLY_CONFIG),
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('unchanged');
@@ -64,6 +77,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: '{ bad json',
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('invalid-json');
@@ -83,6 +97,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(existingConfig),
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
     const expectedServers = { alpha, beta, 'agentic-mcp': AGENTIC_SERVER_ENTRY };
 
@@ -98,6 +113,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(existingConfig),
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('merged');
@@ -108,6 +124,7 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(['not-an-object']),
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('merged');
@@ -124,9 +141,64 @@ describe('buildMergedClientConfig', () => {
     const result = buildMergedClientConfig({
       existingConfigText: '{ still bad json',
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
     });
 
     expect(result.status).toBe('invalid-json');
     expect(result.reason).toBe('Invalid JSON');
+  });
+
+  it('GIVEN a client whose servers live under another key WHEN merging THEN the entry is written under that key', () => {
+    const target: ClientTarget = { ...MCP_SERVERS_TARGET, serversKey: 'mcp' };
+    const other = { type: 'local', command: ['other'] };
+    const existingServers = { other };
+    const existingConfig = { $schema: 'https://opencode.ai/config.json', mcp: existingServers };
+    const expectedServers = { other, 'agentic-mcp': AGENTIC_SERVER_ENTRY };
+
+    const result = buildMergedClientConfig({
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      target,
+    });
+
+    expect(result.mergedConfig).toStrictEqual({
+      $schema: 'https://opencode.ai/config.json',
+      mcp: expectedServers,
+    });
+  });
+
+  it('GIVEN an agentic entry with a higher timeout WHEN merging THEN it is unchanged and keeps the user value', () => {
+    const userEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 7_200_000 };
+    const existingServers = { 'agentic-mcp': userEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildMergedClientConfig({
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
+    });
+
+    expect(result.status).toBe('unchanged');
+    expect(result.mergedConfig).toStrictEqual(existingConfig);
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: kept your 7200000 (not lower than 3660000).']);
+  });
+
+  it('GIVEN an agentic entry with a lower timeout and its own env WHEN merging THEN the timeout is raised and env kept', () => {
+    const env = { DEBUG: '1' };
+    const userEntry = { ...AGENTIC_SERVER_ENTRY, env, timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': userEntry };
+    const existingConfig = { mcpServers: existingServers };
+    const raisedEntry = { ...AGENTIC_SERVER_ENTRY, env, timeout: 3_660_000 };
+    const expectedServers = { 'agentic-mcp': raisedEntry };
+
+    const result = buildMergedClientConfig({
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
+    });
+
+    expect(result.status).toBe('merged');
+    expect(result.mergedConfig).toStrictEqual({ mcpServers: expectedServers });
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 3660000.']);
   });
 });
