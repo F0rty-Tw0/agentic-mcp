@@ -114,6 +114,29 @@ describe('extractNativeSessionId', () => {
     expect(sessionId).toBe('ses_abc123');
   });
 
+  describe('GIVEN antigravity stream-json events with the id inside the result envelope', () => {
+    const outputLines = [
+      '{"event":"step_update","step_update":{"step_index":1,"state":"DONE","step_type":"agent_response"}}',
+      '{"event":"result","result":{"response":"hi","conversation_id":"11a21e91-0000-4000-8000-000000000002"}}',
+    ];
+
+    it('WHEN extracting THEN returns the nested conversation_id', () => {
+      const output = outputLines.join('\n');
+
+      const sessionId = extractNativeSessionId('antigravity', output, 'stream-json');
+
+      expect(sessionId).toBe('11a21e91-0000-4000-8000-000000000002');
+    });
+  });
+
+  it('GIVEN a result event whose result is a string WHEN extracting THEN returns undefined', () => {
+    const output = '{"type":"result","result":"final answer"}';
+
+    const sessionId = extractNativeSessionId('claude', output, 'stream-json');
+
+    expect(sessionId).toBeUndefined();
+  });
+
   it('GIVEN stream-json with a stray non-JSON last line WHEN extracting THEN returns the id from an earlier line', () => {
     const outputLines = ['{"type":"system","session_id":"claude-7"}', 'Warning: truncated'];
     const output = outputLines.join('\n');
