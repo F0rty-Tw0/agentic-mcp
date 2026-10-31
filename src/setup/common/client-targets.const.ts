@@ -45,7 +45,7 @@ const CLAUDE_CODE_TARGET: ClientTarget = {
   keptTimeoutKey: 'timeout',
 };
 
-// agy CLI and Antigravity 2.0 share this file and wait 3 min per tool call unless timeoutSeconds is set (agy issue #780).
+// The agy CLI reads this file and waits 3 min per tool call unless timeoutSeconds is set (agy issue #780).
 // agy documents no variable that moves it, so there is no config-path rule.
 const ANTIGRAVITY_TARGET: ClientTarget = {
   configPath: '.gemini/config/mcp_config.json',
