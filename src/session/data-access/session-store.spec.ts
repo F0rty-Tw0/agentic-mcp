@@ -70,6 +70,33 @@ describe('InMemorySessionStore', () => {
     expect(store.getNativeSessionId('claude', 'missing')).toBeUndefined();
   });
 
+  it('GIVEN a new session WHEN isNativeStartDisabled THEN it returns false', () => {
+    const store = new InMemorySessionStore();
+
+    store.createOrGet('copilot', 's1');
+
+    expect(store.isNativeStartDisabled('copilot', 's1')).toBe(false);
+  });
+
+  it('GIVEN a session WHEN disableNativeStart THEN isNativeStartDisabled returns true', () => {
+    const store = new InMemorySessionStore();
+
+    store.createOrGet('copilot', 's1');
+    store.disableNativeStart('copilot', 's1');
+
+    expect(store.isNativeStartDisabled('copilot', 's1')).toBe(true);
+  });
+
+  it('GIVEN a session with a native id WHEN disableNativeStart THEN the native id is cleared', () => {
+    const store = new InMemorySessionStore();
+
+    store.createOrGet('copilot', 's1');
+    store.setNativeSessionId('copilot', 's1', 'native-abc');
+    store.disableNativeStart('copilot', 's1');
+
+    expect(store.getNativeSessionId('copilot', 's1')).toBeUndefined();
+  });
+
   it('GIVEN store at capacity WHEN createOrGet adds a new session THEN oldest session is evicted', () => {
     const store = new InMemorySessionStore();
 
