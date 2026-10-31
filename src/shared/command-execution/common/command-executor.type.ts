@@ -18,7 +18,8 @@ export type ChildStop = {
 
 export type ChildGroupRegistry = {
   readonly track: (pid: number) => UntrackChildGroup;
-  readonly terminateAll: () => void;
+  readonly terminateAll: () => Promise<void>;
+  readonly killAll: () => void;
 };
 
 export type StoppableChild = {
