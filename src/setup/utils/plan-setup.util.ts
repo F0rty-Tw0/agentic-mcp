@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { buildClientConfig } from './build-client-config.util';
+import { describeClientToolTimeout } from './resolve-client-tool-timeout.util';
 import { CLIENT_TARGETS } from '../common';
 import type { ClientConfigMergeResult, ClientTarget, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
 
@@ -125,10 +126,12 @@ const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
   return warnings;
 };
 
-const buildTargetNotes = (target: ClientTarget): string[] => {
-  if (target.timeoutNote == null) return [];
+const buildTargetNotes = (input: SetupPlanInput, target: ClientTarget): string[] => {
+  if (target.timeoutNote != null) return [target.timeoutNote];
 
-  const notes = [target.timeoutNote];
+  if (input.toolTimeout == null || target.timeoutKeys.length === 0) return [];
+
+  const notes = [describeClientToolTimeout(input.toolTimeout)];
 
   return notes;
 };
@@ -161,7 +164,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     target,
   });
   const mergeResult = isMergeMode ? mergedConfig : overwriteConfig;
-  const targetNotes = buildTargetNotes(target);
+  const targetNotes = buildTargetNotes(input, target);
   const notes = [...mergeResult.notes, ...targetNotes];
 
   const result: SetupPlan = {

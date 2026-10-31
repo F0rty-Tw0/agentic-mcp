@@ -59,3 +59,14 @@ export type ClientTarget = {
   readonly configPathEnvKeys: string[];
   readonly timeoutNote?: string;
 };
+
+export type ClientToolTimeoutSource = 'providers-config' | 'defaults';
+
+// The tool-call limit setup writes: the longest provider run plus the longest queue wait plus a margin.
+export type ClientToolTimeout = {
+  readonly ms: number;
+  readonly runMs: number;
+  readonly queueMs: number;
+  readonly source: ClientToolTimeoutSource;
+  readonly fallbackReason?: string;
+};

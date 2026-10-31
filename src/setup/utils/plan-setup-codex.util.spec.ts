@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildSetupPlan } from './plan-setup.util';
-import type { CodexServerEntry, SetupMode, SetupPlan } from '../common';
+import type { ClientToolTimeout, CodexServerEntry, SetupMode, SetupPlan, SetupPlanInput } from '../common';
 
 const CODEX_ENTRY: CodexServerEntry = {
   command: 'npx',
@@ -25,17 +25,19 @@ const CODEX_TABLE = CODEX_TABLE_LINES.join('\n');
 
 const LOW_TIMEOUT_CONFIG = '# keep me\n[mcp_servers.agentic-mcp]\ncommand = "npx"\ntool_timeout_sec = 300\n';
 
+const CODEX_PLAN_INPUT: SetupPlanInput = {
+  client: 'codex',
+  homeDirectory: '/home/dev',
+  pathOverride: undefined,
+  mode: 'merge',
+  dryRun: false,
+  existingConfigText: undefined,
+  agenticServerEntry: CODEX_ENTRY,
+  backup: 'if-exists',
+};
+
 const planCodex = (existingConfigText: string | undefined, mode: SetupMode = 'merge'): SetupPlan => {
-  const plan = buildSetupPlan({
-    client: 'codex',
-    homeDirectory: '/home/dev',
-    pathOverride: undefined,
-    mode,
-    dryRun: false,
-    existingConfigText,
-    agenticServerEntry: CODEX_ENTRY,
-    backup: 'if-exists',
-  });
+  const plan = buildSetupPlan({ ...CODEX_PLAN_INPUT, mode, existingConfigText });
 
   return plan;
 };
@@ -99,6 +101,23 @@ describe('FEATURE: codex setup plan', () => {
       expect(result.warnings).toStrictEqual([
         'Adding the agentic-mcp entry rewrites /home/dev/.codex/config.toml with a TOML serializer, because a new [mcp_servers.agentic-mcp] table cannot be appended to it (for example, mcp_servers is an inline table), so its comments and formatting are not kept (the backup has the original unless --backup never).',
       ]);
+    });
+  });
+
+  describe('GIVEN a tool timeout from the providers config', () => {
+    it('WHEN building the plan THEN the notes say how the value was derived', () => {
+      const toolTimeout: ClientToolTimeout = {
+        ms: 4_260_000,
+        runMs: 3_600_000,
+        queueMs: 600_000,
+        source: 'providers-config',
+      };
+
+      const result = buildSetupPlan({ ...CODEX_PLAN_INPUT, toolTimeout });
+
+      expect(result.notes).toContain(
+        'agentic-mcp tool-call timeout: 4260000 ms = longest provider timeout 3600000 + longest queueTimeoutMs 600000 + 60000, from the providers config.'
+      );
     });
   });
 

@@ -3,9 +3,10 @@ import type { SupportedClient } from './setup.type';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS } from '../../shared/command-execution/common';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/provider/common';
 
-const CLIENT_TIMEOUT_MARGIN_MS = 60_000;
+export const CLIENT_TIMEOUT_MARGIN_MS = 60_000;
 
 // A client must outwait a queued call plus one provider run, or it cancels the call and agentic-mcp stops the CLI.
+// This is the value for the default limits; setup derives its value from the providers config when it can load it.
 export const CLIENT_TOOL_TIMEOUT_MS =
   DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS + DEFAULT_MCP_TOOL_TIMEOUT_MS + CLIENT_TIMEOUT_MARGIN_MS;
 
@@ -23,10 +24,6 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;
 
 type ClientTargetMap = Readonly<Record<SupportedClient, ClientTarget>>;
-
-const MS_PER_SECOND = 1000;
-
-export const CLIENT_TOOL_TIMEOUT_SEC = CLIENT_TOOL_TIMEOUT_MS / MS_PER_SECOND;
 
 // Codex waits 30 s for a server to start by default; a cold `npx -y agentic-mcp` can take longer.
 export const CODEX_STARTUP_TIMEOUT_SEC = 60;

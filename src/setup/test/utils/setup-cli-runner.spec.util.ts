@@ -9,7 +9,7 @@ import type {
   SetupPlan,
   SkillInstallResult,
 } from '../../common';
-import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../common/setup.const';
+import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS, TEST_PROVIDERS_FILE } from '../common/setup.const';
 
 const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
@@ -69,6 +69,7 @@ export const createSetupCliDependencies = (overrides: Partial<SetupCliDependenci
   const dependencies: SetupCliDependencies = {
     detectInstalledProviders: async () => Promise.resolve(TEST_PROVIDERS),
     generateClientConfigEntry: () => TEST_SERVER_ENTRY,
+    loadProvidersConfig: async () => Promise.resolve(TEST_PROVIDERS_FILE),
     buildSetupPlan: () => createSetupPlan(),
     applySetupPlan: async () => Promise.resolve(createSetupApplyResult()),
     installSkill: async () => Promise.resolve(INSTALLED_SKILL_RESULT),

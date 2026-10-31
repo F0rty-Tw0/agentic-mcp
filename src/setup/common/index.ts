@@ -1,7 +1,7 @@
 export {
   CLIENT_TARGETS,
+  CLIENT_TIMEOUT_MARGIN_MS,
   CLIENT_TOOL_TIMEOUT_MS,
-  CLIENT_TOOL_TIMEOUT_SEC,
   CODEX_STARTUP_TIMEOUT_SEC,
   KNOWN_PROVIDER_COMMANDS,
   SUPPORTED_CLIENTS,
@@ -13,6 +13,8 @@ export type {
   ClientConfigFormat,
   ClientConfigMergeResult,
   ClientTarget,
+  ClientToolTimeout,
+  ClientToolTimeoutSource,
   CodexServerEntry,
   CopilotServerEntry,
   McpServerEntry,

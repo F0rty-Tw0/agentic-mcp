@@ -250,7 +250,7 @@ describe('runSetup', () => {
 
     await runSetup(['--yes'], createDependencies({ detectInstalledProviders, generateClientConfigEntry }));
 
-    expect(generateClientConfigEntry).toHaveBeenCalledWith('generic', providers);
+    expect(generateClientConfigEntry).toHaveBeenCalledWith('generic', providers, expect.any(Number));
   });
 
   it('GIVEN existing config file WHEN running setup THEN reads it and passes to plan builder', async () => {

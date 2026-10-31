@@ -1,4 +1,4 @@
-import { CLIENT_TOOL_TIMEOUT_MS, CLIENT_TOOL_TIMEOUT_SEC, CODEX_STARTUP_TIMEOUT_SEC } from '../common';
+import { CODEX_STARTUP_TIMEOUT_SEC } from '../common';
 import type {
   CodexServerEntry,
   CopilotServerEntry,
@@ -9,44 +9,61 @@ import type {
   SupportedClient,
 } from '../common';
 
+const MS_PER_SECOND = 1000;
+
 const BASE_ENTRY: StdioServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
 };
 
-const TIMED_ENTRY: StdioServerEntry = {
-  ...BASE_ENTRY,
-  timeout: CLIENT_TOOL_TIMEOUT_MS,
+const buildTimedEntry = (toolTimeoutMs: number): StdioServerEntry => {
+  const timedEntry: StdioServerEntry = { ...BASE_ENTRY, timeout: toolTimeoutMs };
+
+  return timedEntry;
 };
 
-// Codex reads both timeouts in seconds from ~/.codex/config.toml.
-const CODEX_ENTRY: CodexServerEntry = {
-  command: BASE_ENTRY.command,
-  args: BASE_ENTRY.args,
-  tool_timeout_sec: CLIENT_TOOL_TIMEOUT_SEC,
-  startup_timeout_sec: CODEX_STARTUP_TIMEOUT_SEC,
+// Codex reads both timeouts in seconds from ~/.codex/config.toml; rounding up never cuts the limit short.
+const buildCodexEntry = (toolTimeoutMs: number): CodexServerEntry => {
+  const toolTimeoutSec = Math.ceil(toolTimeoutMs / MS_PER_SECOND);
+  const codexEntry: CodexServerEntry = {
+    command: BASE_ENTRY.command,
+    args: BASE_ENTRY.args,
+    tool_timeout_sec: toolTimeoutSec,
+    startup_timeout_sec: CODEX_STARTUP_TIMEOUT_SEC,
+  };
+
+  return codexEntry;
 };
 
 // Copilot CLI requires `tools` on a local server.
-const COPILOT_ENTRY: CopilotServerEntry = {
-  type: 'local',
-  command: BASE_ENTRY.command,
-  args: BASE_ENTRY.args,
-  tools: ['*'],
-  timeout: CLIENT_TOOL_TIMEOUT_MS,
+const buildCopilotEntry = (toolTimeoutMs: number): CopilotServerEntry => {
+  const copilotEntry: CopilotServerEntry = {
+    type: 'local',
+    command: BASE_ENTRY.command,
+    args: BASE_ENTRY.args,
+    tools: ['*'],
+    timeout: toolTimeoutMs,
+  };
+
+  return copilotEntry;
 };
 
 // OpenCode takes the command and its arguments as one array.
-const OPENCODE_ENTRY: OpenCodeServerEntry = {
-  type: 'local',
-  command: [BASE_ENTRY.command, ...BASE_ENTRY.args],
-  enabled: true,
-  timeout: CLIENT_TOOL_TIMEOUT_MS,
+const buildOpenCodeEntry = (toolTimeoutMs: number): OpenCodeServerEntry => {
+  const openCodeEntry: OpenCodeServerEntry = {
+    type: 'local',
+    command: [BASE_ENTRY.command, ...BASE_ENTRY.args],
+    enabled: true,
+    timeout: toolTimeoutMs,
+  };
+
+  return openCodeEntry;
 };
 
 export const generateClientConfigEntry = (
   client: SupportedClient,
-  detectedProviders: DetectedProvider[]
+  detectedProviders: DetectedProvider[],
+  toolTimeoutMs: number
 ): McpServerEntry => {
   const hasAnyAvailableProvider = detectedProviders.some((provider) => provider.available);
 
@@ -54,13 +71,13 @@ export const generateClientConfigEntry = (
     case 'claude-code':
       return BASE_ENTRY;
     case 'gemini':
-      return TIMED_ENTRY;
+      return buildTimedEntry(toolTimeoutMs);
     case 'codex':
-      return CODEX_ENTRY;
+      return buildCodexEntry(toolTimeoutMs);
     case 'copilot':
-      return COPILOT_ENTRY;
+      return buildCopilotEntry(toolTimeoutMs);
     case 'opencode':
-      return OPENCODE_ENTRY;
+      return buildOpenCodeEntry(toolTimeoutMs);
     case 'cursor':
     case 'windsurf':
       // Intentionally explicit per-client branches to support project-specific overrides later.

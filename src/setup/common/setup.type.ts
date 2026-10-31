@@ -1,4 +1,5 @@
-import type { McpServerEntry, SetupMergeStatus } from './client-target.type';
+import type { ClientToolTimeout, McpServerEntry, SetupMergeStatus } from './client-target.type';
+import type { ProvidersFile } from '../../shared/provider/common';
 
 export type SupportedClient =
   'claude-code' | 'codex' | 'copilot' | 'cursor' | 'gemini' | 'opencode' | 'windsurf' | 'generic';
@@ -72,6 +73,7 @@ export type SetupPlanInput = {
   readonly agenticServerEntry: McpServerEntry;
   readonly backup: SetupBackupPolicy;
   readonly env?: SetupEnv;
+  readonly toolTimeout?: ClientToolTimeout;
 };
 
 type SetupApplyStatus = 'written' | 'skipped' | 'manual' | 'verification-failed';
@@ -111,8 +113,10 @@ export type SetupCliDependencies = {
   readonly detectInstalledProviders: () => Promise<DetectedProvider[]>;
   readonly generateClientConfigEntry: (
     client: SupportedClient,
-    detectedProviders: DetectedProvider[]
+    detectedProviders: DetectedProvider[],
+    toolTimeoutMs: number
   ) => McpServerEntry;
+  readonly loadProvidersConfig: () => Promise<ProvidersFile>;
   readonly buildSetupPlan: (input: SetupPlanInput) => SetupPlan;
   readonly applySetupPlan: (plan: SetupPlan) => Promise<SetupApplyResult>;
   readonly installSkill: (injectedDependencies?: Partial<SkillInstallDependencies>) => Promise<SkillInstallResult>;

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildSetupPlan } from './plan-setup.util';
-import type { McpServerEntry } from '../common';
+import type { ClientToolTimeout, McpServerEntry } from '../common';
 
 const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
@@ -172,6 +172,29 @@ describe('buildSetupPlan', () => {
 
     expect(result.configText).not.toContain('timeout');
     expect(result.notes).toStrictEqual([CLAUDE_CODE_TIMEOUT_NOTE]);
+  });
+
+  it('GIVEN cursor and a tool timeout from the providers config WHEN building plan THEN no timeout note is added, since nothing is written', () => {
+    const toolTimeout: ClientToolTimeout = {
+      ms: 4_260_000,
+      runMs: 3_600_000,
+      queueMs: 600_000,
+      source: 'providers-config',
+    };
+
+    const result = buildSetupPlan({
+      client: 'cursor',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: undefined,
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+      toolTimeout,
+    });
+
+    expect(result.notes).toStrictEqual([]);
   });
 
   it('GIVEN claude-code merge with a timeout the user set WHEN building plan THEN it is kept as is', () => {
