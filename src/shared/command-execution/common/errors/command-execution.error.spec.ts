@@ -65,7 +65,7 @@ describe('CommandExecutionError.toMcpResponse', () => {
     const result = error.toMcpResponse();
 
     expect(result.content[0]?.text).toBe(
-      'held command Process exited after it printed a complete result, but a process it started kept its output open and was stopped.'
+      'held command Process exited after it printed a complete result, but a process it started kept its output open, so the output was closed.'
     );
   });
 
