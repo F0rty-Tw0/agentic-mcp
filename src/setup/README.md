@@ -10,7 +10,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower. An `agentic-mcp` entry with `url`, `httpUrl` or `serverUrl` (a remote server), or a TOML `mcp_servers` that is not a table, is left for a manual edit (status `unmergeable`)
 - Merges Codex's `config.toml` with `smol-toml`: appends a new table so comments stay, rewrites the file only to update an existing table (with a warning), and refuses a file that is not valid TOML or that a rewrite would change
 - Creates `.bak` backup files before modifying existing configs
-- Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) is set
+- Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) points at a file other than the one setup writes, and names that file
 - Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 
@@ -38,6 +38,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - `utils/merge-server-entry.util.ts` — Merges the `agentic-mcp` entry key by key and never lowers a timeout
 - `utils/merge-client-config.util.ts`, `utils/merge-toml-client-config.util.ts` — JSON and TOML document merges
 - `utils/resolve-client-tool-timeout.util.ts` — Derives the client tool-call timeout from the providers config and describes it in the output
+- `utils/moved-config-warnings.util.ts` — Warns when an environment variable points the client at another config file
 - `utils/parse-toml.util.ts` — Parses TOML into plain objects, keeping integers beyond 2^53 as BigInt
 - `utils/verify-written-config.util.ts` — Parses the written file again and checks the entry is there
 - `domain-logic/apply-setup-plan.ts` — Atomic file write using temp file + rename + verification

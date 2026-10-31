@@ -46,8 +46,18 @@ describe('FEATURE: setup plan warnings for a client config moved by an environme
       const result = planWithEnv({ client: 'codex', env });
 
       expect(result.warnings).toStrictEqual([
-        'CODEX_HOME is set, so codex may read a config other than /home/dev/.codex/config.toml, which setup writes. If it does, run setup again with --path set to that file.',
+        'CODEX_HOME is set, so codex may read /srv/codex/config.toml instead of /home/dev/.codex/config.toml, which setup writes. If it does, run setup again with --path /srv/codex/config.toml.',
       ]);
+    });
+  });
+
+  describe('GIVEN CODEX_HOME points at the default ~/.codex', () => {
+    it('WHEN building the codex plan THEN there is no warning, since Codex reads the file setup writes', () => {
+      const env = createEnv([['CODEX_HOME', '/home/dev/.codex']]);
+
+      const result = planWithEnv({ client: 'codex', env });
+
+      expect(result.warnings).toStrictEqual([]);
     });
   });
 

@@ -13,7 +13,7 @@ const TIMED_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_RULE],
   preservedKeys: ['tools'],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 const CODEX_LIKE_TARGET: ClientTarget = {
@@ -22,7 +22,7 @@ const CODEX_LIKE_TARGET: ClientTarget = {
   serversKey: 'mcp_servers',
   timeoutKeys: [STARTUP_RULE],
   preservedKeys: [],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 const CODEX_LIKE_ENTRY: McpServerEntry = {

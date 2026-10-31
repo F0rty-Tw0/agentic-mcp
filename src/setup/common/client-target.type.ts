@@ -50,13 +50,19 @@ export type TimeoutKeyRule = {
   readonly msAliasKey?: string;
 };
 
+// A variable that moves the client's config: the client reads <value>/<relativePath> (the value itself when empty).
+export type ConfigPathEnvRule = {
+  readonly key: string;
+  readonly relativePath: string;
+};
+
 export type ClientTarget = {
   readonly configPath?: string;
   readonly format: ClientConfigFormat;
   readonly serversKey: string;
   readonly timeoutKeys: TimeoutKeyRule[];
   readonly preservedKeys: string[];
-  readonly configPathEnvKeys: string[];
+  readonly configPathEnvRules: ConfigPathEnvRule[];
   readonly timeoutNote?: string;
 };
 

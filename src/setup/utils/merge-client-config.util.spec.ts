@@ -16,7 +16,7 @@ const MCP_SERVERS_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_RULE],
   preservedKeys: [],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 4_260_000 };

@@ -16,6 +16,7 @@ export type {
   ClientToolTimeout,
   ClientToolTimeoutSource,
   CodexServerEntry,
+  ConfigPathEnvRule,
   CopilotServerEntry,
   McpServerEntry,
   OpenCodeServerEntry,

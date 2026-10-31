@@ -1,4 +1,4 @@
-import type { ClientTarget, TimeoutKeyRule } from './client-target.type';
+import type { ClientTarget, ConfigPathEnvRule, TimeoutKeyRule } from './client-target.type';
 import type { SupportedClient } from './setup.type';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS } from '../../shared/command-execution/common';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/provider/common';
@@ -35,18 +35,28 @@ const CODEX_TOOL_TIMEOUT_RULE: TimeoutKeyRule = { key: 'tool_timeout_sec' };
 // Codex also reads startup_timeout_ms, and startup_timeout_sec wins when both are set.
 const CODEX_STARTUP_TIMEOUT_RULE: TimeoutKeyRule = { key: 'startup_timeout_sec', msAliasKey: 'startup_timeout_ms' };
 
+const CLAUDE_CONFIG_DIR_RULE: ConfigPathEnvRule = { key: 'CLAUDE_CONFIG_DIR', relativePath: '.claude.json' };
+
+const CODEX_HOME_RULE: ConfigPathEnvRule = { key: 'CODEX_HOME', relativePath: 'config.toml' };
+
+const COPILOT_HOME_RULE: ConfigPathEnvRule = { key: 'COPILOT_HOME', relativePath: 'mcp-config.json' };
+
+// OpenCode merges OPENCODE_CONFIG over its global config, which lives under XDG_CONFIG_HOME.
+const OPENCODE_CONFIG_RULE: ConfigPathEnvRule = { key: 'OPENCODE_CONFIG', relativePath: '' };
+
+const XDG_CONFIG_HOME_RULE: ConfigPathEnvRule = { key: 'XDG_CONFIG_HOME', relativePath: 'opencode/opencode.json' };
+
 // Claude Code's per-server timeout is a hard wall-clock limit that replaces its default (code.claude.com/docs/en/mcp).
 const CLAUDE_CODE_TIMEOUT_NOTE =
   'agentic-mcp timeout: not written for Claude Code. Its default tool-call limit (MCP_TOOL_TIMEOUT, about 28 h) is already longer, and progress notifications reset its 30 min stdio idle limit; a per-server timeout would replace that default with a hard limit.';
 
-// configPathEnvKeys: variables that move the file the client reads away from configPath.
 const CLAUDE_CODE_TARGET: ClientTarget = {
   configPath: '.claude.json',
   format: 'json',
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
-  configPathEnvKeys: ['CLAUDE_CONFIG_DIR'],
+  configPathEnvRules: [CLAUDE_CONFIG_DIR_RULE],
   timeoutNote: CLAUDE_CODE_TIMEOUT_NOTE,
 };
 
@@ -56,7 +66,7 @@ const CODEX_TARGET: ClientTarget = {
   serversKey: 'mcp_servers',
   timeoutKeys: [CODEX_TOOL_TIMEOUT_RULE, CODEX_STARTUP_TIMEOUT_RULE],
   preservedKeys: [],
-  configPathEnvKeys: ['CODEX_HOME'],
+  configPathEnvRules: [CODEX_HOME_RULE],
 };
 
 const COPILOT_TARGET: ClientTarget = {
@@ -65,7 +75,7 @@ const COPILOT_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: ['tools'],
-  configPathEnvKeys: ['COPILOT_HOME'],
+  configPathEnvRules: [COPILOT_HOME_RULE],
 };
 
 const CURSOR_TARGET: ClientTarget = {
@@ -74,7 +84,7 @@ const CURSOR_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 const GEMINI_TARGET: ClientTarget = {
@@ -83,7 +93,7 @@ const GEMINI_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: [],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 const OPENCODE_TARGET: ClientTarget = {
@@ -92,7 +102,7 @@ const OPENCODE_TARGET: ClientTarget = {
   serversKey: 'mcp',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: ['enabled'],
-  configPathEnvKeys: ['OPENCODE_CONFIG', 'XDG_CONFIG_HOME'],
+  configPathEnvRules: [OPENCODE_CONFIG_RULE, XDG_CONFIG_HOME_RULE],
 };
 
 const WINDSURF_TARGET: ClientTarget = {
@@ -101,7 +111,7 @@ const WINDSURF_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 const GENERIC_TARGET: ClientTarget = {
@@ -110,7 +120,7 @@ const GENERIC_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
-  configPathEnvKeys: [],
+  configPathEnvRules: [],
 };
 
 export const CLIENT_TARGETS: ClientTargetMap = {

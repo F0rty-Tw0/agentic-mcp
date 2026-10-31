@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { buildClientConfig } from './build-client-config.util';
+import { buildMovedConfigWarnings } from './moved-config-warnings.util';
 import { describeClientToolTimeout } from './resolve-client-tool-timeout.util';
 import { CLIENT_TARGETS } from '../common';
 import type { ClientConfigMergeResult, ClientTarget, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
@@ -76,20 +77,6 @@ const buildRewriteWarning = (
   }
 
   return `Updating the existing agentic-mcp entry rewrites ${target} with a TOML serializer, ${keptNote}`;
-};
-
-// A client reading its config elsewhere would never see the file setup writes.
-const buildMovedConfigWarnings = (input: SetupPlanInput, targetPath: string | undefined): string[] => {
-  if (input.pathOverride != null || targetPath == null) return [];
-
-  const env = input.env ?? {};
-  const setKeys = CLIENT_TARGETS[input.client].configPathEnvKeys.filter((key) => Boolean(env[key]));
-  const warnings = setKeys.map(
-    (key) =>
-      `${key} is set, so ${input.client} may read a config other than ${targetPath}, which setup writes. If it does, run setup again with --path set to that file.`
-  );
-
-  return warnings;
 };
 
 const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
