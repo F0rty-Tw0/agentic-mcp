@@ -5,7 +5,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 ## What It Does
 
 - Detects which AI provider CLIs are installed on the system (Claude, Codex, Copilot, Gemini, Antigravity `agy`, OpenCode)
-- Generates an MCP server entry (`agentic-mcp`) for the target client's config format, with the client's tool-call timeout one minute above the provider timeout (`CLIENT_TOOL_TIMEOUT_MS`) where the client has a per-server key
+- Generates an MCP server entry (`agentic-mcp`) for the target client's config format, with the client's tool-call timeout above the provider timeout plus queue wait (`CLIENT_TOOL_TIMEOUT_MS`) where the client has a per-server key
 - Supports multiple MCP clients: Claude Code, Codex CLI (TOML), Copilot CLI, Gemini CLI, OpenCode, Cursor, Windsurf, and a generic JSON format
 - Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower
 - Merges Codex's `config.toml` with `smol-toml`: appends a new table so comments stay, rewrites the file only to update an existing table (with a warning), and refuses a file that is not valid TOML or that a rewrite would change

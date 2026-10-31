@@ -18,7 +18,7 @@ const MCP_SERVERS_TARGET: ClientTarget = {
   preservedKeys: [],
 };
 
-const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 3_660_000 };
+const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 4_260_000 };
 
 const AGENTIC_ONLY_SERVERS = { 'agentic-mcp': AGENTIC_SERVER_ENTRY };
 
@@ -183,7 +183,7 @@ describe('buildMergedClientConfig', () => {
 
     expect(result.status).toBe('unchanged');
     expect(result.mergedConfig).toStrictEqual(existingConfig);
-    expect(result.notes).toStrictEqual(['agentic-mcp timeout: kept your 7200000 (not lower than 3660000).']);
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: kept your 7200000 (not lower than 4260000).']);
   });
 
   it('GIVEN an agentic entry with a lower timeout and its own env WHEN merging THEN the timeout is raised and env kept', () => {
@@ -191,7 +191,7 @@ describe('buildMergedClientConfig', () => {
     const userEntry = { ...AGENTIC_SERVER_ENTRY, env, timeout: 600_000 };
     const existingServers = { 'agentic-mcp': userEntry };
     const existingConfig = { mcpServers: existingServers };
-    const raisedEntry = { ...AGENTIC_SERVER_ENTRY, env, timeout: 3_660_000 };
+    const raisedEntry = { ...AGENTIC_SERVER_ENTRY, env, timeout: 4_260_000 };
     const expectedServers = { 'agentic-mcp': raisedEntry };
 
     const result = buildMergedClientConfig({
@@ -202,6 +202,6 @@ describe('buildMergedClientConfig', () => {
 
     expect(result.status).toBe('merged');
     expect(result.mergedConfig).toStrictEqual({ mcpServers: expectedServers });
-    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 3660000.']);
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 4260000.']);
   });
 });

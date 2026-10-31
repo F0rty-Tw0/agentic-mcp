@@ -8,7 +8,7 @@ import type { ClientConfigMergeResult, CodexServerEntry } from '../common';
 const CODEX_ENTRY: CodexServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
-  tool_timeout_sec: 3660,
+  tool_timeout_sec: 4260,
   startup_timeout_sec: 60,
 };
 
@@ -18,7 +18,7 @@ const AGENTIC_TABLE_LINES = [
   '[mcp_servers.agentic-mcp]',
   'command = "npx"',
   'args = [ "-y", "agentic-mcp" ]',
-  'tool_timeout_sec = 3660',
+  'tool_timeout_sec = 4260',
   'startup_timeout_sec = 60',
   '',
 ];
@@ -112,7 +112,7 @@ describe('FEATURE: TOML client config merge', () => {
 
       expect(written).toStrictEqual({ mcp_servers: expectedServers });
       expect(result.notes).toStrictEqual([
-        'agentic-mcp tool_timeout_sec: raised from 300 to 3660.',
+        'agentic-mcp tool_timeout_sec: raised from 300 to 4260.',
         'agentic-mcp startup_timeout_sec: set to 60 (was not set).',
       ]);
     });

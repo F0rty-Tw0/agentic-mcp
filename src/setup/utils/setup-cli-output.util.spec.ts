@@ -157,7 +157,7 @@ describe('setup-cli-output utilities', () => {
   });
 
   it('GIVEN plan notes about the timeout WHEN formatting human output THEN they are listed under Tool-call timeout', () => {
-    const note = 'agentic-mcp timeout: raised from 600000 to 3660000.';
+    const note = 'agentic-mcp timeout: raised from 600000 to 4260000.';
 
     const output = formatHumanSetupOutput(createArgs(), createPlan({ notes: [note] }), createApplyResult(), []);
 
@@ -171,7 +171,7 @@ describe('setup-cli-output utilities', () => {
   });
 
   it('GIVEN plan notes WHEN formatting json output THEN they are included as notes', () => {
-    const note = 'agentic-mcp timeout: set to 3660000 (was not set).';
+    const note = 'agentic-mcp timeout: set to 4260000 (was not set).';
 
     const output = formatJsonSetupOutput(createArgs(), createPlan({ notes: [note] }), createApplyResult(), []);
     const parsed = JSON.parse(output) as ConfiguredJsonOutput;

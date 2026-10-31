@@ -14,13 +14,13 @@ const makeProvider = (name: string, available: boolean, binaryPath?: string): De
 };
 
 describe('generateClientConfigEntry', () => {
-  it('GIVEN claude-code WHEN generating entry THEN the per-server timeout is one minute above the provider timeout', () => {
+  it('GIVEN claude-code WHEN generating entry THEN the per-server timeout is above the provider timeout plus queue wait', () => {
     const result = generateClientConfigEntry('claude-code', []);
 
     expect(result).toStrictEqual({
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
-      timeout: 3_660_000,
+      timeout: 4_260_000,
     });
   });
 
@@ -63,13 +63,13 @@ describe('generateClientConfigEntry', () => {
     expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
-  it('GIVEN gemini WHEN generating entry THEN the timeout in ms is one minute above the provider timeout', () => {
+  it('GIVEN gemini WHEN generating entry THEN the timeout in ms is above the provider timeout plus queue wait', () => {
     const result = generateClientConfigEntry('gemini', []);
 
     expect(result).toStrictEqual({
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
-      timeout: 3_660_000,
+      timeout: 4_260_000,
     });
   });
 
@@ -81,7 +81,7 @@ describe('generateClientConfigEntry', () => {
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
       tools: ['*'],
-      timeout: 3_660_000,
+      timeout: 4_260_000,
     });
   });
 
@@ -92,7 +92,7 @@ describe('generateClientConfigEntry', () => {
       type: 'local',
       command: ['npx', '-y', 'agentic-mcp'],
       enabled: true,
-      timeout: 3_660_000,
+      timeout: 4_260_000,
     });
   });
 
@@ -102,7 +102,7 @@ describe('generateClientConfigEntry', () => {
     expect(result).toStrictEqual({
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
-      tool_timeout_sec: 3660,
+      tool_timeout_sec: 4260,
       startup_timeout_sec: 60,
     });
   });

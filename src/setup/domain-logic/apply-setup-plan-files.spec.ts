@@ -130,7 +130,7 @@ describe('applySetupPlan on a real filesystem', () => {
 
   it('GIVEN a codex plan WHEN setup writes the TOML file THEN it passes verification', async () => {
     const targetPath = path.join(directory, 'config.toml');
-    const configText = '[mcp_servers.agentic-mcp]\ncommand = "npx"\ntool_timeout_sec = 3660\n';
+    const configText = '[mcp_servers.agentic-mcp]\ncommand = "npx"\ntool_timeout_sec = 4260\n';
     const basePlan = createPlan(targetPath);
     const plan: SetupPlan = { ...basePlan, client: 'codex', configText };
 

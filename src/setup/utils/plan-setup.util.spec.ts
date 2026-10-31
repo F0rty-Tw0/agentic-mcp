@@ -10,7 +10,7 @@ const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   args: ['-y', 'agentic-mcp'],
 };
 
-const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 3_660_000 };
+const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 4_260_000 };
 
 describe('buildSetupPlan', () => {
   it('GIVEN claude-code client without path override WHEN building plan THEN resolves default client path', () => {
@@ -171,8 +171,8 @@ describe('buildSetupPlan', () => {
       backup: 'if-exists',
     });
 
-    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 3660000.']);
-    expect(result.configText).toContain('"timeout": 3660000');
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 4260000.']);
+    expect(result.configText).toContain('"timeout": 4260000');
   });
 
   it('GIVEN overwrite mode with a higher agentic-mcp timeout WHEN building plan THEN the generated timeout is written', () => {
@@ -214,7 +214,7 @@ describe('buildSetupPlan', () => {
 
     expect(result.targetPath).toBe(path.join('/home/dev', '.gemini/settings.json'));
     expect(JSON.parse(result.configText)).toStrictEqual(writtenConfig);
-    expect(result.notes).toStrictEqual(['agentic-mcp timeout: set to 3660000 (was not set).']);
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: set to 4260000 (was not set).']);
   });
 
   it('GIVEN copilot with a tool allow-list on agentic-mcp WHEN building plan THEN it targets ~/.copilot/mcp-config.json and keeps the list', () => {
@@ -227,7 +227,7 @@ describe('buildSetupPlan', () => {
     };
     const existingServers = { 'agentic-mcp': userEntry };
     const existingConfig = { mcpServers: existingServers };
-    const copilotEntry: McpServerEntry = { ...userEntry, type: 'local', tools: ['*'], timeout: 3_660_000 };
+    const copilotEntry: McpServerEntry = { ...userEntry, type: 'local', tools: ['*'], timeout: 4_260_000 };
 
     const result = buildSetupPlan({
       client: 'copilot',
@@ -239,7 +239,7 @@ describe('buildSetupPlan', () => {
       agenticServerEntry: copilotEntry,
       backup: 'if-exists',
     });
-    const writtenEntry = { ...userEntry, timeout: 3_660_000 };
+    const writtenEntry = { ...userEntry, timeout: 4_260_000 };
     const writtenServers = { 'agentic-mcp': writtenEntry };
 
     expect(result.targetPath).toBe(path.join('/home/dev', '.copilot/mcp-config.json'));
@@ -250,7 +250,7 @@ describe('buildSetupPlan', () => {
     const userEntry = { type: 'local', command: ['npx', '-y', 'agentic-mcp'], enabled: false };
     const existingServers = { 'agentic-mcp': userEntry };
     const existingConfig = { $schema: 'https://opencode.ai/config.json', mcp: existingServers };
-    const opencodeEntry: McpServerEntry = { ...userEntry, type: 'local', enabled: true, timeout: 3_660_000 };
+    const opencodeEntry: McpServerEntry = { ...userEntry, type: 'local', enabled: true, timeout: 4_260_000 };
 
     const result = buildSetupPlan({
       client: 'opencode',
@@ -262,7 +262,7 @@ describe('buildSetupPlan', () => {
       agenticServerEntry: opencodeEntry,
       backup: 'if-exists',
     });
-    const writtenEntry = { ...userEntry, timeout: 3_660_000 };
+    const writtenEntry = { ...userEntry, timeout: 4_260_000 };
     const writtenServers = { 'agentic-mcp': writtenEntry };
     const writtenConfig = { $schema: 'https://opencode.ai/config.json', mcp: writtenServers };
 

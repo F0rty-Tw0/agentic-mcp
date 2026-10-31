@@ -4,12 +4,12 @@ import { buildClientConfig } from './build-client-config.util';
 import { CLIENT_TARGETS } from '../common';
 import type { CodexServerEntry, StdioServerEntry } from '../common';
 
-const GEMINI_ENTRY: StdioServerEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 3_660_000 };
+const GEMINI_ENTRY: StdioServerEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 4_260_000 };
 
 const CODEX_ENTRY: CodexServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
-  tool_timeout_sec: 3660,
+  tool_timeout_sec: 4260,
   startup_timeout_sec: 60,
 };
 

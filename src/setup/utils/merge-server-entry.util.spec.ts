@@ -26,14 +26,14 @@ const CODEX_LIKE_TARGET: ClientTarget = {
 const CODEX_LIKE_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
-  tool_timeout_sec: 3660,
+  tool_timeout_sec: 4260,
   startup_timeout_sec: 60,
 };
 
 const TIMED_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
-  timeout: 3_660_000,
+  timeout: 4_260_000,
 };
 
 describe('FEATURE: agentic-mcp server entry merge', () => {
@@ -47,7 +47,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
 
       expect(result).toStrictEqual({
         entry: TIMED_ENTRY,
-        notes: ['agentic-mcp timeout: set to 3660000 (was not set).'],
+        notes: ['agentic-mcp timeout: set to 4260000 (was not set).'],
       });
     });
   });
@@ -60,7 +60,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
 
       expect(result).toStrictEqual({
         entry: TIMED_ENTRY,
-        notes: ['agentic-mcp timeout: raised from 600000 to 3660000.'],
+        notes: ['agentic-mcp timeout: raised from 600000 to 4260000.'],
       });
     });
   });
@@ -73,7 +73,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
 
       expect(result).toStrictEqual({
         entry: existingEntry,
-        notes: ['agentic-mcp timeout: kept your 7200000 (not lower than 3660000).'],
+        notes: ['agentic-mcp timeout: kept your 7200000 (not lower than 4260000).'],
       });
     });
   });
@@ -91,11 +91,11 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
   describe('GIVEN an existing entry with keys setup does not write', () => {
     it('WHEN merging THEN those keys are kept and the command is updated', () => {
       const env = { DEBUG: '1' };
-      const existingEntry = { command: 'node', args: ['old.js'], env, timeout: 3_660_000 };
+      const existingEntry = { command: 'node', args: ['old.js'], env, timeout: 4_260_000 };
 
       const result = mergeAgenticServerEntry({ existingEntry, agenticServerEntry: TIMED_ENTRY, target: TIMED_TARGET });
 
-      expect(result.entry).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'], env, timeout: 3_660_000 });
+      expect(result.entry).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'], env, timeout: 4_260_000 });
     });
 
     it('WHEN a preserved key is set THEN the user value wins over the generated one', () => {
@@ -140,7 +140,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       const existingEntry = {
         command: 'npx',
         args: ['-y', 'agentic-mcp'],
-        tool_timeout_sec: 3660,
+        tool_timeout_sec: 4260,
         startup_timeout_ms: 120_000,
       };
 
