@@ -1,33 +1,15 @@
 import { randomUUID } from 'node:crypto';
 
-import type { CallToolResult } from '@modelcontextprotocol/server';
-
 import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
 import { canStartNativeSession } from '../../ask/utils/session-flag-args.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
-import type { SessionMode } from '../common';
+import type { SessionFlowResult, SessionFlowState } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
-
-type SessionFlowState = {
-  readonly sessionId: string;
-  readonly prompt?: string;
-  readonly nativeSessionId?: string;
-  readonly startSessionId?: string;
-  readonly mode: SessionMode;
-};
-
-type SessionFlowResult = {
-  readonly response: CallToolResult;
-  readonly responseText: string;
-  readonly nativeSessionId?: string;
-  readonly sessionMode: SessionMode;
-  readonly wasCancelled: boolean;
-  readonly wasStopped?: boolean;
-};
+import { canFallBackToTier1 } from '../utils/session-flow-retry.util';
 
 type SessionExecutionInput = {
   readonly context: ResolvedProviderEntry;
@@ -62,21 +44,6 @@ const buildTier1Prompt = (context: ResolvedProviderEntry, args: AskToolArgs, ses
   const prompt = buildSessionPrompt({ sessionTurnsText, userContext: args.context, prompt: promptText });
 
   return prompt;
-};
-
-const canFallBackToTier1 = (
-  execution: SessionFlowResult,
-  state: SessionFlowState,
-  extra?: ProgressContext
-): boolean => {
-  if (!execution.response.isError || state.mode !== 'tier2-native') return false;
-
-  const isAborted = extra?.signal?.aborted ?? false;
-
-  const wasStopped = execution.wasStopped ?? false;
-  const result = !execution.wasCancelled && !isAborted && !wasStopped;
-
-  return result;
 };
 
 const buildMissingPromptResult = (state: SessionFlowState): SessionFlowResult => {

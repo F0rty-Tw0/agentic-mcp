@@ -5,6 +5,8 @@ export {
   SESSION_TTL_MS,
 } from './session-store.const';
 
+export type { SessionFlowResult, SessionFlowState } from './session-flow.type';
+
 export type { SessionMode } from './session-mode.type';
 
 export type { SessionRecord, SessionTurn } from './session-store.type';
