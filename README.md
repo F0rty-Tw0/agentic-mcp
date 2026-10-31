@@ -301,7 +301,7 @@ These provider definitions ship with the project. Whether they are actually usab
 | Claude    | `claude`    | stable        | Yes                | ask, sessions                        |
 | Codex     | `codex`     | stable        | Yes                | ask, review, sessions                |
 | Copilot   | `copilot`   | stable        | Yes                | ask, sessions                        |
-| Gemini    | `gemini`    | stable        | Yes                | ask                                  |
+| Gemini    | `gemini`    | stable        | Yes                | ask, sessions                        |
 | OpenCode  | `opencode`  | stable        | Yes                | ask, sessions, model listing         |
 | Aider     | `aider`     | community     | Yes                | ask                                  |
 | Goose     | `goose`     | beta          | Yes                | ask, sessions                        |
@@ -316,6 +316,16 @@ These provider definitions ship with the project. Whether they are actually usab
 | Tabnine   | `tabnine`   | experimental  | No                 | disabled template with prerequisites |
 
 Provider definitions live in `src/config/providers.json`.
+
+### Environment variables
+
+Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp dirs, `USER`/`SHELL`/`TERM`, and proxy and CA settings (`HTTP(S)_PROXY`, `NO_PROXY`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`). Nothing else from your shell reaches them unless the provider lists it in `envPassthrough`. The bundled config passes each CLI its own credentials when they are set, for example `ANTHROPIC_API_KEY` to `claude`, `OPENAI_API_KEY`/`CODEX_API_KEY` to `codex`, `GH_TOKEN`/`GITHUB_TOKEN` to `copilot` and `GEMINI_API_KEY` to `gemini`. To pass more, copy the provider into your own config and extend its list:
+
+```json
+"envPassthrough": ["OPENAI_API_KEY", "AZURE_OPENAI_API_KEY"]
+```
+
+`env` sets fixed values and wins over a passed-through one; `"KEY": null` removes a base variable.
 
 ## Useful setup flags
 

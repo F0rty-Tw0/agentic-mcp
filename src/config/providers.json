@@ -11,6 +11,13 @@
       "maxConcurrency": 1,
       "queueTimeoutMs": 30000,
       "env": { "CLAUDECODE": "" },
+      "envPassthrough": [
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_BASE_URL",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "CLAUDE_CONFIG_DIR"
+      ],
       "outputFormat": "json",
       "commands": {
         "ask": {
@@ -54,6 +61,7 @@
       "maxConcurrency": 1,
       "queueTimeoutMs": 30000,
       "env": {},
+      "envPassthrough": ["OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL", "CODEX_HOME"],
       "outputFormat": "json",
       "commands": {
         "ask": {
@@ -98,6 +106,7 @@
       "maxConcurrency": 1,
       "queueTimeoutMs": 30000,
       "env": {},
+      "envPassthrough": ["GH_TOKEN", "GITHUB_TOKEN", "COPILOT_HOME"],
       "outputFormat": "text",
       "commands": {
         "ask": {
@@ -139,6 +148,13 @@
       "maxConcurrency": 1,
       "queueTimeoutMs": 30000,
       "env": {},
+      "envPassthrough": [
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "GOOGLE_CLOUD_PROJECT",
+        "GOOGLE_GENAI_USE_VERTEXAI",
+        "GOOGLE_APPLICATION_CREDENTIALS"
+      ],
       "outputFormat": "json",
       "commands": {
         "ask": {
@@ -166,6 +182,13 @@
       "maxConcurrency": 1,
       "queueTimeoutMs": 30000,
       "env": {},
+      "envPassthrough": [
+        "OPENCODE_CONFIG",
+        "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY",
+        "OPENROUTER_API_KEY",
+        "GEMINI_API_KEY"
+      ],
       "outputFormat": "json",
       "commands": {
         "ask": {
