@@ -1,16 +1,32 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createResultEnvelopeDetector,
   resolveResultWarnings,
   resolveTimeoutResultWarning,
 } from './complete-result.util';
+import { MAX_OUTPUT_BYTES } from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 
 const AGY_RESULT_EVENT = '{"event":"result","result":{"status":"SUCCESS","response":"agy answer"}}';
 const AGY_ERROR_RESULT_EVENT =
   '{"event":"result","result":{"status":"ERROR","error":"RESOURCE_EXHAUSTED: quota","response":"I started to answer but"}}';
 const AGY_STEP_EVENT = '{"event":"step_update","step_update":{"step_index":1,"state":"DONE"}}';
+
+const NESTED_STEP_COUNT = 50;
+
+const feedNestedEnvelope = (isComplete: (chunk: string) => boolean): boolean => {
+  isComplete('{"response":"agy answer","steps":[');
+
+  for (let step = 0; step < NESTED_STEP_COUNT; step += 1) {
+    isComplete('{"step":1}');
+    isComplete(',');
+  }
+
+  const completed = isComplete('{"step":2}]}');
+
+  return completed;
+};
 
 const resolveWarning = (stdout: string, outputFormat: OutputFormat, timedOut = true): string | undefined => {
   const config = { acceptResultOnTimeout: true };
@@ -245,6 +261,50 @@ describe('FEATURE: result envelope detector', () => {
       const lastCompleted = isComplete('"response":"agy answer"}\n');
 
       expect([firstCompleted, lastCompleted]).toStrictEqual([false, true]);
+    });
+
+    describe('WHEN many chunks close nested objects before the envelope closes', () => {
+      afterEach(() => {
+        vi.restoreAllMocks();
+      });
+
+      it('THEN only the closing chunk reports completion', () => {
+        const isComplete = createResultEnvelopeDetector('json');
+
+        const completed = feedNestedEnvelope(isComplete);
+
+        expect(completed).toBe(true);
+      });
+
+      it('THEN the buffered output is parsed once', () => {
+        const parseSpy = vi.spyOn(JSON, 'parse');
+        const isComplete = createResultEnvelopeDetector('json');
+
+        feedNestedEnvelope(isComplete);
+
+        expect(parseSpy).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('WHEN the output grows past the stdout cap THEN it reports no completion', () => {
+      const isComplete = createResultEnvelopeDetector('json');
+
+      isComplete(' '.repeat(MAX_OUTPUT_BYTES));
+
+      const completed = isComplete('{"response":"agy answer"}');
+
+      expect(completed).toBe(false);
+    });
+
+    it('WHEN the output fills the stdout cap exactly THEN the envelope still reports completion', () => {
+      const isComplete = createResultEnvelopeDetector('json');
+      const envelope = '{"response":"agy answer"}';
+
+      isComplete(' '.repeat(MAX_OUTPUT_BYTES - envelope.length));
+
+      const completed = isComplete(envelope);
+
+      expect(completed).toBe(true);
     });
 
     it('WHEN the envelope has an empty answer THEN it reports no completion', () => {

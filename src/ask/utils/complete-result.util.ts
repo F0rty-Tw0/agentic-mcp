@@ -1,3 +1,4 @@
+import { createJsonObjectScanner } from './json-object-scanner.util';
 import {
   describeEnvelopeStatus,
   describeFinishedReason,
@@ -5,6 +6,7 @@ import {
   extractFinalEnvelope,
   hasEnvelopeFailure,
 } from './result-envelope.util';
+import { MAX_OUTPUT_BYTES } from '../../shared/command-execution/common';
 import type { ExecutionResult, ResultCompleteDetector } from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ProviderConfig } from '../../shared/provider/common';
@@ -25,12 +27,22 @@ const hasCompleteResult = (stdout: string, outputFormat: OutputFormat): boolean 
 };
 
 const createJsonEnvelopeDetector = (): ResultCompleteDetector => {
+  const closesTopLevelObject = createJsonObjectScanner();
   let output = '';
+  let outputBytes = 0;
 
   return (chunk: string): boolean => {
+    outputBytes += Buffer.byteLength(chunk, 'utf8');
+
+    if (outputBytes > MAX_OUTPUT_BYTES) {
+      output = '';
+
+      return false;
+    }
+
     output += chunk;
 
-    const mayCloseEnvelope = chunk.trimEnd().endsWith('}');
+    const mayCloseEnvelope = closesTopLevelObject(chunk);
 
     if (!mayCloseEnvelope) return false;
 
