@@ -2,10 +2,9 @@ import process from 'node:process';
 
 import type { ChildGroupRegistry, UntrackChildGroup } from '../common';
 import { CHILD_GROUP_KILL_GRACE_MS, CHILD_GROUP_POLL_INTERVAL_MS } from '../common';
+import { installSignalForwarders } from './child-group-signal-forwarder';
 
 const MAX_GRACE_POLLS = CHILD_GROUP_KILL_GRACE_MS / CHILD_GROUP_POLL_INTERVAL_MS;
-
-const TERMINATION_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 
 const signalGroup = (pid: number, signal: NodeJS.Signals): void => {
   try {
@@ -55,9 +54,12 @@ const waitForGroupsToExit = async (pids: number[], pollsLeft: number): Promise<n
 export const createChildGroupRegistry = (): ChildGroupRegistry => {
   const liveGroups = new Set<number>();
   let hooksInstalled = false;
+  let isShuttingDown = false;
 
   // Groups stay tracked during the grace period, so an exit hook firing meanwhile still kills them.
   const terminateAll = async (): Promise<void> => {
+    isShuttingDown = true;
+
     const pids = [...liveGroups];
 
     pids.forEach(terminateGroup);
@@ -74,25 +76,22 @@ export const createChildGroupRegistry = (): ChildGroupRegistry => {
     liveGroups.clear();
   };
 
-  // CLI mode has no signal handlers; the server's graceful shutdown calls terminateAll itself.
-  const installSignalForwarder = (signal: NodeJS.Signals): void => {
-    const listenerCount = process.listenerCount(signal);
-    const isHandledElsewhere = listenerCount > 0;
-
-    if (isHandledElsewhere) return;
-
-    process.once(signal, () => {
-      void terminateAll().then(() => process.kill(process.pid, signal));
-    });
-  };
-
   const installHooks = (): void => {
     process.once('exit', killAll);
-    TERMINATION_SIGNALS.forEach(installSignalForwarder);
+    installSignalForwarders({ terminateAll, killAll, isShuttingDown: () => isShuttingDown });
     hooksInstalled = true;
   };
 
+  const untrackNothing: UntrackChildGroup = (): void => undefined;
+
   const track = (pid: number): UntrackChildGroup => {
+    // A group spawned after shutdown began would miss terminateAll's snapshot.
+    if (isShuttingDown) {
+      killGroup(pid);
+
+      return untrackNothing;
+    }
+
     // Detached children miss the terminal's SIGINT/SIGHUP, so their groups are signalled when this process stops.
     if (!hooksInstalled) installHooks();
 

@@ -13,6 +13,7 @@ export type {
   ResultCompleteDetector,
   ResultExitWatch,
   RetryWithExponentialBackoffInput,
+  SignalForwarderInput,
   StopChild,
   StoppableChild,
   StreamChunkCallback,

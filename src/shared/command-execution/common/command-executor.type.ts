@@ -22,6 +22,12 @@ export type ChildGroupRegistry = {
   readonly killAll: () => void;
 };
 
+export type SignalForwarderInput = {
+  readonly terminateAll: () => Promise<void>;
+  readonly killAll: () => void;
+  readonly isShuttingDown: () => boolean;
+};
+
 export type StoppableChild = {
   readonly pid?: number;
   readonly on: (event: 'exit', listener: () => void) => unknown;

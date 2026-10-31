@@ -30,6 +30,8 @@ const exitOnSigterm = (): ProcessKill => {
 describe('FEATURE: child process group registry', () => {
   beforeEach(() => {
     vi.spyOn(process, 'once').mockReturnValue(process);
+    vi.spyOn(process, 'on').mockReturnValue(process);
+    vi.spyOn(process, 'removeListener').mockReturnValue(process);
     vi.useFakeTimers();
   });
 
@@ -130,9 +132,8 @@ describe('FEATURE: child process group registry', () => {
 
       registry.track(4242);
 
-      const onceCalls = vi.mocked(process.once).mock.calls;
-      const events = onceCalls.map(([event]) => event);
-      const signalEvents = events.filter((event) => event !== 'exit');
+      const onCalls = vi.mocked(process.on).mock.calls;
+      const signalEvents = onCalls.map(([event]) => event);
 
       expect(signalEvents).toStrictEqual(['SIGINT', 'SIGTERM', 'SIGHUP']);
     });
@@ -144,7 +145,7 @@ describe('FEATURE: child process group registry', () => {
 
       registry.track(4242);
 
-      const sigintCall = vi.mocked(process.once).mock.calls.find(([event]) => event === 'SIGINT');
+      const sigintCall = vi.mocked(process.on).mock.calls.find(([event]) => event === 'SIGINT');
       const forwardSignal = sigintCall?.[1];
 
       forwardSignal?.('SIGINT');
@@ -161,7 +162,7 @@ describe('FEATURE: child process group registry', () => {
 
       registry.track(4242);
 
-      const sigintCall = vi.mocked(process.once).mock.calls.find(([event]) => event === 'SIGINT');
+      const sigintCall = vi.mocked(process.on).mock.calls.find(([event]) => event === 'SIGINT');
       const forwardSignal = sigintCall?.[1];
 
       forwardSignal?.('SIGINT');
@@ -174,6 +175,43 @@ describe('FEATURE: child process group registry', () => {
         [-4242, 'SIGKILL'],
         [process.pid, 'SIGINT'],
       ]);
+    });
+
+    it('WHEN a second signal arrives inside the grace period THEN the groups get SIGKILL and it is re-raised at once', () => {
+      vi.spyOn(process, 'listenerCount').mockReturnValue(0);
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      const onCalls = vi.mocked(process.on).mock.calls;
+      const sigintCall = onCalls.find(([event]) => event === 'SIGINT');
+      const sigtermCall = onCalls.find(([event]) => event === 'SIGTERM');
+
+      sigintCall?.[1]('SIGINT');
+      sigtermCall?.[1]('SIGTERM');
+
+      const signals = killSpy.mock.calls.filter(([, signal]) => signal !== 0);
+
+      expect(signals).toStrictEqual([
+        [-4242, 'SIGTERM'],
+        [-4242, 'SIGKILL'],
+        [process.pid, 'SIGTERM'],
+      ]);
+      expect(process.removeListener).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('GIVEN shutdown has started', () => {
+    it('WHEN a new group is tracked during the grace period THEN it gets SIGKILL at once', () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+      void registry.terminateAll();
+      registry.track(5555);
+
+      expect(killSpy).toHaveBeenCalledWith(-5555, 'SIGKILL');
     });
   });
 
