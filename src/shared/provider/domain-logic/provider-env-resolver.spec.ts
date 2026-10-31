@@ -2,7 +2,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveProviderEnv } from './provider-env-resolver';
-import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../common';
 import type { ProviderConfig, ResolvedProviderEntry } from '../common';
 
 const createContext = (overrides: Partial<ProviderConfig> = {}, providerName = 'test'): ResolvedProviderEntry => {
@@ -39,7 +38,7 @@ describe('resolveProviderEnv', () => {
 
     expect(resolvedEnv).toStrictEqual({
       API_KEY: 'secret',
-      MCP_TOOL_TIMEOUT: String(DEFAULT_MCP_TOOL_TIMEOUT_MS),
+      MCP_TOOL_TIMEOUT: '3600000',
     });
   });
 
