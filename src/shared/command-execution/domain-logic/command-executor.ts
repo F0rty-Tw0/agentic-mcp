@@ -4,34 +4,20 @@ import process from 'node:process';
 import crossSpawn from 'cross-spawn';
 
 import { defaultProviderQueueStore } from './provider-queue';
-import type {
-  ExecuteCommandOptions,
-  ExecutionResult,
-  IdleTimeoutHandle,
-  ProviderQueueOptions,
-  UntrackChildGroup,
-} from '../common';
+import type { ExecuteCommandOptions, ExecutionResult, ProviderQueueOptions, UntrackChildGroup } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import { defaultChildGroupRegistry } from './child-group-registry';
 import { setupIdleTimeout } from './command-idle-timeout';
+import { setupResultExitWatch } from './command-result-exit';
 import { releaseStdioAfterKilledExit } from './command-stdio-release';
 import { createAbortSubscription, setupTimeout } from './command-timeout';
 import { CommandExecutionError } from '../common/errors';
 import type { ProviderQueueLease } from '../common/provider-queue.type';
+import { wrapChunkCallback, wrapStdoutCallback } from '../utils/command-chunk-callback.util';
 import { attachStreamCollector } from '../utils/command-stream-collector.util';
 import { resolveExecutionResult, resolveTimeoutCause } from '../utils/execution-result.util';
 
 type QueueLease = ProviderQueueLease | undefined;
-
-const wrapChunkCallback = (
-  idleTimeout: IdleTimeoutHandle,
-  callback?: (chunk: string) => void
-): ((chunk: string) => void) => {
-  return (chunk: string): void => {
-    idleTimeout.reset();
-    callback?.(chunk);
-  };
-};
 
 // A CLI that exits before reading stdin fails the write with EPIPE; its exit code already reports the failure.
 const ignoreStdinError = (): void => undefined;
@@ -96,6 +82,7 @@ const writeStdin = (child: ChildProcess, stdin?: string): void => {
 
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
   const { binaryPath, timeoutMs, idleTimeoutMs, stdin, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
+  const { isResultComplete } = options;
 
   return new Promise<ExecutionResult>((resolve, reject) => {
     const child = spawnProcess(options);
@@ -105,16 +92,19 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     const timeout = setupTimeout(timeoutMs, child.pid);
     const idleTimeout = setupIdleTimeout(idleTimeoutMs, child.pid);
-    const stdout = attachStreamCollector(child.stdout, wrapChunkCallback(idleTimeout, onStdoutChunk));
+    const resultExitWatch = setupResultExitWatch(isResultComplete, child.pid);
+    const stdout = attachStreamCollector(child.stdout, wrapStdoutCallback(idleTimeout, resultExitWatch, onStdoutChunk));
     const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
     const abort = createAbortSubscription(signal, child.pid);
-    const wasKillRequested = (): boolean =>
-      timeout.markTimedOut() || idleTimeout.timedOut() || signal?.aborted === true;
+    const wasStoppedByWatch = (): boolean =>
+      timeout.markTimedOut() || idleTimeout.timedOut() || resultExitWatch.stopped();
+    const wasKillRequested = (): boolean => wasStoppedByWatch() || signal?.aborted === true;
     const cancelStdioRelease = releaseStdioAfterKilledExit(child, wasKillRequested);
 
     const cleanup = (): void => {
       clearTimeout(timeout.timer);
       idleTimeout.clear();
+      resultExitWatch.clear();
       abort.detach();
       cancelStdioRelease();
       untrackGroup();
@@ -136,6 +126,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       const timeoutCause = resolveTimeoutCause({
         wallClockTimedOut: timeout.markTimedOut(),
         idleTimedOut: idleTimeout.timedOut(),
+        resultExitStopped: resultExitWatch.stopped(),
         timeoutMs,
         idleTimeoutMs,
       });

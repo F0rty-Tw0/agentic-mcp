@@ -85,6 +85,27 @@ describe('FEATURE: executeCommand with real child processes', () => {
     });
   });
 
+  describe('GIVEN a child that prints a complete result and then never exits', () => {
+    const script = "process.stdout.write('RESULT\\n'); setTimeout(() => undefined, 60_000)";
+    const isResultComplete = (chunk: string): boolean => chunk.includes('RESULT');
+
+    it('WHEN a result detector is set THEN the child is stopped well before the timeout', async () => {
+      const options = buildNodeOptions(script, { timeoutMs: 30_000, isResultComplete });
+
+      const result = await executeCommand(options);
+
+      expect(result.executionTimeMs).toBeLessThan(15_000);
+    }, 20_000);
+
+    it('WHEN a result detector is set THEN the result reports the stop as a timeout', async () => {
+      const options = buildNodeOptions(script, { timeoutMs: 30_000, isResultComplete });
+
+      const result = await executeCommand(options);
+
+      expect(result.timedOut).toBe(true);
+    }, 20_000);
+  });
+
   describe('GIVEN a child whose grandchild inherits its stdio', () => {
     it('WHEN timeoutMs elapses THEN the whole tree is killed and the result settles as timed out', async () => {
       const options = buildNodeOptions(GRANDCHILD_HOLDING_STDIO_SCRIPT, { timeoutMs: 500 });

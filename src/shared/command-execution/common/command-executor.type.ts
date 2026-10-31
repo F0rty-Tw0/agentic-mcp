@@ -31,6 +31,14 @@ export type IdleTimeoutHandle = {
   readonly timedOut: () => boolean;
 };
 
+export type ResultCompleteDetector = (chunk: string) => boolean;
+
+export type ResultExitWatch = {
+  readonly observe: (chunk: string) => void;
+  readonly clear: () => void;
+  readonly stopped: () => boolean;
+};
+
 export type RetryWithExponentialBackoffInput<T> = {
   readonly operation: RetryOperation<T>;
   readonly maxRetries: number;
@@ -60,9 +68,10 @@ export type ExecuteCommandOptions = {
   readonly onStderrChunk?: StreamChunkCallback;
   readonly signal?: AbortSignal;
   readonly onSpawned?: (pid: number) => void;
+  readonly isResultComplete?: ResultCompleteDetector;
 };
 
-export type ExecutionTimeoutKind = 'wall-clock' | 'idle';
+export type ExecutionTimeoutKind = 'wall-clock' | 'idle' | 'result-exit';
 
 export type ExecutionTimeoutCause = {
   readonly kind: ExecutionTimeoutKind;
@@ -81,6 +90,7 @@ export type ResolveExecutionResultInput = {
 export type ResolveTimeoutCauseInput = {
   readonly wallClockTimedOut: boolean;
   readonly idleTimedOut: boolean;
+  readonly resultExitStopped: boolean;
   readonly timeoutMs: number;
   readonly idleTimeoutMs?: number;
 };

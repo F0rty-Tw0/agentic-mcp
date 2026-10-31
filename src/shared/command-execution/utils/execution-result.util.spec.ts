@@ -9,6 +9,7 @@ describe('FEATURE: resolveTimeoutCause', () => {
       const result = resolveTimeoutCause({
         wallClockTimedOut: true,
         idleTimedOut: true,
+        resultExitStopped: false,
         timeoutMs: 5_000,
         idleTimeoutMs: 1_000,
       });
@@ -23,6 +24,7 @@ describe('FEATURE: resolveTimeoutCause', () => {
       const result = resolveTimeoutCause({
         wallClockTimedOut: false,
         idleTimedOut: true,
+        resultExitStopped: false,
         timeoutMs: 5_000,
         idleTimeoutMs: 1_000,
       });
@@ -32,9 +34,27 @@ describe('FEATURE: resolveTimeoutCause', () => {
     });
   });
 
+  describe('GIVEN the child was stopped after a complete result', () => {
+    it('WHEN resolving the cause THEN result-exit wins over the timers', () => {
+      const result = resolveTimeoutCause({
+        wallClockTimedOut: true,
+        idleTimedOut: false,
+        resultExitStopped: true,
+        timeoutMs: 5_000,
+      });
+
+      expect(result?.kind).toBe('result-exit');
+    });
+  });
+
   describe('GIVEN neither timer fired', () => {
     it('WHEN resolving the cause THEN there is none', () => {
-      const result = resolveTimeoutCause({ wallClockTimedOut: false, idleTimedOut: false, timeoutMs: 5_000 });
+      const result = resolveTimeoutCause({
+        wallClockTimedOut: false,
+        idleTimedOut: false,
+        resultExitStopped: false,
+        timeoutMs: 5_000,
+      });
 
       expect(result).toBeUndefined();
     });

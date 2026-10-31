@@ -6,7 +6,13 @@ import type {
 } from '../common';
 
 export const resolveTimeoutCause = (input: ResolveTimeoutCauseInput): ExecutionTimeoutCause | undefined => {
-  const { wallClockTimedOut, idleTimedOut, timeoutMs, idleTimeoutMs } = input;
+  const { wallClockTimedOut, idleTimedOut, resultExitStopped, timeoutMs, idleTimeoutMs } = input;
+
+  if (resultExitStopped) {
+    const resultExitCause: ExecutionTimeoutCause = { kind: 'result-exit', limitMs: 0 };
+
+    return resultExitCause;
+  }
 
   if (wallClockTimedOut) {
     const wallClockCause: ExecutionTimeoutCause = { kind: 'wall-clock', limitMs: timeoutMs };

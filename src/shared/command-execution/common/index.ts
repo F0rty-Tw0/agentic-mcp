@@ -8,6 +8,8 @@ export type {
   ProviderQueueOptions,
   ResolveExecutionResultInput,
   ResolveTimeoutCauseInput,
+  ResultCompleteDetector,
+  ResultExitWatch,
   RetryWithExponentialBackoffInput,
   StdioReleasableChild,
   StreamChunkCallback,
@@ -22,5 +24,6 @@ export {
   GLOBAL_SLOT_MAX_EXTRA_WAIT_MS,
   MAX_ERROR_STDERR_BYTES,
   PROBE_QUEUE_TIMEOUT_MS,
+  RESULT_EXIT_GRACE_MS,
   STDIO_RELEASE_GRACE_MS,
 } from './execution-limits.const';

@@ -30,6 +30,9 @@ const buildTimeoutText = (timeoutCause?: ExecutionTimeoutCause): string => {
 
   if (timeoutCause.kind === 'idle') return idleText;
 
+  if (timeoutCause.kind === 'result-exit')
+    return 'Process stopped after it printed a complete result but did not exit.';
+
   const wallClockText = `Process timed out after ${limit} (provider timeout).`;
 
   return wallClockText;
