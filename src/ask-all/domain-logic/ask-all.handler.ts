@@ -1,6 +1,6 @@
 import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
-import { buildErrorResult } from './ask-all-result.builder';
+import { buildErrorResult, buildProviderFailure } from './ask-all-result.builder';
 import { runProviderAsk } from './ask-all-runner';
 import { buildAskAllSummary } from './ask-all-summary.builder';
 import { GLOBAL_MAX_CONCURRENT_SPAWNS, createSemaphore, startHeartbeat } from '../../shared';
@@ -32,6 +32,13 @@ const resolveAskAllInput = (resolvedProviders: ResolvedProviderEntry[], args: As
   return result;
 };
 
+const buildCancelledLegResult = (provider: ResolvedProviderEntry): AskAllProviderResult => {
+  const cancelledText = `ask_all was cancelled before provider "${provider.name}" started`;
+  const result = buildProviderFailure(provider, 0, cancelledText);
+
+  return result;
+};
+
 const runAllProviderAsks = async (
   resolvedInput: ResolvedAskAllInput,
   args: AskAllToolArgs,
@@ -44,6 +51,8 @@ const runAllProviderAsks = async (
     await spawnSlots.acquireSlot();
 
     try {
+      if (callerSignal?.aborted) return buildCancelledLegResult(provider);
+
       const result = await runProviderAsk({ provider, args, model: resolvedInput.model, callerSignal });
 
       return result;
