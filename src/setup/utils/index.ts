@@ -1,3 +1,5 @@
+export { resolveSkillPath } from './client-skill.util';
+
 export { buildMergedClientConfig } from './merge-client-config.util';
 
 export { buildSetupPlan } from './plan-setup.util';

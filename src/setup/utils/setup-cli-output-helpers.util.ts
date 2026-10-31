@@ -1,3 +1,4 @@
+import { SKILL_CONSENT_REASON } from '../common';
 import type {
   DetectedProvider,
   MinimalSetupOutputInput,
@@ -115,6 +116,8 @@ export const formatSkillOutput = (skillResult: SkillInstallResult): string => {
       return `Skill installed: ${skillResult.skillPath}\n`;
     case 'already-exists':
       return `Skill already up to date: ${skillResult.skillPath}\n`;
+    case 'skipped':
+      return `Skill not installed: ${skillResult.reason ?? SKILL_CONSENT_REASON}\n`;
     case 'error':
       return `Skill install failed: ${skillResult.reason ?? 'unknown error'}\n`;
     default:

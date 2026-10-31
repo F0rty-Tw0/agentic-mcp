@@ -97,7 +97,7 @@ export type ParsedSetupArgs = {
 };
 
 export type SkillInstallResult = {
-  readonly status: 'installed' | 'already-exists' | 'error';
+  readonly status: 'installed' | 'already-exists' | 'skipped' | 'error';
   readonly skillPath: string;
   readonly reason?: string;
 };

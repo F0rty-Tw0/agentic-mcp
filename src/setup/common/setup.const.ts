@@ -21,6 +21,8 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
   'generic',
 ];
 
+export const SKILL_CONSENT_REASON = 'rerun with --yes to install it';
+
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;
 
 type ClientTargetMap = Readonly<Record<SupportedClient, ClientTarget>>;

@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import type { SkillInstallDependencies, SkillInstallResult } from '../common';
 import { SKILL_CONTENT } from '../common/skill-content';
+import { resolveSkillPath } from '../utils';
 
 const defaultDependencies: SkillInstallDependencies = {
   homeDirectory: homedir(),
@@ -18,7 +19,7 @@ export const installSkill = async (
   injectedDependencies?: Partial<SkillInstallDependencies>
 ): Promise<SkillInstallResult> => {
   const dependencies: SkillInstallDependencies = { ...defaultDependencies, ...injectedDependencies };
-  const skillPath = path.join(dependencies.homeDirectory, '.claude', 'skills', 'using-agentic-mcp', 'SKILL.md');
+  const skillPath = resolveSkillPath(dependencies.homeDirectory);
 
   try {
     const existing = await dependencies.readFile(skillPath, 'utf8');

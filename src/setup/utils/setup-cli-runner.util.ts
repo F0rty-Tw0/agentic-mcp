@@ -11,6 +11,7 @@ import type {
   SkillInstallResult,
   SupportedClient,
 } from '../common';
+import { buildSkippedSkillResult } from './client-skill.util';
 import { buildDefaultClientToolTimeout, resolveClientToolTimeout } from './resolve-client-tool-timeout.util';
 import {
   formatHumanMinimalSetupOutput,
@@ -72,7 +73,7 @@ const installClientSkill = async (
   const isConsentGated = isConsentRequired(plan);
   const hasConsent = parsedArgs.yes || isConsentGated;
 
-  if (!hasConsent) return undefined;
+  if (!hasConsent) return buildSkippedSkillResult(dependencies.homeDirectory);
 
   const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
 
