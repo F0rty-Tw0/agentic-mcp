@@ -4,6 +4,8 @@ export type StreamChunkCallback = (chunk: string) => void;
 
 export type UntrackChildGroup = () => void;
 
+export type StopChild = () => void;
+
 export type ChildGroupRegistry = {
   readonly track: (pid: number) => UntrackChildGroup;
   readonly terminateAll: () => void;

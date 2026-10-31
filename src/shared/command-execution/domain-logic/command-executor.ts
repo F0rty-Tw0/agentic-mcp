@@ -4,13 +4,20 @@ import process from 'node:process';
 import crossSpawn from 'cross-spawn';
 
 import { defaultProviderQueueStore } from './provider-queue';
-import type { ExecuteCommandOptions, ExecutionResult, ProviderQueueOptions, UntrackChildGroup } from '../common';
+import type {
+  ExecuteCommandOptions,
+  ExecutionResult,
+  ProviderQueueOptions,
+  StopChild,
+  UntrackChildGroup,
+} from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import { defaultChildGroupRegistry } from './child-group-registry';
 import { setupIdleTimeout } from './command-idle-timeout';
 import { setupResultExitWatch } from './command-result-exit';
 import { releaseStdioAfterKilledExit, trackExitBeforeKill } from './command-stdio-release';
 import { createAbortSubscription, setupTimeout } from './command-timeout';
+import { killProcess } from './platform';
 import { CommandExecutionError } from '../common/errors';
 import type { ProviderQueueLease } from '../common/provider-queue.type';
 import { wrapChunkCallback, wrapStdoutCallback } from '../utils/command-chunk-callback.util';
@@ -72,6 +79,16 @@ const trackChildGroup = (child: ChildProcess): UntrackChildGroup => {
   return untrack;
 };
 
+const buildStopChild = (pid: number | undefined): StopChild | undefined => {
+  if (pid === undefined) return;
+
+  const stopChild: StopChild = (): void => {
+    void killProcess(pid);
+  };
+
+  return stopChild;
+};
+
 const writeStdin = (child: ChildProcess, stdin?: string): void => {
   if (!stdin || !child.stdin) return;
 
@@ -96,12 +113,13 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     if (child.pid !== undefined && onSpawned) onSpawned(child.pid);
 
-    const timeout = setupTimeout(timeoutMs, child.pid);
-    const idleTimeout = setupIdleTimeout(idleTimeoutMs, child.pid);
-    const resultExitWatch = setupResultExitWatch(options, child.pid);
+    const stopChild = buildStopChild(child.pid);
+    const timeout = setupTimeout(timeoutMs, stopChild);
+    const idleTimeout = setupIdleTimeout(idleTimeoutMs, stopChild);
+    const resultExitWatch = setupResultExitWatch(options, stopChild);
     const stdout = attachStreamCollector(child.stdout, wrapStdoutCallback(idleTimeout, resultExitWatch, onStdoutChunk));
     const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
-    const abort = createAbortSubscription(signal, child.pid);
+    const abort = createAbortSubscription(signal, stopChild);
     const wasStoppedByWatch = (): boolean =>
       timeout.markTimedOut() || idleTimeout.timedOut() || resultExitWatch.stopped();
     const wasKillRequested = (): boolean => wasStoppedByWatch() || signal?.aborted === true;

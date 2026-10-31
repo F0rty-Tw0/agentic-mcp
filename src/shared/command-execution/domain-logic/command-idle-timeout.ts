@@ -1,10 +1,12 @@
-import type { IdleTimeoutHandle } from '../common';
-import { killProcess } from './platform';
+import type { IdleTimeoutHandle, StopChild } from '../common';
 
 const NOOP_HANDLE: IdleTimeoutHandle = { reset: () => undefined, clear: () => undefined, timedOut: () => false };
 
-export const setupIdleTimeout = (idleTimeoutMs: number | undefined, pid: number | undefined): IdleTimeoutHandle => {
-  if (!idleTimeoutMs || pid === undefined) return NOOP_HANDLE;
+export const setupIdleTimeout = (
+  idleTimeoutMs: number | undefined,
+  stopChild: StopChild | undefined
+): IdleTimeoutHandle => {
+  if (!idleTimeoutMs || !stopChild) return NOOP_HANDLE;
 
   let timer: NodeJS.Timeout | undefined;
   let idleTimedOut = false;
@@ -14,7 +16,7 @@ export const setupIdleTimeout = (idleTimeoutMs: number | undefined, pid: number 
 
     timer = setTimeout(() => {
       idleTimedOut = true;
-      void killProcess(pid);
+      stopChild();
     }, idleTimeoutMs);
   };
 

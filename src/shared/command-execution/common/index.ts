@@ -12,6 +12,7 @@ export type {
   ResultExitWatch,
   RetryWithExponentialBackoffInput,
   StdioReleasableChild,
+  StopChild,
   StreamChunkCallback,
   StreamCollector,
   UntrackChildGroup,
