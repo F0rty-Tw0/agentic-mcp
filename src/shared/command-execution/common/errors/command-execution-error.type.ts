@@ -1,7 +1,10 @@
+import type { ExecutionTimeoutCause } from '../command-executor.type';
+
 export type CommandExecutionErrorDetails = {
   readonly exitCode?: number | null;
   readonly signal?: string | null;
   readonly timedOut?: boolean;
+  readonly timeoutCause?: ExecutionTimeoutCause;
   readonly stderr?: string;
   readonly output?: string;
 };

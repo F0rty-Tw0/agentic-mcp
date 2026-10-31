@@ -1,5 +1,6 @@
 import type { McpErrorResponse, McpTextContent } from '../../../mcp-protocol/common';
-import { MAX_ERROR_STDERR_BYTES } from '../execution-limits.const';
+import type { ExecutionTimeoutCause } from '../command-executor.type';
+import { MAX_ERROR_STDERR_BYTES, MS_PER_SECOND } from '../execution-limits.const';
 import type { CommandExecutionErrorDetails, QueueTimeoutErrorDetails } from './command-execution-error.type';
 
 const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
@@ -12,6 +13,20 @@ const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
   return `${cappedDetail}\n[${channel} truncated]`;
 };
 
+const buildTimeoutText = (timeoutCause?: ExecutionTimeoutCause): string => {
+  if (!timeoutCause) return 'Process timed out.';
+
+  const limitSeconds = Math.round(timeoutCause.limitMs / MS_PER_SECOND);
+
+  const idleText = `Process killed after no output for ${limitSeconds} s (provider idleTimeout).`;
+
+  if (timeoutCause.kind === 'idle') return idleText;
+
+  const wallClockText = `Process timed out after ${limitSeconds} s (provider timeout).`;
+
+  return wallClockText;
+};
+
 const buildQueueTimeoutMessage = (details: QueueTimeoutErrorDetails): string => {
   return `Queue timeout for provider "${details.providerName}": waited ${details.waitMs}ms (limit: ${details.queueTimeoutMs}ms).`;
 };
@@ -20,6 +35,7 @@ export class CommandExecutionError extends Error {
   public readonly exitCode?: number | null;
   public readonly signal?: string | null;
   public readonly timedOut?: boolean;
+  public readonly timeoutCause?: ExecutionTimeoutCause;
   public readonly stderr?: string;
   public readonly output?: string;
 
@@ -29,6 +45,7 @@ export class CommandExecutionError extends Error {
     this.exitCode = details.exitCode;
     this.signal = details.signal;
     this.timedOut = details.timedOut;
+    this.timeoutCause = details.timeoutCause;
     this.stderr = details.stderr;
     this.output = details.output;
   }
@@ -37,7 +54,7 @@ export class CommandExecutionError extends Error {
     const parts: string[] = [this.message];
 
     if (this.timedOut) {
-      parts.push('Process timed out.');
+      parts.push(buildTimeoutText(this.timeoutCause));
     } else if (this.signal != null) {
       parts.push(`Killed by signal: ${this.signal}.`);
     } else if (this.exitCode != null) {
