@@ -28,6 +28,13 @@ const throwForGroupTarget = (target: number): true => {
   return true;
 };
 
+// The group takes SIGTERM, then is gone by the first liveness probe.
+const groupExitsOnSigterm = (_target: number, signal?: string | number): true => {
+  if (signal === 0) throw new Error('ESRCH');
+
+  return true;
+};
+
 describe('FEATURE: kill a child that already exited', () => {
   const originalPlatform = process.platform;
 
@@ -59,6 +66,21 @@ describe('FEATURE: kill a child that already exited', () => {
       const result = await killProcess(CHILD_PID, { childExited: true });
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('GIVEN posix and a child that exited while its group lives on', () => {
+    beforeEach(() => {
+      Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+    });
+
+    it('WHEN killed THEN the group still gets SIGTERM, since its id stays reserved while members live', async () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(groupExitsOnSigterm);
+
+      const result = await killProcess(CHILD_PID, { childExited: true });
+
+      expect(killSpy).toHaveBeenCalledWith(-CHILD_PID, 'SIGTERM');
+      expect(result).toBe(true);
     });
   });
 
