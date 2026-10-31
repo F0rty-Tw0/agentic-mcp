@@ -14,6 +14,7 @@
 - Guard prompts that start with `-` so CLIs do not read them as options, and prompts like `constructor` are no longer swallowed by the CLI parser
 - Move the toolchain to TypeScript 7, Vitest 5, ESLint 10, lint-suite 3, pnpm 12 and Node 26 LTS (Node 22 and 24 still supported)
 - Move from `@modelcontextprotocol/sdk` 1.x to the v2 packages `@modelcontextprotocol/server` and `@modelcontextprotocol/client` ^2.4; the stdio server keeps serving 2025-era clients and now also accepts 2026-07-28 clients, and tool input schemas declare JSON Schema 2020-12 instead of draft-07
+- **Changed:** with the v2 SDK, closing stdin while a call is running aborts that call without a response, as the MCP stdio binding specifies (it used to answer, then exit). Calling an unknown tool now returns a JSON-RPC error (`-32602 Tool X not found`) instead of a tool result with `isError`, invalid-argument messages are worded differently, and tool definitions no longer carry `execution.taskSupport`
 
 ## [0.1.12] - 2026-03-13
 
