@@ -12,7 +12,8 @@
 - Fix process handling: a CLI that exits before reading stdin no longer crashes the server, kills reach the whole process group, a killed call settles even when a grandchild holds its output, and Ctrl-C stops provider CLIs in CLI mode
 - Fix state handling: running async jobs are no longer pruned after 15 minutes, in-use sessions are not evicted, and the session fallback keeps the conversation history
 - Guard prompts that start with `-` so CLIs do not read them as options, and prompts like `constructor` are no longer swallowed by the CLI parser
-- Move the toolchain to TypeScript 7, Vitest 5, ESLint 10, lint-suite 3, pnpm 12 and Node 26 LTS (Node 22 and 24 still supported); require `@modelcontextprotocol/sdk` ^1.32 for its security fixes
+- Move the toolchain to TypeScript 7, Vitest 5, ESLint 10, lint-suite 3, pnpm 12 and Node 26 LTS (Node 22 and 24 still supported)
+- Move from `@modelcontextprotocol/sdk` 1.x to the v2 packages `@modelcontextprotocol/server` and `@modelcontextprotocol/client` ^2.4; the stdio server keeps serving 2025-era clients and now also accepts 2026-07-28 clients, and tool input schemas declare JSON Schema 2020-12 instead of draft-07
 
 ## [0.1.12] - 2026-03-13
 

@@ -15,11 +15,14 @@ MCP tool registration — registers all MCP tools with the server instance, buil
 | --------------- | ------------------------------------------------ |
 | `common/`       | Tool registry types                              |
 | `domain-logic/` | Tool registry orchestration and ask tool builder |
+| `utils/`        | Tool args predicates, SDK boundary adapters      |
 
 ## Key Files
 
 - `domain-logic/tool-registry.ts` — `registerAllTools()` — main registration function that connects providers to MCP tools
 - `domain-logic/ask-tool.builder.ts` — Builds `ask_<provider>` tool definitions with dynamic input schemas based on provider capabilities
+- `utils/progress-context.util.ts` — `toProgressContext()` — adapts the SDK's per-request `ctx` into the `ProgressContext` the handlers take
+- `utils/input-schema.util.ts` — `toInputSchema()` — wraps a tool definition's raw zod shape in `z.object()` for `registerTool`
 
 ## Integration Tests
 
@@ -32,4 +35,4 @@ These tests exercise `registerAllTools()` indirectly through `createServer()`.
 
 ## Unit Tests
 
-2 `.spec.ts` files covering the tool registry (registration logic, handler wiring) and the ask tool builder (schema generation from provider config).
+9 `.spec.ts` files covering the tool registry (registration logic, handler wiring, progress-context wiring), the ask and review tool builders (schema generation from provider config), and the `utils/` adapters.

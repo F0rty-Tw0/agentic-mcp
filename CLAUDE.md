@@ -3,7 +3,7 @@
 ## Gotchas
 
 - **`pnpm run`** — always `pnpm run <script>`, never bare `pnpm <script>`.
-- **No extensions on relative imports** — use `'./foo'`, never `'./foo.ts'` or `'./foo.js'`. Package imports keep their original extension (`'@modelcontextprotocol/sdk/server/mcp.js'`).
+- **No extensions on relative imports** — use `'./foo'`, never `'./foo.ts'` or `'./foo.js'`. Package imports use the specifier the package exports, extension included only when the export has one (`'@modelcontextprotocol/server/stdio'`).
 - **Config over code** — new providers go in `providers.json`, not in source files. No code changes, no rebuilds.
 - **Never `shell: true`** — all spawns use `cross-spawn` with array args. Never pass user input through a shell.
 
