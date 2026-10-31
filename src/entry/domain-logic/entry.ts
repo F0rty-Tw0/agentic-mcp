@@ -12,11 +12,15 @@ import { registerGracefulShutdown } from './graceful-shutdown';
 import { createServerFactory } from './server-factory';
 import type { ConfigPathOptions } from '../../shared/provider/common';
 
+const reportStdioError = (error: Error): void => {
+  process.stderr.write(`agentic-mcp: ${error.message}\n`);
+};
+
 const startServer = async (configPath?: string): Promise<void> => {
   const configPathOptions: ConfigPathOptions = { configPath };
   const options = configPath ? configPathOptions : undefined;
   const serverFactory = await createServerFactory(options);
-  const stdioServer = serveStdio(serverFactory);
+  const stdioServer = serveStdio(serverFactory, { onerror: reportStdioError });
 
   registerGracefulShutdown(async () => {
     await stdioServer.close();

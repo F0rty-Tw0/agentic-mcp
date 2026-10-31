@@ -102,7 +102,9 @@ export const createServer = async (options?: ConfigPathOptions): Promise<McpServ
     }
   }
 
-  if (!resolvedProviders.length) {
+  const shouldWarnNoProviders = options?.warnNoProviders !== false;
+
+  if (!resolvedProviders.length && shouldWarnNoProviders) {
     process.stderr.write(NO_PROVIDERS_WARNING);
   }
 

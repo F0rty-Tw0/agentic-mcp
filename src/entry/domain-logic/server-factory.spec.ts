@@ -57,15 +57,16 @@ describe('createServerFactory', () => {
     });
 
     describe('WHEN a second instance is asked for', () => {
-      it('THEN it builds a fresh server from the same options', async () => {
+      it('THEN it builds a fresh server from the same options without repeating startup warnings', async () => {
         const serverFactory = await createServerFactory(options);
+        const quietOptions: ConfigPathOptions = { ...options, warnDangerousFlags: false, warnNoProviders: false };
 
         await serverFactory();
 
         const server = await serverFactory();
 
         expect(server).toBe(freshServer);
-        expect(mocks.createServer).toHaveBeenNthCalledWith(2, options);
+        expect(mocks.createServer).toHaveBeenNthCalledWith(2, quietOptions);
       });
     });
   });

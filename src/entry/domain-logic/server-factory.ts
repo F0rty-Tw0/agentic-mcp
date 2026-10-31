@@ -9,8 +9,12 @@ export const createServerFactory = async (options?: ConfigPathOptions): Promise<
   const startupServer = await createServer(options);
   const unclaimedServers: McpServer[] = [startupServer];
 
+  // A client that probes server/discover and then falls back to a 2025 handshake gets a second instance;
+  // its startup warnings were already printed for the first one.
+  const repeatOptions: ConfigPathOptions = { ...options, warnDangerousFlags: false, warnNoProviders: false };
+
   const serverFactory = async (): Promise<McpServer> => {
-    const server = unclaimedServers.pop() ?? (await createServer(options));
+    const server = unclaimedServers.pop() ?? (await createServer(repeatOptions));
 
     return server;
   };
