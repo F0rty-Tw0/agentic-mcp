@@ -65,7 +65,7 @@ Runs the bundled `copilot` config against a fake `copilot` (`test/fixtures/fake-
 
 ### `ask.handler-copilot-lost-session.test.ts` and `ask.handler-copilot-start-retry.test.ts`
 
-Run the bundled `copilot` config against the same fake. Test switches in the env: `FAKE_COPILOT_RUN_LOG` logs each run's argv, `FAKE_COPILOT_LOST_SESSION=<id>` fails `--resume <id>`, and `FAKE_COPILOT_REJECT_SESSION_ID=1` rejects `--session-id=` as an unknown option.
+Run the bundled `copilot` config against the same fake. Test switches in the env: `FAKE_COPILOT_RUN_LOG` logs each run's argv, `FAKE_COPILOT_LOST_SESSION=<id>` fails `--resume <id>`, `FAKE_COPILOT_REJECT_SESSION_ID=1` rejects `--session-id=` as an unknown option, and `FAKE_COPILOT_FAIL_RUN=1` fails every run with a generic error.
 
 | Test                       | What It Verifies                                                                 | Expected Output                                       |
 | -------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
@@ -73,6 +73,8 @@ Run the bundled `copilot` config against the same fake. Test switches in the env
 | Lost session, next turn    | Copilot runs once and resumes the new id                                         | One run, argv ends with `--resume <new uuid>`         |
 | Start flag rejected, ask 1 | The ask reruns once without `--session-id=` and succeeds                         | Two runs: with the flag, then without; no error       |
 | Start flag rejected, ask 2 | The session no longer passes the flag and replays the first turn                 | One run, no `--session-id=`, `-p` holds the old turns |
+| Generic failure, ask 1     | A failure that is not a flag rejection is not rerun                              | One run, with `--session-id=`; error returned         |
+| Generic failure, ask 2     | The session keeps passing the start flag                                         | One run, with `--session-id=`                         |
 
 ### `ask.handler-cancellation.test.ts`
 
