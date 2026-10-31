@@ -1,3 +1,4 @@
+import { buildKeptTimeoutNote } from './kept-timeout-note.util';
 import type { ClientTarget, McpServerEntry, TimeoutKeyRule } from '../common';
 
 type JsonRecord = Readonly<Record<string, unknown>>;
@@ -6,6 +7,7 @@ type MergeServerEntryInput = {
   readonly existingEntry: unknown;
   readonly agenticServerEntry: McpServerEntry;
   readonly target: ClientTarget;
+  readonly toolTimeoutMs?: number;
 };
 
 type MergeServerEntryResult = {
@@ -129,7 +131,7 @@ const pickPresentKeys = (source: JsonRecord, keys: string[]): JsonRecord => {
 };
 
 export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServerEntryResult => {
-  const { agenticServerEntry, target } = input;
+  const { agenticServerEntry, target, toolTimeoutMs } = input;
   const emptyEntry: JsonRecord = {};
   const existingEntry = isRecord(input.existingEntry) ? input.existingEntry : emptyEntry;
   const generatedEntry: JsonRecord = agenticServerEntry;
@@ -157,6 +159,10 @@ export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServ
 
     timeoutValues[key] = choice.value;
   }
+
+  const keptTimeoutNote = buildKeptTimeoutNote({ key: target.keptTimeoutKey, existingEntry, toolTimeoutMs });
+
+  if (keptTimeoutNote != null) notes.push(keptTimeoutNote);
 
   const mergedEntry: JsonRecord = { ...existingEntry, ...generatedEntry, ...preservedValues, ...timeoutValues };
   const keptEntries = Object.entries(mergedEntry).filter(([key]) => !omittedKeys.includes(key));

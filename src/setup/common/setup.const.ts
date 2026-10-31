@@ -58,6 +58,7 @@ const CLAUDE_CODE_TARGET: ClientTarget = {
   preservedKeys: [],
   configPathEnvRules: [CLAUDE_CONFIG_DIR_RULE],
   timeoutNote: CLAUDE_CODE_TIMEOUT_NOTE,
+  keptTimeoutKey: 'timeout',
 };
 
 const CODEX_TARGET: ClientTarget = {

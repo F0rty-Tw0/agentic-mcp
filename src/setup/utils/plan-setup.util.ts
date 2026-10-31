@@ -140,6 +140,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     existingConfigText: input.existingConfigText,
     agenticServerEntry: input.agenticServerEntry,
     target,
+    toolTimeoutMs: input.toolTimeout?.ms,
   });
   const isMergeMode = input.mode === 'merge';
   const isBlockedMerge = BLOCKING_MERGE_STATUSES.includes(mergedConfig.status);

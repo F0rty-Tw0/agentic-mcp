@@ -64,6 +64,8 @@ export type ClientTarget = {
   readonly preservedKeys: string[];
   readonly configPathEnvRules: ConfigPathEnvRule[];
   readonly timeoutNote?: string;
+  // A timeout key setup never writes but keeps; a value below the tool-call timeout gets a warning note.
+  readonly keptTimeoutKey?: string;
 };
 
 export type ClientToolTimeoutSource = 'providers-config' | 'defaults';

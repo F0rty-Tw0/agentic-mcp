@@ -7,6 +7,7 @@ type MergeClientConfigInput = {
   readonly existingConfigText?: string;
   readonly agenticServerEntry: McpServerEntry;
   readonly target: ClientTarget;
+  readonly toolTimeoutMs?: number;
 };
 
 type MergeResultStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json' | 'unmergeable';
@@ -127,7 +128,7 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
   const currentServers = isRecord(serversValue) ? serversValue : emptyRoot;
   const currentAgentic = currentServers['agentic-mcp'];
 
-  const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
+  const mergedEntry = mergeAgenticServerEntry({ ...input, existingEntry: currentAgentic });
   const mergedServers = { ...currentServers, 'agentic-mcp': mergedEntry.entry };
   const mergedConfig = createServersConfig(parsedRoot, target.serversKey, mergedServers);
   const isUnchanged = isDeepStrictEqual(currentAgentic, mergedEntry.entry);

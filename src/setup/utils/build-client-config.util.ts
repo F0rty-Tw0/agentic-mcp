@@ -6,6 +6,7 @@ type BuildClientConfigInput = {
   readonly existingConfigText?: string;
   readonly agenticServerEntry: McpServerEntry;
   readonly target: ClientTarget;
+  readonly toolTimeoutMs?: number;
 };
 
 const buildJsonClientConfig = (input: BuildClientConfigInput): ClientConfigMergeResult => {
