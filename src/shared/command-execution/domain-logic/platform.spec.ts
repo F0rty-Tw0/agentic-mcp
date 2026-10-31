@@ -232,7 +232,7 @@ describe('platform', () => {
   });
 
   describe('buildMinimalEnv', () => {
-    it('GIVEN provider env values WHEN building minimal env THEN provider values override safe keys and null maps to empty string', () => {
+    it('GIVEN provider env values WHEN building minimal env THEN provider values override safe keys and null removes the key', () => {
       vi.stubEnv('PATH', '/usr/bin');
       vi.stubEnv('HOME', '/home/tester');
 
@@ -245,7 +245,7 @@ describe('platform', () => {
       expect(env.PATH).toBe('/custom/bin');
       expect(env.HOME).toBe('/home/tester');
       expect(env.feature_flag).toBe('on');
-      expect(env.null_setting).toBe('');
+      expect('null_setting' in env).toBe(false);
     });
 
     it('GIVEN non-safe key in process.env WHEN building minimal env THEN it is excluded', () => {
