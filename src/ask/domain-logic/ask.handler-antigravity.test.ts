@@ -152,6 +152,17 @@ describe('FEATURE: antigravity provider against a fake agy CLI', () => {
   });
 
   it(
+    'GIVEN an agy run that exits while a process it started holds stdout WHEN asked THEN the attribution warns that agy exited',
+    async () => {
+      const result = await askFakeAgy({ prompt: 'exit-held', include_structured: true });
+      const attribution = readAttribution(result);
+
+      expect(attribution?.warning).toContain('antigravity exited after printing a complete result');
+    },
+    HANG_CASE_TIMEOUT_MS
+  );
+
+  it(
     'GIVEN an agy stream-json run that prints its result event and then never exits WHEN asked THEN the answer is returned as a success',
     async () => {
       const result = await askFakeAgy({ prompt: 'hang', stream_live: true });

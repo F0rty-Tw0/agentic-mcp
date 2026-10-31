@@ -6,6 +6,7 @@ import {
   resolveTimeoutResultWarning,
 } from './complete-result.util';
 import { MAX_OUTPUT_BYTES } from '../../shared/command-execution/common';
+import type { ExecutionTimeoutCause } from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 
 const AGY_RESULT_EVENT = '{"event":"result","result":{"status":"SUCCESS","response":"agy answer"}}';
@@ -207,6 +208,24 @@ describe('FEATURE: timeout result acceptance', () => {
 
       expect(warning).toBeUndefined();
     });
+  });
+
+  it('GIVEN a run stopped after it exited while a process it started held stdout WHEN the result is accepted THEN the warning says it exited', () => {
+    const timeoutCause: ExecutionTimeoutCause = { kind: 'result-exit', limitMs: 0, outputHeldAfterExit: true };
+    const config = { acceptResultOnTimeout: true };
+    const result = { stdout: '{"response":"agy answer"}', timedOut: true, timeoutCause };
+
+    const warning = resolveTimeoutResultWarning({
+      providerName: 'antigravity',
+      config,
+      result,
+      outputFormat: 'json',
+      wasCancelled: false,
+    });
+
+    expect(warning).toBe(
+      'antigravity exited after printing a complete result, but a process it started kept its output open, so that process was stopped; the printed result is returned.'
+    );
   });
 
   it('GIVEN a timed-out text run WHEN it printed an answer THEN no warning is returned', () => {

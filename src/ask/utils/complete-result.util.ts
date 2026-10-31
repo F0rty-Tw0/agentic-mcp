@@ -7,7 +7,11 @@ import {
   hasEnvelopeFailure,
 } from './result-envelope.util';
 import { MAX_OUTPUT_BYTES } from '../../shared/command-execution/common';
-import type { ExecutionResult, ResultCompleteDetector } from '../../shared/command-execution/common';
+import type {
+  ExecutionResult,
+  ExecutionTimeoutCause,
+  ResultCompleteDetector,
+} from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ProviderConfig } from '../../shared/provider/common';
 import type { ResultWarnings } from '../common';
@@ -15,7 +19,7 @@ import type { ResultWarnings } from '../common';
 type TimeoutResultInput = {
   readonly providerName: string;
   readonly config: Pick<ProviderConfig, 'acceptResultOnTimeout'>;
-  readonly result: Pick<ExecutionResult, 'stdout' | 'timedOut'>;
+  readonly result: Pick<ExecutionResult, 'stdout' | 'timedOut' | 'timeoutCause'>;
   readonly outputFormat: OutputFormat;
   readonly wasCancelled: boolean;
 };
@@ -77,6 +81,16 @@ export const createResultEnvelopeDetector = (outputFormat: OutputFormat): Result
   return neverComplete;
 };
 
+const describeStop = (providerName: string, timeoutCause?: ExecutionTimeoutCause): string => {
+  const hungNote = `${providerName} did not exit after printing a complete result, so it was stopped; the printed result is returned.`;
+
+  if (!timeoutCause?.outputHeldAfterExit) return hungNote;
+
+  const heldOutputNote = `${providerName} exited after printing a complete result, but a process it started kept its output open, so that process was stopped; the printed result is returned.`;
+
+  return heldOutputNote;
+};
+
 export const resolveTimeoutResultWarning = (timeoutResultInput: TimeoutResultInput): string | undefined => {
   const { providerName, config, result, outputFormat, wasCancelled } = timeoutResultInput;
 
@@ -90,7 +104,7 @@ export const resolveTimeoutResultWarning = (timeoutResultInput: TimeoutResultInp
 
   if (hasFailure) return;
 
-  const stopNote = `${providerName} did not exit after printing a complete result, so it was stopped; the printed result is returned.`;
+  const stopNote = describeStop(providerName, result.timeoutCause);
   const statusNote = describeEnvelopeStatus(providerName, envelope);
   const notes = [stopNote, statusNote];
   const warning = notes.filter((note) => note !== undefined).join(' ');

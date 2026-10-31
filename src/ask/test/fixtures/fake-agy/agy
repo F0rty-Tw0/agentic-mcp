@@ -3,6 +3,7 @@
 // -p <prompt>, --output-format json|stream-json, a JSON envelope with top-level response and conversation_id,
 // stream-json events shaped {"event":"result","result":{...}}, and strict rejection of unknown or stray arguments.
 // A prompt of "hang" prints the complete result and then never exits and ignores SIGTERM, like agy issue #1313.
+// A prompt of "exit-held" starts a background child that keeps stdout open, prints the result and exits 0.
 // A prompt of "print-timeout" prints a result with finished_reason "print_timeout" and exits 0, as agy 1.4.11+ does
 // when --print-timeout expires.
 
@@ -88,4 +89,11 @@ if (outputFormat === 'json') {
 if (prompt === 'hang') {
   process.on('SIGTERM', () => undefined);
   setInterval(() => undefined, 60_000);
+}
+
+if (prompt === 'exit-held') {
+  const { spawn } = process.getBuiltinModule('node:child_process');
+
+  spawn(process.execPath, ['-e', 'setTimeout(() => undefined, 20_000)'], { stdio: ['ignore', 'inherit', 'inherit'] });
+  process.exit(0);
 }
