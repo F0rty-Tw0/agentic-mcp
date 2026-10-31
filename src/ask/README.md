@@ -1,6 +1,6 @@
 # ask
 
-Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to individual AI provider CLIs (Claude, Codex, Copilot, Gemini, OpenCode) and returns their responses.
+Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to individual AI provider CLIs (Claude, Codex, Copilot, Gemini, Antigravity, OpenCode, and more) and returns their responses.
 
 ## What It Does
 
@@ -8,6 +8,7 @@ Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to 
 - Supports three execution modes: **sync** (default), **async** (background job), and **session** (multi-turn conversation)
 - Handles live output streaming via MCP progress notifications when `stream_live` is enabled
 - Supports request cancellation via `AbortSignal` and per-provider timeout enforcement
+- For providers with `acceptResultOnTimeout`, returns a complete printed result (json envelope or terminal stream-json result event) as a success with an attribution `warning` when the CLI is killed by timeout or does not exit `resultExitGraceMs` after printing it (`utils/complete-result.util.ts`)
 - Manages session locking to prevent concurrent writes to the same conversation thread
 
 ## Structure
@@ -39,6 +40,17 @@ Tests live streaming via MCP progress notifications using a real Node.js child p
 | Test                                      | What It Verifies                                                                                                                                                | Expected Output                                                                           |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Stream with interleaved stdout and stderr | Progress notifications are emitted with contiguous sequence numbers, both `stdout` and `stderr` channels appear, and the final event is a `done` terminal event | `result.isError` is falsy; events contain both channel types; last event type is `"done"` |
+
+### `ask.handler-antigravity.test.ts`
+
+Runs the bundled `antigravity` config against a fake `agy` (`test/fixtures/fake-agy/agy`) that rejects unknown or stray arguments like agy print mode.
+
+| Test                             | What It Verifies                                                                         | Expected Output                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| json answer                      | The top-level `response` of the json envelope is the answer                              | Text is `agy-fake: hello`                              |
+| json session resume              | A second call in one session passes `--conversation <conversation_id>`                   | Text contains `(resumed <id>)`                         |
+| stream-json answer and resume    | `{"event":"result","result":{...}}` gives the answer and the conversation id             | Same as json                                           |
+| Result printed, then never exits | The run is stopped after `resultExitGraceMs` and the printed answer returned (agy #1313) | Success, well under the timeout, attribution `warning` |
 
 ### `ask.handler-cancellation.test.ts`
 

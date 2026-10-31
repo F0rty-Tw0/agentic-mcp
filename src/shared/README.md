@@ -12,6 +12,7 @@ Process spawning and stream collection — executes provider CLIs as child proce
 - Enforces concurrency limits via a counting semaphore
 - Collects stdout/stderr streams with configurable output capping
 - Handles timeout enforcement and abort signal propagation
+- Optionally stops a child that has not exited a grace period after an `isResultComplete` detector saw its full result (`domain-logic/command-result-exit.ts`)
 - Tracks active processes for cancellation notification support
 
 **Key files:**
