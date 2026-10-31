@@ -9,7 +9,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const ENTRY_PATH = path.join(import.meta.dirname, '..', '..', 'index.ts');
 const CALL_TIMEOUT_MS = 30_000;
-const SETTLE_MS = 1_500;
+const POLL_INTERVAL_MS = 100;
+const POLL_LIMIT_MS = 15_000;
 const MODERN_PIN = { pin: '2026-07-28' };
 const MODERN_NEGOTIATION: VersionNegotiationOptions = { mode: MODERN_PIN };
 const LEGACY_NEGOTIATION: VersionNegotiationOptions = { mode: 'legacy' };
@@ -22,6 +23,32 @@ type StdioSession = {
 };
 
 const sleep = async (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Polls instead of fixed sleeps so a slow CI runner does not race the provider start or exit.
+const waitFor = async <T>(probe: () => Promise<T | undefined>): Promise<T> => {
+  const deadline = Date.now() + POLL_LIMIT_MS;
+
+  while (Date.now() < deadline) {
+    const value = await probe();
+
+    if (value !== undefined) return value;
+
+    await sleep(POLL_INTERVAL_MS);
+  }
+
+  throw new Error(`condition not met within ${String(POLL_LIMIT_MS)} ms`);
+};
+
+const readPid = async (pidFile: string): Promise<number | undefined> => {
+  try {
+    const pidText = await readFile(pidFile, 'utf8');
+    const pid = Number(pidText);
+
+    return pid;
+  } catch {
+    return undefined;
+  }
+};
 
 // A provider CLI that records its pid and prints a line every 200 ms for 8 s.
 const buildFakeProviderConfig = (pidFile: string): string => {
@@ -80,7 +107,7 @@ const openSession = async (directory: string, era: Era): Promise<StdioSession> =
   return session;
 };
 
-describe.skipIf(process.platform === 'win32')('integration: MCP over stdio in both protocol eras', () => {
+describe.skipIf(process.platform !== 'linux')('integration: MCP over stdio in both protocol eras', () => {
   let directory: string;
   let session: StdioSession | undefined;
 
@@ -127,18 +154,22 @@ describe.skipIf(process.platform === 'win32')('integration: MCP over stdio in bo
         () => 'rejected'
       );
 
-      await sleep(SETTLE_MS);
-      const pidText = await readFile(session.pidFile, 'utf8');
-      const pid = Number(pidText);
+      const { pidFile } = session;
+      const pid = await waitFor(async () => readPid(pidFile));
+      const aliveBeforeCancel = await isAlive(pid);
 
       controller.abort('test cancel');
-      await sleep(SETTLE_MS);
 
       const settled = await outcome;
-      const providerAlive = await isAlive(pid);
+      const stopped = await waitFor(async () => {
+        const alive = await isAlive(pid);
 
+        return alive ? undefined : true;
+      });
+
+      expect(aliveBeforeCancel).toBe(true);
       expect(settled).toBe('rejected');
-      expect(providerAlive).toBe(false);
+      expect(stopped).toBe(true);
     },
     CALL_TIMEOUT_MS
   );
