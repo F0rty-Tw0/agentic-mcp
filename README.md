@@ -319,10 +319,10 @@ Provider definitions live in `src/config/providers.json`.
 
 ### Environment variables
 
-Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp dirs, `USER`/`SHELL`/`TERM`, and proxy and CA settings (`HTTP(S)_PROXY`, `NO_PROXY`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`). Nothing else from your shell reaches them unless the provider lists it in `envPassthrough`. The bundled config passes each CLI its own credentials when they are set, for example `ANTHROPIC_API_KEY` to `claude`, `OPENAI_API_KEY`/`CODEX_API_KEY` to `codex`, `GH_TOKEN`/`GITHUB_TOKEN` to `copilot` and `GEMINI_API_KEY` to `gemini`. To pass more, copy the provider into your own config and extend its list:
+Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp dirs, `USER`/`LOGNAME`/`SHELL`, and proxy and CA settings (`HTTP(S)_PROXY`, `NO_PROXY`, `ALL_PROXY`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`). Nothing else from your shell reaches them unless the provider lists it in `envPassthrough`. The bundled config passes only each CLI's config-directory variable (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`) and no credentials: an API key in the environment overrides a CLI's own login, and `claude -p` always uses `ANTHROPIC_API_KEY` when it is set, which moves a Pro or Max subscription to per-token API billing. If you do authenticate with environment keys, copy the provider into your own config and list them:
 
 ```json
-"envPassthrough": ["OPENAI_API_KEY", "AZURE_OPENAI_API_KEY"]
+"envPassthrough": ["CODEX_HOME", "OPENAI_API_KEY"]
 ```
 
 `env` sets fixed values and wins over a passed-through one; `"KEY": null` removes a base variable in every spelling (`"https_proxy": null` also drops `HTTPS_PROXY`). Anything the provider CLI runs, including tools it starts in your working directory, can read the variables it was given, so keep each list to what that CLI needs.

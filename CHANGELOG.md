@@ -5,7 +5,8 @@
 - Fix `ask_codex`: codex 0.166 removed `--full-auto`, which made every call fail. Codex now runs with its default read-only sandbox unless `sandbox=workspace-write` is passed
 - Update provider flags to the current CLIs: Claude permission modes `auto`/`manual` (`delegate` removed) and effort `xhigh`/`max`, Gemini `--approval-mode yolo`, OpenCode `--auto`, Copilot `--reasoning-effort`
 - Fix native session resume for Codex (`exec resume <id>`) and OpenCode (`--session`), and add it for Gemini (`--resume`)
-- Pass provider credentials (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GH_TOKEN`, …) and proxy/CA variables to the CLIs through a per-provider `envPassthrough` list; `env: { KEY: null }` now removes a variable as documented
+- Pass proxy and CA variables (`HTTP(S)_PROXY`, `NO_PROXY`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`, …) to the provider CLIs, and add a per-provider `envPassthrough` list for anything else, such as API keys. The bundled config passes no credentials, so subscription logins keep working
+- **Changed:** `env: { KEY: null }` now removes the variable, as the schema documents, instead of setting it to an empty string
 - Fix `setup --client claude-code`: it now writes `~/.claude.json`, keeps the file's permissions, follows symlinks, never replaces a config that is not strict JSON, keeps every earlier backup, and refuses `--mode overwrite` on Claude Code's state file
 - Fix MCP cancellation: a cancelled call stops (also while queued) and gets no response; `ask_all` honors cancel; async jobs and calls without a client progress token send no stray progress notifications
 - Fix process handling: a CLI that exits before reading stdin no longer crashes the server, kills reach the whole process group, a killed call settles even when a grandchild holds its output, and Ctrl-C stops provider CLIs in CLI mode

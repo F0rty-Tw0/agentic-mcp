@@ -28,7 +28,6 @@ const SAFE_ENV_KEYS = [
   'USER',
   'LOGNAME',
   'SHELL',
-  'TERM',
   'LC_ALL',
   'HTTP_PROXY',
   'HTTPS_PROXY',

@@ -7,16 +7,29 @@ describe('buildMinimalEnv network and identity keys', () => {
     vi.unstubAllEnvs();
   });
 
-  it.each(['HTTPS_PROXY', 'https_proxy', 'NO_PROXY', 'NODE_EXTRA_CA_CERTS', 'SSL_CERT_FILE', 'USER', 'TERM'])(
-    'GIVEN %s in process.env WHEN building minimal env THEN the provider CLI gets it',
-    (key) => {
-      vi.stubEnv(key, 'value-from-parent');
+  it.each([
+    'USER',
+    'LOGNAME',
+    'SHELL',
+    'LC_ALL',
+    'HTTP_PROXY',
+    'HTTPS_PROXY',
+    'NO_PROXY',
+    'ALL_PROXY',
+    'http_proxy',
+    'https_proxy',
+    'no_proxy',
+    'all_proxy',
+    'NODE_EXTRA_CA_CERTS',
+    'SSL_CERT_FILE',
+    'SSL_CERT_DIR',
+  ])('GIVEN %s in process.env WHEN building minimal env THEN the provider CLI gets it', (key) => {
+    vi.stubEnv(key, 'value-from-parent');
 
-      const env = buildMinimalEnv({});
+    const env = buildMinimalEnv({});
 
-      expect(env[key]).toBe('value-from-parent');
-    }
-  );
+    expect(env[key]).toBe('value-from-parent');
+  });
 
   it('GIVEN a provider env key set to null WHEN building minimal env THEN the inherited variable is removed', () => {
     vi.stubEnv('LANG', 'en_US.UTF-8');
