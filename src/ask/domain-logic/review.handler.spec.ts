@@ -7,7 +7,6 @@ import { handleReview } from './review.handler';
 import { buildReviewArgArray } from '../../cli-args/domain-logic/arg.builder';
 import type { ProgressContext } from '../../shared';
 import { executeCommand } from '../../shared';
-import * as requestRegistry from '../../shared/validation/domain-logic/request-registry';
 import { ASK_DEFAULT_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
 import { ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB } from '../test/stubs/ask-execution-result.stub';
 import { createAskContext } from '../test/utils/ask-context.spec.util';
@@ -64,15 +63,11 @@ vi.mock('./ask-runner-response.builder', () => {
   return result;
 });
 
-const createProgressContext = (requestId?: string): ProgressContext => {
-  const noRequestId = {};
-  const requestIdPatch = { requestId };
-  const requestIdContext = requestId ? requestIdPatch : noRequestId;
+const createProgressContext = (): ProgressContext => {
   const progressContext: ProgressContext = {
     sendNotification: vi.fn(async () => {
       await Promise.resolve();
     }),
-    ...requestIdContext,
   };
 
   Reflect.set(progressContext, '_meta', { progressToken: 'token-1' });
@@ -112,7 +107,6 @@ describe('handleReview', () => {
   });
 
   afterEach(() => {
-    requestRegistry.unregisterActiveRequest('req-1');
     vi.restoreAllMocks();
   });
 
@@ -211,42 +205,6 @@ describe('handleReview', () => {
     await handleReview(context, { scope: 'uncommitted', stream_live: true }, extra);
 
     expect(extra.sendNotification).toHaveBeenCalled();
-  });
-
-  it('GIVEN review requestId WHEN the provider process spawns THEN it registers and unregisters the active request', async () => {
-    const ask = { args: ['exec'], flags: {} };
-    const flags = {
-      uncommitted: ['--uncommitted'],
-      base: '--base',
-      commit: '--commit',
-    };
-    const review = {
-      args: ['review'],
-      flags,
-    };
-    const commands = {
-      ask,
-      review,
-    };
-    const context = createAskContext({
-      commands,
-    });
-    const registerSpy = vi.spyOn(requestRegistry, 'registerActiveRequest');
-    const unregisterSpy = vi.spyOn(requestRegistry, 'unregisterActiveRequest');
-    const extra = createProgressContext('req-1');
-
-    vi.mocked(executeCommand).mockImplementation(async (options) => {
-      await Promise.resolve();
-      options.onSpawned?.(777);
-
-      return ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB;
-    });
-
-    await handleReview(context, { scope: 'uncommitted' }, extra);
-
-    expect(registerSpy).toHaveBeenCalledWith('req-1', 777);
-    expect(unregisterSpy).toHaveBeenCalledWith('req-1');
-    expect(requestRegistry.getActiveRequest('req-1')).toBeUndefined();
   });
 
   it('GIVEN review streaming and a failed execution WHEN handling review THEN it emits a terminal error event', async () => {

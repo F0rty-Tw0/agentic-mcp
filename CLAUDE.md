@@ -25,7 +25,7 @@
 - `server/` — MCP server factory
 - `session/` — session store with locking for multi-turn conversations
 - `setup/` — `agentic-mcp setup` CLI for configuring MCP clients
-- `shared/` — cross-cutting: command-execution (spawning, semaphore), mcp-protocol (types, heartbeat), provider (config types, env resolver, model error detection), validation (request registry, Zod utils)
+- `shared/` — cross-cutting: command-execution (spawning, semaphore), mcp-protocol (types, heartbeat), provider (config types, env resolver, model error detection), validation (argument validators, ValidationError)
 - `simple-tools/` — ping, help, list_providers handlers
 - `streaming/` — live output streaming via MCP progress notifications
 - `tool-registry/` — MCP tool registration (builds tool definitions from provider config)

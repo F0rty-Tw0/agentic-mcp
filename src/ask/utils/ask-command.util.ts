@@ -24,7 +24,6 @@ type BuildCommandOptionsInput = {
   readonly onStdoutChunk?: (chunk: string) => void;
   readonly onStderrChunk?: (chunk: string) => void;
   readonly signal?: AbortSignal;
-  readonly onSpawned?: (pid: number) => void;
   readonly outputFormat?: OutputFormat;
 };
 
@@ -95,7 +94,7 @@ const resolveResultDetector = (
 };
 
 export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOptionsInput): ExecuteCommandOptions => {
-  const { context, resolved, cliArgs, stdinInput, env, onStdoutChunk, onStderrChunk, signal, onSpawned } =
+  const { context, resolved, cliArgs, stdinInput, env, onStdoutChunk, onStderrChunk, signal } =
     buildCommandOptionsInput;
   const isResultComplete = resolveResultDetector(context.config, buildCommandOptionsInput.outputFormat);
 
@@ -113,7 +112,6 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
     onStdoutChunk,
     onStderrChunk,
     signal,
-    onSpawned,
     isResultComplete,
     resultExitGraceMs: context.config.resultExitGraceMs,
   };

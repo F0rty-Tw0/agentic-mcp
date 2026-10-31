@@ -1,6 +1,6 @@
 import { buildExecutionEnv } from './ask-command';
 import { buildArgArray } from '../../cli-args';
-import { executeCommand, registerActiveRequest } from '../../shared';
+import { executeCommand } from '../../shared';
 import type { ExecutionResult } from '../../shared/command-execution/common';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
@@ -23,30 +23,12 @@ type CommandExecutionOutcome = {
   readonly outputFormat: ResolvedProviderEntry['config']['outputFormat'];
 };
 
-type SpawnCallback = (pid: number) => void;
-
-export const resolveRequestId = (extra?: ProgressContext): string | undefined => {
-  if (!extra?.requestId) return;
-
-  const requestId = String(extra.requestId);
-
-  return requestId;
-};
-
 const resolveTier2SessionArgs = (config: ResolvedProviderEntry['config'], tier2SessionId?: string): string[] => {
   if (!tier2SessionId) return [];
 
   const sessionArgs = buildNativeSessionArgs(config, tier2SessionId);
 
   return sessionArgs;
-};
-
-export const buildOnSpawned = (requestId?: string): SpawnCallback | undefined => {
-  if (!requestId) return;
-
-  const onSpawned: SpawnCallback = (pid) => registerActiveRequest(requestId, pid);
-
-  return onSpawned;
 };
 
 export const runCommandExecution = async (
@@ -58,7 +40,6 @@ export const runCommandExecution = async (
   const resolved = validateAndResolveArgs(remappedArgs, context.name);
   const tier2SessionArgs = resolveTier2SessionArgs(context.config, tier2SessionId);
   const { args: cliArgs, stdinInput, outputFormat } = buildArgArray(context.config, resolved, tier2SessionArgs);
-  const requestId = resolveRequestId(extra);
   const liveOutputAdapter = createProviderLiveOutputAdapter({
     providerName: context.name,
     outputFormat,
@@ -67,7 +48,6 @@ export const runCommandExecution = async (
 
   streamNotifier.emitStart();
 
-  const onSpawned = buildOnSpawned(requestId);
   const commandOptions = buildCommandOptions({
     context,
     resolved,
@@ -77,7 +57,6 @@ export const runCommandExecution = async (
     onStdoutChunk: liveOutputAdapter.onStdoutChunk,
     onStderrChunk: liveOutputAdapter.onStderrChunk,
     signal: extra?.signal,
-    onSpawned,
     outputFormat,
   });
 

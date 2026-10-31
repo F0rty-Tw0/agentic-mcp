@@ -1,9 +1,9 @@
 import { buildCommandFailure, buildExecutionEnv, resolveModelFallback } from './ask-command';
-import { resolveRequestId, runCommandExecution } from './ask-command-execution';
+import { runCommandExecution } from './ask-command-execution';
 import { startAskHeartbeat } from './ask-heartbeat';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { recordCall } from '../../provider-metrics';
-import { CommandExecutionError, toMcpError, unregisterActiveRequest } from '../../shared';
+import { CommandExecutionError, toMcpError } from '../../shared';
 import type { ExecutionResult } from '../../shared/command-execution/common';
 import type { McpErrorResponse, OutputFormat, ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
@@ -140,7 +140,6 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
   const input = { providerName: context.name, args, extra };
   const streamNotifier = createStreamNotifier(input);
   const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
-  const requestId = resolveRequestId(extra);
 
   try {
     const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, streamNotifier };
@@ -156,7 +155,6 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
 
     return buildFailureExecution(errorResponse, false);
   } finally {
-    if (requestId) unregisterActiveRequest(requestId);
     stopHeartbeat();
     streamNotifier.stop();
   }

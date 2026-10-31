@@ -196,7 +196,6 @@ describe('buildCommandOptions', () => {
     const onStdoutChunk = vi.fn();
     const onStderrChunk = vi.fn();
     const controller = new AbortController();
-    const onSpawned = vi.fn();
 
     const result = buildCommandOptions({
       context,
@@ -207,7 +206,6 @@ describe('buildCommandOptions', () => {
       onStdoutChunk,
       onStderrChunk,
       signal: controller.signal,
-      onSpawned,
     });
 
     expect(result.binaryPath).toBe('/usr/bin/test');
@@ -219,7 +217,6 @@ describe('buildCommandOptions', () => {
     expect(result.onStdoutChunk).toBe(onStdoutChunk);
     expect(result.onStderrChunk).toBe(onStderrChunk);
     expect(result.signal).toBe(controller.signal);
-    expect(result.onSpawned).toBe(onSpawned);
   });
 
   it('GIVEN input without optional fields WHEN called THEN returns options with undefined optional fields', () => {
@@ -239,7 +236,6 @@ describe('buildCommandOptions', () => {
     expect(result.onStdoutChunk).toBeUndefined();
     expect(result.onStderrChunk).toBeUndefined();
     expect(result.signal).toBeUndefined();
-    expect(result.onSpawned).toBeUndefined();
   });
 
   describe('GIVEN a provider that opts in with acceptResultOnTimeout', () => {

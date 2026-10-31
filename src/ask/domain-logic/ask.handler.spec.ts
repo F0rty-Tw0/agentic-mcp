@@ -9,7 +9,6 @@ import {
   TEST_MINIMAL_ENV_STUB,
   buildMinimalEnv,
   executeCommand,
-  getActiveRequest,
   stripAnsi,
 } from '../../shared';
 import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_STDIN_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
@@ -320,27 +319,6 @@ describe('handleAsk', () => {
       expect(text).toContain('[output truncated —');
       expect(text).toContain('bytes total]');
       expect(text.length).toBeLessThan(largeOutput.length);
-    });
-  });
-
-  describe('request tracking', () => {
-    it('GIVEN requestId and spawned process WHEN command completes THEN active request is cleaned up', async () => {
-      const context = createAskContext();
-      const extra: ProgressContext = {
-        sendNotification: vi.fn(async () => Promise.resolve()),
-        requestId: 'req-1',
-      };
-
-      vi.mocked(executeCommand).mockImplementation(async (options) => {
-        await Promise.resolve();
-        options.onSpawned?.(777);
-
-        return ASK_SUCCESS_EXECUTION_RESULT_STUB;
-      });
-
-      await handleAsk(context, { prompt: 'track process' }, extra);
-
-      expect(getActiveRequest('req-1')).toBeUndefined();
     });
   });
 });
