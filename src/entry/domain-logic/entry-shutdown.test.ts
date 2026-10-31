@@ -73,7 +73,12 @@ const startAskAndSigterm = async (directory: string): Promise<ShutdownRun> => {
   const providerPid = await waitForPid(pidFile, PROVIDER_START_LIMIT_MS);
   const serverPid = transport.pid;
 
-  if (providerPid === undefined || serverPid === null) throw new Error('server or provider did not start');
+  if (providerPid === undefined || serverPid === null) {
+    // Closing the client stops the server, which stops its provider group, so a failed start leaks nothing.
+    await client.close();
+
+    throw new Error('server or provider did not start');
+  }
 
   process.kill(serverPid, 'SIGTERM');
 

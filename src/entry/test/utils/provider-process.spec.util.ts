@@ -23,10 +23,12 @@ const pollFor = async <T>(
   return undefined;
 };
 
-const readPid = async (pidFile: string): Promise<number | undefined> => {
+// A poll can land between the writer's truncate and its write: Number('') is 0, and kill(0) hits the whole group.
+export const readPid = async (pidFile: string): Promise<number | undefined> => {
   try {
     const pidText = await readFile(pidFile, 'utf8');
-    const pid = Number(pidText);
+    const parsed = Number(pidText);
+    const pid = Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 
     return pid;
   } catch {
