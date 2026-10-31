@@ -3,7 +3,6 @@
 ## [Unreleased]
 
 - **Breaking:** require Node.js 26 or newer (`engines >=26`). Node 26 is the current LTS; builds now target Node 26 and ES2025
-
 - Fix `ask_codex`: codex 0.166 removed `--full-auto`, which made every call fail. Codex now runs with its default read-only sandbox unless `sandbox=workspace-write` is passed
 - Update provider flags to the current CLIs: Claude permission modes `auto`/`manual` (`delegate` removed) and effort `xhigh`/`max`, Gemini `--approval-mode yolo`, OpenCode `--auto`, Copilot `--reasoning-effort`
 - Fix native session resume for Codex (`exec resume <id>`) and OpenCode (`--session`), and add it for Gemini (`--resume`)
