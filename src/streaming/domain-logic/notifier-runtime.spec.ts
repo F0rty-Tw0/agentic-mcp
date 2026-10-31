@@ -69,17 +69,16 @@ describe('queueChunk', () => {
 
     expect(state.queuedStdout).toBe('');
     expect(state.flushTimer).toBeUndefined();
-    expect(state.lastChunkAtMs).toBe(0);
+    expect(state.lastEmitAtMs).toBe(0);
   });
 
-  it('GIVEN stdout chunk WHEN called THEN appends to queuedStdout and updates lastChunkAtMs', () => {
+  it('GIVEN stdout chunk WHEN called THEN appends to queuedStdout and schedules a flush', () => {
     const state = makeState();
     const context = makeContext();
 
     queueChunk(state, 'stdout', 'hello', context);
 
     expect(state.queuedStdout).toBe('hello');
-    expect(state.lastChunkAtMs).toBeGreaterThan(0);
     expect(state.flushTimer).toBeDefined();
   });
 
@@ -352,6 +351,15 @@ describe('emitError', () => {
 });
 
 describe('emitEvent (internal, via exported functions)', () => {
+  it('GIVEN active state WHEN an event is sent THEN lastEmitAtMs records the send time', () => {
+    const state = makeState();
+
+    vi.setSystemTime(12_345);
+    emitSystemEvent(state, makeContext(), 'heartbeat');
+
+    expect(state.lastEmitAtMs).toBe(12_345);
+  });
+
   it('GIVEN multiple calls WHEN emitting THEN sequence increments for each', () => {
     const state = makeState();
     const context = makeContext();

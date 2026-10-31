@@ -85,8 +85,8 @@ export type NotifierState = {
   queuedStdout: string;
   // eslint-disable-next-line local/readonly-type-properties -- chunk buffer appended and flushed in place
   queuedStderr: string;
-  // eslint-disable-next-line local/readonly-type-properties -- refreshed in place on every chunk
-  lastChunkAtMs: number;
+  // eslint-disable-next-line local/readonly-type-properties -- refreshed in place on every sent notification
+  lastEmitAtMs: number;
   // eslint-disable-next-line local/readonly-type-properties -- set in place when the notifier stops
   stopped: boolean;
   flushTimer?: NodeJS.Timeout;

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
-import { HEARTBEAT_IDLE_INTERVAL_MS, STREAM_PROGRESS_START } from '../common';
+import { HEARTBEAT_IDLE_INTERVAL_MS, HEARTBEAT_TICK_MS, STREAM_PROGRESS_START } from '../common';
 import type { AskStreamExecutionSummary, NotifierState, StreamNotifier } from '../common';
 import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime';
 import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
@@ -29,7 +29,7 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
     coalescedChunks: 0,
     queuedStdout: '',
     queuedStderr: '',
-    lastChunkAtMs: Date.now(),
+    lastEmitAtMs: Date.now(),
     stopped: false,
     flushTimer: undefined,
   };
@@ -37,12 +37,12 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
 
   const heartbeatTimer = setInterval(() => {
     const nowMs = Date.now();
-    const idleMs = nowMs - state.lastChunkAtMs;
+    const silentMs = nowMs - state.lastEmitAtMs;
 
-    if (idleMs < HEARTBEAT_IDLE_INTERVAL_MS) return;
+    if (silentMs < HEARTBEAT_IDLE_INTERVAL_MS) return;
 
     emitSystemEvent(state, context, 'heartbeat');
-  }, HEARTBEAT_IDLE_INTERVAL_MS);
+  }, HEARTBEAT_TICK_MS);
 
   const streamNotifier: StreamNotifier = {
     onStdoutChunk: (chunk: string): void => {
