@@ -12,6 +12,12 @@ afterEach(() => {
 });
 
 describe('resolveProviderMetricsFilePath', () => {
+  it('GIVEN the vitest env WHEN resolved THEN the path sits in the OS temp dir, not the real user state', () => {
+    const result = resolveProviderMetricsFilePath();
+
+    expect(result.startsWith(os.tmpdir())).toBe(true);
+  });
+
   it('GIVEN AGENTIC_MCP_METRICS_PATH WHEN resolved THEN the absolute override path wins', () => {
     vi.stubEnv('AGENTIC_MCP_METRICS_PATH', './custom/provider-metrics.json');
 
