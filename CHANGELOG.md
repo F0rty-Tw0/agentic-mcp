@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Fix `ask_codex`: codex 0.166 removed `--full-auto`, which made every call fail. Codex now runs with its default read-only sandbox unless `sandbox=workspace-write` is passed
+- Update provider flags to the current CLIs: Claude permission modes `auto`/`manual` (`delegate` removed) and effort `xhigh`/`max`, Gemini `--approval-mode yolo`, OpenCode `--auto`, Copilot `--reasoning-effort`
+- Fix native session resume for Codex (`exec resume <id>`) and OpenCode (`--session`), and add it for Gemini (`--resume`)
+- Pass provider credentials (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GH_TOKEN`, …) and proxy/CA variables to the CLIs through a per-provider `envPassthrough` list; `env: { KEY: null }` now removes a variable as documented
+- Fix `setup --client claude-code`: it now writes `~/.claude.json`, keeps the file's permissions, follows symlinks, never replaces a config that is not strict JSON, keeps every earlier backup, and refuses `--mode overwrite` on Claude Code's state file
+- Fix MCP cancellation: a cancelled call stops (also while queued) and gets no response; `ask_all` honors cancel; async jobs and calls without a client progress token send no stray progress notifications
+- Fix process handling: a CLI that exits before reading stdin no longer crashes the server, kills reach the whole process group, a killed call settles even when a grandchild holds its output, and Ctrl-C stops provider CLIs in CLI mode
+- Fix state handling: running async jobs are no longer pruned after 15 minutes, in-use sessions are not evicted, and the session fallback keeps the conversation history
+- Guard prompts that start with `-` so CLIs do not read them as options, and prompts like `constructor` are no longer swallowed by the CLI parser
+- Move the toolchain to TypeScript 7, Vitest 5, ESLint 10, lint-suite 3, pnpm 12 and Node 26 LTS (Node 22 and 24 still supported); require `@modelcontextprotocol/sdk` ^1.32 for its security fixes
+
 ## [0.1.12] - 2026-03-13
 
 - Add `agentic-mcp prove` as the fastest real-answer proof path, with optional explicit provider selection
