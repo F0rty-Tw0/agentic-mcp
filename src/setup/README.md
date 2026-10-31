@@ -12,7 +12,10 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Creates `.bak` backup files before modifying existing configs; a merge that leaves the `agentic-mcp` entry as it is writes nothing and makes no backup (write intent and result `unchanged`, "already configured")
 - Keeps a Claude Code `timeout` the user set, with a note when it is lower than the derived tool-call timeout, since it cuts long runs short
 - Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) points at a file other than the one setup writes, and names that file
-- Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
+- Keeps an Antigravity `timeoutSeconds` of 0 or below, with a warning, since agy documents no meaning for it; the timeout rule's `keepsNonPositive` flag marks this, and only the agy rule sets it
+- Keeps a disabled `agentic-mcp` entry (`"disabled": true` or `enabled: false`) disabled, with a warning that the client will not start it
+- Supports `--dry-run` to preview changes without writing any file (with `--minimal` it skips the skill install too), `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
+- Exits 1 when aborted (the confirmation prompt is declined or closed, or a non-interactive write lacks `--yes`); with `--output json` it prints `result.status: "aborted"` and the reason. The prompt goes to stderr
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 
 ## Output Contract
@@ -37,6 +40,9 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - `domain-logic/detect-providers.ts` — Scans the system for installed provider binaries
 - `domain-logic/generate-config.ts` — Generates the per-client MCP server entry, including its timeout keys
 - `utils/merge-server-entry.util.ts` — Merges the `agentic-mcp` entry key by key and never lowers a timeout
+- `utils/choose-timeout.util.ts` — Picks each timeout key's value (kept, raised, or kept at 0 or below for a `keepsNonPositive` rule)
+- `utils/disabled-entry-warning.util.ts` — Warns when the existing entry is disabled
+- `utils/setup-abort.util.ts` — Reports an aborted run (exit code 1, JSON `aborted` result)
 - `utils/merge-client-config.util.ts`, `utils/merge-toml-client-config.util.ts` — JSON and TOML document merges
 - `utils/resolve-client-tool-timeout.util.ts` — Derives the client tool-call timeout from the providers config and describes it in the output
 - `utils/moved-config-warnings.util.ts` — Warns when an environment variable points the client at another config file
@@ -53,14 +59,14 @@ Run with: `pnpm run test:integration`
 
 Exercises the setup CLI with real filesystem operations in a temp directory. Uses `runSetup()` with injected dependencies (stubbed provider detection, captured stdout/stderr, temp home directory, non-interactive mode).
 
-| Test                        | What It Verifies                                                                                             | Expected Output                                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Fresh config write          | With `--yes` and `--path`, a valid config file is created containing `mcpServers["agentic-mcp"]`             | Parsed JSON has `mcpServers` with `agentic-mcp` entry, and stdout points to the first real-use command |
-| Merge with existing config  | When an existing config has `other-server`, running setup preserves it alongside the new `agentic-mcp` entry | Both `other-server` and `agentic-mcp` exist in `mcpServers`                                            |
-| Backup creation             | When `--backup` is passed with an existing config, a `.bak` file is created with the original content        | `.bak` file content matches the original config                                                        |
-| Non-interactive safety gate | Without `--yes` in non-interactive mode, setup aborts with an error and does not write any file              | stderr contains `"non-interactive write requires explicit --yes"`; target file does not exist          |
-| Dry run                     | With `--dry-run`, output is produced but no file is written to disk                                          | stdout length > 0; target file does not exist                                                          |
-| Minimal setup               | With `--minimal`, the skill is installed and the next real-proof command is surfaced                         | skill file exists; stdout explains what remains unproven and shows the first real-proof command        |
+| Test                        | What It Verifies                                                                                             | Expected Output                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Fresh config write          | With `--yes` and `--path`, a valid config file is created containing `mcpServers["agentic-mcp"]`             | Parsed JSON has `mcpServers` with `agentic-mcp` entry, and stdout points to the first real-use command     |
+| Merge with existing config  | When an existing config has `other-server`, running setup preserves it alongside the new `agentic-mcp` entry | Both `other-server` and `agentic-mcp` exist in `mcpServers`                                                |
+| Backup creation             | When `--backup` is passed with an existing config, a `.bak` file is created with the original content        | `.bak` file content matches the original config                                                            |
+| Non-interactive safety gate | Without `--yes` in non-interactive mode, setup aborts with an error and does not write any file              | stderr contains `"non-interactive write requires explicit --yes"`; exit code 1; target file does not exist |
+| Dry run                     | With `--dry-run`, output is produced but no file is written to disk                                          | stdout length > 0; target file does not exist                                                              |
+| Minimal setup               | With `--minimal`, the skill is installed and the next real-proof command is surfaced                         | skill file exists; stdout explains what remains unproven and shows the first real-proof command            |
 
 ## Unit Tests
 
