@@ -42,7 +42,9 @@ export const buildAskAllToolDefinition = (providerNames: string[]): ToolDefiniti
     description:
       `Compare multiple providers on the same prompt through one command. ` +
       `Available providers: ${providerList}. ` +
-      `Returns a structured result with each provider's response, success status, and timing.`,
+      `Returns a structured result with each provider's response, success status, and timing. ` +
+      `Runs synchronously and waits for the slowest provider; for work likely to take more than about a minute, ` +
+      `call ask_<provider> with mode: "async" for each provider instead, then poll each job with action: "status".`,
     inputSchema,
     annotations,
   };

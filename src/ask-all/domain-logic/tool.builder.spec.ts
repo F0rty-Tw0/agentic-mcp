@@ -21,6 +21,13 @@ describe('buildAskAllToolDefinition', () => {
       expect(def.description).toContain('same prompt');
     });
 
+    it('GIVEN provider names WHEN called THEN description points long work to ask with mode async and status polling', () => {
+      const def = buildAskAllToolDefinition(['claude', 'codex']);
+
+      expect(def.description).toContain('ask_<provider> with mode: "async"');
+      expect(def.description).toContain('action: "status"');
+    });
+
     it('GIVEN provider names WHEN called THEN description mentions providers', () => {
       const def = buildAskAllToolDefinition(['claude', 'codex']);
 
