@@ -1,7 +1,7 @@
+import { extractParsedText, parseStructuredLine, splitTrimmedLines } from './output-text.util';
 import { stripAnsi } from '../../shared';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ParsedProviderOutput, ProviderOutputMetadata } from '../common';
-import { extractParsedText, parseStructuredLine, splitTrimmedLines } from './output-text.util';
 
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;
 

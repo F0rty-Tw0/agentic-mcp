@@ -1,3 +1,4 @@
+import { createResultEnvelopeDetector } from './complete-result.util';
 import {
   DEFAULT_MCP_TOOL_TIMEOUT_MS,
   ValidationError,
@@ -13,7 +14,6 @@ import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common';
 import type { AskToolArgs } from '../common';
-import { createResultEnvelopeDetector } from './complete-result.util';
 
 type BuildCommandOptionsInput = {
   readonly context: ResolvedProviderEntry;
