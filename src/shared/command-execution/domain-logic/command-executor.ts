@@ -9,7 +9,6 @@ import type {
   ExecutionResult,
   IdleTimeoutHandle,
   ProviderQueueOptions,
-  StreamCollector,
   UntrackChildGroup,
 } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
@@ -20,35 +19,9 @@ import { createAbortSubscription, setupTimeout } from './command-timeout';
 import { CommandExecutionError } from '../common/errors';
 import type { ProviderQueueLease } from '../common/provider-queue.type';
 import { attachStreamCollector } from '../utils/command-stream-collector.util';
-
-type ResolveExecutionResultInput = {
-  readonly stdout: StreamCollector;
-  readonly stderr: StreamCollector;
-  readonly exitCode: number | null;
-  readonly closeSignal: string | null;
-  readonly timedOut: boolean;
-  readonly startTime: number;
-};
+import { resolveExecutionResult, resolveTimeoutCause } from '../utils/execution-result.util';
 
 type QueueLease = ProviderQueueLease | undefined;
-
-const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionResult => {
-  const { stdout, stderr, exitCode, closeSignal, timedOut, startTime } = input;
-
-  const executionResult: ExecutionResult = {
-    stdout: stdout.output(),
-    stderr: stderr.output(),
-    exitCode,
-    signal: closeSignal,
-    timedOut,
-    truncated: stdout.truncated() || stderr.truncated(),
-    stdoutBytes: stdout.bytes(),
-    stderrBytes: stderr.bytes(),
-    executionTimeMs: Date.now() - startTime,
-  };
-
-  return executionResult;
-};
 
 const wrapChunkCallback = (
   idleTimeout: IdleTimeoutHandle,
@@ -160,9 +133,16 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     child.on('close', (exitCode, closeSignal) => {
       cleanup();
-      const timedOut = timeout.markTimedOut() || idleTimeout.timedOut();
+      const timeoutCause = resolveTimeoutCause({
+        wallClockTimedOut: timeout.markTimedOut(),
+        idleTimedOut: idleTimeout.timedOut(),
+        timeoutMs,
+        idleTimeoutMs,
+      });
 
-      resolve(resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timedOut, startTime }));
+      const executionTimeMs = Date.now() - startTime;
+
+      resolve(resolveExecutionResult({ stdout, stderr, exitCode, closeSignal, timeoutCause, executionTimeMs }));
     });
 
     writeStdin(child, stdin);

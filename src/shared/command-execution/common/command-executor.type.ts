@@ -61,12 +61,36 @@ export type ExecuteCommandOptions = {
   readonly onSpawned?: (pid: number) => void;
 };
 
+export type ExecutionTimeoutKind = 'wall-clock' | 'idle';
+
+export type ExecutionTimeoutCause = {
+  readonly kind: ExecutionTimeoutKind;
+  readonly limitMs: number;
+};
+
+export type ResolveExecutionResultInput = {
+  readonly stdout: StreamCollector;
+  readonly stderr: StreamCollector;
+  readonly exitCode: number | null;
+  readonly closeSignal: string | null;
+  readonly timeoutCause?: ExecutionTimeoutCause;
+  readonly executionTimeMs: number;
+};
+
+export type ResolveTimeoutCauseInput = {
+  readonly wallClockTimedOut: boolean;
+  readonly idleTimedOut: boolean;
+  readonly timeoutMs: number;
+  readonly idleTimeoutMs?: number;
+};
+
 export type ExecutionResult = {
   readonly stdout: string;
   readonly stderr: string;
   readonly exitCode: number | null;
   readonly signal: string | null;
   readonly timedOut: boolean;
+  readonly timeoutCause?: ExecutionTimeoutCause;
   readonly truncated: boolean;
   readonly stdoutBytes: number;
   readonly stderrBytes: number;

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { executeCommand } from './command-executor';
-import type { ExecuteCommandOptions } from '../common';
+import type { ExecuteCommandOptions, ExecutionTimeoutCause } from '../common';
 
 const LARGE_STDIN_BYTES = 4 * 1024 * 1024;
 
@@ -71,6 +71,17 @@ describe('FEATURE: executeCommand with real child processes', () => {
       const result = await executeCommand(options);
 
       expect(result.timedOut).toBe(true);
+    });
+
+    it('WHEN idleTimeoutMs elapses THEN the result names the idle limit as the cause', async () => {
+      const options = buildNodeOptions("process.stdout.write('x'); setTimeout(() => undefined, 20_000)", {
+        idleTimeoutMs: 300,
+      });
+
+      const result = await executeCommand(options);
+      const expectedCause: ExecutionTimeoutCause = { kind: 'idle', limitMs: 300 };
+
+      expect(result.timeoutCause).toStrictEqual(expectedCause);
     });
   });
 
