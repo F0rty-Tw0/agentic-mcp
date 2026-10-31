@@ -51,4 +51,25 @@ describe('FEATURE: provider config schema', () => {
       expect(valid).toBe(true);
     });
   });
+
+  describe('GIVEN the acceptResultOnTimeout opt-in', () => {
+    it('WHEN it is true THEN the parsed config keeps it', () => {
+      const providersFile = buildProvidersFile({ acceptResultOnTimeout: true });
+
+      const parsed = providersFileSchema.parse(providersFile);
+
+      expect(parsed.providers.test?.acceptResultOnTimeout).toBe(true);
+    });
+
+    it('WHEN it is not a boolean THEN the config is rejected', () => {
+      const providersFile = buildProvidersFile({});
+      const provider = { ...providersFile.providers.test, acceptResultOnTimeout: 'yes' };
+      const providers = { test: provider };
+      const invalidFile = { ...providersFile, providers };
+
+      const parsed = providersFileSchema.safeParse(invalidFile);
+
+      expect(parsed.success).toBe(false);
+    });
+  });
 });
