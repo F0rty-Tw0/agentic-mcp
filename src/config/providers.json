@@ -161,6 +161,48 @@
       },
       "input": { "method": "flag" }
     },
+    "antigravity": {
+      "enabled": true,
+      "description": "Google Antigravity CLI (agy) — Google's agent CLI, successor to Gemini CLI for individual accounts",
+      "supportLevel": "beta",
+      "command": "agy",
+      "timeout": 3600000,
+      "acceptResultOnTimeout": true,
+      "maxConcurrency": 1,
+      "queueTimeoutMs": 600000,
+      "env": { "AGY_CLI_DISABLE_AUTO_UPDATE": "true" },
+      "envPassthrough": ["GOOGLE_CLOUD_PROJECT", "DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR"],
+      "versionCheck": { "flag": "--version" },
+      "outputFormat": "json",
+      "commands": {
+        "ask": {
+          "args": ["-p"],
+          "trailingArgs": ["--output-format", "json", "--disable-slash-commands", "--print-timeout", "58m"],
+          "flags": {
+            "model": "--model",
+            "effort": {
+              "flag": "--effort",
+              "values": ["low", "medium", "high"]
+            },
+            "autoMode": ["--dangerously-skip-permissions"],
+            "workingDir": "--add-dir"
+          },
+          "streaming": {
+            "trailingArgs": ["--output-format", "stream-json", "--disable-slash-commands", "--print-timeout", "58m"],
+            "outputFormat": "stream-json"
+          }
+        },
+        "models": {
+          "args": ["models"]
+        },
+        "sessions": {
+          "flags": {
+            "resume": ["--conversation"]
+          }
+        }
+      },
+      "input": { "method": "flag" }
+    },
     "opencode": {
       "enabled": true,
       "description": "OpenCode — multi-model CLI coding assistant",
