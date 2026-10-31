@@ -23,6 +23,8 @@ export type {
   TomlRewriteCause,
 } from './client-target.type';
 
+export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord } from './toml-parse.type';
+
 export type {
   ClientConfigTemplate,
   DetectedProvider,

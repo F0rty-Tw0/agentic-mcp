@@ -7,7 +7,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Detects which AI provider CLIs are installed on the system (Claude, Codex, Copilot, Gemini, Antigravity `agy`, OpenCode)
 - Generates an MCP server entry (`agentic-mcp`) for the target client's config format, with the client's tool-call timeout above the provider timeout plus queue wait (`CLIENT_TOOL_TIMEOUT_MS`) where the client has a per-server key
 - Supports multiple MCP clients: Claude Code, Codex CLI (TOML), Copilot CLI, Gemini CLI, OpenCode, Cursor, Windsurf, and a generic JSON format
-- Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower
+- Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower. An `agentic-mcp` entry with `url`, `httpUrl` or `serverUrl` (a remote server), or a TOML `mcp_servers` that is not a table, is left for a manual edit (status `unmergeable`)
 - Merges Codex's `config.toml` with `smol-toml`: appends a new table so comments stay, rewrites the file only to update an existing table (with a warning), and refuses a file that is not valid TOML or that a rewrite would change
 - Creates `.bak` backup files before modifying existing configs
 - Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
@@ -36,6 +36,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - `domain-logic/generate-config.ts` — Generates the per-client MCP server entry, including its timeout keys
 - `utils/merge-server-entry.util.ts` — Merges the `agentic-mcp` entry key by key and never lowers a timeout
 - `utils/merge-client-config.util.ts`, `utils/merge-toml-client-config.util.ts` — JSON and TOML document merges
+- `utils/parse-toml.util.ts` — Parses TOML into plain objects, keeping integers beyond 2^53 as BigInt
 - `utils/verify-written-config.util.ts` — Parses the written file again and checks the entry is there
 - `domain-logic/apply-setup-plan.ts` — Atomic file write using temp file + rename + verification
 - `domain-logic/install-skill.ts` — Installs the `using-agentic-mcp` Claude Code skill

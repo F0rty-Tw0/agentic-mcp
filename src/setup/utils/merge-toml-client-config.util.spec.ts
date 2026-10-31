@@ -149,6 +149,15 @@ describe('FEATURE: TOML client config merge', () => {
     });
   });
 
+  describe('GIVEN an agentic-mcp table with a remote url', () => {
+    it('WHEN merging THEN the merge is refused instead of adding a command next to the url', () => {
+      const result = mergeToml('[mcp_servers.agentic-mcp]\nurl = "https://example.com/mcp"\n');
+
+      expect(result.status).toBe('unmergeable');
+      expect(result.reason).toContain('uses url (a remote server)');
+    });
+  });
+
   describe('GIVEN a file that is not valid TOML', () => {
     it('WHEN merging THEN the status is invalid-toml with the parser message', () => {
       const result = mergeToml('[mcp_servers\ncommand = "x"\n');

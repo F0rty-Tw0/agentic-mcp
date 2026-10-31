@@ -39,6 +39,24 @@ const isRecord = (value: unknown): value is JsonRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
+// A remote server entry: url (most clients), httpUrl (Gemini CLI), serverUrl (Windsurf).
+const REMOTE_TRANSPORT_KEYS = ['url', 'httpUrl', 'serverUrl'];
+
+export const findRemoteTransportKey = (existingEntry: unknown): string | undefined => {
+  if (!isRecord(existingEntry)) return undefined;
+
+  const remoteKey = REMOTE_TRANSPORT_KEYS.find((key) => key in existingEntry);
+
+  return remoteKey;
+};
+
+// Adding a command next to a url mixes transports, which Codex rejects ("url is not supported for stdio").
+export const buildRemoteTransportReason = (remoteKey: string): string => {
+  const reason = `the agentic-mcp entry uses ${remoteKey} (a remote server) and setup writes a local command; it will not mix the two, so remove ${remoteKey} or replace the entry by hand`;
+
+  return reason;
+};
+
 const isTimeoutValue = (value: unknown): value is TimeoutValue => {
   return typeof value === 'number' || typeof value === 'bigint';
 };

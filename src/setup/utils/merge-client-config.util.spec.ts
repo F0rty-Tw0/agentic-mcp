@@ -24,6 +24,9 @@ const AGENTIC_ONLY_SERVERS = { 'agentic-mcp': AGENTIC_SERVER_ENTRY };
 
 const AGENTIC_ONLY_CONFIG = { mcpServers: AGENTIC_ONLY_SERVERS };
 
+const REMOTE_URL_REASON =
+  'the agentic-mcp entry uses url (a remote server) and setup writes a local command; it will not mix the two, so remove url or replace the entry by hand';
+
 describe('buildMergedClientConfig', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -203,5 +206,20 @@ describe('buildMergedClientConfig', () => {
     expect(result.status).toBe('merged');
     expect(result.mergedConfig).toStrictEqual({ mcpServers: expectedServers });
     expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 4260000.']);
+  });
+
+  it('GIVEN an agentic entry with a remote url WHEN merging THEN it is refused as unmergeable and the url is not mixed with a command', () => {
+    const remoteEntry = { type: 'http', url: 'https://example.com/mcp' };
+    const existingServers = { 'agentic-mcp': remoteEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildMergedClientConfig({
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      target: MCP_SERVERS_TARGET,
+    });
+
+    expect(result.status).toBe('unmergeable');
+    expect(result.reason).toBe(REMOTE_URL_REASON);
   });
 });

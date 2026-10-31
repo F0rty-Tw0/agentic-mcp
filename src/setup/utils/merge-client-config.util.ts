@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import { mergeAgenticServerEntry } from './merge-server-entry.util';
+import { buildRemoteTransportReason, findRemoteTransportKey, mergeAgenticServerEntry } from './merge-server-entry.util';
 import type { ClientTarget, McpServerEntry } from '../common';
 
 type MergeClientConfigInput = {
@@ -9,7 +9,7 @@ type MergeClientConfigInput = {
   readonly target: ClientTarget;
 };
 
-type MergeResultStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json';
+type MergeResultStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json' | 'unmergeable';
 
 type JsonRecord = Readonly<Record<string, unknown>>;
 
@@ -103,6 +103,19 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
   const parsedRoot = isRecord(parseResult.parsedConfig) ? parseResult.parsedConfig : emptyRoot;
   const currentServers = normalizeMcpServers(parsedRoot[target.serversKey]);
   const currentAgentic = currentServers['agentic-mcp'];
+  const remoteKey = findRemoteTransportKey(currentAgentic);
+
+  if (remoteKey != null) {
+    const unmergeableResult: MergeClientConfigResult = {
+      status: 'unmergeable',
+      mergedConfig: createdConfig,
+      notes: [],
+      reason: buildRemoteTransportReason(remoteKey),
+    };
+
+    return unmergeableResult;
+  }
+
   const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
   const mergedServers = { ...currentServers, 'agentic-mcp': mergedEntry.entry };
   const mergedConfig = createServersConfig(parsedRoot, target.serversKey, mergedServers);

@@ -1,27 +1,16 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import { parse, stringify } from 'smol-toml';
+import { stringify } from 'smol-toml';
 
-import { mergeAgenticServerEntry } from './merge-server-entry.util';
-import type { ClientConfigMergeResult, ClientTarget, McpServerEntry, TomlRewriteCause } from '../common';
+import { buildRemoteTransportReason, findRemoteTransportKey, mergeAgenticServerEntry } from './merge-server-entry.util';
+import { parsesTo, tryParseToml } from './parse-toml.util';
+import type { ClientConfigMergeResult, ClientTarget, McpServerEntry, TomlRecord, TomlRewriteCause } from '../common';
 
 type MergeTomlClientConfigInput = {
   readonly existingConfigText?: string;
   readonly agenticServerEntry: McpServerEntry;
   readonly target: ClientTarget;
 };
-
-type TomlRecord = Readonly<Record<string, unknown>>;
-
-type ParsedTomlSuccess = {
-  readonly table: TomlRecord;
-};
-
-type ParsedTomlFailure = {
-  readonly reason: string;
-};
-
-type ParsedTomlResult = ParsedTomlSuccess | ParsedTomlFailure;
 
 type MergedTomlDocument = {
   readonly existingText: string;
@@ -36,49 +25,6 @@ const REWRITE_UNSAFE_REASON =
 
 const isRecord = (value: unknown): value is TomlRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-};
-
-// smol-toml returns null-prototype tables; plain copies compare equal to the objects setup builds.
-const toPlainValue = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(toPlainValue);
-
-  if (!isRecord(value) || value instanceof Date) return value;
-
-  const plainEntries = Object.entries(value).map(([key, item]): [string, unknown] => [key, toPlainValue(item)]);
-  const plainRecord: TomlRecord = Object.fromEntries(plainEntries);
-
-  return plainRecord;
-};
-
-// Large integers stay BigInt, so a rewrite keeps every digit.
-const parseToml = (text: string): TomlRecord => {
-  const parsedTable = parse(text, { integersAsBigInt: 'asNeeded' });
-  const plainTable = toPlainValue(parsedTable);
-  const emptyTable: TomlRecord = {};
-  const table = isRecord(plainTable) ? plainTable : emptyTable;
-
-  return table;
-};
-
-const tryParseToml = (text: string): ParsedTomlResult => {
-  try {
-    const parsedResult: ParsedTomlSuccess = { table: parseToml(text) };
-
-    return parsedResult;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Invalid TOML';
-    const [firstLine] = message.split('\n');
-    const failureResult: ParsedTomlFailure = { reason: `Invalid TOML: ${String(firstLine)}` };
-
-    return failureResult;
-  }
-};
-
-const parsesTo = (text: string, expectedRoot: TomlRecord): boolean => {
-  const parsed = tryParseToml(text);
-  const isMatch = 'table' in parsed && isDeepStrictEqual(parsed.table, expectedRoot);
-
-  return isMatch;
 };
 
 const buildAgenticTable = (serversKey: string, entry: TomlRecord): TomlRecord => {
@@ -142,6 +88,21 @@ const writeMergedDocument = (mergedDocument: MergedTomlDocument): ClientConfigMe
   return createResult({ status: 'merged', configText: rewrittenText, notes, rewriteCause });
 };
 
+// Replacing a non-table servers value drops it; adding a command to a remote entry mixes transports.
+const findUnmergeableReason = (serversValue: unknown, serversKey: string): string | undefined => {
+  if (serversValue === undefined) return undefined;
+
+  if (!isRecord(serversValue)) return `${serversKey} is not a table, so setup will not replace it`;
+
+  const remoteKey = findRemoteTransportKey(serversValue['agentic-mcp']);
+
+  if (remoteKey == null) return undefined;
+
+  const reason = buildRemoteTransportReason(remoteKey);
+
+  return reason;
+};
+
 export const buildMergedTomlClientConfig = (input: MergeTomlClientConfigInput): ClientConfigMergeResult => {
   const { existingConfigText, agenticServerEntry, target } = input;
   const createdEntry = mergeAgenticServerEntry({ existingEntry: undefined, agenticServerEntry, target });
@@ -162,16 +123,20 @@ export const buildMergedTomlClientConfig = (input: MergeTomlClientConfigInput): 
 
   const emptyServers: TomlRecord = {};
   const currentServersValue = parseResult.table[target.serversKey];
-  const isServersTable = isRecord(currentServersValue);
+  const unmergeableReason = findUnmergeableReason(currentServersValue, target.serversKey);
 
-  if (currentServersValue !== undefined && !isServersTable) {
-    const reason = `${target.serversKey} is not a table, so setup will not replace it`;
-
-    return createResult({ status: 'unmergeable', configText: existingConfigText, notes: [], reason });
+  if (unmergeableReason != null) {
+    return createResult({
+      status: 'unmergeable',
+      configText: existingConfigText,
+      notes: [],
+      reason: unmergeableReason,
+    });
   }
 
-  const currentServers = isServersTable ? currentServersValue : emptyServers;
+  const currentServers = isRecord(currentServersValue) ? currentServersValue : emptyServers;
   const currentAgentic = currentServers['agentic-mcp'];
+
   const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
   const isUnchanged = isDeepStrictEqual(currentAgentic, mergedEntry.entry);
 

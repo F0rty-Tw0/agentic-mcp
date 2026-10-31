@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeAgenticServerEntry } from './merge-server-entry.util';
+import { findRemoteTransportKey, mergeAgenticServerEntry } from './merge-server-entry.util';
 import type { ClientTarget, McpServerEntry, TimeoutKeyRule } from '../common';
 
 const TIMEOUT_RULE: TimeoutKeyRule = { key: 'timeout' };
@@ -220,6 +220,42 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       });
 
       expect(result.notes).toStrictEqual(['agentic-mcp startup_timeout_sec: set to 60 (was not set).']);
+    });
+  });
+});
+
+describe('FEATURE: remote transport detection', () => {
+  describe('GIVEN an existing agentic-mcp entry', () => {
+    it('WHEN it has a url THEN url is returned', () => {
+      const result = findRemoteTransportKey({ url: 'https://example.com/mcp' });
+
+      expect(result).toBe('url');
+    });
+
+    it('WHEN it has a Gemini httpUrl THEN httpUrl is returned', () => {
+      const result = findRemoteTransportKey({ httpUrl: 'https://example.com/mcp' });
+
+      expect(result).toBe('httpUrl');
+    });
+
+    it('WHEN it has a Windsurf serverUrl THEN serverUrl is returned', () => {
+      const result = findRemoteTransportKey({ serverUrl: 'https://example.com/mcp' });
+
+      expect(result).toBe('serverUrl');
+    });
+
+    it('WHEN it only has a command THEN nothing is returned', () => {
+      const result = findRemoteTransportKey({ command: 'npx' });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('GIVEN no entry object', () => {
+    it('WHEN checking THEN nothing is returned', () => {
+      const result = findRemoteTransportKey(undefined);
+
+      expect(result).toBeUndefined();
     });
   });
 });
