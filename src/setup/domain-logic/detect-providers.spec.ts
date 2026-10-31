@@ -35,7 +35,7 @@ describe('detectInstalledProviders', () => {
 
       const result = await detectInstalledProviders();
 
-      expect(result).toHaveLength(5);
+      expect(result).toHaveLength(6);
 
       for (const provider of result) {
         expect(provider.available).toBe(true);
@@ -50,7 +50,7 @@ describe('detectInstalledProviders', () => {
 
       const result = await detectInstalledProviders();
 
-      expect(result).toHaveLength(5);
+      expect(result).toHaveLength(6);
 
       for (const provider of result) {
         expect(provider.available).toBe(false);
@@ -90,7 +90,7 @@ describe('detectInstalledProviders', () => {
       const result = await detectInstalledProviders();
       const names = result.map((p) => p.name);
 
-      expect(names).toStrictEqual(['claude', 'codex', 'copilot', 'gemini', 'opencode']);
+      expect(names).toStrictEqual(['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode']);
     });
   });
 });
