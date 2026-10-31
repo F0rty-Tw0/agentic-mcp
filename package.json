@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/client": "catalog:runtime",
-    "@modelcontextprotocol/sdk": "catalog:runtime",
     "@modelcontextprotocol/server": "catalog:runtime",
     "cross-spawn": "catalog:runtime",
     "which": "catalog:runtime",

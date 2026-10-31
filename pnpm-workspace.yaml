@@ -22,7 +22,6 @@ catalogs:
     release-it: ^21.1.1
   runtime:
     '@modelcontextprotocol/client': ^2.4.0
-    '@modelcontextprotocol/sdk': ^1.32.0
     '@modelcontextprotocol/server': ^2.4.0
     cross-spawn: ^7.0.6
     which: ^6.0.1
