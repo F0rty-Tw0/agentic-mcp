@@ -3,22 +3,25 @@ import type { ProviderQueueOptions } from '../common';
 import {
   buildLease,
   buildQueueAbortError,
-  buildQueueTimeoutError,
   cleanupProviderQueueState,
+  createQueueTimeoutHandler,
   getOrCreateProviderQueueState,
   rejectQueuedRequest,
   removeAbortListener,
   startQueuedRequest,
 } from './provider-queue.util';
-import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from '../common/provider-queue.type';
+import type {
+  ProviderQueueLease,
+  ProviderQueueState,
+  QueuedRequest,
+  QueuedRequestRef,
+} from '../common/provider-queue.type';
 
 type ProviderQueueStore = {
   readonly acquireSlot: (options: ProviderQueueOptions) => Promise<ProviderQueueLease>;
 };
 
 type CreateProviderQueueStoreOptions = { readonly globalMaxConcurrency?: number };
-
-type QueuedRequestRef = { current?: QueuedRequest };
 
 const createDrainQueues = (
   providerStates: Map<string, ProviderQueueState>,
@@ -91,20 +94,19 @@ const waitForQueuedSlot = async (
       });
     };
 
+    const onQueueTimeout = createQueueTimeoutHandler({
+      state,
+      providerStates,
+      options,
+      signal,
+      onAbort,
+      reject,
+      queuedRequestRef,
+    });
+
     const queuedRequest: QueuedRequest = {
       enqueuedAtMs,
-      timer: setTimeout(() => {
-        rejectQueuedRequest({
-          state,
-          providerStates,
-          options,
-          queuedRequest,
-          signal,
-          onAbort,
-          reject,
-          error: buildQueueTimeoutError(options, queuedRequest.enqueuedAtMs),
-        });
-      }, options.queueTimeoutMs),
+      timer: setTimeout(onQueueTimeout, options.queueTimeoutMs),
       resolve: (): void => {
         removeAbortListener(signal, onAbort);
         resolve();

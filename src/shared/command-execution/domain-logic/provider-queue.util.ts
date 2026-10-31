@@ -1,6 +1,11 @@
 import type { ProviderQueueOptions } from '../common';
 import { CommandExecutionError, QueueTimeoutError } from '../common/errors';
-import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from '../common/provider-queue.type';
+import type {
+  ProviderQueueLease,
+  ProviderQueueState,
+  QueuedRequest,
+  QueuedRequestRef,
+} from '../common/provider-queue.type';
 
 const removeQueuedRequest = (waitQueue: QueuedRequest[], queuedRequest: QueuedRequest): boolean => {
   const index = waitQueue.indexOf(queuedRequest);
@@ -96,7 +101,7 @@ export const rejectQueuedRequest = (input: RejectQueuedRequestInput): void => {
   reject(error);
 };
 
-export const buildQueueTimeoutError = (options: ProviderQueueOptions, enqueuedAtMs: number): QueueTimeoutError => {
+const buildQueueTimeoutError = (options: ProviderQueueOptions, enqueuedAtMs: number): QueueTimeoutError => {
   const waitMs = Date.now() - enqueuedAtMs;
   const error = new QueueTimeoutError({
     providerName: options.providerName,
@@ -128,4 +133,42 @@ export const startQueuedRequest = (
   cleanupProviderQueueState(providerStates, providerName);
 
   return true;
+};
+
+type QueueTimeoutHandlerInput = {
+  readonly state: ProviderQueueState;
+  readonly providerStates: Map<string, ProviderQueueState>;
+  readonly options: ProviderQueueOptions;
+  readonly signal: AbortSignal | undefined;
+  readonly onAbort: () => void;
+  readonly reject: (reason?: unknown) => void;
+  readonly queuedRequestRef: QueuedRequestRef;
+};
+
+// A request whose provider has a free slot waits only for the global spawn cap, which every run frees within its
+// own timeout, so the queue timeout keeps it waiting instead of failing it.
+const isOnlyGloballyBlocked = (state: ProviderQueueState): boolean => state.activeCount < state.maxConcurrency;
+
+export const createQueueTimeoutHandler = (input: QueueTimeoutHandlerInput): (() => void) => {
+  const { state, providerStates, options, signal, onAbort, reject, queuedRequestRef } = input;
+
+  const onQueueTimeout = (): void => {
+    const queuedRequest = queuedRequestRef.current;
+
+    if (!queuedRequest) return;
+
+    const onlyGloballyBlocked = isOnlyGloballyBlocked(state);
+
+    if (onlyGloballyBlocked) {
+      queuedRequest.timer = setTimeout(onQueueTimeout, options.queueTimeoutMs);
+
+      return;
+    }
+
+    const error = buildQueueTimeoutError(options, queuedRequest.enqueuedAtMs);
+
+    rejectQueuedRequest({ state, providerStates, options, queuedRequest, signal, onAbort, reject, error });
+  };
+
+  return onQueueTimeout;
 };

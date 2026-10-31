@@ -112,4 +112,39 @@ describe('createProviderQueueStore', () => {
     leaseE.release();
     sixth.release();
   });
+
+  it('GIVEN the global ceiling is full and the provider itself is idle WHEN the request waits past queueTimeoutMs THEN it keeps waiting and gets the next global slot', async () => {
+    vi.useFakeTimers();
+
+    const store = createProviderQueueStore({ globalMaxConcurrency: 1 });
+    const busyLease = await store.acquireSlot(createQueueInput({ providerName: 'a' }));
+    const waitingPromise = store.acquireSlot(createQueueInput({ providerName: 'b' }));
+    const settledPromise = waitingPromise.then(() => 'acquired').catch((value: unknown) => value);
+
+    await vi.advanceTimersByTimeAsync(500);
+    busyLease.release();
+
+    const settled = await settledPromise;
+
+    expect(settled).toBe('acquired');
+    vi.useRealTimers();
+  });
+
+  it('GIVEN the provider is busy and the global ceiling is also full WHEN the request waits past queueTimeoutMs THEN it rejects with QueueTimeoutError', async () => {
+    vi.useFakeTimers();
+
+    const store = createProviderQueueStore({ globalMaxConcurrency: 2 });
+    const providerLease = await store.acquireSlot(createQueueInput());
+    const otherLease = await store.acquireSlot(createQueueInput({ providerName: 'a' }));
+    const caughtPromise = store.acquireSlot(createQueueInput()).catch((value: unknown) => value);
+
+    await vi.advanceTimersByTimeAsync(51);
+
+    const error = await caughtPromise;
+
+    expect(error).toBeInstanceOf(QueueTimeoutError);
+    providerLease.release();
+    otherLease.release();
+    vi.useRealTimers();
+  });
 });
