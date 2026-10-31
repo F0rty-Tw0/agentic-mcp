@@ -61,6 +61,22 @@ const buildInvalidMergeWarning = (targetPath: string | undefined, mergedConfig: 
   return `Existing config at ${target} could not be merged safely and was left unchanged (${reason}). Add the agentic-mcp entry by hand.`;
 };
 
+const buildRewriteWarning = (
+  targetPath: string | undefined,
+  client: SetupPlanInput['client'],
+  mergedConfig: ClientConfigMergeResult
+): string => {
+  const target = String(targetPath);
+  const { serversKey } = CLIENT_TARGETS[client];
+  const keptNote = 'so its comments and formatting are not kept (the backup has the original unless --backup never).';
+
+  if (mergedConfig.rewriteCause === 'new-entry') {
+    return `Adding the agentic-mcp entry rewrites ${target} with a TOML serializer, because a new [${serversKey}.agentic-mcp] table cannot be appended to it (for example, ${serversKey} is an inline table), ${keptNote}`;
+  }
+
+  return `Updating the existing agentic-mcp entry rewrites ${target} with a TOML serializer, ${keptNote}`;
+};
+
 const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
   const { input, targetPath, isClaudeStateOverwrite, isInvalidMerge, mergedConfig } = planWarningsInput;
   const isMergeRewrite = input.mode === 'merge' && mergedConfig.rewritten;
@@ -85,9 +101,7 @@ const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
   }
 
   if (isMergeRewrite) {
-    warnings.push(
-      `Updating the existing agentic-mcp entry rewrites ${String(targetPath)} with a TOML serializer, so its comments and formatting are not kept (the backup has the original unless --backup never).`
-    );
+    warnings.push(buildRewriteWarning(targetPath, input.client, mergedConfig));
   }
 
   return warnings;

@@ -1,11 +1,15 @@
 export type SetupMergeStatus =
   'created' | 'merged' | 'unchanged' | 'invalid-json' | 'invalid-toml' | 'rewrite-unsafe' | 'unmergeable';
 
+// Why a TOML merge rewrote the whole file instead of appending a table.
+export type TomlRewriteCause = 'new-entry' | 'existing-entry';
+
 export type ClientConfigMergeResult = {
   readonly status: SetupMergeStatus;
   readonly configText: string;
   readonly notes: string[];
   readonly rewritten: boolean;
+  readonly rewriteCause?: TomlRewriteCause;
   readonly reason?: string;
 };
 

@@ -92,6 +92,16 @@ describe('FEATURE: codex setup plan', () => {
     });
   });
 
+  describe('GIVEN a config.toml whose mcp_servers is an inline table', () => {
+    it('WHEN building the merge plan THEN the rewrite warning says the entry is added, not updated', () => {
+      const result = planCodex('mcp_servers = { docs = { command = "docs-mcp" } }\n');
+
+      expect(result.warnings).toStrictEqual([
+        'Adding the agentic-mcp entry rewrites /home/dev/.codex/config.toml with a TOML serializer, because a new [mcp_servers.agentic-mcp] table cannot be appended to it (for example, mcp_servers is an inline table), so its comments and formatting are not kept (the backup has the original unless --backup never).',
+      ]);
+    });
+  });
+
   describe('GIVEN an existing config.toml and overwrite mode', () => {
     it('WHEN building the plan THEN only the agentic-mcp table is written', () => {
       const result = planCodex(LOW_TIMEOUT_CONFIG, 'overwrite');

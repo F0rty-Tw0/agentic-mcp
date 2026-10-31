@@ -108,6 +108,7 @@ describe('FEATURE: TOML client config merge', () => {
 
       expect(result.status).toBe('merged');
       expect(result.rewritten).toBe(true);
+      expect(result.rewriteCause).toBe('existing-entry');
       const expectedServers = { 'agentic-mcp': CODEX_ENTRY };
 
       expect(written).toStrictEqual({ mcp_servers: expectedServers });
@@ -126,6 +127,7 @@ describe('FEATURE: TOML client config merge', () => {
       const expectedServers = { docs, 'agentic-mcp': CODEX_ENTRY };
 
       expect(result.rewritten).toBe(true);
+      expect(result.rewriteCause).toBe('new-entry');
       expect(written).toStrictEqual({ mcp_servers: expectedServers });
     });
   });
@@ -141,6 +143,7 @@ describe('FEATURE: TOML client config merge', () => {
         configText: existingText,
         notes: [],
         rewritten: false,
+        rewriteCause: undefined,
         reason: 'mcp_servers is not a table, so setup will not replace it',
       });
     });

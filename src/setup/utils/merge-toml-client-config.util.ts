@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { parse, stringify } from 'smol-toml';
 
 import { mergeAgenticServerEntry } from './merge-server-entry.util';
-import type { ClientConfigMergeResult, ClientTarget, McpServerEntry } from '../common';
+import type { ClientConfigMergeResult, ClientTarget, McpServerEntry, TomlRewriteCause } from '../common';
 
 type MergeTomlClientConfigInput = {
   readonly existingConfigText?: string;
@@ -92,14 +92,14 @@ type ResultInput = {
   readonly status: ClientConfigMergeResult['status'];
   readonly configText: string;
   readonly notes: string[];
-  readonly rewritten?: boolean;
+  readonly rewriteCause?: TomlRewriteCause;
   readonly reason?: string;
 };
 
 const createResult = (resultInput: ResultInput): ClientConfigMergeResult => {
-  const { status, configText, notes, reason } = resultInput;
-  const rewritten = resultInput.rewritten ?? false;
-  const result: ClientConfigMergeResult = { status, configText, notes, rewritten, reason };
+  const { status, configText, notes, rewriteCause, reason } = resultInput;
+  const rewritten = rewriteCause != null;
+  const result: ClientConfigMergeResult = { status, configText, notes, rewritten, rewriteCause, reason };
 
   return result;
 };
@@ -120,7 +120,7 @@ const appendAgenticTable = (mergedDocument: MergedTomlDocument): string | undefi
 };
 
 const writeMergedDocument = (mergedDocument: MergedTomlDocument): ClientConfigMergeResult => {
-  const { existingText, expectedRoot, notes } = mergedDocument;
+  const { existingText, expectedRoot, notes, isNewEntry } = mergedDocument;
   const appendedText = appendAgenticTable(mergedDocument);
 
   if (appendedText != null) return createResult({ status: 'merged', configText: appendedText, notes });
@@ -137,7 +137,9 @@ const writeMergedDocument = (mergedDocument: MergedTomlDocument): ClientConfigMe
     });
   }
 
-  return createResult({ status: 'merged', configText: rewrittenText, notes, rewritten: true });
+  const rewriteCause: TomlRewriteCause = isNewEntry ? 'new-entry' : 'existing-entry';
+
+  return createResult({ status: 'merged', configText: rewrittenText, notes, rewriteCause });
 };
 
 export const buildMergedTomlClientConfig = (input: MergeTomlClientConfigInput): ClientConfigMergeResult => {
