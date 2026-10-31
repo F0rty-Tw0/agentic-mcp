@@ -22,6 +22,7 @@ const createPlan = (targetPath: string): SetupPlan => {
     mergeStatusPreview: 'merged',
     configText: CONFIG_TEXT,
     warnings: [],
+    notes: [],
   };
 
   return plan;
@@ -114,5 +115,50 @@ describe('applySetupPlan on a real filesystem', () => {
     const mode = await readMode(targetPath);
 
     expect(mode).toBe(OWNER_ONLY_MODE);
+  });
+
+  it('GIVEN an opencode plan WHEN setup writes it THEN the agentic-mcp entry under mcp passes verification', async () => {
+    const targetPath = path.join(directory, 'opencode.json');
+    const configText = '{"mcp":{"agentic-mcp":{"type":"local","command":["npx","-y","agentic-mcp"]}}}\n';
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'opencode', configText };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result.status).toBe('written');
+  });
+
+  it('GIVEN a codex plan WHEN setup writes the TOML file THEN it passes verification', async () => {
+    const targetPath = path.join(directory, 'config.toml');
+    const configText = '[mcp_servers.agentic-mcp]\ncommand = "npx"\ntool_timeout_sec = 4260\n';
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'codex', configText };
+
+    const result = await applySetupPlan(plan);
+    const written = await readFile(targetPath, 'utf8');
+
+    expect(result.status).toBe('written');
+    expect(written).toBe(configText);
+  });
+
+  it('GIVEN a codex plan without the agentic-mcp table WHEN setup writes it THEN verification fails', async () => {
+    const targetPath = path.join(directory, 'config.toml');
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'codex', configText: 'model = "gpt-6"\n' };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result.status).toBe('verification-failed');
+    expect(result.reason).toBe('Written config must include object key mcp_servers.');
+  });
+
+  it('GIVEN a codex plan whose text is not TOML WHEN setup writes it THEN verification fails with the parser message', async () => {
+    const targetPath = path.join(directory, 'config.toml');
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'codex', configText: '[mcp_servers\n' };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result.reason).toMatch(/^Invalid TOML in written file: /);
   });
 });

@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
+import { loadConfig } from '../../config/loader';
 import type { SetupCliDependencies } from '../common';
 import { buildSetupPlan, parseSetupArgs, runConfiguredSetup, runMinimalSetup } from '../utils';
 import { applySetupPlan } from './apply-setup-plan';
@@ -24,6 +25,8 @@ const defaultPromptConfirm = async (question: string): Promise<boolean> => {
 const defaultDependencies: SetupCliDependencies = {
   detectInstalledProviders,
   generateClientConfigEntry,
+  // The same resolution the server uses without --config: AGENTIC_MCP_CONFIG, user-local, then bundled.
+  loadProvidersConfig: async () => loadConfig(),
   buildSetupPlan,
   applySetupPlan,
   installSkill,
@@ -33,6 +36,7 @@ const defaultDependencies: SetupCliDependencies = {
   isInteractive: Boolean(process.stdin.isTTY && process.stdout.isTTY),
   promptConfirm: defaultPromptConfirm,
   readConfigFile: async (configPath: string) => readFile(configPath, 'utf8'),
+  env: process.env,
 };
 
 export const runSetup = async (args: string[], injectedDependencies?: Partial<SetupCliDependencies>): Promise<void> => {

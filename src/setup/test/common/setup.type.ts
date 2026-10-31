@@ -30,6 +30,7 @@ export type ConfiguredJsonOutput = {
   readonly dryRun: boolean;
   readonly mergeStatusPreview: string;
   readonly mode: string;
+  readonly notes: string[];
   readonly providers: DetectedProvider[];
   readonly result: JsonApplyResult;
   readonly summary: JsonSummary;

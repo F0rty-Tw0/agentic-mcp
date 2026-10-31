@@ -100,4 +100,40 @@ describe('parseSetupArgs', () => {
     });
     expect(stderrWrite).toHaveBeenCalledWith('Warning: unknown client "--yes", using "generic"\n');
   });
+
+  it('GIVEN --client gemini WHEN parsing setup args THEN the gemini client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'gemini'], stderrWrite });
+
+    expect(result.client).toBe('gemini');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN --client copilot WHEN parsing setup args THEN the copilot client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'copilot'], stderrWrite });
+
+    expect(result.client).toBe('copilot');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN --client opencode WHEN parsing setup args THEN the opencode client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'opencode'], stderrWrite });
+
+    expect(result.client).toBe('opencode');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN --client codex WHEN parsing setup args THEN the codex client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'codex'], stderrWrite });
+
+    expect(result.client).toBe('codex');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
 });

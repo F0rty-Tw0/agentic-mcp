@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { generateClientConfigEntry } from './generate-config';
+import { CLIENT_TOOL_TIMEOUT_MS } from '../common';
 import type { DetectedProvider, SupportedClient } from '../common';
+import { buildSetupPlan } from '../utils/plan-setup.util';
 
 const makeProvider = (name: string, available: boolean, binaryPath?: string): DetectedProvider => {
   const provider: DetectedProvider = {
@@ -14,8 +16,37 @@ const makeProvider = (name: string, available: boolean, binaryPath?: string): De
 };
 
 describe('generateClientConfigEntry', () => {
-  it('GIVEN any client and providers WHEN generating entry THEN returns deterministic agentic-mcp entry', () => {
-    const result = generateClientConfigEntry('claude-code', []);
+  it('GIVEN claude-code WHEN generating entry THEN no timeout key is written, so its longer default stays', () => {
+    const result = generateClientConfigEntry('claude-code', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+    });
+  });
+
+  it('GIVEN claude-code with a timeout the user set WHEN the generated entry is planned THEN the file is left unchanged', () => {
+    const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+    const agenticServerEntry = generateClientConfigEntry('claude-code', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry,
+      backup: 'if-exists',
+    });
+
+    expect(result.mergeStatusPreview).toBe('unchanged');
+  });
+
+  it('GIVEN cursor WHEN generating entry THEN no timeout key is written', () => {
+    const result = generateClientConfigEntry('cursor', [], CLIENT_TOOL_TIMEOUT_MS);
 
     expect(result).toStrictEqual({
       command: 'npx',
@@ -26,34 +57,91 @@ describe('generateClientConfigEntry', () => {
   it('GIVEN generic client and provider detection WHEN generating entry THEN output stays stable', () => {
     const providers = [makeProvider('claude', true, '/usr/bin/claude')];
 
-    const result = generateClientConfigEntry('generic', providers);
+    const result = generateClientConfigEntry('generic', providers, CLIENT_TOOL_TIMEOUT_MS);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN generic client and no detected providers WHEN generating entry THEN output stays stable', () => {
-    const result = generateClientConfigEntry('generic', []);
+    const result = generateClientConfigEntry('generic', [], CLIENT_TOOL_TIMEOUT_MS);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN available providers and unavailable providers WHEN generating entry THEN does not leak binary paths', () => {
     const providers = [makeProvider('claude', true, '/usr/bin/claude'), makeProvider('codex', false)];
 
-    const result = generateClientConfigEntry('windsurf', providers);
+    const result = generateClientConfigEntry('windsurf', providers, CLIENT_TOOL_TIMEOUT_MS);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN unknown client WHEN generating entry THEN default branch returns deterministic entry', () => {
     const unknownClient = 'future-client' as SupportedClient;
 
-    const result = generateClientConfigEntry(unknownClient, []);
+    const result = generateClientConfigEntry(unknownClient, [], CLIENT_TOOL_TIMEOUT_MS);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
+  });
+
+  it('GIVEN gemini WHEN generating entry THEN the timeout in ms is above the provider timeout plus queue wait', () => {
+    const result = generateClientConfigEntry('gemini', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      timeout: 4_260_000,
+    });
+  });
+
+  it('GIVEN copilot WHEN generating entry THEN it is a local server with all tools and the timeout in ms', () => {
+    const result = generateClientConfigEntry('copilot', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    expect(result).toStrictEqual({
+      type: 'local',
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tools: ['*'],
+      timeout: 4_260_000,
+    });
+  });
+
+  it('GIVEN opencode WHEN generating entry THEN it is an enabled local server with a command array and the timeout in ms', () => {
+    const result = generateClientConfigEntry('opencode', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    expect(result).toStrictEqual({
+      type: 'local',
+      command: ['npx', '-y', 'agentic-mcp'],
+      enabled: true,
+      timeout: 4_260_000,
+    });
+  });
+
+  it('GIVEN codex WHEN generating entry THEN the tool timeout is in seconds and startup gets 60 s for a cold npx', () => {
+    const result = generateClientConfigEntry('codex', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tool_timeout_sec: 4260,
+      startup_timeout_sec: 60,
+    });
+  });
+
+  it('GIVEN a tool timeout from the providers config WHEN generating a gemini entry THEN that value is written in ms', () => {
+    const result = generateClientConfigEntry('gemini', [], 6_660_000);
+
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 6_660_000 });
+  });
+
+  it('GIVEN a tool timeout that is not whole seconds WHEN generating a codex entry THEN the seconds are rounded up', () => {
+    const result = generateClientConfigEntry('codex', [], 6_660_500);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tool_timeout_sec: 6661,
+      startup_timeout_sec: 60,
+    });
   });
 });

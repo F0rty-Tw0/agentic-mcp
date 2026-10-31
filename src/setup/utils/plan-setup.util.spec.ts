@@ -3,12 +3,17 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildSetupPlan } from './plan-setup.util';
-import type { McpServerEntry } from '../common';
+import type { ClientToolTimeout, McpServerEntry } from '../common';
 
 const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
 };
+
+const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 4_260_000 };
+
+const CLAUDE_CODE_TIMEOUT_NOTE =
+  'agentic-mcp timeout: not written for Claude Code. Its default tool-call limit (MCP_TOOL_TIMEOUT, about 28 h) is already longer, and progress notifications reset its 30 min stdio idle limit; a per-server timeout would replace that default with a hard limit.';
 
 describe('buildSetupPlan', () => {
   it('GIVEN claude-code client without path override WHEN building plan THEN resolves default client path', () => {
@@ -151,5 +156,178 @@ describe('buildSetupPlan', () => {
     });
 
     expect(result.writeIntent).toBe('write');
+  });
+
+  it('GIVEN claude-code merge WHEN building plan THEN no timeout is written and the note says why', () => {
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: undefined,
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.configText).not.toContain('timeout');
+    expect(result.notes).toStrictEqual([CLAUDE_CODE_TIMEOUT_NOTE]);
+  });
+
+  it('GIVEN cursor and a tool timeout from the providers config WHEN building plan THEN no timeout note is added, since nothing is written', () => {
+    const toolTimeout: ClientToolTimeout = {
+      ms: 4_260_000,
+      runMs: 3_600_000,
+      queueMs: 600_000,
+      source: 'providers-config',
+    };
+
+    const result = buildSetupPlan({
+      client: 'cursor',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: undefined,
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+      toolTimeout,
+    });
+
+    expect(result.notes).toStrictEqual([]);
+  });
+
+  it('GIVEN claude-code merge with a timeout the user set WHEN building plan THEN it is kept as is', () => {
+    const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.mergeStatusPreview).toBe('unchanged');
+  });
+
+  it('GIVEN gemini merge with a lower agentic-mcp timeout WHEN building plan THEN the plan raises it and says so', () => {
+    const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'gemini',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: raised from 600000 to 4260000.']);
+    expect(result.configText).toContain('"timeout": 4260000');
+  });
+
+  it('GIVEN overwrite mode with a higher agentic-mcp timeout WHEN building plan THEN the generated timeout is written', () => {
+    const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 7_200_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'cursor',
+      homeDirectory: '/home/dev',
+      pathOverride: '/tmp/mcp.json',
+      mode: 'overwrite',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.configText).not.toContain('7200000');
+  });
+
+  it('GIVEN gemini with other servers and settings WHEN building plan THEN it targets ~/.gemini/settings.json and keeps them', () => {
+    const other = { command: 'node', args: ['other.js'] };
+    const existingServers = { other };
+    const existingConfig = { theme: 'dark', mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'gemini',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+    const writtenServers = { other, 'agentic-mcp': TIMED_SERVER_ENTRY };
+    const writtenConfig = { theme: 'dark', mcpServers: writtenServers };
+
+    expect(result.targetPath).toBe(path.join('/home/dev', '.gemini/settings.json'));
+    expect(JSON.parse(result.configText)).toStrictEqual(writtenConfig);
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: set to 4260000 (was not set).']);
+  });
+
+  it('GIVEN copilot with a tool allow-list on agentic-mcp WHEN building plan THEN it targets ~/.copilot/mcp-config.json and keeps the list', () => {
+    const userEntry = {
+      type: 'local',
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tools: ['ask_codex'],
+      timeout: 600_000,
+    };
+    const existingServers = { 'agentic-mcp': userEntry };
+    const existingConfig = { mcpServers: existingServers };
+    const copilotEntry: McpServerEntry = { ...userEntry, type: 'local', tools: ['*'], timeout: 4_260_000 };
+
+    const result = buildSetupPlan({
+      client: 'copilot',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: copilotEntry,
+      backup: 'if-exists',
+    });
+    const writtenEntry = { ...userEntry, timeout: 4_260_000 };
+    const writtenServers = { 'agentic-mcp': writtenEntry };
+
+    expect(result.targetPath).toBe(path.join('/home/dev', '.copilot/mcp-config.json'));
+    expect(JSON.parse(result.configText)).toStrictEqual({ mcpServers: writtenServers });
+  });
+
+  it('GIVEN opencode with a disabled agentic-mcp entry WHEN building plan THEN it writes under mcp in the global config and keeps it disabled', () => {
+    const userEntry = { type: 'local', command: ['npx', '-y', 'agentic-mcp'], enabled: false };
+    const existingServers = { 'agentic-mcp': userEntry };
+    const existingConfig = { $schema: 'https://opencode.ai/config.json', mcp: existingServers };
+    const opencodeEntry: McpServerEntry = { ...userEntry, type: 'local', enabled: true, timeout: 4_260_000 };
+
+    const result = buildSetupPlan({
+      client: 'opencode',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: opencodeEntry,
+      backup: 'if-exists',
+    });
+    const writtenEntry = { ...userEntry, timeout: 4_260_000 };
+    const writtenServers = { 'agentic-mcp': writtenEntry };
+    const writtenConfig = { $schema: 'https://opencode.ai/config.json', mcp: writtenServers };
+
+    expect(result.targetPath).toBe(path.join('/home/dev', '.config/opencode/opencode.json'));
+    expect(JSON.parse(result.configText)).toStrictEqual(writtenConfig);
   });
 });

@@ -22,4 +22,8 @@ describe('HELP_TEXT', () => {
   it('GIVEN CLI help WHEN rendered THEN it mentions the ask_all report option', () => {
     expect(HELP_TEXT).toContain('--report <path>');
   });
+
+  it('GIVEN CLI help WHEN rendered THEN it lists the setup clients', () => {
+    expect(HELP_TEXT).toContain('--client <name>           setup only: claude-code, codex, copilot, gemini, opencode');
+  });
 });

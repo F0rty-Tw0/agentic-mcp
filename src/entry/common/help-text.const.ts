@@ -36,6 +36,7 @@ const HELP_LINES = [
   '  --version                 Print version and exit',
   '  --help                    Print this help message and exit',
   '  --minimal                 Install the skill and print suggested MCP setup',
+  '  --client <name>           setup only: claude-code, codex, copilot, gemini, opencode, cursor, windsurf, or generic',
   '',
   'ask_all combinations:',
   '  --provider/--providers choose providers',

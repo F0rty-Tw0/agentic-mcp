@@ -9,7 +9,7 @@ import type {
   SetupPlan,
   SkillInstallResult,
 } from '../../common';
-import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../common/setup.const';
+import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS, TEST_PROVIDERS_FILE } from '../common/setup.const';
 
 const TEST_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
@@ -47,6 +47,7 @@ export const createSetupPlan = (overrides: Partial<SetupPlan> = {}): SetupPlan =
     mergeStatusPreview: 'merged',
     configText: '{"mcpServers":{"agentic-mcp":{"command":"npx","args":["-y","agentic-mcp"]}}}\n',
     warnings: [],
+    notes: [],
     ...overrides,
   };
 
@@ -68,6 +69,7 @@ export const createSetupCliDependencies = (overrides: Partial<SetupCliDependenci
   const dependencies: SetupCliDependencies = {
     detectInstalledProviders: async () => Promise.resolve(TEST_PROVIDERS),
     generateClientConfigEntry: () => TEST_SERVER_ENTRY,
+    loadProvidersConfig: async () => Promise.resolve(TEST_PROVIDERS_FILE),
     buildSetupPlan: () => createSetupPlan(),
     applySetupPlan: async () => Promise.resolve(createSetupApplyResult()),
     installSkill: async () => Promise.resolve(INSTALLED_SKILL_RESULT),
@@ -77,6 +79,7 @@ export const createSetupCliDependencies = (overrides: Partial<SetupCliDependenci
     isInteractive: false,
     promptConfirm: async () => Promise.resolve(false),
     readConfigFile: async () => Promise.resolve('{"mcpServers":{}}'),
+    env: {},
     ...overrides,
   };
 

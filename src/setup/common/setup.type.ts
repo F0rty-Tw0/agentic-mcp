@@ -1,19 +1,18 @@
-export type SupportedClient = 'claude-code' | 'cursor' | 'windsurf' | 'generic';
+import type { ClientToolTimeout, McpServerEntry, SetupMergeStatus } from './client-target.type';
+import type { ProvidersFile } from '../../shared/provider/common';
+
+export type SupportedClient =
+  'claude-code' | 'codex' | 'copilot' | 'cursor' | 'gemini' | 'opencode' | 'windsurf' | 'generic';
 
 export type SetupMode = 'merge' | 'overwrite';
+
+export type SetupEnv = Readonly<Record<string, string | undefined>>;
 
 export type SetupBackupPolicy = 'if-exists' | 'always' | 'never';
 
 export type SetupWriteIntent = 'write' | 'skip' | 'manual';
 
-export type SetupMergeStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json';
-
 export type SetupOutputMode = 'human' | 'json';
-
-export type McpServerEntry = {
-  readonly command: string;
-  readonly args: string[];
-};
 
 export type SetupFileStat = {
   readonly mode: number;
@@ -61,6 +60,7 @@ export type SetupPlan = {
   readonly mergeStatusPreview: SetupMergeStatus;
   readonly configText: string;
   readonly warnings: string[];
+  readonly notes: string[];
 };
 
 export type SetupPlanInput = {
@@ -72,6 +72,8 @@ export type SetupPlanInput = {
   readonly existingConfigText?: string;
   readonly agenticServerEntry: McpServerEntry;
   readonly backup: SetupBackupPolicy;
+  readonly env?: SetupEnv;
+  readonly toolTimeout?: ClientToolTimeout;
 };
 
 type SetupApplyStatus = 'written' | 'skipped' | 'manual' | 'verification-failed';
@@ -111,8 +113,10 @@ export type SetupCliDependencies = {
   readonly detectInstalledProviders: () => Promise<DetectedProvider[]>;
   readonly generateClientConfigEntry: (
     client: SupportedClient,
-    detectedProviders: DetectedProvider[]
+    detectedProviders: DetectedProvider[],
+    toolTimeoutMs: number
   ) => McpServerEntry;
+  readonly loadProvidersConfig: () => Promise<ProvidersFile>;
   readonly buildSetupPlan: (input: SetupPlanInput) => SetupPlan;
   readonly applySetupPlan: (plan: SetupPlan) => Promise<SetupApplyResult>;
   readonly installSkill: (injectedDependencies?: Partial<SkillInstallDependencies>) => Promise<SkillInstallResult>;
@@ -122,6 +126,7 @@ export type SetupCliDependencies = {
   readonly isInteractive: boolean;
   readonly promptConfirm: (question: string) => Promise<boolean>;
   readonly readConfigFile: (path: string) => Promise<string>;
+  readonly env: SetupEnv;
 };
 
 export type SetupResult = {
