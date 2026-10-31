@@ -24,6 +24,8 @@ describe('HELP_TEXT', () => {
   });
 
   it('GIVEN CLI help WHEN rendered THEN it lists the setup clients', () => {
-    expect(HELP_TEXT).toContain('--client <name>           setup only: claude-code, codex, copilot, gemini, opencode');
+    expect(HELP_TEXT).toContain(
+      '--client <name>           setup only: antigravity, claude-code, codex, copilot, gemini, opencode'
+    );
   });
 });
