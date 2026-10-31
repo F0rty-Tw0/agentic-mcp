@@ -6,15 +6,17 @@ import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { StreamNotifier } from '../../streaming/common';
 import type { AskToolArgs } from '../common';
-import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from '../utils/ask-command.util';
+import { buildCommandOptions, validateAndResolveArgs } from '../utils/ask-command.util';
 import { createProviderLiveOutputAdapter } from '../utils/provider-live-output.util';
 import { resolveRequestedModel } from '../utils/resolve-requested-model.util';
+import { buildNativeSessionArgs, buildStartSessionArgs } from '../utils/session-flag-args.util';
 
 type RunCommandExecutionInput = {
   readonly context: ResolvedProviderEntry;
   readonly args: AskToolArgs;
   readonly extra?: ProgressContext;
   readonly tier2SessionId?: string;
+  readonly startSessionId?: string;
   readonly streamNotifier: StreamNotifier;
 };
 
@@ -23,23 +25,25 @@ type CommandExecutionOutcome = {
   readonly outputFormat: ResolvedProviderEntry['config']['outputFormat'];
 };
 
-const resolveTier2SessionArgs = (config: ResolvedProviderEntry['config'], tier2SessionId?: string): string[] => {
-  if (!tier2SessionId) return [];
+const resolveSessionArgs = (runCommandExecutionInput: RunCommandExecutionInput): string[] => {
+  const { context, tier2SessionId, startSessionId } = runCommandExecutionInput;
 
-  const sessionArgs = buildNativeSessionArgs(config, tier2SessionId);
+  if (tier2SessionId) return buildNativeSessionArgs(context.config, tier2SessionId);
 
-  return sessionArgs;
+  if (startSessionId) return buildStartSessionArgs(context.config, startSessionId);
+
+  return [];
 };
 
 export const runCommandExecution = async (
   runCommandExecutionInput: RunCommandExecutionInput
 ): Promise<CommandExecutionOutcome> => {
-  const { context, args, extra, tier2SessionId, streamNotifier } = runCommandExecutionInput;
+  const { context, args, extra, streamNotifier } = runCommandExecutionInput;
   const env = buildExecutionEnv(context);
   const remappedArgs = await resolveRequestedModel({ context, args, env });
   const resolved = validateAndResolveArgs(remappedArgs, context.name);
-  const tier2SessionArgs = resolveTier2SessionArgs(context.config, tier2SessionId);
-  const { args: cliArgs, stdinInput, outputFormat } = buildArgArray(context.config, resolved, tier2SessionArgs);
+  const sessionArgs = resolveSessionArgs(runCommandExecutionInput);
+  const { args: cliArgs, stdinInput, outputFormat } = buildArgArray(context.config, resolved, sessionArgs);
   const liveOutputAdapter = createProviderLiveOutputAdapter({
     providerName: context.name,
     outputFormat,

@@ -17,3 +17,7 @@ export const FLAG_SYSTEM_PROMPT = 'systemPrompt';
 export const SESSION_RESUME_FLAG_KEY = 'resume';
 
 export const SESSION_CONTINUE_FLAG_KEY = 'continue';
+
+export const SESSION_START_FLAG_KEY = 'startWithId';
+
+export const SESSION_FLAG_VALUE_JOINER = '=';

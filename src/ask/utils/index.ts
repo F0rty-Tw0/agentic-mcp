@@ -13,3 +13,5 @@ export { resolveRequestedModel } from './resolve-requested-model.util';
 export { resolveAskTimeoutMs } from './ask-command.util';
 
 export { isLeveledFlag } from './leveled-flag.util';
+
+export { buildNativeSessionArgs, buildStartSessionArgs, canStartNativeSession } from './session-flag-args.util';
