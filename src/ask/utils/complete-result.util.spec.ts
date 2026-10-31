@@ -150,6 +150,22 @@ describe('FEATURE: timeout result acceptance', () => {
       expect(warning).toBeUndefined();
     });
 
+    it('WHEN the nested result reports a status other than SUCCESS THEN the warning names it', () => {
+      const stdout = '{"event":"result","result":{"status":"ERROR","response":"agy answer"}}';
+
+      const warning = resolveWarning(stdout, 'stream-json');
+
+      expect(warning).toContain('antigravity reported status ERROR.');
+    });
+
+    it('WHEN the result event carries an error outside its nested result THEN no warning is returned', () => {
+      const stdout = '{"event":"result","error":"boom","result":{"response":"partial"}}';
+
+      const warning = resolveWarning(stdout, 'stream-json');
+
+      expect(warning).toBeUndefined();
+    });
+
     it('WHEN nothing was printed THEN no warning is returned', () => {
       const warning = resolveWarning('', 'stream-json');
 

@@ -20,6 +20,15 @@ describe('FEATURE: result envelope reading', () => {
       expect(hasFailure).toBe(true);
     });
 
+    it('WHEN a result event carries an error outside its nested result THEN the envelope reports a failure', () => {
+      const nestedResult: ProviderJsonRecord = { response: 'partial' };
+      const event: ProviderJsonRecord = { event: 'result', error: 'boom', result: nestedResult };
+
+      const hasFailure = hasEnvelopeFailure(event);
+
+      expect(hasFailure).toBe(true);
+    });
+
     it('WHEN the error is blank text THEN the envelope reports no failure', () => {
       const envelope: ProviderJsonRecord = { response: 'answer', error: '  ' };
 
@@ -50,6 +59,15 @@ describe('FEATURE: result envelope reading', () => {
       const envelope: ProviderJsonRecord = { status: 'ERROR' };
 
       const note = describeEnvelopeStatus('antigravity', envelope);
+
+      expect(note).toBe('antigravity reported status ERROR.');
+    });
+
+    it('WHEN a result event nests the status THEN the note names the nested status', () => {
+      const nestedResult: ProviderJsonRecord = { status: 'ERROR', response: 'answer' };
+      const event: ProviderJsonRecord = { event: 'result', result: nestedResult };
+
+      const note = describeEnvelopeStatus('antigravity', event);
 
       expect(note).toBe('antigravity reported status ERROR.');
     });
