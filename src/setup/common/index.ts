@@ -28,6 +28,7 @@ export type {
   SetupMergeStatus,
   StdioServerEntry,
   TimeoutKeyRule,
+  TimeoutValue,
   TomlRewriteCause,
 } from './client-target.type';
 

@@ -52,6 +52,9 @@ export type McpServerEntry =
 
 export type ClientConfigFormat = 'json' | 'toml';
 
+// smol-toml parses an integer beyond 2^53 as a BigInt, which is still a set timeout.
+export type TimeoutValue = number | bigint;
+
 export type TimeoutKeyRule = {
   readonly key: string;
   readonly msAliasKey?: string;
