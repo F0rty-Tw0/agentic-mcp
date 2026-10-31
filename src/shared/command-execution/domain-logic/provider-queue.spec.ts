@@ -230,4 +230,18 @@ describe('createProviderQueueStore', () => {
 
     expect(readSettlement()).toBe('CommandExecutionError: Command cancelled while waiting for provider queue slot');
   });
+  it('GIVEN the global ceiling stays full and the request allows no extra global wait WHEN it waits past queueTimeoutMs THEN it rejects with QueueTimeoutError', async () => {
+    vi.useFakeTimers();
+
+    const store = createProviderQueueStore({ globalMaxConcurrency: 1 });
+    const busyLease = await store.acquireSlot(createQueueInput({ providerName: 'a' }));
+    const waitingInput = createQueueInput({ providerName: 'b', globalSlotExtraWaitMs: 0 });
+    const readSettlement = trackSettlement(store.acquireSlot(waitingInput));
+
+    await vi.advanceTimersByTimeAsync(waitingInput.queueTimeoutMs);
+
+    expect(readSettlement()).toContain('waited 50 ms for a free slot (limit: 50 ms)');
+    busyLease.release();
+    vi.useRealTimers();
+  });
 });

@@ -42,6 +42,7 @@ export type ProviderQueueOptions = {
   readonly providerName: string;
   readonly maxConcurrency: number;
   readonly queueTimeoutMs: number;
+  readonly globalSlotExtraWaitMs?: number;
   readonly signal?: AbortSignal;
 };
 

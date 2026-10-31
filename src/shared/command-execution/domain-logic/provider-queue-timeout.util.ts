@@ -28,12 +28,13 @@ type QueueTimeoutHandlerInput = {
 };
 
 // A request whose provider has a free slot waits only for the global spawn cap. Freed global slots go to the oldest
-// waiter, so it keeps waiting past its queue timeout, but no longer than GLOBAL_SLOT_MAX_EXTRA_WAIT_MS more.
+// waiter, so it keeps waiting past its queue timeout, but no longer than its globalSlotExtraWaitMs more.
 const isOnlyGloballyBlocked = (state: ProviderQueueState): boolean => state.activeCount < state.maxConcurrency;
 
 const resolveWaitLimitMs = (state: ProviderQueueState, options: ProviderQueueOptions): number => {
   const onlyGloballyBlocked = isOnlyGloballyBlocked(state);
-  const extraWaitMs = onlyGloballyBlocked ? GLOBAL_SLOT_MAX_EXTRA_WAIT_MS : 0;
+  const globalSlotExtraWaitMs = options.globalSlotExtraWaitMs ?? GLOBAL_SLOT_MAX_EXTRA_WAIT_MS;
+  const extraWaitMs = onlyGloballyBlocked ? globalSlotExtraWaitMs : 0;
   const waitLimitMs = options.queueTimeoutMs + extraWaitMs;
 
   return waitLimitMs;
