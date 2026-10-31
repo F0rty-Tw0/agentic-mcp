@@ -134,8 +134,20 @@ describe('generateClientConfigEntry', () => {
     expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 6_660_000 });
   });
 
+  it('GIVEN antigravity WHEN generating entry THEN timeoutSeconds is the tool timeout in seconds', () => {
+    const result = generateClientConfigEntry('antigravity', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'], timeoutSeconds: 4260 });
+  });
+
+  it('GIVEN a tool timeout that is not whole seconds WHEN generating an antigravity entry THEN the seconds are rounded up', () => {
+    const result = generateClientConfigEntry('antigravity', [], 6_660_001);
+
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'], timeoutSeconds: 6661 });
+  });
+
   it('GIVEN a tool timeout that is not whole seconds WHEN generating a codex entry THEN the seconds are rounded up', () => {
-    const result = generateClientConfigEntry('codex', [], 6_660_500);
+    const result = generateClientConfigEntry('codex', [], 6_660_001);
 
     expect(result).toStrictEqual({
       command: 'npx',

@@ -41,7 +41,14 @@ export type OpenCodeServerEntry = {
   readonly timeout: number;
 };
 
-export type McpServerEntry = StdioServerEntry | CodexServerEntry | CopilotServerEntry | OpenCodeServerEntry;
+export type AntigravityServerEntry = {
+  readonly command: string;
+  readonly args: string[];
+  readonly timeoutSeconds: number;
+};
+
+export type McpServerEntry =
+  StdioServerEntry | AntigravityServerEntry | CodexServerEntry | CopilotServerEntry | OpenCodeServerEntry;
 
 export type ClientConfigFormat = 'json' | 'toml';
 

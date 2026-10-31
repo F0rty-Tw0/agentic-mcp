@@ -16,6 +16,12 @@ describe('client-skill utilities', () => {
     expect(hasSkill).toBe(false);
   });
 
+  it('GIVEN antigravity WHEN checking for a client skill THEN it has none', () => {
+    const hasSkill = hasClientSkill('antigravity');
+
+    expect(hasSkill).toBe(false);
+  });
+
   it('GIVEN a home directory WHEN resolving the skill path THEN it points to the using-agentic-mcp skill', () => {
     const skillPath = resolveSkillPath('/home/dev');
 

@@ -1,5 +1,6 @@
 import { CODEX_STARTUP_TIMEOUT_SEC } from '../common';
 import type {
+  AntigravityServerEntry,
   CodexServerEntry,
   CopilotServerEntry,
   DetectedProvider,
@@ -35,6 +36,18 @@ const buildCodexEntry = (toolTimeoutMs: number): CodexServerEntry => {
   return codexEntry;
 };
 
+// Antigravity reads timeoutSeconds in seconds from ~/.gemini/config/mcp_config.json; rounding up never cuts it short.
+const buildAntigravityEntry = (toolTimeoutMs: number): AntigravityServerEntry => {
+  const timeoutSeconds = Math.ceil(toolTimeoutMs / MS_PER_SECOND);
+  const antigravityEntry: AntigravityServerEntry = {
+    command: BASE_ENTRY.command,
+    args: BASE_ENTRY.args,
+    timeoutSeconds,
+  };
+
+  return antigravityEntry;
+};
+
 // Copilot CLI requires `tools` on a local server.
 const buildCopilotEntry = (toolTimeoutMs: number): CopilotServerEntry => {
   const copilotEntry: CopilotServerEntry = {
@@ -60,36 +73,27 @@ const buildOpenCodeEntry = (toolTimeoutMs: number): OpenCodeServerEntry => {
   return openCodeEntry;
 };
 
+type TimedEntryBuilder = (toolTimeoutMs: number) => McpServerEntry;
+
+// Claude Code, Cursor, Windsurf and generic get no timeout key, so they use the base entry.
+const TIMED_ENTRY_BUILDERS: Readonly<Partial<Record<SupportedClient, TimedEntryBuilder>>> = {
+  antigravity: buildAntigravityEntry,
+  codex: buildCodexEntry,
+  copilot: buildCopilotEntry,
+  gemini: buildTimedEntry,
+  opencode: buildOpenCodeEntry,
+};
+
 export const generateClientConfigEntry = (
   client: SupportedClient,
-  detectedProviders: DetectedProvider[],
+  _detectedProviders: DetectedProvider[],
   toolTimeoutMs: number
 ): McpServerEntry => {
-  const hasAnyAvailableProvider = detectedProviders.some((provider) => provider.available);
+  const buildClientEntry = TIMED_ENTRY_BUILDERS[client];
 
-  switch (client) {
-    case 'claude-code':
-      return BASE_ENTRY;
-    case 'gemini':
-      return buildTimedEntry(toolTimeoutMs);
-    case 'codex':
-      return buildCodexEntry(toolTimeoutMs);
-    case 'copilot':
-      return buildCopilotEntry(toolTimeoutMs);
-    case 'opencode':
-      return buildOpenCodeEntry(toolTimeoutMs);
-    case 'cursor':
-    case 'windsurf':
-      // Intentionally explicit per-client branches to support project-specific overrides later.
-      return BASE_ENTRY;
-    case 'generic':
-      // TODO: Use provider availability to adjust the generic entry for project-specific defaults.
-      if (hasAnyAvailableProvider) return BASE_ENTRY;
+  if (buildClientEntry == null) return BASE_ENTRY;
 
-      // TODO: Keep this explicit fallback to make future generic behavior changes intentional.
-      return BASE_ENTRY;
-    default:
-      // Intentionally keep a default branch for future client additions.
-      return BASE_ENTRY;
-  }
+  const clientEntry = buildClientEntry(toolTimeoutMs);
+
+  return clientEntry;
 };

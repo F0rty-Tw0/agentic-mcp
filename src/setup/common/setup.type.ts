@@ -2,7 +2,7 @@ import type { ClientToolTimeout, McpServerEntry, SetupMergeStatus } from './clie
 import type { ProvidersFile } from '../../shared/provider/common';
 
 export type SupportedClient =
-  'claude-code' | 'codex' | 'copilot' | 'cursor' | 'gemini' | 'opencode' | 'windsurf' | 'generic';
+  'antigravity' | 'claude-code' | 'codex' | 'copilot' | 'cursor' | 'gemini' | 'opencode' | 'windsurf' | 'generic';
 
 export type SetupMode = 'merge' | 'overwrite';
 
