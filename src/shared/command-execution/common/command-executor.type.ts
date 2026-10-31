@@ -6,12 +6,19 @@ export type UntrackChildGroup = () => void;
 
 export type StopChild = () => void;
 
+export type ChildStop = {
+  readonly stop: StopChild | undefined;
+  readonly exitedBeforeStop: () => boolean;
+  readonly cancelRelease: () => void;
+};
+
 export type ChildGroupRegistry = {
   readonly track: (pid: number) => UntrackChildGroup;
   readonly terminateAll: () => void;
 };
 
-export type StdioReleasableChild = {
+export type StoppableChild = {
+  readonly pid?: number;
   readonly on: (event: 'exit', listener: () => void) => unknown;
   readonly stdout: Readable | null;
   readonly stderr: Readable | null;

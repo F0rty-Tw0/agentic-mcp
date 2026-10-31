@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { executeCommand } from './command-executor';
-import type { ExecuteCommandOptions, ExecutionTimeoutCause } from '../common';
+import type { ExecuteCommandOptions, ExecutionResult, ExecutionTimeoutCause } from '../common';
 
 const LARGE_STDIN_BYTES = 4 * 1024 * 1024;
 
@@ -42,6 +42,21 @@ const EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_LINES = [
 ];
 const EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_SCRIPT = EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_LINES.join('\n');
 
+const EXITED_WITH_ESCAPED_GRANDCHILD_LINES = [
+  "const { spawn } = require('node:child_process');",
+  "const grandchild = spawn(process.execPath, ['-e', 'setTimeout(() => undefined, 20_000)'], {",
+  "  stdio: 'inherit',",
+  '  detached: true,',
+  '});',
+  'process.stdout.write(`RESULT ${grandchild.pid}\\n`);',
+  'process.exit(0);',
+];
+const EXITED_WITH_ESCAPED_GRANDCHILD_SCRIPT = EXITED_WITH_ESCAPED_GRANDCHILD_LINES.join('\n');
+
+const SETTLE_BEFORE_GRANDCHILD_EXIT_MS = 10_000;
+
+const ABORT_AFTER_EXIT_MS = 500;
+
 const escapedPids: number[] = [];
 
 const killQuietly = (pid: number): void => {
@@ -64,6 +79,16 @@ const buildNodeOptions = (script: string, overrides: Partial<ExecuteCommandOptio
   };
 
   return executeCommandOptions;
+};
+
+const runWithEscapedGrandchild = async (overrides: Partial<ExecuteCommandOptions>): Promise<ExecutionResult> => {
+  const options = buildNodeOptions(EXITED_WITH_ESCAPED_GRANDCHILD_SCRIPT, overrides);
+  const result = await executeCommand(options);
+  const grandchildPid = Number(result.stdout.replace('RESULT', ''));
+
+  escapedPids.push(grandchildPid);
+
+  return result;
 };
 
 describe('FEATURE: executeCommand with real child processes', () => {
@@ -155,6 +180,36 @@ describe('FEATURE: executeCommand with real child processes', () => {
       const result = await executeCommand(options);
 
       expect(result.timeoutCause?.outputHeldAfterExit).toBe(true);
+    }, 40_000);
+  });
+
+  describe('GIVEN a child that prints a result and exits while a grandchild outside its group holds stdout', () => {
+    it('WHEN the result watch stops it THEN the result settles before the grandchild exits', async () => {
+      const isResultComplete = (chunk: string): boolean => chunk.includes('RESULT');
+
+      const result = await runWithEscapedGrandchild({ timeoutMs: 30_000, isResultComplete, resultExitGraceMs: 300 });
+
+      expect(result.executionTimeMs).toBeLessThan(SETTLE_BEFORE_GRANDCHILD_EXIT_MS);
+    }, 40_000);
+
+    it('WHEN timeoutMs elapses THEN the result settles before the grandchild exits', async () => {
+      const result = await runWithEscapedGrandchild({ timeoutMs: 500 });
+
+      expect(result.executionTimeMs).toBeLessThan(SETTLE_BEFORE_GRANDCHILD_EXIT_MS);
+    }, 40_000);
+
+    it('WHEN idleTimeoutMs elapses THEN the result settles before the grandchild exits', async () => {
+      const result = await runWithEscapedGrandchild({ timeoutMs: 30_000, idleTimeoutMs: 300 });
+
+      expect(result.executionTimeMs).toBeLessThan(SETTLE_BEFORE_GRANDCHILD_EXIT_MS);
+    }, 40_000);
+
+    it('WHEN the call is aborted THEN the result settles before the grandchild exits', async () => {
+      const signal = AbortSignal.timeout(ABORT_AFTER_EXIT_MS);
+
+      const result = await runWithEscapedGrandchild({ timeoutMs: 30_000, signal });
+
+      expect(result.executionTimeMs).toBeLessThan(SETTLE_BEFORE_GRANDCHILD_EXIT_MS);
     }, 40_000);
   });
 

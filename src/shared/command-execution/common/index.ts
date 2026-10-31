@@ -1,5 +1,6 @@
 export type {
   ChildGroupRegistry,
+  ChildStop,
   ExecuteCommandOptions,
   ExecutionResult,
   ExecutionTimeoutCause,
@@ -11,8 +12,8 @@ export type {
   ResultCompleteDetector,
   ResultExitWatch,
   RetryWithExponentialBackoffInput,
-  StdioReleasableChild,
   StopChild,
+  StoppableChild,
   StreamChunkCallback,
   StreamCollector,
   UntrackChildGroup,
