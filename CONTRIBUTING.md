@@ -30,7 +30,7 @@ Open an issue with:
 ### Fix a Bug or Add a Feature
 
 1. Check existing issues first
-2. Create a branch from `dev`
+2. Create a branch from `master`
 3. Make your changes with tests
 4. Submit a PR
 

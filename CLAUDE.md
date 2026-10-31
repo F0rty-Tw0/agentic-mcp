@@ -67,7 +67,7 @@ Global:
 
 ## Git
 
-- **PRs target `dev`**, not `master`. Flow: `feat/x` -> PR -> `dev` -> PR -> `master`.
+- **PRs target `master`.** Flow: `feat/x` -> PR -> `master`. There is no `dev` branch flow.
 - **Commit format:** `type(scope): emoji message` — e.g. `feat(config): ✨ add Zod schema for providers`.
 - **Squash merge only.** Auto-delete branches after merge. Apply labels from `.github/labels.yml`.
 
