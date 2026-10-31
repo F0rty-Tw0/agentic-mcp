@@ -61,6 +61,10 @@ const extractTopLevelTextEventText = (value: unknown): string | undefined => {
   return typeof value.text === 'string' ? value.text : undefined;
 };
 
+export const extractTerminalResultText = (value: unknown): string | undefined => {
+  return extractTopLevelResultText(value) ?? extractNestedResultEventText(value);
+};
+
 export const extractParsedText = (value: unknown): string | undefined => {
   return (
     extractTopLevelResultText(value) ??
