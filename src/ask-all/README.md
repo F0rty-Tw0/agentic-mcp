@@ -4,7 +4,7 @@ Compare multiple providers on the same prompt — `ask_all` is the side-by-side 
 
 ## What It Does
 
-- Runs the same prompt across multiple configured providers in parallel
+- Runs the same prompt across multiple configured providers in parallel, at most `GLOBAL_MAX_CONCURRENT_SPAWNS` (5) at a time; the rest wait for a free slot, and each provider's timeout starts when its own run starts
 - Returns a structured side-by-side result with per-provider success status, attribution, and execution timing
 - Helps you evaluate differences in answer quality, latency, and failures without bespoke glue scripts
 - Supports CLI report export so one comparison can become a reusable JSON artifact via `agentic-mcp ask_all ... --report <path>`
@@ -23,7 +23,7 @@ Use `ask_all` when comparison is the goal. Do not use it for routine single-prov
 
 ## Key Files
 
-- `domain-logic/ask-all.handler.ts` — `handleAskAll()` — filters providers, runs them in parallel with `Promise.all`, sends the caller heartbeat, builds the summary
+- `domain-logic/ask-all.handler.ts` — `handleAskAll()` — filters providers, runs them in parallel with `Promise.all` through a semaphore of `GLOBAL_MAX_CONCURRENT_SPAWNS` slots, sends the caller heartbeat, builds the summary
 - `domain-logic/ask-all-runner.ts` — `runProviderAsk()` — one provider's `handleAsk` call with its timeout, linked to the caller's abort signal
 - `domain-logic/tool.builder.ts` — Builds the `ask_all` MCP tool definition
 
@@ -33,4 +33,4 @@ None in this module. `src/server/domain-logic/create-server-cancellation.test.ts
 
 ## Unit Tests
 
-4 `.spec.ts` files covering the handler logic (parallel invocation, error handling), the caller's request context (cancellation, heartbeat), tool builder (schema generation), and utility functions (text extraction).
+5 `.spec.ts` files covering the handler logic (parallel invocation, error handling), the fan-out under the global spawn cap, the caller's request context (cancellation, heartbeat), tool builder (schema generation), and utility functions (text extraction).

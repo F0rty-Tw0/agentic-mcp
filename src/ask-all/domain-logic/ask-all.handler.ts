@@ -3,7 +3,7 @@ import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 import { buildErrorResult } from './ask-all-result.builder';
 import { runProviderAsk } from './ask-all-runner';
 import { buildAskAllSummary } from './ask-all-summary.builder';
-import { startHeartbeat } from '../../shared';
+import { GLOBAL_MAX_CONCURRENT_SPAWNS, createSemaphore, startHeartbeat } from '../../shared';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common';
@@ -39,8 +39,18 @@ const runAllProviderAsks = async (
 ): Promise<AskAllProviderResult[]> => {
   const callerSignal = extra?.signal;
   const stopHeartbeat = startHeartbeat(extra);
-  const runForProvider = async (provider: ResolvedProviderEntry): Promise<AskAllProviderResult> =>
-    runProviderAsk({ provider, args, model: resolvedInput.model, callerSignal });
+  const spawnSlots = createSemaphore(GLOBAL_MAX_CONCURRENT_SPAWNS);
+  const runForProvider = async (provider: ResolvedProviderEntry): Promise<AskAllProviderResult> => {
+    await spawnSlots.acquireSlot();
+
+    try {
+      const result = await runProviderAsk({ provider, args, model: resolvedInput.model, callerSignal });
+
+      return result;
+    } finally {
+      spawnSlots.releaseSlot();
+    }
+  };
 
   try {
     const results = await Promise.all(resolvedInput.filteredProviders.map(runForProvider));

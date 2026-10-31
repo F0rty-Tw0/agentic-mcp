@@ -51,6 +51,14 @@ const readProviderContext = (callIndex: number): ProgressContext | undefined => 
   return providerContext;
 };
 
+const countProviderAsks = (): number => vi.mocked(handleAsk).mock.calls.length;
+
+const waitForProviderAsks = async (count: number): Promise<void> => {
+  await vi.waitFor(() => {
+    expect(countProviderAsks()).toBe(count);
+  });
+};
+
 const isSignalAborted = (providerContext?: ProgressContext): boolean => providerContext?.signal?.aborted === true;
 
 const readProviderSignalStates = (): boolean[] => {
@@ -83,6 +91,7 @@ describe('handleAskAll request context', () => {
 
       const asked = handleAskAll([claude, codex], ASK_ALL_ARGS, extra);
 
+      await waitForProviderAsks(2);
       controller.abort();
 
       expect(readProviderSignalStates()).toStrictEqual([true, true]);
