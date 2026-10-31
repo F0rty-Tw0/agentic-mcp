@@ -56,6 +56,9 @@ const buildInvalidMergeWarning = (targetPath: string | undefined, mergedConfig: 
   const reason = String(mergedConfig.reason);
   const target = String(targetPath);
 
+  // An unmergeable reason already says what to change by hand.
+  if (mergedConfig.status === 'unmergeable') return `Existing config at ${target} was left unchanged: ${reason}.`;
+
   if (mergedConfig.status === 'invalid-json') {
     return `Existing config at ${target} is not valid JSON and was left unchanged (${reason}). Add the agentic-mcp entry by hand.`;
   }

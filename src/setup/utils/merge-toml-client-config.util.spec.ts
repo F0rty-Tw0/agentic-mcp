@@ -144,7 +144,8 @@ describe('FEATURE: TOML client config merge', () => {
         notes: [],
         rewritten: false,
         rewriteCause: undefined,
-        reason: 'mcp_servers is not a table, so setup will not replace it',
+        reason:
+          'mcp_servers is not a table, and setup will not replace it; make it a table or remove it, then run setup again',
       });
     });
   });

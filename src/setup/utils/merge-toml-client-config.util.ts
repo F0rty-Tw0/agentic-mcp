@@ -92,7 +92,8 @@ const writeMergedDocument = (mergedDocument: MergedTomlDocument): ClientConfigMe
 const findUnmergeableReason = (serversValue: unknown, serversKey: string): string | undefined => {
   if (serversValue === undefined) return undefined;
 
-  if (!isRecord(serversValue)) return `${serversKey} is not a table, so setup will not replace it`;
+  if (!isRecord(serversValue))
+    return `${serversKey} is not a table, and setup will not replace it; make it a table or remove it, then run setup again`;
 
   const remoteKey = findRemoteTransportKey(serversValue['agentic-mcp']);
 

@@ -81,7 +81,19 @@ describe('FEATURE: codex setup plan', () => {
       const result = planCodex('mcp_servers = "oops"\n');
 
       expect(result.writeIntent).toBe('manual');
-      expect(result.warnings).toContainEqual(expect.stringContaining('(mcp_servers is not a table'));
+      expect(result.warnings).toStrictEqual([
+        'Existing config at /home/dev/.codex/config.toml was left unchanged: mcp_servers is not a table, and setup will not replace it; make it a table or remove it, then run setup again.',
+      ]);
+    });
+  });
+
+  describe('GIVEN an agentic-mcp table with a remote url', () => {
+    it('WHEN building the merge plan THEN the warning says to remove the url, not to add the entry', () => {
+      const result = planCodex('[mcp_servers.agentic-mcp]\nurl = "https://example.com/mcp"\n');
+
+      expect(result.warnings).toStrictEqual([
+        'Existing config at /home/dev/.codex/config.toml was left unchanged: the agentic-mcp entry uses url (a remote server) and setup writes a local command; it will not mix the two, so remove url or replace the entry by hand.',
+      ]);
     });
   });
 
