@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveTimeoutResultWarning } from './complete-result.util';
+import { createResultEnvelopeDetector, resolveTimeoutResultWarning } from './complete-result.util';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 
 const AGY_RESULT_EVENT = '{"event":"result","result":{"status":"SUCCESS","response":"agy answer"}}';
@@ -81,5 +81,64 @@ describe('FEATURE: timeout result acceptance', () => {
     const warning = resolveWarning('{"response":"agy answer"}', 'json', false);
 
     expect(warning).toBeUndefined();
+  });
+});
+
+describe('FEATURE: result envelope detector', () => {
+  describe('GIVEN a stream-json detector', () => {
+    it('WHEN a terminal result event arrives split across chunks THEN the last chunk reports completion', () => {
+      const isComplete = createResultEnvelopeDetector('stream-json');
+      const half = Math.floor(AGY_RESULT_EVENT.length / 2);
+      const firstChunk = `${AGY_STEP_EVENT}\n${AGY_RESULT_EVENT.slice(0, half)}`;
+      const lastChunk = `${AGY_RESULT_EVENT.slice(half)}\n`;
+
+      const firstCompleted = isComplete(firstChunk);
+      const lastCompleted = isComplete(lastChunk);
+
+      expect([firstCompleted, lastCompleted]).toStrictEqual([false, true]);
+    });
+
+    it('WHEN the terminal result line has no trailing newline THEN it reports completion', () => {
+      const isComplete = createResultEnvelopeDetector('stream-json');
+
+      const completed = isComplete(AGY_RESULT_EVENT);
+
+      expect(completed).toBe(true);
+    });
+
+    it('WHEN only step events arrive THEN it reports no completion', () => {
+      const isComplete = createResultEnvelopeDetector('stream-json');
+
+      const completed = isComplete(`${AGY_STEP_EVENT}\n${AGY_STEP_EVENT}\n`);
+
+      expect(completed).toBe(false);
+    });
+  });
+
+  describe('GIVEN a json detector', () => {
+    it('WHEN the envelope arrives in two chunks THEN only the last chunk reports completion', () => {
+      const isComplete = createResultEnvelopeDetector('json');
+
+      const firstCompleted = isComplete('{"status":"SUCCESS",');
+      const lastCompleted = isComplete('"response":"agy answer"}\n');
+
+      expect([firstCompleted, lastCompleted]).toStrictEqual([false, true]);
+    });
+
+    it('WHEN the envelope has an empty answer THEN it reports no completion', () => {
+      const isComplete = createResultEnvelopeDetector('json');
+
+      const completed = isComplete('{"status":"SUCCESS","response":""}');
+
+      expect(completed).toBe(false);
+    });
+  });
+
+  it('GIVEN a text detector WHEN output arrives THEN it never reports completion', () => {
+    const isComplete = createResultEnvelopeDetector('text');
+
+    const completed = isComplete('{"response":"agy answer"}');
+
+    expect(completed).toBe(false);
   });
 });

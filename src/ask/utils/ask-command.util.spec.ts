@@ -241,6 +241,26 @@ describe('buildCommandOptions', () => {
     expect(result.signal).toBeUndefined();
     expect(result.onSpawned).toBeUndefined();
   });
+
+  describe('GIVEN a provider that opts in with acceptResultOnTimeout', () => {
+    const context = buildContext({ config: buildProviderConfig({ acceptResultOnTimeout: true }) });
+
+    it('WHEN called with json output THEN the result detector recognises a complete envelope', () => {
+      const options = buildCommandOptions({ context, resolved: {}, cliArgs: [], env: {}, outputFormat: 'json' });
+
+      const isComplete = options.isResultComplete?.('{"response":"agy answer"}');
+
+      expect(isComplete).toBe(true);
+    });
+  });
+
+  it('GIVEN a provider without the opt-in WHEN called with json output THEN no result detector is set', () => {
+    const context = buildContext();
+
+    const options = buildCommandOptions({ context, resolved: {}, cliArgs: [], env: {}, outputFormat: 'json' });
+
+    expect(options.isResultComplete).toBeUndefined();
+  });
 });
 
 describe('buildNativeSessionArgs', () => {

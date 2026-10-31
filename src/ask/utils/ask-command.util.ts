@@ -8,10 +8,12 @@ import {
   validateSessionId,
   validateWorkingDirectory,
 } from '../../shared';
-import type { ExecuteCommandOptions } from '../../shared/command-execution/common';
+import type { ExecuteCommandOptions, ResultCompleteDetector } from '../../shared/command-execution/common';
+import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common';
 import type { AskToolArgs } from '../common';
+import { createResultEnvelopeDetector } from './complete-result.util';
 
 type BuildCommandOptionsInput = {
   readonly context: ResolvedProviderEntry;
@@ -23,6 +25,7 @@ type BuildCommandOptionsInput = {
   readonly onStderrChunk?: (chunk: string) => void;
   readonly signal?: AbortSignal;
   readonly onSpawned?: (pid: number) => void;
+  readonly outputFormat?: OutputFormat;
 };
 
 const COPILOT_MODEL_ALIASES: Readonly<Record<string, string>> = {
@@ -80,9 +83,21 @@ export const validateAndResolveArgs = (args: AskToolArgs, providerName?: string)
   return resolvedArgs;
 };
 
+const resolveResultDetector = (
+  config: ProviderConfig,
+  outputFormat?: OutputFormat
+): ResultCompleteDetector | undefined => {
+  if (!config.acceptResultOnTimeout || outputFormat === undefined) return;
+
+  const isResultComplete = createResultEnvelopeDetector(outputFormat);
+
+  return isResultComplete;
+};
+
 export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOptionsInput): ExecuteCommandOptions => {
   const { context, resolved, cliArgs, stdinInput, env, onStdoutChunk, onStderrChunk, signal, onSpawned } =
     buildCommandOptionsInput;
+  const isResultComplete = resolveResultDetector(context.config, buildCommandOptionsInput.outputFormat);
 
   const timeoutMs = resolveAskTimeoutMs(context.config.timeout);
   const providerQueue = buildProviderQueueOptions(context);
@@ -99,6 +114,7 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
     onStderrChunk,
     signal,
     onSpawned,
+    isResultComplete,
   };
 
   return commandOptions;

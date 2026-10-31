@@ -5,7 +5,7 @@ import {
   splitTrimmedLines,
 } from './output-text.util';
 import { stripAnsi } from '../../shared';
-import type { ExecutionResult } from '../../shared/command-execution/common';
+import type { ExecutionResult, ResultCompleteDetector } from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ProviderConfig } from '../../shared/provider/common';
 
@@ -51,6 +51,53 @@ const extractCompleteResultText = (stdout: string, outputFormat: OutputFormat): 
   if (outputFormat === 'stream-json') return extractLastResultEventText(cleanOutput);
 
   return;
+};
+
+const hasCompleteResult = (stdout: string, outputFormat: OutputFormat): boolean => {
+  const completeText = extractCompleteResultText(stdout, outputFormat);
+
+  return completeText !== undefined;
+};
+
+const createJsonEnvelopeDetector = (): ResultCompleteDetector => {
+  let output = '';
+
+  return (chunk: string): boolean => {
+    output += chunk;
+
+    const mayCloseEnvelope = chunk.trimEnd().endsWith('}');
+
+    if (!mayCloseEnvelope) return false;
+
+    return hasCompleteResult(output, 'json');
+  };
+};
+
+// Reads each stream-json line once; the unterminated tail is also checked so a result without a newline counts.
+const createStreamJsonResultDetector = (): ResultCompleteDetector => {
+  let pendingLine = '';
+
+  return (chunk: string): boolean => {
+    const bufferedOutput = `${pendingLine}${chunk}`;
+    const lines = bufferedOutput.split(/\r?\n/);
+
+    pendingLine = lines.pop() ?? '';
+
+    const candidateLines = [...lines, pendingLine];
+    const isComplete = candidateLines.some((line) => hasCompleteResult(line, 'stream-json'));
+
+    return isComplete;
+  };
+};
+
+const neverComplete: ResultCompleteDetector = () => false;
+
+export const createResultEnvelopeDetector = (outputFormat: OutputFormat): ResultCompleteDetector => {
+  if (outputFormat === 'json') return createJsonEnvelopeDetector();
+
+  if (outputFormat === 'stream-json') return createStreamJsonResultDetector();
+
+  return neverComplete;
 };
 
 export const resolveTimeoutResultWarning = (timeoutResultInput: TimeoutResultInput): string | undefined => {
