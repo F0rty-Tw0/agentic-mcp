@@ -77,6 +77,7 @@ export type ExecutionTimeoutKind = 'wall-clock' | 'idle' | 'result-exit';
 export type ExecutionTimeoutCause = {
   readonly kind: ExecutionTimeoutKind;
   readonly limitMs: number;
+  readonly outputHeldAfterExit?: boolean;
 };
 
 export type ResolveExecutionResultInput = {
@@ -92,6 +93,7 @@ export type ResolveTimeoutCauseInput = {
   readonly wallClockTimedOut: boolean;
   readonly idleTimedOut: boolean;
   readonly resultExitStopped: boolean;
+  readonly exitedBeforeKill?: boolean;
   readonly timeoutMs: number;
   readonly idleTimeoutMs?: number;
 };

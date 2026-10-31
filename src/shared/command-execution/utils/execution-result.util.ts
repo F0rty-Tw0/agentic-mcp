@@ -5,7 +5,7 @@ import type {
   ResolveTimeoutCauseInput,
 } from '../common';
 
-export const resolveTimeoutCause = (input: ResolveTimeoutCauseInput): ExecutionTimeoutCause | undefined => {
+const resolveStopCause = (input: ResolveTimeoutCauseInput): ExecutionTimeoutCause | undefined => {
   const { wallClockTimedOut, idleTimedOut, resultExitStopped, timeoutMs, idleTimeoutMs } = input;
 
   if (resultExitStopped) {
@@ -25,6 +25,16 @@ export const resolveTimeoutCause = (input: ResolveTimeoutCauseInput): ExecutionT
   const idleCause: ExecutionTimeoutCause = { kind: 'idle', limitMs: idleTimeoutMs };
 
   return idleCause;
+};
+
+export const resolveTimeoutCause = (input: ResolveTimeoutCauseInput): ExecutionTimeoutCause | undefined => {
+  const stopCause = resolveStopCause(input);
+
+  if (stopCause === undefined || !input.exitedBeforeKill) return stopCause;
+
+  const heldOutputCause: ExecutionTimeoutCause = { ...stopCause, outputHeldAfterExit: true };
+
+  return heldOutputCause;
 };
 
 export const resolveExecutionResult = (input: ResolveExecutionResultInput): ExecutionResult => {

@@ -47,6 +47,33 @@ describe('FEATURE: resolveTimeoutCause', () => {
     });
   });
 
+  describe('GIVEN the child exited on its own before it was stopped', () => {
+    it('WHEN resolving the cause THEN the cause says a descendant held the output after the exit', () => {
+      const result = resolveTimeoutCause({
+        wallClockTimedOut: false,
+        idleTimedOut: false,
+        resultExitStopped: true,
+        exitedBeforeKill: true,
+        timeoutMs: 5_000,
+      });
+      const expected: ExecutionTimeoutCause = { kind: 'result-exit', limitMs: 0, outputHeldAfterExit: true };
+
+      expect(result).toStrictEqual(expected);
+    });
+
+    it('WHEN nothing stopped it THEN there is no cause', () => {
+      const result = resolveTimeoutCause({
+        wallClockTimedOut: false,
+        idleTimedOut: false,
+        resultExitStopped: false,
+        exitedBeforeKill: true,
+        timeoutMs: 5_000,
+      });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
   describe('GIVEN neither timer fired', () => {
     it('WHEN resolving the cause THEN there is none', () => {
       const result = resolveTimeoutCause({

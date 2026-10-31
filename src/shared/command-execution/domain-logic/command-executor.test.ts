@@ -34,6 +34,14 @@ const RESULT_WITH_ESCAPED_GRANDCHILD_LINES = [
 ];
 const RESULT_WITH_ESCAPED_GRANDCHILD_SCRIPT = RESULT_WITH_ESCAPED_GRANDCHILD_LINES.join('\n');
 
+const EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_LINES = [
+  "const { spawn } = require('node:child_process');",
+  "spawn(process.execPath, ['-e', 'setTimeout(() => undefined, 20_000)'], { stdio: 'inherit' });",
+  "process.stdout.write('RESULT\\n');",
+  'process.exit(0);',
+];
+const EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_SCRIPT = EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_LINES.join('\n');
+
 const escapedPids: number[] = [];
 
 const killQuietly = (pid: number): void => {
@@ -132,6 +140,21 @@ describe('FEATURE: executeCommand with real child processes', () => {
       escapedPids.push(grandchildPid);
 
       expect(result.executionTimeMs).toBeLessThan(10_000);
+    }, 40_000);
+  });
+
+  describe('GIVEN a child that prints a complete result and exits while its grandchild holds stdout', () => {
+    it('WHEN the result watch stops the grandchild THEN the cause says the output was held after the exit', async () => {
+      const isResultComplete = (chunk: string): boolean => chunk.includes('RESULT');
+      const options = buildNodeOptions(EXITED_WITH_GRANDCHILD_HOLDING_STDOUT_SCRIPT, {
+        timeoutMs: 30_000,
+        isResultComplete,
+        resultExitGraceMs: 300,
+      });
+
+      const result = await executeCommand(options);
+
+      expect(result.timeoutCause?.outputHeldAfterExit).toBe(true);
     }, 40_000);
   });
 

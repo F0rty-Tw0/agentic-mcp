@@ -3,7 +3,7 @@ import { PassThrough } from 'node:stream';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { releaseStdioAfterKilledExit } from './command-stdio-release';
+import { releaseStdioAfterKilledExit, trackExitBeforeKill } from './command-stdio-release';
 import type { StdioReleasableChild } from '../common';
 import { STDIO_RELEASE_GRACE_MS } from '../common';
 
@@ -75,5 +75,35 @@ describe('FEATURE: release stdio after a killed child exits', () => {
 
       expect(fake.destroyed()).toBe(false);
     });
+  });
+});
+
+describe('FEATURE: track whether a child exited before a kill was requested', () => {
+  it('GIVEN no kill was requested WHEN the child exits THEN it exited before the kill', () => {
+    const fake = createFakeChild();
+
+    const exitedBeforeKill = trackExitBeforeKill(fake.child, () => false);
+
+    fake.emitExit();
+
+    expect(exitedBeforeKill()).toBe(true);
+  });
+
+  it('GIVEN a kill was requested WHEN the child exits THEN it did not exit before the kill', () => {
+    const fake = createFakeChild();
+
+    const exitedBeforeKill = trackExitBeforeKill(fake.child, () => true);
+
+    fake.emitExit();
+
+    expect(exitedBeforeKill()).toBe(false);
+  });
+
+  it('GIVEN a child that has not exited WHEN asked THEN it did not exit before the kill', () => {
+    const fake = createFakeChild();
+
+    const exitedBeforeKill = trackExitBeforeKill(fake.child, () => false);
+
+    expect(exitedBeforeKill()).toBe(false);
   });
 });

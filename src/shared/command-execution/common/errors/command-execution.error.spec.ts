@@ -58,6 +58,17 @@ describe('CommandExecutionError.toMcpResponse', () => {
     );
   });
 
+  it('GIVEN a result-exit cause after the child exited WHEN toMcpResponse called THEN it says a process the CLI started held the output', () => {
+    const timeoutCause: ExecutionTimeoutCause = { kind: 'result-exit', limitMs: 0, outputHeldAfterExit: true };
+    const error = new CommandExecutionError('held command', { timedOut: true, timeoutCause });
+
+    const result = error.toMcpResponse();
+
+    expect(result.content[0]?.text).toBe(
+      'held command Process exited after it printed a complete result, but a process it started kept its output open and was stopped.'
+    );
+  });
+
   it('GIVEN error with short stderr WHEN toMcpResponse called THEN includes full stderr without truncation', () => {
     const error = new CommandExecutionError('command failed', { exitCode: 1, stderr: 'short error message' });
 

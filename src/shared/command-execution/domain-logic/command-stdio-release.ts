@@ -3,6 +3,8 @@ import { STDIO_RELEASE_GRACE_MS } from '../common';
 
 type CancelStdioRelease = () => void;
 
+type ExitedBeforeKill = () => boolean;
+
 export const releaseStdioAfterKilledExit = (
   child: StdioReleasableChild,
   wasKillRequested: () => boolean
@@ -27,4 +29,14 @@ export const releaseStdioAfterKilledExit = (
   };
 
   return cancel;
+};
+
+export const trackExitBeforeKill = (child: StdioReleasableChild, wasKillRequested: () => boolean): ExitedBeforeKill => {
+  let exitedBeforeKill = false;
+
+  child.on('exit', () => {
+    exitedBeforeKill = !wasKillRequested();
+  });
+
+  return (): boolean => exitedBeforeKill;
 };
