@@ -31,6 +31,7 @@ export const SKILL_CONTENT_INTRO_LINES = [
   '| Need limited proof for one provider | `ping_<provider>` | `agentic-mcp ping_<provider>` | Before a manual provider-specific ask, not as final proof |',
   '| Need to inspect provider-specific capabilities | `help_<provider>` | `agentic-mcp help_<provider>` | Only when you need flags, models, or behavior details |',
   '| Need one provider to answer a task | `ask_<provider>` | `agentic-mcp ask_<provider> "..."` | Focused single-provider work after the first proof |',
+  '| Need a long task that may outlast the MCP client tool-call timeout | `ask_<provider>` with `mode: "async"`, then `action: "status"` with the `job_id` | `agentic-mcp ask_<provider> "..." --async`, then `--job-id <id>` | Work likely to take more than about a minute, such as a big PR review or a multi-file task |',
   '| Need to compare providers on the same prompt | `ask_all` | `agentic-mcp ask_all "..." --providers claude,gemini` | Only when comparison itself is the goal |',
   '| Need to resume or inspect multi-turn work | `sessions_<provider>` then `ask_<provider>` with `session_id` | `agentic-mcp sessions_<provider>` then `agentic-mcp ask_<provider> "..." --session-id <id>` | Continue existing context instead of starting over |',
   '| Need usage and reliability metrics | `provider_metrics` | `agentic-mcp provider_metrics` | After runs, debugging, or performance review |',

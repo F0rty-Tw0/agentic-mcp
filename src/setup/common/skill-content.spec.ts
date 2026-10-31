@@ -56,4 +56,18 @@ describe('SKILL_CONTENT', () => {
       expect(SKILL_CONTENT).toContain(expectedFlag);
     }
   });
+
+  it('GIVEN installed skill WHEN describing long-running work THEN it steers work over about a minute to async mode and status polling', () => {
+    const expectedGuidance = [
+      'Need a long task that may outlast the MCP client tool-call timeout',
+      '## Long-Running Work',
+      'more than about a minute',
+      '`mode: "async"`',
+      '`action: "status"`',
+    ];
+
+    for (const guidanceLine of expectedGuidance) {
+      expect(SKILL_CONTENT).toContain(guidanceLine);
+    }
+  });
 });
