@@ -78,6 +78,19 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
     });
   });
 
+  describe('GIVEN an existing entry with a timeout too large for a number (TOML BigInt)', () => {
+    it('WHEN merging THEN the user value is kept and reported', () => {
+      const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 99_999_999_999_999_999_999n };
+
+      const result = mergeAgenticServerEntry({ existingEntry, agenticServerEntry: TIMED_ENTRY, target: TIMED_TARGET });
+
+      expect(result).toStrictEqual({
+        entry: existingEntry,
+        notes: ['agentic-mcp timeout: kept your 99999999999999999999 (not lower than 4260000).'],
+      });
+    });
+  });
+
   describe('GIVEN an existing entry with a timeout that is not a number', () => {
     it('WHEN merging THEN the generated timeout replaces it', () => {
       const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: '600000' };
@@ -154,6 +167,26 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
         entry: existingEntry,
         notes: ['agentic-mcp startup_timeout_sec: not set; kept your startup_timeout_ms 120000 (not lower than 60 s).'],
       });
+    });
+  });
+
+  describe('GIVEN a seconds timeout key whose ms alias is a TOML BigInt', () => {
+    it('WHEN merging THEN the seconds key is not added and the alias is kept', () => {
+      const existingEntry = {
+        command: 'npx',
+        args: ['-y', 'agentic-mcp'],
+        startup_timeout_ms: 99_999_999_999_999_999_999n,
+      };
+
+      const result = mergeAgenticServerEntry({
+        existingEntry,
+        agenticServerEntry: CODEX_LIKE_ENTRY,
+        target: CODEX_LIKE_TARGET,
+      });
+
+      expect(result.notes).toStrictEqual([
+        'agentic-mcp startup_timeout_sec: not set; kept your startup_timeout_ms 99999999999999999999 (not lower than 60 s).',
+      ]);
     });
   });
 

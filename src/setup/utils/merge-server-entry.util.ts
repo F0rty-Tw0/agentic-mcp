@@ -13,8 +13,11 @@ type MergeServerEntryResult = {
   readonly notes: string[];
 };
 
+// smol-toml parses an integer beyond 2^53 as a BigInt, which is still a set timeout.
+type TimeoutValue = number | bigint;
+
 type TimeoutChoice = {
-  readonly value?: number;
+  readonly value?: TimeoutValue;
   readonly note: string;
 };
 
@@ -36,10 +39,14 @@ const isRecord = (value: unknown): value is JsonRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
+const isTimeoutValue = (value: unknown): value is TimeoutValue => {
+  return typeof value === 'number' || typeof value === 'bigint';
+};
+
 const chooseTimeout = (input: TimeoutChoiceInput): TimeoutChoice => {
   const { key, existingValue, generatedValue } = input;
 
-  if (typeof existingValue !== 'number') {
+  if (!isTimeoutValue(existingValue)) {
     const setChoice: TimeoutChoice = {
       value: generatedValue,
       note: `agentic-mcp ${key}: set to ${String(generatedValue)} (was not set).`,
@@ -73,11 +80,13 @@ const chooseAliasTimeout = (input: AliasChoiceInput): TimeoutChoice | undefined 
 
   const aliasValue = existingEntry[rule.msAliasKey];
 
-  if (typeof aliasValue !== 'number') return undefined;
+  if (!isTimeoutValue(aliasValue)) return undefined;
 
   const aliasLabel = `${rule.msAliasKey} ${String(aliasValue)}`;
+  const aliasMs = Number(aliasValue);
+  const aliasSeconds = aliasMs / MS_PER_SECOND;
 
-  if (aliasValue / MS_PER_SECOND >= generatedValue) {
+  if (aliasSeconds >= generatedValue) {
     const keptChoice: TimeoutChoice = {
       note: `agentic-mcp ${rule.key}: not set; kept your ${aliasLabel} (not lower than ${String(generatedValue)} s).`,
     };
@@ -107,7 +116,7 @@ export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServ
   const existingEntry = isRecord(input.existingEntry) ? input.existingEntry : emptyEntry;
   const generatedEntry: JsonRecord = agenticServerEntry;
   const preservedValues = pickPresentKeys(existingEntry, target.preservedKeys);
-  const timeoutValues: Record<string, number> = {};
+  const timeoutValues: Record<string, TimeoutValue> = {};
   const notes: string[] = [];
 
   const omittedKeys: string[] = [];
