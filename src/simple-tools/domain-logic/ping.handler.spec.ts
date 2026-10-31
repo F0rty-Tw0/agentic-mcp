@@ -118,7 +118,7 @@ describe('handlePing', () => {
       const providerQueue = {
         providerName: 'test',
         maxConcurrency: 1,
-        queueTimeoutMs: 30_000,
+        queueTimeoutMs: 600_000,
       };
 
       expect(executeCommand).toHaveBeenCalledWith({

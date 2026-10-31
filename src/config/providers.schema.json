@@ -183,7 +183,7 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 2147483647,
-          "description": "Optional maximum time in milliseconds a request may wait in the provider queue before spawning. Distinct from the execution timeout. Defaults to 30000 when omitted."
+          "description": "Optional maximum time in milliseconds a request may wait in the provider queue before spawning. Distinct from the execution timeout. Defaults to 600000 (10 min) when omitted."
         },
         "env": {
           "type": "object",
