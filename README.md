@@ -71,7 +71,7 @@ You need:
 Supported provider binaries today:
 
 - Core enabled providers: `claude`, `codex`, `copilot`, `gemini`, `opencode`
-- Additional enabled providers: `aider`, `goose`, `amp`, `cline`, `agent` (Cursor Agent CLI), `droid`
+- Additional enabled providers: `agy` (Antigravity CLI), `aider`, `goose`, `amp`, `cline`, `agent` (Cursor Agent CLI), `droid`
 - Disabled templates shipped for later verification: `q` (Amazon Q), `plandex`, `openhands`, `qwen`, `tabnine`
 
 `list_providers` is the source of truth for what is enabled, what is disabled, which support level each provider is in, and which prerequisites a template still needs. If the underlying binary is missing or not logged in, setup may still succeed while provider calls fail.
@@ -323,30 +323,42 @@ npx agentic-mcp provider_metrics
 
 These provider definitions ship with the project. Whether they are actually usable on your machine still depends on the underlying CLI binary being installed and authenticated.
 
-| Provider  | Binary      | Support level | Enabled by default | Notes                                |
-| --------- | ----------- | ------------- | ------------------ | ------------------------------------ |
-| Claude    | `claude`    | stable        | Yes                | ask, sessions                        |
-| Codex     | `codex`     | stable        | Yes                | ask, review, sessions                |
-| Copilot   | `copilot`   | stable        | Yes                | ask, sessions                        |
-| Gemini    | `gemini`    | stable        | Yes                | ask, sessions                        |
-| OpenCode  | `opencode`  | stable        | Yes                | ask, sessions, model listing         |
-| Aider     | `aider`     | community     | Yes                | ask                                  |
-| Goose     | `goose`     | beta          | Yes                | ask, sessions                        |
-| Amp       | `amp`       | beta          | Yes                | ask                                  |
-| Cline     | `cline`     | beta          | Yes                | ask                                  |
-| Cursor    | `agent`     | beta          | Yes                | ask                                  |
-| Droid     | `droid`     | beta          | Yes                | ask                                  |
-| Amazon Q  | `q`         | experimental  | No                 | disabled template with prerequisites |
-| Plandex   | `plandex`   | community     | No                 | disabled template with prerequisites |
-| OpenHands | `openhands` | experimental  | No                 | disabled template with prerequisites |
-| Qwen Code | `qwen`      | experimental  | No                 | disabled template with prerequisites |
-| Tabnine   | `tabnine`   | experimental  | No                 | disabled template with prerequisites |
+| Provider    | Binary      | Support level | Enabled by default | Notes                                   |
+| ----------- | ----------- | ------------- | ------------------ | --------------------------------------- |
+| Claude      | `claude`    | stable        | Yes                | ask, sessions                           |
+| Codex       | `codex`     | stable        | Yes                | ask, review, sessions                   |
+| Copilot     | `copilot`   | stable        | Yes                | ask, sessions                           |
+| Gemini      | `gemini`    | stable        | Yes                | ask, sessions                           |
+| Antigravity | `agy`       | beta          | Yes                | ask, sessions, model listing; see below |
+| OpenCode    | `opencode`  | stable        | Yes                | ask, sessions, model listing            |
+| Aider       | `aider`     | community     | Yes                | ask                                     |
+| Goose       | `goose`     | beta          | Yes                | ask, sessions                           |
+| Amp         | `amp`       | beta          | Yes                | ask                                     |
+| Cline       | `cline`     | beta          | Yes                | ask                                     |
+| Cursor      | `agent`     | beta          | Yes                | ask                                     |
+| Droid       | `droid`     | beta          | Yes                | ask                                     |
+| Amazon Q    | `q`         | experimental  | No                 | disabled template with prerequisites    |
+| Plandex     | `plandex`   | community     | No                 | disabled template with prerequisites    |
+| OpenHands   | `openhands` | experimental  | No                 | disabled template with prerequisites    |
+| Qwen Code   | `qwen`      | experimental  | No                 | disabled template with prerequisites    |
+| Tabnine     | `tabnine`   | experimental  | No                 | disabled template with prerequisites    |
 
 Provider definitions live in `src/config/providers.json`.
 
+### Antigravity
+
+The `antigravity` provider (`ask_antigravity`) runs Google's Antigravity CLI (`agy`), which replaced Gemini CLI for individual Google accounts on 2026-06-18. The `gemini` provider stays for API-key and enterprise users. The integration is tested against a fake `agy`, not the real binary, so it ships as beta.
+
+- Install `agy` from Google (it is not on npm), then run `agy` once in a terminal to finish sign-in and the one-time onboarding screens. Print mode does not show them, and a run without a login fails fast.
+- JSON output needs agy 1.1.8 or newer.
+- Some agy versions print the full answer and then never exit ([#1313](https://github.com/google-antigravity/antigravity-cli/issues/1313)). The provider sets `acceptResultOnTimeout`, so agentic-mcp stops agy `resultExitGraceMs` (30 s by default) after it printed a complete result and returns that answer, with a `warning` in the attribution.
+- Runs can take up to 60 minutes; agy gets `--print-timeout 58m` so it returns first. Auto-update is turned off for these runs.
+- `autoMode` maps to `--dangerously-skip-permissions`. Without it, print mode denies file writes and commands that need approval. File attachments, a system prompt and the sandbox are not mapped.
+- The bundled config passes no credentials. To sign in with `GEMINI_API_KEY` (agy also needs `"modelProvider": "gemini"` in `~/.gemini/antigravity-cli/settings.json`) or with Application Default Credentials (`AGY_ADC_AUTH`, `GOOGLE_APPLICATION_CREDENTIALS`), copy the provider into your own config and add those names to its `envPassthrough`.
+
 ### Environment variables
 
-Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp dirs, `USER`/`LOGNAME`/`SHELL`, and proxy and CA settings (`HTTP(S)_PROXY`, `NO_PROXY`, `ALL_PROXY`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`). Nothing else from your shell reaches them unless the provider lists it in `envPassthrough`. The bundled config passes only each CLI's config-directory variable (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`) and no credentials: an API key in the environment overrides a CLI's own login, and `claude -p` always uses `ANTHROPIC_API_KEY` when it is set, which moves a Pro or Max subscription to per-token API billing. If you do authenticate with environment keys, copy the provider into your own config and list them:
+Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp dirs, `USER`/`LOGNAME`/`SHELL`, and proxy and CA settings (`HTTP(S)_PROXY`, `NO_PROXY`, `ALL_PROXY`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`). Nothing else from your shell reaches them unless the provider lists it in `envPassthrough`. The bundled config passes only each CLI's config-directory variable (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`), `GOOGLE_CLOUD_PROJECT` for Gemini and Antigravity, and for Antigravity the desktop-Linux keyring variables `DBUS_SESSION_BUS_ADDRESS` and `XDG_RUNTIME_DIR`. It passes no credentials: an API key in the environment overrides a CLI's own login, and `claude -p` always uses `ANTHROPIC_API_KEY` when it is set, which moves a Pro or Max subscription to per-token API billing. If you do authenticate with environment keys, copy the provider into your own config and list them:
 
 ```json
 "envPassthrough": ["CODEX_HOME", "OPENAI_API_KEY"]
