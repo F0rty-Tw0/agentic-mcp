@@ -1,4 +1,5 @@
 import { defaultChildGroupRegistry } from '../../shared';
+import { SHUTDOWN_CLOSE_TIMEOUT_MS } from '../common';
 
 type CloseFn = () => Promise<void>;
 
@@ -12,12 +13,20 @@ const closeServer = async (close: CloseFn): Promise<number> => {
   return 0;
 };
 
-// Provider groups ignoring SIGTERM get SIGKILL after a bounded grace period, before the process exits.
+const closeTimeout = async (): Promise<number> => {
+  const timedOutCode = await new Promise<number>((resolve) => {
+    setTimeout(resolve, SHUTDOWN_CLOSE_TIMEOUT_MS, 1).unref();
+  });
+
+  return timedOutCode;
+};
+
+// Groups are stopped alongside close, since close can wait forever on a client that stopped reading.
 export const registerGracefulShutdown = (close: CloseFn): void => {
   const handler = async (): Promise<void> => {
-    const exitCode = await closeServer(close);
+    const closed = Promise.race([closeServer(close), closeTimeout()]);
+    const [exitCode] = await Promise.all([closed, defaultChildGroupRegistry.terminateAll()]);
 
-    await defaultChildGroupRegistry.terminateAll();
     process.exit(exitCode);
   };
 

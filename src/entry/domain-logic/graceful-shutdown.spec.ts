@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { registerGracefulShutdown } from './graceful-shutdown';
 import { defaultChildGroupRegistry } from '../../shared';
+import { SHUTDOWN_CLOSE_TIMEOUT_MS } from '../common';
 
 type SignalHandler = () => unknown | Promise<void>;
 
@@ -149,5 +150,37 @@ describe('registerGracefulShutdown', () => {
     await flushShutdown();
 
     expect(terminateSpy).toHaveBeenCalledOnce();
+  });
+
+  describe('GIVEN a close that never settles', () => {
+    const neverSettles = async (): Promise<void> => new Promise<void>(() => undefined);
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('WHEN a signal fires THEN provider groups are terminated without waiting for close', async () => {
+      const readHandler = captureHandler('SIGTERM');
+      const terminateSpy = vi.mocked(defaultChildGroupRegistry.terminateAll);
+
+      vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      registerGracefulShutdown(neverSettles);
+      void readHandler()();
+      await flushShutdown();
+
+      expect(terminateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('WHEN the close timeout passes THEN the process exits with code 1', async () => {
+      vi.useFakeTimers();
+      const readHandler = captureHandler('SIGTERM');
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+
+      registerGracefulShutdown(neverSettles);
+      void readHandler()();
+      await vi.advanceTimersByTimeAsync(SHUTDOWN_CLOSE_TIMEOUT_MS);
+
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
   });
 });
