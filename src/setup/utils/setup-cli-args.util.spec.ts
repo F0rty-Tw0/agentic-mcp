@@ -118,4 +118,13 @@ describe('parseSetupArgs', () => {
     expect(result.client).toBe('copilot');
     expect(stderrWrite).not.toHaveBeenCalled();
   });
+
+  it('GIVEN --client opencode WHEN parsing setup args THEN the opencode client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'opencode'], stderrWrite });
+
+    expect(result.client).toBe('opencode');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
 });

@@ -9,6 +9,7 @@ export type {
   DetectedProvider,
   McpServerEntry,
   MinimalSetupOutputInput,
+  OpenCodeServerEntry,
   ParsedSetupArgs,
   SetupApplyResult,
   SetupBackupPolicy,

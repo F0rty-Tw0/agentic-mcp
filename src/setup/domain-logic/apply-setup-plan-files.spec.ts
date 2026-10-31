@@ -116,4 +116,15 @@ describe('applySetupPlan on a real filesystem', () => {
 
     expect(mode).toBe(OWNER_ONLY_MODE);
   });
+
+  it('GIVEN an opencode plan WHEN setup writes it THEN the agentic-mcp entry under mcp passes verification', async () => {
+    const targetPath = path.join(directory, 'opencode.json');
+    const configText = '{"mcp":{"agentic-mcp":{"type":"local","command":["npx","-y","agentic-mcp"]}}}\n';
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'opencode', configText };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result.status).toBe('written');
+  });
 });

@@ -38,15 +38,13 @@ describe('generateClientConfigEntry', () => {
 
     const result = generateClientConfigEntry('generic', providers);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN generic client and no detected providers WHEN generating entry THEN output stays stable', () => {
     const result = generateClientConfigEntry('generic', []);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN available providers and unavailable providers WHEN generating entry THEN does not leak binary paths', () => {
@@ -54,8 +52,7 @@ describe('generateClientConfigEntry', () => {
 
     const result = generateClientConfigEntry('windsurf', providers);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN unknown client WHEN generating entry THEN default branch returns deterministic entry', () => {
@@ -63,8 +60,7 @@ describe('generateClientConfigEntry', () => {
 
     const result = generateClientConfigEntry(unknownClient, []);
 
-    expect(result.command).toBe('npx');
-    expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
+    expect(result).toStrictEqual({ command: 'npx', args: ['-y', 'agentic-mcp'] });
   });
 
   it('GIVEN gemini WHEN generating entry THEN the timeout in ms is one minute above the provider timeout', () => {
@@ -85,6 +81,17 @@ describe('generateClientConfigEntry', () => {
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
       tools: ['*'],
+      timeout: 3_660_000,
+    });
+  });
+
+  it('GIVEN opencode WHEN generating entry THEN it is an enabled local server with a command array and the timeout in ms', () => {
+    const result = generateClientConfigEntry('opencode', []);
+
+    expect(result).toStrictEqual({
+      type: 'local',
+      command: ['npx', '-y', 'agentic-mcp'],
+      enabled: true,
       timeout: 3_660_000,
     });
   });

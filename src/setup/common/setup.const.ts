@@ -11,6 +11,7 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
   'copilot',
   'cursor',
   'gemini',
+  'opencode',
   'windsurf',
   'generic',
 ];
@@ -47,6 +48,13 @@ const GEMINI_TARGET: ClientTarget = {
   preservedKeys: [],
 };
 
+const OPENCODE_TARGET: ClientTarget = {
+  configPath: '.config/opencode/opencode.json',
+  serversKey: 'mcp',
+  timeoutKeys: ['timeout'],
+  preservedKeys: ['enabled'],
+};
+
 const WINDSURF_TARGET: ClientTarget = {
   configPath: '.codeium/windsurf/mcp_config.json',
   serversKey: 'mcpServers',
@@ -66,6 +74,7 @@ export const CLIENT_TARGETS: ClientTargetMap = {
   copilot: COPILOT_TARGET,
   cursor: CURSOR_TARGET,
   gemini: GEMINI_TARGET,
+  opencode: OPENCODE_TARGET,
   windsurf: WINDSURF_TARGET,
   generic: GENERIC_TARGET,
 };

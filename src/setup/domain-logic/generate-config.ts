@@ -3,6 +3,7 @@ import type {
   CopilotServerEntry,
   DetectedProvider,
   McpServerEntry,
+  OpenCodeServerEntry,
   StdioServerEntry,
   SupportedClient,
 } from '../common';
@@ -26,6 +27,14 @@ const COPILOT_ENTRY: CopilotServerEntry = {
   timeout: CLIENT_TOOL_TIMEOUT_MS,
 };
 
+// OpenCode takes the command and its arguments as one array.
+const OPENCODE_ENTRY: OpenCodeServerEntry = {
+  type: 'local',
+  command: [BASE_ENTRY.command, ...BASE_ENTRY.args],
+  enabled: true,
+  timeout: CLIENT_TOOL_TIMEOUT_MS,
+};
+
 export const generateClientConfigEntry = (
   client: SupportedClient,
   detectedProviders: DetectedProvider[]
@@ -38,6 +47,8 @@ export const generateClientConfigEntry = (
       return TIMED_ENTRY;
     case 'copilot':
       return COPILOT_ENTRY;
+    case 'opencode':
+      return OPENCODE_ENTRY;
     case 'cursor':
     case 'windsurf':
       // Intentionally explicit per-client branches to support project-specific overrides later.

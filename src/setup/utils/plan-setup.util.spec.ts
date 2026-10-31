@@ -245,4 +245,28 @@ describe('buildSetupPlan', () => {
     expect(result.targetPath).toBe(path.join('/home/dev', '.copilot/mcp-config.json'));
     expect(JSON.parse(result.configText)).toStrictEqual({ mcpServers: writtenServers });
   });
+
+  it('GIVEN opencode with a disabled agentic-mcp entry WHEN building plan THEN it writes under mcp in the global config and keeps it disabled', () => {
+    const userEntry = { type: 'local', command: ['npx', '-y', 'agentic-mcp'], enabled: false };
+    const existingServers = { 'agentic-mcp': userEntry };
+    const existingConfig = { $schema: 'https://opencode.ai/config.json', mcp: existingServers };
+    const opencodeEntry: McpServerEntry = { ...userEntry, type: 'local', enabled: true, timeout: 3_660_000 };
+
+    const result = buildSetupPlan({
+      client: 'opencode',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: opencodeEntry,
+      backup: 'if-exists',
+    });
+    const writtenEntry = { ...userEntry, timeout: 3_660_000 };
+    const writtenServers = { 'agentic-mcp': writtenEntry };
+    const writtenConfig = { $schema: 'https://opencode.ai/config.json', mcp: writtenServers };
+
+    expect(result.targetPath).toBe(path.join('/home/dev', '.config/opencode/opencode.json'));
+    expect(JSON.parse(result.configText)).toStrictEqual(writtenConfig);
+  });
 });
