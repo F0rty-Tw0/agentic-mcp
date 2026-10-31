@@ -136,4 +136,13 @@ describe('parseSetupArgs', () => {
     expect(result.client).toBe('codex');
     expect(stderrWrite).not.toHaveBeenCalled();
   });
+
+  it('GIVEN --client antigravity WHEN parsing setup args THEN the antigravity client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'antigravity'], stderrWrite });
+
+    expect(result.client).toBe('antigravity');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
 });

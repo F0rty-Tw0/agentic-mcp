@@ -1,8 +1,8 @@
+export { CLIENT_TARGETS, CODEX_STARTUP_TIMEOUT_SEC } from './client-targets.const';
+
 export {
-  CLIENT_TARGETS,
   CLIENT_TIMEOUT_MARGIN_MS,
   CLIENT_TOOL_TIMEOUT_MS,
-  CODEX_STARTUP_TIMEOUT_SEC,
   KNOWN_PROVIDER_COMMANDS,
   SKILL_CONSENT_REASON,
   SUPPORTED_CLIENTS,
@@ -11,6 +11,7 @@ export {
 export { SKILL_CONTENT } from './skill-content';
 
 export type {
+  AntigravityServerEntry,
   ClientConfigFormat,
   ClientConfigMergeResult,
   ClientTarget,
