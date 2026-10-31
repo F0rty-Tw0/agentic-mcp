@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import type { ProvidersFile } from '../../../shared/provider/common';
-import { TEST_PROVIDER_CONFIG_STUB } from '../../../shared/provider/test/stubs';
+import { TEST_PROVIDER_CONFIG_STUB } from '../../../shared/provider/test/stubs/provider-config.stub';
 import type { DetectedProvider } from '../../common';
 
 const CLAUDE_TEST_PROVIDER: DetectedProvider = {
