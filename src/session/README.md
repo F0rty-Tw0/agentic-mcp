@@ -24,7 +24,8 @@ Session state and session-aware ask orchestration — provides in-memory multi-t
 ## Key Files
 
 - `data-access/session-store.ts` — `InMemorySessionStore` with locking, turn storage, native session tracking, and provider-scoped listing
-- `domain-logic/ask-session-flow.ts` — builds session flow state and retries native-session failures with tier-1 fallback
+- `domain-logic/ask-session-flow.ts` — builds session flow state, retries native-session failures with tier-1 fallback, and retries a rejected start flag once without it
+- `utils/session-flow-retry.util.ts` — decides when a failed run falls back to tier 1 or retries without the start flag
 - `domain-logic/sessions.handler.ts` — renders provider-scoped session listings for MCP tools
 - `utils/session-metadata.util.ts` — merges session mode metadata into MCP responses
 
@@ -37,3 +38,5 @@ Session behavior is covered by unit tests in this module plus ask integration te
 - Session listing by provider name
 - Native session ID extraction and fallback behavior
 - Starting a native session with a generated id when the provider sets `commands.sessions.flags.startWithId` (`ask/domain-logic/ask.handler-copilot.test.ts`)
+- A failed resume whose replay starts a new native id, so the next turn resumes it in one run (`ask/domain-logic/ask.handler-copilot-lost-session.test.ts`)
+- A CLI that rejects the start flag: one retry without it, then the session replays without the flag (`ask/domain-logic/ask.handler-copilot-start-retry.test.ts`)
