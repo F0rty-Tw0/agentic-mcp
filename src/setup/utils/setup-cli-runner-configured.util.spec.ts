@@ -3,6 +3,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runConfiguredSetup } from './setup-cli-runner.util';
+import type { SkillInstallResult } from '../common';
 import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
 import type { ConfiguredJsonOutput } from '../test/common/setup.type';
 import {
@@ -10,7 +11,6 @@ import {
   createSetupApplyResult,
   createSetupCliDependencies,
   createSetupPlan,
-  readStdoutCallOutput,
   readStdoutOutput,
 } from '../test/utils/setup-cli-runner.spec.util';
 
@@ -118,13 +118,14 @@ describe('runConfiguredSetup', () => {
     expect(output).toContain('Warnings:');
   });
 
-  it('GIVEN claude-code client with json output WHEN running configured setup THEN prints json output with truthful summary and skill output', async () => {
+  it('GIVEN claude-code client with json output WHEN running configured setup THEN stdout is one json document holding the summary and the skill result', async () => {
     const stdoutWrite = vi.fn<(text: string) => void>();
-    const installSkill = vi.fn().mockResolvedValue({
+    const skillResult: SkillInstallResult = {
       status: 'error',
       skillPath: DEFAULT_SKILL_PATH,
       reason: 'permission denied',
-    });
+    };
+    const installSkill = vi.fn().mockResolvedValue(skillResult);
     const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ path: DEFAULT_CLAUDE_PATH }));
     const dependencies = createSetupCliDependencies({ stdoutWrite, installSkill, applySetupPlan });
 
@@ -134,9 +135,8 @@ describe('runConfiguredSetup', () => {
       detectedProviders: TEST_PROVIDERS,
     });
 
-    const configuredOutput = readStdoutCallOutput(stdoutWrite, 0);
-    const skillOutput = readStdoutCallOutput(stdoutWrite, 1);
-    const parsed = JSON.parse(configuredOutput) as ConfiguredJsonOutput;
+    const stdout = readStdoutOutput(stdoutWrite);
+    const parsed = JSON.parse(stdout) as ConfiguredJsonOutput;
 
     expect(parsed.backup).toBe('if-exists');
     expect(parsed.client).toBe('claude-code');
@@ -155,7 +155,7 @@ describe('runConfiguredSetup', () => {
     expect(parsed.warnings).toStrictEqual([]);
     expect(parsed.writeIntent).toBe('write');
     expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
-    expect(skillOutput).toBe('Skill install failed: permission denied\n');
+    expect(parsed.skillResult).toStrictEqual(skillResult);
   });
 
   it('GIVEN generic client without path override WHEN running configured setup THEN it skips reading an existing config file', async () => {

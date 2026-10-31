@@ -22,6 +22,7 @@ type JsonApplyResult = {
 type JsonSkillResult = {
   readonly status: string;
   readonly skillPath: string;
+  readonly reason?: string;
 };
 
 export type ConfiguredJsonOutput = {
@@ -33,6 +34,7 @@ export type ConfiguredJsonOutput = {
   readonly notes: string[];
   readonly providers: DetectedProvider[];
   readonly result: JsonApplyResult;
+  readonly skillResult?: JsonSkillResult;
   readonly summary: JsonSummary;
   readonly targetPath?: string;
   readonly warnings: string[];

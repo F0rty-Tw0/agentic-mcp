@@ -30,6 +30,7 @@ export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord
 
 export type {
   ClientConfigTemplate,
+  ConfiguredSetupOutputInput,
   DetectedProvider,
   MinimalSetupOutputInput,
   ParsedSetupArgs,

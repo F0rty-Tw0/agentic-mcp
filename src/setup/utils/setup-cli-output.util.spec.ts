@@ -10,7 +10,14 @@ import {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
-import type { DetectedProvider, ParsedSetupArgs, SetupApplyResult, SetupPlan, SkillInstallResult } from '../common';
+import type {
+  ConfiguredSetupOutputInput,
+  DetectedProvider,
+  ParsedSetupArgs,
+  SetupApplyResult,
+  SetupPlan,
+  SkillInstallResult,
+} from '../common';
 import type { ConfiguredJsonOutput, MinimalJsonOutput } from '../test/common/setup.type';
 
 const FIRST_PROOF_COMMAND = 'npx agentic-mcp prove claude';
@@ -73,6 +80,18 @@ const createProvider = (overrides: Partial<DetectedProvider> = {}): DetectedProv
   return provider;
 };
 
+const createOutputInput = (overrides: Partial<ConfiguredSetupOutputInput> = {}): ConfiguredSetupOutputInput => {
+  const input: ConfiguredSetupOutputInput = {
+    parsedArgs: createArgs(),
+    plan: createPlan(),
+    result: createApplyResult(),
+    detectedProviders: [],
+    ...overrides,
+  };
+
+  return input;
+};
+
 describe('setup-cli-output utilities', () => {
   it('GIVEN detected providers WHEN formatting summary THEN includes availability status per provider', () => {
     const output = formatProviderSummary([
@@ -117,10 +136,12 @@ describe('setup-cli-output utilities', () => {
 
   it('GIVEN setup args plan and result WHEN formatting json output THEN returns parseable truthful summary fields', () => {
     const output = formatJsonSetupOutput(
-      createArgs({ output: 'json', backup: 'always' }),
-      createPlan({ warnings: ['warn-1'] }),
-      createApplyResult({ backupPath: '/tmp/mcp.json.bak' }),
-      [createProvider({ name: 'claude' })]
+      createOutputInput({
+        parsedArgs: createArgs({ output: 'json', backup: 'always' }),
+        plan: createPlan({ warnings: ['warn-1'] }),
+        result: createApplyResult({ backupPath: '/tmp/mcp.json.bak' }),
+        detectedProviders: [createProvider({ name: 'claude' })],
+      })
     );
 
     const parsed = JSON.parse(output) as ConfiguredJsonOutput;
@@ -137,13 +158,15 @@ describe('setup-cli-output utilities', () => {
 
   it('GIVEN setup args plan and result WHEN formatting human output THEN includes truthful sections and the first ask command', () => {
     const output = formatHumanSetupOutput(
-      createArgs({ mode: 'overwrite', dryRun: true }),
-      createPlan({ warnings: ['Overwrite mode replaces existing config content.'] }),
-      createApplyResult({
-        status: 'verification-failed',
-        reason: 'Written config must include mcpServers',
-      }),
-      [createProvider({ name: 'claude' })]
+      createOutputInput({
+        parsedArgs: createArgs({ mode: 'overwrite', dryRun: true }),
+        plan: createPlan({ warnings: ['Overwrite mode replaces existing config content.'] }),
+        result: createApplyResult({
+          status: 'verification-failed',
+          reason: 'Written config must include mcpServers',
+        }),
+        detectedProviders: [createProvider({ name: 'claude' })],
+      })
     );
 
     expect(output).toContain('agentic-mcp setup');
@@ -159,13 +182,13 @@ describe('setup-cli-output utilities', () => {
   it('GIVEN plan notes about the timeout WHEN formatting human output THEN they are listed under Tool-call timeout', () => {
     const note = 'agentic-mcp timeout: raised from 600000 to 4260000.';
 
-    const output = formatHumanSetupOutput(createArgs(), createPlan({ notes: [note] }), createApplyResult(), []);
+    const output = formatHumanSetupOutput(createOutputInput({ plan: createPlan({ notes: [note] }) }));
 
     expect(output).toContain(`Tool-call timeout:\n  - ${note}`);
   });
 
   it('GIVEN no plan notes WHEN formatting human output THEN there is no Tool-call timeout section', () => {
-    const output = formatHumanSetupOutput(createArgs(), createPlan(), createApplyResult(), []);
+    const output = formatHumanSetupOutput(createOutputInput());
 
     expect(output).not.toContain('Tool-call timeout:');
   });
@@ -173,14 +196,21 @@ describe('setup-cli-output utilities', () => {
   it('GIVEN plan notes WHEN formatting json output THEN they are included as notes', () => {
     const note = 'agentic-mcp timeout: set to 4260000 (was not set).';
 
-    const output = formatJsonSetupOutput(createArgs(), createPlan({ notes: [note] }), createApplyResult(), []);
+    const output = formatJsonSetupOutput(createOutputInput({ plan: createPlan({ notes: [note] }) }));
     const parsed = JSON.parse(output) as ConfiguredJsonOutput;
 
     expect(parsed.notes).toStrictEqual([note]);
   });
 
+  it('GIVEN a skill result WHEN formatting human output THEN the skill line ends the output', () => {
+    const skillResult: SkillInstallResult = { status: 'installed', skillPath: SKILL_PATH };
+    const output = formatHumanSetupOutput(createOutputInput({ skillResult }));
+
+    expect(output.endsWith(`\nSkill installed: ${SKILL_PATH}\n`)).toBe(true);
+  });
+
   it('GIVEN no detected providers WHEN formatting human output THEN it points to the next diagnostic step', () => {
-    const output = formatHumanSetupOutput(createArgs(), createPlan(), createApplyResult(), []);
+    const output = formatHumanSetupOutput(createOutputInput());
 
     expect(output).toContain('Next diagnostic step:');
     expect(output).toContain('npx agentic-mcp list_providers');

@@ -3,11 +3,12 @@ import path from 'node:path';
 import { CLIENT_TARGETS } from '../common';
 import type {
   ClientToolTimeout,
+  ConfiguredSetupOutputInput,
   DetectedProvider,
   ParsedSetupArgs,
-  SetupApplyResult,
   SetupCliDependencies,
   SetupPlan,
+  SkillInstallResult,
   SupportedClient,
 } from '../common';
 import { buildDefaultClientToolTimeout, resolveClientToolTimeout } from './resolve-client-tool-timeout.util';
@@ -16,7 +17,6 @@ import {
   formatHumanSetupOutput,
   formatJsonMinimalSetupOutput,
   formatJsonSetupOutput,
-  formatSkillOutput,
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
@@ -51,15 +51,20 @@ const resolveSuggestedClient = (client: SupportedClient): SupportedClient => {
   return client;
 };
 
-const buildConfiguredOutput = (
-  parsedArgs: ParsedSetupArgs,
-  plan: SetupPlan,
-  result: SetupApplyResult,
-  detectedProviders: DetectedProvider[]
-): string => {
-  if (parsedArgs.output === 'json') return formatJsonSetupOutput(parsedArgs, plan, result, detectedProviders);
+const buildConfiguredOutput = (input: ConfiguredSetupOutputInput): string => {
+  if (input.parsedArgs.output === 'json') return formatJsonSetupOutput(input);
 
-  return formatHumanSetupOutput(parsedArgs, plan, result, detectedProviders);
+  return formatHumanSetupOutput(input);
+};
+
+const installClientSkill = async (input: SetupCliFlowInput): Promise<SkillInstallResult | undefined> => {
+  const { parsedArgs, dependencies } = input;
+
+  if (parsedArgs.client !== 'claude-code') return undefined;
+
+  const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
+
+  return skillResult;
 };
 
 // The server fails to start on a config that does not load, so the defaults only shape the preview here.
@@ -137,13 +142,8 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   }
 
   const result = await dependencies.applySetupPlan(plan);
-  const output = buildConfiguredOutput(parsedArgs, plan, result, detectedProviders);
+  const skillResult = await installClientSkill(input);
+  const output = buildConfiguredOutput({ parsedArgs, plan, result, detectedProviders, skillResult });
 
   dependencies.stdoutWrite(output);
-
-  if (parsedArgs.client !== 'claude-code') return;
-
-  const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
-
-  dependencies.stdoutWrite(formatSkillOutput(skillResult));
 };

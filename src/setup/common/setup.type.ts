@@ -137,6 +137,14 @@ export type SetupResult = {
   readonly written: boolean;
 };
 
+export type ConfiguredSetupOutputInput = {
+  readonly parsedArgs: ParsedSetupArgs;
+  readonly plan: SetupPlan;
+  readonly result: SetupApplyResult;
+  readonly detectedProviders: DetectedProvider[];
+  readonly skillResult?: SkillInstallResult;
+};
+
 export type MinimalSetupOutputInput = {
   readonly client: SupportedClient;
   readonly detectedProviders: DetectedProvider[];
