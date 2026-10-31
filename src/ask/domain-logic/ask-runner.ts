@@ -1,16 +1,16 @@
-import { buildCommandFailure, buildExecutionEnv, resolveModelFallback } from './ask-command';
+import { buildExecutionEnv, resolveModelFallback } from './ask-command';
 import { runCommandExecution } from './ask-command-execution';
 import { startAskHeartbeat } from './ask-heartbeat';
+import { buildFailedRunExecution, buildThrownRunExecution } from './ask-runner-failure';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { recordCall } from '../../provider-metrics';
-import { CommandExecutionError, toMcpError } from '../../shared';
 import type { ExecutionResult } from '../../shared/command-execution/common';
-import type { McpErrorResponse, OutputFormat, ProgressContext } from '../../shared/mcp-protocol/common';
+import type { OutputFormat, ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
-import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
-import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
+import { buildExecutionSummary, createStreamNotifier, holdStreamError } from '../../streaming';
+import type { StreamNotifier } from '../../streaming/common';
 import type { AskExecution, AskToolArgs, ResultWarnings } from '../common';
-import { buildExecution, buildFailureExecution } from '../utils';
+import { buildExecution } from '../utils';
 import { resolveResultWarnings } from '../utils/complete-result.util';
 
 type RunInvocationInput = {
@@ -19,6 +19,7 @@ type RunInvocationInput = {
   readonly extra?: ProgressContext;
   readonly tier2SessionId?: string;
   readonly startSessionId?: string;
+  readonly willRetry?: (execution: AskExecution) => boolean;
 };
 
 type ExecuteInput = {
@@ -58,33 +59,6 @@ const resolveWarnings = (
   return warnings;
 };
 
-const toErrorResponse = (error: unknown): McpErrorResponse => {
-  if (error instanceof CommandExecutionError) return error.toMcpResponse();
-
-  const errorResponse = toMcpError(error);
-
-  return errorResponse;
-};
-
-const handleFailedExecution = async (
-  executeInput: ExecuteInput,
-  result: ExecutionResult,
-  summary: AskStreamExecutionSummary
-): Promise<AskExecution> => {
-  const { context, args, extra, streamNotifier } = executeInput;
-  const env = buildExecutionEnv(context);
-  const error = await buildCommandFailure(context, args, env, result);
-  const errorResponse = error.toMcpResponse();
-  const [firstContent] = errorResponse.content;
-
-  streamNotifier.emitError(firstContent?.type === 'text' ? firstContent.text : error.message, summary);
-  await recordCall(context.name, result.executionTimeMs, false);
-  const wasCancelled = extra?.signal?.aborted ?? false;
-  const wasStopped = result.timedOut || result.signal !== null;
-
-  return buildFailureExecution(errorResponse, wasCancelled, wasStopped);
-};
-
 const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = false): Promise<AskExecution> => {
   const { context, args, streamNotifier } = executeInput;
   const { result, outputFormat } = await runCommandExecution(executeInput);
@@ -111,7 +85,7 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
       }
     }
 
-    return handleFailedExecution(executeInput, result, summary);
+    return buildFailedRunExecution(executeInput, result, summary);
   }
 
   const env = buildExecutionEnv(context);
@@ -137,25 +111,32 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
   return buildExecution(response, result.stdout, outputFormat, context);
 };
 
+const executeOrFail = async (executeInput: ExecuteInput): Promise<AskExecution> => {
+  try {
+    return await executeAndBuildResponse(executeInput);
+  } catch (error) {
+    const execution = await buildThrownRunExecution(executeInput, error);
+
+    return execution;
+  }
+};
+
+// A run the caller will retry keeps its terminal error off the stream; the retry's own run ends the stream.
 export const runAskInvocation = async (runInvocationInput: RunInvocationInput): Promise<AskExecution> => {
-  const { context, args, extra, tier2SessionId, startSessionId } = runInvocationInput;
+  const { context, args, extra, tier2SessionId, startSessionId, willRetry } = runInvocationInput;
   const input = { providerName: context.name, args, extra };
-  const streamNotifier = createStreamNotifier(input);
+  const liveNotifier = createStreamNotifier(input);
+  const { notifier: streamNotifier, releaseError } = holdStreamError(liveNotifier);
   const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
 
   try {
     const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, startSessionId, streamNotifier };
+    const execution = await executeOrFail(executeInput);
+    const isRetried = willRetry?.(execution) ?? false;
 
-    return await executeAndBuildResponse(executeInput);
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorResponse = toErrorResponse(error);
-    const [firstContent] = errorResponse.content;
+    if (!isRetried) releaseError();
 
-    streamNotifier.emitError(firstContent?.type === 'text' ? firstContent.text : errorMessage);
-    await recordCall(context.name, 0, false);
-
-    return buildFailureExecution(errorResponse, false);
+    return execution;
   } finally {
     stopHeartbeat();
     streamNotifier.stop();

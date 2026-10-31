@@ -1,7 +1,7 @@
 import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import { canFallBackToTier1, canRetryWithoutStartFlag } from './session-flow-retry.util';
+import { canFallBackToTier1, canRetryWithoutStartFlag, canSessionFlowRetry } from './session-flow-retry.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { SessionFlowResult, SessionFlowState } from '../common';
 
@@ -134,5 +134,19 @@ describe('FEATURE: canRetryWithoutStartFlag', () => {
 
   it('GIVEN an aborted request WHEN checked THEN it does not retry', () => {
     expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, START_STATE, START_FLAG, createAbortedExtra())).toBe(false);
+  });
+});
+
+describe('canSessionFlowRetry', () => {
+  it('GIVEN a start run rejected for the start flag WHEN checked THEN the flow retries', () => {
+    expect(canSessionFlowRetry(REJECTED_EXECUTION, START_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a failed tier2 resume WHEN checked THEN the flow retries', () => {
+    expect(canSessionFlowRetry(createExecution(), TIER2_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a failed tier1 run that is not a flag rejection WHEN checked THEN the flow does not retry', () => {
+    expect(canSessionFlowRetry(createExecution(), START_STATE, START_FLAG)).toBe(false);
   });
 });

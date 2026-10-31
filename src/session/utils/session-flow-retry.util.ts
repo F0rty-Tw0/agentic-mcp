@@ -47,3 +47,15 @@ export const canRetryWithoutStartFlag = (
 
   return result;
 };
+
+export const canSessionFlowRetry = (
+  execution: SessionFlowResult,
+  state: SessionFlowState,
+  startFlag: string | undefined,
+  extra?: ProgressContext
+): boolean => {
+  const result =
+    canRetryWithoutStartFlag(execution, state, startFlag, extra) || canFallBackToTier1(execution, state, extra);
+
+  return result;
+};
