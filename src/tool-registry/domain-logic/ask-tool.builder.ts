@@ -11,7 +11,10 @@ export const buildAskToolDefinition = (providerName: string, config: ProviderCon
     name: `ask_${providerName}`,
     description:
       `Get an answer from ${providerName}. Returns the answer as text content and opt-in structured metadata ` +
-      `for attribution, session mode, and parsed provider payloads.`,
+      `for attribution, session mode, and parsed provider payloads. ` +
+      `For work likely to take more than about a minute (a big PR review, a multi-file task), call with ` +
+      `mode: "async", then poll with action: "status" and the returned job_id, so your MCP client's own ` +
+      `tool-call timeout cannot cut the run off.`,
     inputSchema: buildAskInputSchema(config, askCmd),
     annotations,
   };

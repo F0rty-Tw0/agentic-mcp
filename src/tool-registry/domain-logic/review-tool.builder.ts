@@ -83,7 +83,9 @@ export const buildReviewToolDefinition = (providerName: string, config: Provider
     name: `review_${providerName}`,
     description:
       `Run a repository review with ${providerName}. Returns review text content and opt-in structured metadata ` +
-      `for attribution and parsed provider payloads.`,
+      `for attribution and parsed provider payloads. Runs synchronously; for a big review likely to take more ` +
+      `than about a minute, call ask_${providerName} with mode: "async" and a review prompt instead, then poll ` +
+      `with action: "status".`,
     inputSchema: buildReviewInputSchema(config),
     annotations,
   };
