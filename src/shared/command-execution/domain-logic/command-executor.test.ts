@@ -23,6 +23,17 @@ const ESCAPED_GRANDCHILD_LINES = [
 ];
 const ESCAPED_GRANDCHILD_SCRIPT = ESCAPED_GRANDCHILD_LINES.join('\n');
 
+const RESULT_WITH_ESCAPED_GRANDCHILD_LINES = [
+  "const { spawn } = require('node:child_process');",
+  "const grandchild = spawn(process.execPath, ['-e', 'setTimeout(() => undefined, 20_000)'], {",
+  "  stdio: 'inherit',",
+  '  detached: true,',
+  '});',
+  'process.stdout.write(`RESULT ${grandchild.pid}\\n`);',
+  'setTimeout(() => undefined, 60_000);',
+];
+const RESULT_WITH_ESCAPED_GRANDCHILD_SCRIPT = RESULT_WITH_ESCAPED_GRANDCHILD_LINES.join('\n');
+
 const escapedPids: number[] = [];
 
 const killQuietly = (pid: number): void => {
@@ -104,6 +115,24 @@ describe('FEATURE: executeCommand with real child processes', () => {
 
       expect(result.timedOut).toBe(true);
     }, 20_000);
+  });
+
+  describe('GIVEN a child that prints a complete result while a grandchild outside its group holds stdout', () => {
+    it('WHEN the result watch stops the child THEN the result settles before the grandchild exits', async () => {
+      const isResultComplete = (chunk: string): boolean => chunk.includes('RESULT');
+      const options = buildNodeOptions(RESULT_WITH_ESCAPED_GRANDCHILD_SCRIPT, {
+        timeoutMs: 30_000,
+        isResultComplete,
+        resultExitGraceMs: 300,
+      });
+
+      const result = await executeCommand(options);
+      const grandchildPid = Number(result.stdout.replace('RESULT', ''));
+
+      escapedPids.push(grandchildPid);
+
+      expect(result.executionTimeMs).toBeLessThan(10_000);
+    }, 40_000);
   });
 
   describe('GIVEN a child whose grandchild inherits its stdio', () => {
