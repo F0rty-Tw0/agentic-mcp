@@ -1,0 +1,98 @@
+#!/usr/bin/env node
+// Fake GitHub Copilot CLI for integration tests. It mimics copilot print mode with text output:
+// -p <prompt>, the bundled trailing flags, --session-id=<uuid> (joined form only, UUID required, as copilot 1.0.51+
+// starts a new session with that id) and --resume <id>. Unknown or stray arguments fail the run.
+// The answer is "copilot-fake: <prompt>" followed by an "argv: <json>" line so tests can assert the exact argv.
+// `--help` prints a usage line and exits 0.
+// Test switches (env): FAKE_COPILOT_RUN_LOG=<file> appends each run's argv as one JSON line;
+// FAKE_COPILOT_LOST_SESSION=<id> fails `--resume <id>` as copilot does for a session it no longer has;
+// FAKE_COPILOT_REJECT_SESSION_ID=1 rejects `--session-id=` as an unknown option, as copilot before 1.0.51 does;
+// FAKE_COPILOT_FAIL_RUN=1 fails every valid run with a generic error that is not a flag rejection.
+
+const fs = process.getBuiltinModule('node:fs');
+
+const VALUE_FLAGS = new Set([
+  '-p',
+  '--model',
+  '--add-dir',
+  '--reasoning-effort',
+  '--max-autopilot-continues',
+  '--resume',
+]);
+const BOOLEAN_FLAGS = new Set([
+  '--allow-all',
+  '--disable-builtin-mcps',
+  '--no-ask-user',
+  '-s',
+  '--no-color',
+  '--yolo',
+  '--continue',
+]);
+const SESSION_ID_PREFIX = '--session-id=';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const fail = (message) => {
+  process.stderr.write(`error: ${message}\n`);
+  process.exit(2);
+};
+
+const argv = process.argv.slice(2);
+const { FAKE_COPILOT_RUN_LOG, FAKE_COPILOT_LOST_SESSION, FAKE_COPILOT_REJECT_SESSION_ID, FAKE_COPILOT_FAIL_RUN } =
+  process.env;
+
+if (FAKE_COPILOT_RUN_LOG) fs.appendFileSync(FAKE_COPILOT_RUN_LOG, `${JSON.stringify(argv)}\n`);
+
+if (argv.length === 1 && argv[0] === '--help') {
+  process.stdout.write('Usage: copilot [options]\n');
+  process.exit(0);
+}
+
+const parseArgs = (args) => {
+  const values = {};
+  const booleans = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (BOOLEAN_FLAGS.has(arg)) {
+      booleans.push(arg);
+      continue;
+    }
+
+    if (arg.startsWith(SESSION_ID_PREFIX) && FAKE_COPILOT_REJECT_SESSION_ID) fail(`unknown option '${arg}'`);
+
+    if (arg.startsWith(SESSION_ID_PREFIX)) {
+      values['--session-id'] = arg.slice(SESSION_ID_PREFIX.length);
+      continue;
+    }
+
+    if (!VALUE_FLAGS.has(arg)) fail(`unexpected argument ${JSON.stringify(arg)}`);
+
+    const value = args[index + 1];
+
+    if (value === undefined) fail(`flag ${arg} needs a value`);
+
+    values[arg] = value;
+    index += 1;
+  }
+
+  return { values, booleans };
+};
+
+const { values } = parseArgs(argv);
+const prompt = values['-p'];
+const sessionId = values['--session-id'];
+
+if (prompt === undefined) fail('a prompt is required in print mode');
+
+if (sessionId !== undefined && !UUID_PATTERN.test(sessionId)) fail(`--session-id must be a UUID, got ${sessionId}`);
+
+if (sessionId !== undefined && values['--resume'] !== undefined) fail('use either --session-id or --resume');
+
+if (FAKE_COPILOT_LOST_SESSION && values['--resume'] === FAKE_COPILOT_LOST_SESSION) {
+  fail(`session ${FAKE_COPILOT_LOST_SESSION} not found`);
+}
+
+if (FAKE_COPILOT_FAIL_RUN) fail('request failed: the model service is unavailable');
+
+process.stdout.write(`copilot-fake: ${prompt}\nargv: ${JSON.stringify(argv)}\n`);

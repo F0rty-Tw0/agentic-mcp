@@ -33,10 +33,13 @@ const streamingCommandSchema = z.object({
   outputFormat: outputFormatSchema.optional(),
 });
 
+const startWithIdFlagSchema = z.union([z.string().min(1), z.array(z.string()).min(1)]);
+const commandFlagsSchema = z.object({ startWithId: startWithIdFlagSchema.optional() }).catchall(flagValueSchema);
+
 const commandDefSchema = z.object({
   args: z.array(z.string()).optional(),
   trailingArgs: z.array(z.string()).optional(),
-  flags: z.record(z.string(), flagValueSchema).optional(),
+  flags: commandFlagsSchema.optional(),
   streaming: streamingCommandSchema.optional(),
   placement: z.enum(['end', 'beforePrompt']).optional(),
 });

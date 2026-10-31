@@ -18,6 +18,7 @@ type RunInvocationInput = {
   readonly args: AskToolArgs;
   readonly extra?: ProgressContext;
   readonly tier2SessionId?: string;
+  readonly startSessionId?: string;
 };
 
 type ExecuteInput = {
@@ -25,6 +26,7 @@ type ExecuteInput = {
   readonly args: AskToolArgs;
   readonly extra?: ProgressContext;
   readonly tier2SessionId?: string;
+  readonly startSessionId?: string;
   readonly streamNotifier: StreamNotifier;
 };
 
@@ -136,13 +138,13 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
 };
 
 export const runAskInvocation = async (runInvocationInput: RunInvocationInput): Promise<AskExecution> => {
-  const { context, args, extra, tier2SessionId } = runInvocationInput;
+  const { context, args, extra, tier2SessionId, startSessionId } = runInvocationInput;
   const input = { providerName: context.name, args, extra };
   const streamNotifier = createStreamNotifier(input);
   const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
 
   try {
-    const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, streamNotifier };
+    const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, startSessionId, streamNotifier };
 
     return await executeAndBuildResponse(executeInput);
   } catch (error) {

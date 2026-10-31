@@ -53,6 +53,29 @@ Runs the bundled `antigravity` config against a fake `agy` (`test/fixtures/fake-
 | stream-json answer and resume    | `{"event":"result","result":{...}}` gives the answer and the conversation id             | Same as json                                           |
 | Result printed, then never exits | The run is stopped after `resultExitGraceMs` and the printed answer returned (agy #1313) | Success, well under the timeout, attribution `warning` |
 
+### `ask.handler-copilot.test.ts`
+
+Runs the bundled `copilot` config against a fake `copilot` (`test/fixtures/fake-copilot/copilot`) that rejects unknown or stray arguments and prints the argv it received.
+
+| Test                     | What It Verifies                                                                 | Expected Output                                          |
+| ------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| First ask in a session   | The run starts copilot with one `--session-id=<uuid>` argument and no `--resume` | argv holds `--session-id=<uuid>`                         |
+| Follow-up in the session | The run passes `--resume <same uuid>` and only the new prompt, with no replay    | argv ends with `--resume <uuid>`, `-p` is the new prompt |
+| `help_copilot`           | The help text ends with the agentic-mcp session support line                     | `agentic-mcp sessions: native resume. ...`               |
+
+### `ask.handler-copilot-lost-session.test.ts` and `ask.handler-copilot-start-retry.test.ts`
+
+Run the bundled `copilot` config against the same fake. Test switches in the env: `FAKE_COPILOT_RUN_LOG` logs each run's argv, `FAKE_COPILOT_LOST_SESSION=<id>` fails `--resume <id>`, `FAKE_COPILOT_REJECT_SESSION_ID=1` rejects `--session-id=` as an unknown option, and `FAKE_COPILOT_FAIL_RUN=1` fails every run with a generic error.
+
+| Test                       | What It Verifies                                                                 | Expected Output                                       |
+| -------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Lost session, follow-up    | The failed resume falls back to a replay that starts a new `--session-id=<uuid>` | A new uuid, not the first one                         |
+| Lost session, next turn    | Copilot runs once and resumes the new id                                         | One run, argv ends with `--resume <new uuid>`         |
+| Start flag rejected, ask 1 | The ask reruns once without `--session-id=` and succeeds                         | Two runs: with the flag, then without; no error       |
+| Start flag rejected, ask 2 | The session no longer passes the flag and replays the first turn                 | One run, no `--session-id=`, `-p` holds the old turns |
+| Generic failure, ask 1     | A failure that is not a flag rejection is not rerun                              | One run, with `--session-id=`; error returned         |
+| Generic failure, ask 2     | The session keeps passing the start flag                                         | One run, with `--session-id=`                         |
+
 ### `ask.handler-cancellation.test.ts`
 
 Tests request cancellation and timeout behavior using real child processes that run for 5 seconds.

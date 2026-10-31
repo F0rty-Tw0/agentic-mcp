@@ -1,29 +1,15 @@
-import type { CallToolResult } from '@modelcontextprotocol/server';
+import { randomUUID } from 'node:crypto';
 
 import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
+import { canStartNativeSession, resolveStartFlagName } from '../../ask/utils/session-flag-args.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
-import type { SessionMode } from '../common';
+import type { SessionFlowResult, SessionFlowState } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
-
-type SessionFlowState = {
-  readonly sessionId: string;
-  readonly prompt?: string;
-  readonly nativeSessionId?: string;
-  readonly mode: SessionMode;
-};
-
-type SessionFlowResult = {
-  readonly response: CallToolResult;
-  readonly responseText: string;
-  readonly nativeSessionId?: string;
-  readonly sessionMode: SessionMode;
-  readonly wasCancelled: boolean;
-  readonly wasStopped?: boolean;
-};
+import { canFallBackToTier1, canRetryWithoutStartFlag } from '../utils/session-flow-retry.util';
 
 type SessionExecutionInput = {
   readonly context: ResolvedProviderEntry;
@@ -32,7 +18,7 @@ type SessionExecutionInput = {
   readonly state: SessionFlowState;
 };
 
-const runSessionExecution = async (
+const runSingleExecution = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
   extra: ProgressContext | undefined,
@@ -44,8 +30,31 @@ const runSessionExecution = async (
     args: promptArgs,
     extra,
     tier2SessionId: state.nativeSessionId,
+    startSessionId: state.startSessionId,
   });
-  const result: SessionFlowResult = { ...execution, sessionMode: state.mode };
+  const nativeSessionId = state.startSessionId ?? execution.nativeSessionId;
+  const result: SessionFlowResult = { ...execution, nativeSessionId, sessionMode: state.mode };
+
+  return result;
+};
+
+// Only a run the CLI fails with an unknown-option error naming the start flag (copilot before 1.0.51) is rerun once
+// without it as a replay; any other failure is returned as is, so a run that did work is never repeated.
+const runSessionExecution = async (
+  context: ResolvedProviderEntry,
+  args: AskToolArgs,
+  extra: ProgressContext | undefined,
+  state: SessionFlowState
+): Promise<SessionFlowResult> => {
+  const execution = await runSingleExecution(context, args, extra, state);
+  const startFlag = resolveStartFlagName(context.config);
+  const shouldRetry = canRetryWithoutStartFlag(execution, state, startFlag, extra);
+
+  if (!shouldRetry) return execution;
+
+  const retryState: SessionFlowState = { ...state, startSessionId: undefined };
+  const retryExecution = await runSingleExecution(context, args, extra, retryState);
+  const result: SessionFlowResult = { ...retryExecution, hasDroppedStartFlag: true };
 
   return result;
 };
@@ -58,27 +67,25 @@ const buildTier1Prompt = (context: ResolvedProviderEntry, args: AskToolArgs, ses
   return prompt;
 };
 
-const canFallBackToTier1 = (
-  execution: SessionFlowResult,
-  state: SessionFlowState,
-  extra?: ProgressContext
-): boolean => {
-  if (!execution.response.isError || state.mode !== 'tier2-native') return false;
-
-  const isAborted = extra?.signal?.aborted ?? false;
-
-  const wasStopped = execution.wasStopped ?? false;
-  const result = !execution.wasCancelled && !isAborted && !wasStopped;
-
-  return result;
-};
-
 const buildMissingPromptResult = (state: SessionFlowState): SessionFlowResult => {
   const error = new ValidationError('Prompt is required');
   const response = error.toMcpResponse();
   const result: SessionFlowResult = { response, responseText: '', sessionMode: state.mode, wasCancelled: false };
 
   return result;
+};
+
+const resolveStartSessionId = (context: ResolvedProviderEntry, sessionId: string): string | undefined => {
+  const isStartDisabled = SESSION_STORE.isNativeStartDisabled(context.name, sessionId);
+
+  if (isStartDisabled) return;
+
+  const candidateId = randomUUID();
+  const canStart = canStartNativeSession(context.config, candidateId);
+
+  if (!canStart) return;
+
+  return candidateId;
 };
 
 export const executeSessionFlow = async ({
@@ -100,6 +107,7 @@ export const executeSessionFlow = async ({
     prompt: fallbackPrompt,
     mode: 'tier2-fallback-to-tier1',
     nativeSessionId: undefined,
+    startSessionId: resolveStartSessionId(context, state.sessionId),
   };
   const fallbackExecution = await runSessionExecution(context, args, extra, fallbackState);
   const result: SessionFlowResult = {
@@ -108,6 +116,7 @@ export const executeSessionFlow = async ({
     nativeSessionId: fallbackExecution.nativeSessionId,
     sessionMode: 'tier2-fallback-to-tier1',
     wasCancelled: fallbackExecution.wasCancelled,
+    hasDroppedStartFlag: fallbackExecution.hasDroppedStartFlag,
   };
 
   return result;
@@ -132,11 +141,10 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
   }
 
   const prompt = buildTier1Prompt(context, args, sessionId);
-  const result: SessionFlowState = {
-    sessionId,
-    prompt,
-    mode: 'tier1-prepend',
-  };
+  const startSessionId = resolveStartSessionId(context, sessionId);
+  const tier1State: SessionFlowState = { sessionId, prompt, mode: 'tier1-prepend' };
+  const startState: SessionFlowState = { ...tier1State, startSessionId };
+  const result = startSessionId ? startState : tier1State;
 
   return result;
 };

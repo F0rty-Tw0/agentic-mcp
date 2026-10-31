@@ -48,6 +48,8 @@ const handleSessionAsk = async (
       SESSION_STORE.addTurn(context.name, sessionId, { role: 'user', text: args.prompt ?? '' });
       SESSION_STORE.addTurn(context.name, sessionId, { role: 'assistant', text: result.responseText });
 
+      if (result.hasDroppedStartFlag) SESSION_STORE.disableNativeStart(context.name, sessionId);
+
       if (result.nativeSessionId) {
         SESSION_STORE.setNativeSessionId(context.name, sessionId, result.nativeSessionId);
       }

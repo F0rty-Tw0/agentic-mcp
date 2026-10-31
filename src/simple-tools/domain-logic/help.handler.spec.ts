@@ -6,6 +6,7 @@ import { DEFAULT_MCP_TOOL_TIMEOUT_MS, buildMinimalEnv, executeCommand, stripAnsi
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import {
   SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB,
+  SIMPLE_TOOLS_PROVIDER_CONFIG_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,
 } from '../test/stubs/simple-tools.stub';
 import { createSimpleToolsContext } from '../test/utils/simple-tools-context.spec.util';
@@ -47,6 +48,22 @@ describe('handleHelp', () => {
   });
 
   describe('successful execution', () => {
+    it('GIVEN a provider with a sessions command WHEN handling help THEN appends the agentic-mcp session support line', async () => {
+      const flags = { resume: ['--resume'], startWithId: '--session-id=' };
+      const sessions = { flags };
+      const commands = { ...SIMPLE_TOOLS_PROVIDER_CONFIG_STUB.commands, sessions };
+      const context = createSimpleToolsContext({ commands });
+
+      const result = await handleHelp(context);
+
+      const text =
+        'Usage: test-cli [options]\n\nagentic-mcp sessions: native resume. A new session starts with an id ' +
+        'agentic-mcp generates (--session-id=<id>); follow-ups resume it (--resume <id>).';
+      const content = [{ type: 'text', text }];
+
+      expect(result).toStrictEqual({ content });
+    });
+
     it('GIVEN provider context WHEN handling help THEN returns text content with help output', async () => {
       const context = createSimpleToolsContext();
 

@@ -8,7 +8,9 @@ export {
   FLAG_SYSTEM_PROMPT,
   FLAG_WORKING_DIR,
   SESSION_CONTINUE_FLAG_KEY,
+  SESSION_FLAG_VALUE_JOINER,
   SESSION_RESUME_FLAG_KEY,
+  SESSION_START_FLAG_KEY,
 } from './command-def.const';
 
 export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const';

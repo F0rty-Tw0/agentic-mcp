@@ -11,8 +11,7 @@ import {
 } from '../../shared';
 import type { ExecuteCommandOptions, ResultCompleteDetector } from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
-import type { FlagValue, ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
-import { SESSION_CONTINUE_FLAG_KEY, SESSION_RESUME_FLAG_KEY } from '../common';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskToolArgs } from '../common';
 
 type BuildCommandOptionsInput = {
@@ -117,33 +116,4 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
   };
 
   return commandOptions;
-};
-
-const resolveSessionFlagArgs = (flagValue: FlagValue | undefined, value: string): string[] => {
-  if (!flagValue) return [];
-
-  if (typeof flagValue === 'string') return [flagValue, value];
-
-  if (Array.isArray(flagValue)) return [...flagValue, value];
-
-  const isAllowedValue = flagValue.values.includes(value);
-
-  if (!isAllowedValue) return [];
-
-  return [flagValue.flag, value];
-};
-
-export const buildNativeSessionArgs = (config: ProviderConfig, nativeSessionId: string): string[] => {
-  const sessionsCommand = config.commands.sessions;
-
-  if (!sessionsCommand?.flags) return [];
-
-  const resumeFlag = sessionsCommand.flags[SESSION_RESUME_FLAG_KEY];
-  const continueFlag = sessionsCommand.flags[SESSION_CONTINUE_FLAG_KEY];
-
-  const resumeArgs = resolveSessionFlagArgs(resumeFlag, nativeSessionId);
-
-  if (resumeArgs.length) return resumeArgs;
-
-  return resolveSessionFlagArgs(continueFlag, nativeSessionId);
 };

@@ -127,7 +127,8 @@
         "sessions": {
           "flags": {
             "resume": ["--resume"],
-            "continue": ["--continue"]
+            "continue": ["--continue"],
+            "startWithId": "--session-id="
           }
         }
       },

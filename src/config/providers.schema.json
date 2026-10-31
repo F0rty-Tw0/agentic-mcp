@@ -93,6 +93,15 @@
           "additionalProperties": {
             "$ref": "#/$defs/flagValue"
           },
+          "properties": {
+            "startWithId": {
+              "oneOf": [
+                { "type": "string", "minLength": 1 },
+                { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+              ],
+              "description": "sessions command only: how to start a new CLI session with an id agentic-mcp chooses. When set together with a \"resume\" or \"continue\" flag, the first ask of a session generates a UUID, passes it with this flag, and stores it as the native session id, so follow-ups resume natively instead of replaying prior turns. String = value flag; a value ending in \"=\" is joined with the id into one argument (copilot: \"--session-id=\" produces \"--session-id=<uuid>\"), otherwise flag and id are two arguments. Array = args placed before the id. The \"=\" joining rule applies to every sessions flag (resume, continue, startWithId)."
+            }
+          },
           "description": "Named dynamic flags. Keys are semantic capability names (e.g. \"model\", \"autoMode\", \"sandbox\"), values define how to map them to CLI arguments. Open map — any key is allowed."
         },
         "streaming": {

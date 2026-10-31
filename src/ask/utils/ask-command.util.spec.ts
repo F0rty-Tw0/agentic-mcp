@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from './ask-command.util';
+import { buildCommandOptions, validateAndResolveArgs } from './ask-command.util';
 import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared';
 import { ValidationError } from '../../shared';
 import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
@@ -266,103 +266,5 @@ describe('buildCommandOptions', () => {
     const options = buildCommandOptions({ context, resolved: {}, cliArgs: [], env: {}, outputFormat: 'json' });
 
     expect(options.isResultComplete).toBeUndefined();
-  });
-});
-
-describe('buildNativeSessionArgs', () => {
-  it('GIVEN config without sessions command WHEN called THEN returns empty array', () => {
-    const config = buildProviderConfig();
-    const result = buildNativeSessionArgs(config, 'session-123');
-
-    expect(result).toStrictEqual([]);
-  });
-
-  it('GIVEN config with sessions command but no flags WHEN called THEN returns empty array', () => {
-    const ask = { args: [] };
-    const commands = {
-      ask,
-      sessions: {},
-    };
-    const config = buildProviderConfig({
-      commands,
-    });
-
-    const result = buildNativeSessionArgs(config, 'session-123');
-
-    expect(result).toStrictEqual([]);
-  });
-
-  it('GIVEN config with resume flag as string WHEN called THEN returns resume flag and session id', () => {
-    const flags = { resume: '--resume' };
-    const sessions = { flags };
-    const ask = { args: [] };
-    const commands = { ask, sessions };
-    const config = buildProviderConfig({
-      commands,
-    });
-
-    const result = buildNativeSessionArgs(config, 'session-123');
-
-    expect(result).toStrictEqual(['--resume', 'session-123']);
-  });
-
-  it('GIVEN config with resume flag as array WHEN called THEN returns all flag parts and session id', () => {
-    const ask = { args: [] };
-    const flags = {
-      resume: ['--resume', '--session'],
-    };
-    const sessions = { flags };
-    const commands = { ask, sessions };
-    const config = buildProviderConfig({
-      commands,
-    });
-
-    const result = buildNativeSessionArgs(config, 'session-123');
-
-    expect(result).toStrictEqual(['--resume', '--session', 'session-123']);
-  });
-
-  it('GIVEN config with continue flag but no resume flag WHEN called THEN returns continue flag args', () => {
-    const ask = { args: [] };
-    const flags = { continue: '--continue' };
-    const sessions = { flags };
-    const commands = { ask, sessions };
-    const config = buildProviderConfig({
-      commands,
-    });
-
-    const result = buildNativeSessionArgs(config, 'session-456');
-
-    expect(result).toStrictEqual(['--continue', 'session-456']);
-  });
-
-  it('GIVEN config with leveled resume flag where session id is in values WHEN called THEN returns flag and session id', () => {
-    const resume = { flag: '--resume', values: ['session-789', 'other-session'] };
-    const ask = { args: [] };
-    const flags = { resume };
-    const sessions = { flags };
-    const commands = { ask, sessions };
-    const config = buildProviderConfig({
-      commands,
-    });
-
-    const result = buildNativeSessionArgs(config, 'session-789');
-
-    expect(result).toStrictEqual(['--resume', 'session-789']);
-  });
-
-  it('GIVEN config with leveled resume flag where session id is not in values WHEN called THEN returns empty array', () => {
-    const ask = { args: [] };
-    const resume = { flag: '--resume', values: ['other-session'] };
-    const flags = { resume };
-    const sessions = { flags };
-    const commands = { ask, sessions };
-    const config = buildProviderConfig({
-      commands,
-    });
-
-    const result = buildNativeSessionArgs(config, 'session-789');
-
-    expect(result).toStrictEqual([]);
   });
 });
