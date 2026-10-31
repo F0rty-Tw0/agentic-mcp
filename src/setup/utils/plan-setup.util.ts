@@ -4,7 +4,7 @@ import { buildClientConfig } from './build-client-config.util';
 import { CLIENT_TARGETS } from '../common';
 import type { ClientConfigMergeResult, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
 
-const BLOCKING_MERGE_STATUSES: SetupMergeStatus[] = ['invalid-json', 'invalid-toml', 'rewrite-unsafe'];
+const BLOCKING_MERGE_STATUSES: SetupMergeStatus[] = ['invalid-json', 'invalid-toml', 'rewrite-unsafe', 'unmergeable'];
 
 const resolveTargetPath = (input: SetupPlanInput): string | undefined => {
   if (input.pathOverride != null) return input.pathOverride;

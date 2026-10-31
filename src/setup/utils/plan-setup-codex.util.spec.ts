@@ -74,6 +74,15 @@ describe('FEATURE: codex setup plan', () => {
     });
   });
 
+  describe('GIVEN a config.toml whose mcp_servers is not a table', () => {
+    it('WHEN building the merge plan THEN nothing is written and the warning says why', () => {
+      const result = planCodex('mcp_servers = "oops"\n');
+
+      expect(result.writeIntent).toBe('manual');
+      expect(result.warnings).toContainEqual(expect.stringContaining('(mcp_servers is not a table'));
+    });
+  });
+
   describe('GIVEN an agentic-mcp table with a lower tool timeout', () => {
     it('WHEN building the merge plan THEN it warns that the rewrite drops comments and formatting', () => {
       const result = planCodex(LOW_TIMEOUT_CONFIG);

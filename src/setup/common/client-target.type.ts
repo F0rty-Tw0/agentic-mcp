@@ -1,4 +1,5 @@
-export type SetupMergeStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json' | 'invalid-toml' | 'rewrite-unsafe';
+export type SetupMergeStatus =
+  'created' | 'merged' | 'unchanged' | 'invalid-json' | 'invalid-toml' | 'rewrite-unsafe' | 'unmergeable';
 
 export type ClientConfigMergeResult = {
   readonly status: SetupMergeStatus;

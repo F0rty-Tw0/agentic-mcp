@@ -130,6 +130,22 @@ describe('FEATURE: TOML client config merge', () => {
     });
   });
 
+  describe('GIVEN mcp_servers is not a table', () => {
+    it('WHEN merging THEN the merge is refused and the file is kept as is', () => {
+      const existingText = 'mcp_servers = "oops"\n';
+
+      const result = mergeToml(existingText);
+
+      expect(result).toStrictEqual({
+        status: 'unmergeable',
+        configText: existingText,
+        notes: [],
+        rewritten: false,
+        reason: 'mcp_servers is not a table, so setup will not replace it',
+      });
+    });
+  });
+
   describe('GIVEN a file that is not valid TOML', () => {
     it('WHEN merging THEN the status is invalid-toml with the parser message', () => {
       const result = mergeToml('[mcp_servers\ncommand = "x"\n');

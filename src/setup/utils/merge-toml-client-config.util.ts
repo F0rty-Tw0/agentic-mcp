@@ -160,7 +160,15 @@ export const buildMergedTomlClientConfig = (input: MergeTomlClientConfigInput): 
 
   const emptyServers: TomlRecord = {};
   const currentServersValue = parseResult.table[target.serversKey];
-  const currentServers = isRecord(currentServersValue) ? currentServersValue : emptyServers;
+  const isServersTable = isRecord(currentServersValue);
+
+  if (currentServersValue !== undefined && !isServersTable) {
+    const reason = `${target.serversKey} is not a table, so setup will not replace it`;
+
+    return createResult({ status: 'unmergeable', configText: existingConfigText, notes: [], reason });
+  }
+
+  const currentServers = isServersTable ? currentServersValue : emptyServers;
   const currentAgentic = currentServers['agentic-mcp'];
   const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
   const isUnchanged = isDeepStrictEqual(currentAgentic, mergedEntry.entry);
