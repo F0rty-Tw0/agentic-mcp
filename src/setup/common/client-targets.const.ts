@@ -10,7 +10,9 @@ const TIMEOUT_MS_RULE: TimeoutKeyRule = { key: 'timeout' };
 
 const CODEX_TOOL_TIMEOUT_RULE: TimeoutKeyRule = { key: 'tool_timeout_sec' };
 
-const ANTIGRAVITY_TIMEOUT_RULE: TimeoutKeyRule = { key: 'timeoutSeconds' };
+// agy documents no meaning for a timeoutSeconds of 0 or below (it may mean no limit), so setup keeps one.
+// The other timeout keys are not flagged: a client that passes 0 as the MCP SDK request timeout fails every call at once.
+const ANTIGRAVITY_TIMEOUT_RULE: TimeoutKeyRule = { key: 'timeoutSeconds', keepsNonPositive: true };
 
 // Codex also reads startup_timeout_ms, and startup_timeout_sec wins when both are set.
 const CODEX_STARTUP_TIMEOUT_RULE: TimeoutKeyRule = { key: 'startup_timeout_sec', msAliasKey: 'startup_timeout_ms' };

@@ -16,6 +16,7 @@ const buildJsonClientConfig = (input: BuildClientConfigInput): ClientConfigMerge
     status: merged.status,
     configText,
     notes: merged.notes,
+    warnings: merged.warnings,
     rewritten: false,
     reason: merged.reason,
   };

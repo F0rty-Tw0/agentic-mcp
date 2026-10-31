@@ -149,7 +149,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
   const isWriteBlocked = isInvalidMerge || isClaudeStateOverwrite;
   const isUnchanged = isMergeMode && mergedConfig.status === 'unchanged';
   const writeIntent = resolveWriteIntent({ input, targetPath, isWriteBlocked, isUnchanged });
-  const warnings = buildPlanWarnings({
+  const planWarnings = buildPlanWarnings({
     input,
     targetPath,
     isClaudeStateOverwrite,
@@ -163,6 +163,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     target,
   });
   const mergeResult = isMergeMode ? mergedConfig : overwriteConfig;
+  const warnings = [...planWarnings, ...mergeResult.warnings];
   const targetNotes = buildTargetNotes(input, target);
   const notes = [...mergeResult.notes, ...targetNotes];
 

@@ -50,6 +50,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       expect(result).toStrictEqual({
         entry: TIMED_ENTRY,
         notes: ['agentic-mcp timeout: set to 4260000 (was not set).'],
+        warnings: [],
       });
     });
   });
@@ -63,6 +64,21 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       expect(result).toStrictEqual({
         entry: TIMED_ENTRY,
         notes: ['agentic-mcp timeout: raised from 600000 to 4260000.'],
+        warnings: [],
+      });
+    });
+  });
+
+  describe('GIVEN an existing timeout of 0 on a key not flagged keepsNonPositive', () => {
+    it('WHEN merging THEN the timeout is raised, since a 0 request timeout fails every call', () => {
+      const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 0 };
+
+      const result = mergeAgenticServerEntry({ existingEntry, agenticServerEntry: TIMED_ENTRY, target: TIMED_TARGET });
+
+      expect(result).toStrictEqual({
+        entry: TIMED_ENTRY,
+        notes: ['agentic-mcp timeout: raised from 0 to 4260000.'],
+        warnings: [],
       });
     });
   });
@@ -76,6 +92,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       expect(result).toStrictEqual({
         entry: existingEntry,
         notes: ['agentic-mcp timeout: kept your 7200000 (not lower than 4260000).'],
+        warnings: [],
       });
     });
   });
@@ -89,6 +106,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       expect(result).toStrictEqual({
         entry: existingEntry,
         notes: ['agentic-mcp timeout: kept your 99999999999999999999 (not lower than 4260000).'],
+        warnings: [],
       });
     });
   });
@@ -134,7 +152,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
 
       const result = mergeAgenticServerEntry({ existingEntry: undefined, agenticServerEntry: entry, target });
 
-      expect(result).toStrictEqual({ entry, notes: [] });
+      expect(result).toStrictEqual({ entry, notes: [], warnings: [] });
     });
   });
 
@@ -168,6 +186,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       expect(result).toStrictEqual({
         entry: existingEntry,
         notes: ['agentic-mcp startup_timeout_sec: not set; kept your startup_timeout_ms 120000 (not lower than 60 s).'],
+        warnings: [],
       });
     });
   });
@@ -207,6 +226,7 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       expect(result).toStrictEqual({
         entry: expectedEntry,
         notes: ['agentic-mcp startup_timeout_sec: set to 60 (your startup_timeout_ms 10000 was lower).'],
+        warnings: [],
       });
     });
   });

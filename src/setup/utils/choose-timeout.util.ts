@@ -5,11 +5,18 @@ type JsonRecord = Readonly<Record<string, unknown>>;
 type TimeoutChoice = {
   readonly value?: TimeoutValue;
   readonly note: string;
+  readonly warning?: string;
 };
 
 type TimeoutChoiceInput = {
-  readonly key: string;
+  readonly rule: TimeoutKeyRule;
   readonly existingValue: unknown;
+  readonly generatedValue: number;
+};
+
+type KeptChoiceInput = {
+  readonly key: string;
+  readonly existingValue: TimeoutValue;
   readonly generatedValue: number;
 };
 
@@ -25,8 +32,21 @@ const isTimeoutValue = (value: unknown): value is TimeoutValue => {
   return typeof value === 'number' || typeof value === 'bigint';
 };
 
-export const chooseTimeout = (input: TimeoutChoiceInput): TimeoutChoice => {
+const buildKeptNonPositiveChoice = (input: KeptChoiceInput): TimeoutChoice => {
   const { key, existingValue, generatedValue } = input;
+  const kept = String(existingValue);
+  const keptChoice: TimeoutChoice = {
+    value: existingValue,
+    note: `agentic-mcp ${key}: kept your ${kept} (0 or below; see the warning).`,
+    warning: `agentic-mcp ${key}: kept your ${kept}. The client does not document what 0 or a negative value means (it may mean no limit), so setup leaves it; if the client stops long provider runs, set ${key} to at least ${String(generatedValue)}.`,
+  };
+
+  return keptChoice;
+};
+
+export const chooseTimeout = (input: TimeoutChoiceInput): TimeoutChoice => {
+  const { rule, existingValue, generatedValue } = input;
+  const { key } = rule;
 
   if (!isTimeoutValue(existingValue)) {
     const setChoice: TimeoutChoice = {
@@ -36,6 +56,10 @@ export const chooseTimeout = (input: TimeoutChoiceInput): TimeoutChoice => {
 
     return setChoice;
   }
+
+  const isKeptNonPositive = rule.keepsNonPositive === true && existingValue <= 0;
+
+  if (isKeptNonPositive) return buildKeptNonPositiveChoice({ key, existingValue, generatedValue });
 
   if (existingValue >= generatedValue) {
     const keptChoice: TimeoutChoice = {

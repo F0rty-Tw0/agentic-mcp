@@ -14,6 +14,7 @@ type MergeServerEntryInput = {
 type MergeServerEntryResult = {
   readonly entry: JsonRecord;
   readonly notes: string[];
+  readonly warnings: string[];
 };
 
 const isRecord = (value: unknown): value is JsonRecord => {
@@ -54,6 +55,7 @@ export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServ
   const preservedValues = pickPresentKeys(existingEntry, target.preservedKeys);
   const timeoutValues: Record<string, TimeoutValue> = {};
   const notes: string[] = [];
+  const warnings: string[] = [];
 
   const omittedKeys: string[] = [];
 
@@ -64,9 +66,11 @@ export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServ
     if (typeof generatedValue !== 'number') continue;
 
     const aliasChoice = chooseAliasTimeout({ rule, existingEntry, generatedValue });
-    const choice = aliasChoice ?? chooseTimeout({ key, existingValue: existingEntry[key], generatedValue });
+    const choice = aliasChoice ?? chooseTimeout({ rule, existingValue: existingEntry[key], generatedValue });
 
     notes.push(choice.note);
+
+    if (choice.warning != null) warnings.push(choice.warning);
 
     if (choice.value == null) {
       omittedKeys.push(key);
@@ -83,7 +87,7 @@ export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServ
   const mergedEntry: JsonRecord = { ...existingEntry, ...generatedEntry, ...preservedValues, ...timeoutValues };
   const keptEntries = Object.entries(mergedEntry).filter(([key]) => !omittedKeys.includes(key));
   const entry: JsonRecord = Object.fromEntries(keptEntries);
-  const result: MergeServerEntryResult = { entry, notes };
+  const result: MergeServerEntryResult = { entry, notes, warnings };
 
   return result;
 };
