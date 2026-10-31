@@ -7,7 +7,7 @@
  * Run with: pnpm run test:integration
  */
 
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -133,6 +133,32 @@ describe('integration: non-interactive safety gate', () => {
     }
 
     expect(fileExists).toBe(false);
+  });
+});
+
+describe('integration: unchanged codex rerun', () => {
+  it('GIVEN a configured codex entry WHEN runSetup reruns without --yes THEN it reports unchanged and leaves the file alone', async () => {
+    const configDirectory = path.join(tempDir, '.codex');
+    const configPath = path.join(configDirectory, 'config.toml');
+    const baseDeps = commonDeps();
+    const deps = { ...baseDeps, env: {} };
+
+    await runSetup(['--client', 'codex', '--yes'], deps);
+
+    const statBefore = await stat(configPath);
+
+    stdoutOutput = '';
+    await runSetup(['--client', 'codex'], deps);
+
+    const statAfter = await stat(configPath);
+    const configFiles = await readdir(configDirectory);
+
+    expect(stderrOutput).toBe('');
+    expect(stdoutOutput).toContain('Setup result: unchanged.');
+    expect(stdoutOutput).toContain('already configured');
+    expect(statAfter.ino).toBe(statBefore.ino);
+    expect(statAfter.mtimeMs).toBe(statBefore.mtimeMs);
+    expect(configFiles).toStrictEqual(['config.toml']);
   });
 });
 

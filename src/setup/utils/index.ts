@@ -15,8 +15,9 @@ export {
   formatJsonSetupOutput,
   formatProviderSummary,
   formatSkillOutput,
-  isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
+
+export { isNonInteractiveWriteBlocked } from './setup-consent.util';
 
 export { verifyWrittenConfig } from './verify-written-config.util';

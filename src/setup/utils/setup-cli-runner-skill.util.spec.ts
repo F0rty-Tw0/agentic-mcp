@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runConfiguredSetup } from './setup-cli-runner.util';
 import type { SetupApplyResult, SetupPlan } from '../common';
-import { DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
+import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
 import {
   createParsedSetupArgs,
   createSetupApplyResult,
@@ -56,6 +56,24 @@ describe('runConfiguredSetup skill install', () => {
       const parsed: unknown = JSON.parse(readStdoutOutput(stdoutWrite));
 
       expect(parsed).toStrictEqual(expect.objectContaining({ skillResult: expectedSkillResult }));
+    });
+  });
+
+  describe('GIVEN an unchanged claude-code plan without yes and an interactive terminal', () => {
+    it('WHEN running configured setup THEN the prompt says the config is already there and asks about the skill', async () => {
+      const promptConfirm = vi.fn().mockResolvedValue(false);
+      const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'unchanged' });
+      const dependencies = createSetupCliDependencies({ promptConfirm, buildSetupPlan, isInteractive: true });
+
+      await runConfiguredSetup({
+        parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+        dependencies,
+        detectedProviders: TEST_PROVIDERS,
+      });
+
+      expect(promptConfirm).toHaveBeenCalledWith(
+        `agentic-mcp is already configured in ${DEFAULT_CLAUDE_PATH}. Install the Claude Code skill? [y/N] `
+      );
     });
   });
 });

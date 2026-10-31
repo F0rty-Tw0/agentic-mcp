@@ -7,7 +7,6 @@ import {
   formatJsonSetupOutput,
   formatProviderSummary,
   formatSkillOutput,
-  isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
 import type {
@@ -250,22 +249,6 @@ describe('setup-cli-output utilities', () => {
     expect(parsed.nextSteps).toContain('npx agentic-mcp setup --client cursor --yes');
     expect(parsed.summary.nextStep.command).toBe('npx agentic-mcp setup --client cursor --yes');
     expect(parsed.summary.firstProofCommand).toBe(FIRST_PROOF_COMMAND);
-  });
-
-  it('GIVEN non-interactive write without --yes WHEN checking block THEN returns true', () => {
-    const result = isNonInteractiveWriteBlocked(
-      createArgs({ yes: false }),
-      createPlan({ writeIntent: 'write' }),
-      false
-    );
-
-    expect(result).toBe(true);
-  });
-
-  it('GIVEN non-interactive write with --yes WHEN checking block THEN returns false', () => {
-    const result = isNonInteractiveWriteBlocked(createArgs({ yes: true }), createPlan({ writeIntent: 'write' }), false);
-
-    expect(result).toBe(false);
   });
 
   it('GIVEN installed status WHEN formatting skill output THEN includes skill path', () => {

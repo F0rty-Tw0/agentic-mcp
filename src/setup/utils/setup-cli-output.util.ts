@@ -1,4 +1,4 @@
-import type { ConfiguredSetupOutputInput, MinimalSetupOutputInput, ParsedSetupArgs, SetupPlan } from '../common';
+import type { ConfiguredSetupOutputInput, MinimalSetupOutputInput } from '../common';
 import {
   buildConfiguredSummary,
   buildMinimalNextSteps,
@@ -146,17 +146,4 @@ export const formatHumanMinimalSetupOutput = (input: MinimalSetupOutputInput): s
   }
 
   return `${lines.join('\n')}\n`;
-};
-
-// An unchanged plan still installs the Claude Code skill, so it needs the same consent as a write.
-export const isConsentRequired = (plan: SetupPlan): boolean => {
-  return plan.writeIntent === 'write' || plan.writeIntent === 'unchanged';
-};
-
-export const isNonInteractiveWriteBlocked = (
-  args: ParsedSetupArgs,
-  plan: SetupPlan,
-  isInteractive: boolean
-): boolean => {
-  return !isInteractive && !args.yes && isConsentRequired(plan);
 };

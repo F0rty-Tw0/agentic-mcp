@@ -11,17 +11,16 @@ import type {
   SkillInstallResult,
   SupportedClient,
 } from '../common';
-import { buildSkippedSkillResult } from './client-skill.util';
+import { buildSkippedSkillResult, hasClientSkill } from './client-skill.util';
 import { buildDefaultClientToolTimeout, resolveClientToolTimeout } from './resolve-client-tool-timeout.util';
 import {
   formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
   formatJsonMinimalSetupOutput,
   formatJsonSetupOutput,
-  isConsentRequired,
-  isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
+import { buildConsentPrompt, isConsentRequired, isNonInteractiveWriteBlocked } from './setup-consent.util';
 
 type SetupCliFlowInput = {
   readonly parsedArgs: ParsedSetupArgs;
@@ -64,8 +63,9 @@ const installClientSkill = async (
   plan: SetupPlan
 ): Promise<SkillInstallResult | undefined> => {
   const { parsedArgs, dependencies } = input;
+  const hasSkill = hasClientSkill(parsedArgs.client);
 
-  if (parsedArgs.client !== 'claude-code') return undefined;
+  if (!hasSkill) return undefined;
 
   if (plan.writeIntent === 'skip') return undefined;
 
@@ -147,7 +147,8 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   const isConsentNeeded = isConsentRequired(plan);
 
   if (dependencies.isInteractive && !parsedArgs.yes && isConsentNeeded) {
-    const confirmed = await dependencies.promptConfirm(`Write config to ${plan.targetPath}? [y/N] `);
+    const consentPrompt = buildConsentPrompt(plan);
+    const confirmed = await dependencies.promptConfirm(consentPrompt);
 
     if (!confirmed) {
       dependencies.stdoutWrite('Aborted. No files written.\n');
