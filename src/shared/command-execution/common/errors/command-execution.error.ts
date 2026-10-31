@@ -40,7 +40,7 @@ const buildQueueTimeoutMessage = (details: QueueTimeoutErrorDetails): string => 
   const waited = formatDuration(details.waitMs);
   const limit = formatDuration(details.queueTimeoutMs);
   const busyText = `Queue timeout for provider "${providerName}": the provider is busy with other calls; waited ${waited} for a free slot (limit: ${limit}).`;
-  const adviceText = `Retry later, or call ask_${providerName} with mode: "async" and poll the job with action: "status".`;
+  const adviceText = 'Retry after those calls finish.';
   const message = `${busyText} ${adviceText}`;
 
   return message;
