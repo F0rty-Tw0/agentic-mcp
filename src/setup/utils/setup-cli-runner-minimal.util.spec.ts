@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runMinimalSetup } from './setup-cli-runner.util';
+import { SKILL_DRY_RUN_REASON } from '../common';
+import type { SetupCliDependencies, SkillInstallResult } from '../common';
 import { DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
 import type { MinimalJsonOutput } from '../test/common/setup.type';
 import {
@@ -72,5 +74,38 @@ describe('runMinimalSetup', () => {
     expect(parsed.summary.nextStep.command).toBe('npx agentic-mcp setup --client cursor --yes');
     expect(parsed.summary.firstProofCommand).toBe(FIRST_PROOF_COMMAND);
     expect(parsed.summary.unproven).toContain('MCP client configuration has not been written yet.');
+  });
+
+  it('GIVEN a dry run WHEN running minimal setup THEN it does not install the skill', async () => {
+    const installSkill = vi.fn<SetupCliDependencies['installSkill']>();
+    const dependencies = createSetupCliDependencies({ installSkill });
+
+    await runMinimalSetup({
+      parsedArgs: createParsedSetupArgs({ minimal: true, dryRun: true }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN a dry run with json output WHEN running minimal setup THEN the skill result says it was skipped for the dry run', async () => {
+    const stdoutWrite = vi.fn<(text: string) => void>();
+    const dependencies = createSetupCliDependencies({ stdoutWrite });
+
+    await runMinimalSetup({
+      parsedArgs: createParsedSetupArgs({ output: 'json', minimal: true, dryRun: true }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    const parsed: unknown = JSON.parse(readStdoutCallOutput(stdoutWrite, 0));
+    const expectedSkillResult: SkillInstallResult = {
+      status: 'skipped',
+      skillPath: DEFAULT_SKILL_PATH,
+      reason: SKILL_DRY_RUN_REASON,
+    };
+
+    expect(parsed).toMatchObject({ skillResult: expectedSkillResult });
   });
 });

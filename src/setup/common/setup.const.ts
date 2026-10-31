@@ -23,4 +23,6 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
 
 export const SKILL_CONSENT_REASON = 'rerun with --yes to install it';
 
+export const SKILL_DRY_RUN_REASON = 'dry run, so nothing was written; rerun without --dry-run to install it';
+
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;

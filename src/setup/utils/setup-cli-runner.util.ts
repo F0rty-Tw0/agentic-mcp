@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { CLIENT_TARGETS } from '../common';
+import { CLIENT_TARGETS, SKILL_DRY_RUN_REASON } from '../common';
 import type {
   ClientToolTimeout,
   ConfiguredSetupOutputInput,
@@ -119,10 +119,20 @@ const buildSetupPlanFromArgs = async (input: SetupCliFlowInput): Promise<SetupPl
   return plan;
 };
 
+const installMinimalSkill = async (input: SetupCliFlowInput): Promise<SkillInstallResult> => {
+  const { parsedArgs, dependencies } = input;
+
+  if (parsedArgs.dryRun) return buildSkippedSkillResult(dependencies.homeDirectory, SKILL_DRY_RUN_REASON);
+
+  const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
+
+  return skillResult;
+};
+
 export const runMinimalSetup = async (input: SetupCliFlowInput): Promise<void> => {
   const { parsedArgs, dependencies, detectedProviders } = input;
   const client = resolveSuggestedClient(parsedArgs.client);
-  const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
+  const skillResult = await installMinimalSkill(input);
   const jsonMinimalSetupOutput = formatJsonMinimalSetupOutput({ client, detectedProviders, skillResult });
   const humanMinimalSetupOutput = formatHumanMinimalSetupOutput({ client, detectedProviders, skillResult });
   const output = parsedArgs.output === 'json' ? jsonMinimalSetupOutput : humanMinimalSetupOutput;
