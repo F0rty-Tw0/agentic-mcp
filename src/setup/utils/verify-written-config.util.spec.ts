@@ -25,6 +25,14 @@ describe('FEATURE: written config verification', () => {
       expect(result.status).toBe('written');
     });
 
+    it('WHEN another table holds an integer beyond 2^53 THEN it is verified as written', () => {
+      const configText = '[notice]\nseen_at = 9223372036854775807\n\n[mcp_servers.agentic-mcp]\ncommand = "npx"\n';
+
+      const result = verifyWrittenConfig(configText, CLIENT_TARGETS.codex);
+
+      expect(result.status).toBe('written');
+    });
+
     it('WHEN the text is not TOML THEN the reason says so', () => {
       const result = verifyWrittenConfig('[mcp_servers\n', CLIENT_TARGETS.codex);
 

@@ -29,8 +29,9 @@ const createFailedVerificationResult = (reason: string): SetupApplyResult => {
   return result;
 };
 
+// Same parse options as the merge, so an integer beyond 2^53 elsewhere in the file still verifies.
 const parseByFormat = (content: string, format: ClientConfigFormat): unknown => {
-  if (format === 'toml') return parse(content);
+  if (format === 'toml') return parse(content, { integersAsBigInt: 'asNeeded' });
 
   const parsed: unknown = JSON.parse(content);
 
