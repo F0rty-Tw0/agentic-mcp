@@ -13,22 +13,37 @@ const capErrorDetail = (text: string, channel: 'stderr' | 'output'): string => {
   return `${cappedDetail}\n[${channel} truncated]`;
 };
 
+const formatDuration = (durationMs: number): string => {
+  if (durationMs < MS_PER_SECOND) return `${durationMs} ms`;
+
+  const durationSeconds = Math.round(durationMs / MS_PER_SECOND);
+  const formattedDuration = `${durationSeconds} s`;
+
+  return formattedDuration;
+};
+
 const buildTimeoutText = (timeoutCause?: ExecutionTimeoutCause): string => {
   if (!timeoutCause) return 'Process timed out.';
 
-  const limitSeconds = Math.round(timeoutCause.limitMs / MS_PER_SECOND);
-
-  const idleText = `Process killed after no output for ${limitSeconds} s (provider idleTimeout).`;
+  const limit = formatDuration(timeoutCause.limitMs);
+  const idleText = `Process killed after no output for ${limit} (provider idleTimeout).`;
 
   if (timeoutCause.kind === 'idle') return idleText;
 
-  const wallClockText = `Process timed out after ${limitSeconds} s (provider timeout).`;
+  const wallClockText = `Process timed out after ${limit} (provider timeout).`;
 
   return wallClockText;
 };
 
 const buildQueueTimeoutMessage = (details: QueueTimeoutErrorDetails): string => {
-  return `Queue timeout for provider "${details.providerName}": waited ${details.waitMs}ms (limit: ${details.queueTimeoutMs}ms).`;
+  const { providerName } = details;
+  const waited = formatDuration(details.waitMs);
+  const limit = formatDuration(details.queueTimeoutMs);
+  const busyText = `Queue timeout for provider "${providerName}": the provider is busy with other calls; waited ${waited} for a free slot (limit: ${limit}).`;
+  const adviceText = `Retry later, or call ask_${providerName} with mode: "async" and poll the job with action: "status".`;
+  const message = `${busyText} ${adviceText}`;
+
+  return message;
 };
 
 export class CommandExecutionError extends Error {

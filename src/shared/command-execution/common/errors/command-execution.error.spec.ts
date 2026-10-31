@@ -139,7 +139,16 @@ describe('QueueTimeoutError', () => {
     const text = getFirstText(error);
 
     expect(text).toContain('Queue timeout for provider "codex"');
-    expect(text).toContain('waited 31ms');
-    expect(text).toContain('limit: 30ms');
+    expect(text).toContain('waited 31 ms');
+    expect(text).toContain('limit: 30 ms');
+  });
+
+  it('GIVEN a QueueTimeoutError after minutes of waiting WHEN converting to MCP response THEN it says the provider is busy, how long it waited and what to do', () => {
+    const error = new QueueTimeoutError({ providerName: 'codex', waitMs: 600_004, queueTimeoutMs: 600_000 });
+    const text = getFirstText(error);
+
+    expect(text).toBe(
+      'Queue timeout for provider "codex": the provider is busy with other calls; waited 600 s for a free slot (limit: 600 s). Retry later, or call ask_codex with mode: "async" and poll the job with action: "status".'
+    );
   });
 });
