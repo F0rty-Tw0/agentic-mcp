@@ -13,6 +13,7 @@ import type {
 } from '../common';
 import { buildSkippedSkillResult, hasClientSkill } from './client-skill.util';
 import { buildDefaultClientToolTimeout, resolveClientToolTimeout } from './resolve-client-tool-timeout.util';
+import { reportSetupAbort } from './setup-abort.util';
 import {
   formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
@@ -147,9 +148,7 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   const isWriteBlocked = isNonInteractiveWriteBlocked(parsedArgs, plan, dependencies.isInteractive);
 
   if (isWriteBlocked) {
-    dependencies.stderrWrite(
-      'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
-    );
+    reportSetupAbort({ parsedArgs, plan, dependencies, cause: 'needs-yes' });
 
     return;
   }
@@ -161,7 +160,7 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
     const confirmed = await dependencies.promptConfirm(consentPrompt);
 
     if (!confirmed) {
-      dependencies.stdoutWrite('Aborted. No files written.\n');
+      reportSetupAbort({ parsedArgs, plan, dependencies, cause: 'declined' });
 
       return;
     }

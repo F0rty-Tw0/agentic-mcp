@@ -1,17 +1,22 @@
+import process from 'node:process';
+
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SETUP_ABORTED_EXIT_CODE } from '../common';
 import type { McpServerEntry, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
 type ReadLineInterfaceMock = {
   readonly question: (question: string, callback: (answer: string) => void) => void;
   readonly close: () => void;
+  readonly once: (event: string, listener: () => void) => void;
 };
 
 const mocks = vi.hoisted(() => {
   const close = vi.fn<() => void>();
   const question = vi.fn<(question: string, callback: (answer: string) => void) => void>();
+  const once = vi.fn<(event: string, listener: () => void) => void>();
   const createReadLineInterface = (): ReadLineInterfaceMock => {
-    const readLineInterface: ReadLineInterfaceMock = { question, close };
+    const readLineInterface: ReadLineInterfaceMock = { question, close, once };
 
     return readLineInterface;
   };
@@ -19,6 +24,7 @@ const mocks = vi.hoisted(() => {
   const hoistedMocks = {
     close,
     question,
+    once,
     createInterface,
   };
 
@@ -86,6 +92,7 @@ const createDependencies = (overrides: Partial<SetupCliDependencies> = {}): Part
     stderrWrite: vi.fn<(text: string) => void>(),
     isInteractive: true,
     readConfigFile: async () => Promise.resolve('{"mcpServers":{}}'),
+    setExitCode: vi.fn<(code: number) => void>(),
     ...overrides,
   };
 
@@ -96,7 +103,8 @@ describe('runSetup default promptConfirm', () => {
   beforeEach(() => {
     mocks.createInterface.mockClear();
     mocks.question.mockClear();
-    mocks.close.mockClear();
+    mocks.close.mockReset();
+    mocks.once.mockReset();
   });
 
   beforeAll(async () => {
@@ -148,5 +156,51 @@ describe('runSetup default promptConfirm', () => {
     expect(mocks.close).toHaveBeenCalledTimes(1);
     expect(applySetupPlan).not.toHaveBeenCalled();
     expect(stdoutWrite).toHaveBeenCalledWith('Aborted. No files written.\n');
+  });
+
+  it('GIVEN the default prompt WHEN running setup THEN it asks on stderr so stdout stays for the output', async () => {
+    mocks.question.mockImplementation((_question, callback) => {
+      callback('no');
+    });
+
+    await runSetup([], createDependencies());
+
+    expect(mocks.createInterface).toHaveBeenCalledWith({ input: process.stdin, output: process.stderr });
+  });
+
+  it('GIVEN the default prompt receives yes and closing fires the close event WHEN running setup THEN it still applies the plan', async () => {
+    const applySetupPlan = vi.fn<SetupCliDependencies['applySetupPlan']>().mockResolvedValue(createApplyResult());
+    const closeListeners: (() => void)[] = [];
+
+    mocks.once.mockImplementation((_event, listener) => {
+      closeListeners.push(listener);
+    });
+    mocks.close.mockImplementation(() => {
+      closeListeners.forEach((listener) => {
+        listener();
+      });
+    });
+    mocks.question.mockImplementation((_question, callback) => {
+      callback('yes');
+    });
+
+    await runSetup([], createDependencies({ applySetupPlan }));
+
+    expect(applySetupPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('GIVEN the default prompt input closes before an answer WHEN running setup THEN it aborts with the aborted exit code', async () => {
+    const setExitCode = vi.fn<(code: number) => void>();
+    const applySetupPlan = vi.fn<SetupCliDependencies['applySetupPlan']>().mockResolvedValue(createApplyResult());
+
+    mocks.question.mockImplementation(() => undefined);
+    mocks.once.mockImplementation((event, listener) => {
+      if (event === 'close') listener();
+    });
+
+    await runSetup([], createDependencies({ setExitCode, applySetupPlan }));
+
+    expect(applySetupPlan).not.toHaveBeenCalled();
+    expect(setExitCode).toHaveBeenCalledWith(SETUP_ABORTED_EXIT_CODE);
   });
 });

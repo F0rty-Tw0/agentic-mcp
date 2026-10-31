@@ -76,7 +76,10 @@ export type SetupPlanInput = {
   readonly toolTimeout?: ClientToolTimeout;
 };
 
-type SetupApplyStatus = 'written' | 'unchanged' | 'skipped' | 'manual' | 'verification-failed';
+type SetupApplyStatus = 'written' | 'unchanged' | 'skipped' | 'manual' | 'verification-failed' | 'aborted';
+
+// Why setup stopped before writing: the prompt was declined, or a non-interactive write lacked --yes.
+export type SetupAbortCause = 'declined' | 'needs-yes';
 
 export type SetupApplyResult = {
   readonly status: SetupApplyStatus;
@@ -127,6 +130,7 @@ export type SetupCliDependencies = {
   readonly promptConfirm: (question: string) => Promise<boolean>;
   readonly readConfigFile: (path: string) => Promise<string>;
   readonly env: SetupEnv;
+  readonly setExitCode: (code: number) => void;
 };
 
 export type SetupResult = {
