@@ -1,4 +1,4 @@
-import type { ServerNotification } from '@modelcontextprotocol/sdk/types.js';
+import type { ServerNotification } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';

@@ -6,7 +6,7 @@
  * Run with: pnpm run test:integration
  */
 
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { handleAsk } from '../../ask/domain-logic/ask.handler';

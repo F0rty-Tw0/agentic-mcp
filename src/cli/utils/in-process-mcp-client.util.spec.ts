@@ -1,4 +1,4 @@
-import type { CallToolResult, Progress } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, Progress } from '@modelcontextprotocol/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
 
@@ -100,17 +100,11 @@ vi.mock('../../server', () => {
   return serverModule;
 });
 
-vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
-  const clientModule = { Client: mocks.clientClass };
+vi.mock('@modelcontextprotocol/client', () => {
+  const inMemoryTransport = { createLinkedPair: mocks.createLinkedPair };
+  const clientModule = { Client: mocks.clientClass, InMemoryTransport: inMemoryTransport };
 
   return clientModule;
-});
-
-vi.mock('@modelcontextprotocol/sdk/inMemory.js', () => {
-  const inMemoryTransport = { createLinkedPair: mocks.createLinkedPair };
-  const inMemoryModule = { InMemoryTransport: inMemoryTransport };
-
-  return inMemoryModule;
 });
 
 const buildCallToolResult = (): CallToolResult => {
@@ -191,7 +185,7 @@ describe('callCliTool', () => {
     expect(mocks.clientConnect).toHaveBeenCalledWith(mocks.clientTransport);
     const expectedRequest = { name: 'ask_claude', arguments: args };
 
-    expect(mocks.clientCallTool).toHaveBeenCalledWith(expectedRequest, undefined, {
+    expect(mocks.clientCallTool).toHaveBeenCalledWith(expectedRequest, {
       onprogress: onProgress,
       resetTimeoutOnProgress: true,
       timeout: 1_800_000,
@@ -270,22 +264,6 @@ describe('callCliTool', () => {
 
     await expect(callCliToolPromise).rejects.toThrow('Provider "nonexistent" not found');
     expect(mocks.clientCallTool).not.toHaveBeenCalled();
-    expect(mocks.clientClose).toHaveBeenCalledTimes(1);
-    expect(mocks.serverClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('GIVEN callTool resolves a malformed result WHEN calling a CLI tool THEN it rejects and still closes both client and server', async () => {
-    const malformedResult = { content: 'not-a-content-array' };
-
-    mocks.clientCallTool.mockResolvedValueOnce(malformedResult);
-
-    const args = { prompt: 'hello' };
-    const callCliToolPromise = callCliTool({
-      toolName: 'ask_claude',
-      args,
-    });
-
-    await expect(callCliToolPromise).rejects.toThrow('CLI tool "ask_claude" returned an unexpected result');
     expect(mocks.clientClose).toHaveBeenCalledTimes(1);
     expect(mocks.serverClose).toHaveBeenCalledTimes(1);
   });

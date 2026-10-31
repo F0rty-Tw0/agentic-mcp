@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 import { describe, expect, it } from 'vitest';
 
 import type { SessionMode } from '../common';

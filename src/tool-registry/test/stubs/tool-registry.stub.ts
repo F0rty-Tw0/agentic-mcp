@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import type { ToolDefinition } from '../../../shared/mcp-protocol/common';
 import type { ProviderConfig, ResolvedProvider, ResolvedProviderEntry } from '../../../shared/provider/common';

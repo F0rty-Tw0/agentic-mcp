@@ -6,10 +6,8 @@
  * Run with: pnpm run test:integration
  */
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Client, InMemoryTransport } from '@modelcontextprotocol/client';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer } from './create-server';
@@ -79,7 +77,7 @@ const findAvailableProvider = async (): Promise<string | undefined> => {
   const pingTools = tools.filter((tool) => tool.name.startsWith('ping_'));
 
   for (const tool of pingTools) {
-    const result = (await client.callTool({ name: tool.name })) as CallToolResult;
+    const result = await client.callTool({ name: tool.name });
     const text = (result.content[0] as McpTextContent).text;
 
     const isSuccessfulPing = isSuccessfulPingText(text);
@@ -96,7 +94,7 @@ describe('integration: ping', () => {
 
     if (!provider) return; // no CLIs installed — nothing to assert
 
-    const result = (await client.callTool({ name: `ping_${provider}` })) as CallToolResult;
+    const result = await client.callTool({ name: `ping_${provider}` });
 
     expect(result.isError).toBeUndefined();
     expect(result.content).toHaveLength(1);
@@ -117,7 +115,7 @@ describe('integration: help', () => {
 
     if (!provider) return; // no CLIs installed — nothing to assert
 
-    const result = (await client.callTool({ name: `help_${provider}` })) as CallToolResult;
+    const result = await client.callTool({ name: `help_${provider}` });
 
     expect(result.isError).toBeUndefined();
     expect(result.content).toHaveLength(1);
@@ -131,7 +129,7 @@ describe('integration: help', () => {
 
 describe('integration: list_providers', () => {
   it('GIVEN a running server WHEN calling list_providers THEN it returns provider status', async () => {
-    const result = (await client.callTool({ name: 'list_providers' })) as CallToolResult;
+    const result = await client.callTool({ name: 'list_providers' });
 
     expect(result.isError).toBeUndefined();
     expect(result.content).toHaveLength(1);
@@ -144,7 +142,7 @@ describe('integration: list_providers', () => {
   });
 
   it('GIVEN a running server WHEN calling list_providers THEN each provider shows a truthful status label', async () => {
-    const result = (await client.callTool({ name: 'list_providers' })) as CallToolResult;
+    const result = await client.callTool({ name: 'list_providers' });
 
     const text = (result.content[0] as McpTextContent).text;
 

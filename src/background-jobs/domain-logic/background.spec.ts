@@ -1,4 +1,4 @@
-import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildJobStatusResponse, startBackgroundInvocation } from './background';

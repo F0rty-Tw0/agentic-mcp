@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 
 import { loadConfig, warnDangerousFlags } from '../../config/loader';
 import { APP_VERSION, resolveCliBinary } from '../../shared';

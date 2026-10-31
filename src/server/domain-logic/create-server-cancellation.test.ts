@@ -3,11 +3,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { isJSONRPCErrorResponse, isJSONRPCRequest, isJSONRPCResultResponse } from '@modelcontextprotocol/sdk/types.js';
-import type { JSONRPCMessage, RequestId } from '@modelcontextprotocol/sdk/types.js';
+import {
+  Client,
+  InMemoryTransport,
+  isJSONRPCErrorResponse,
+  isJSONRPCRequest,
+  isJSONRPCResultResponse,
+} from '@modelcontextprotocol/client';
+import type { JSONRPCMessage, RequestId } from '@modelcontextprotocol/client';
+import type { McpServer } from '@modelcontextprotocol/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer } from './create-server';
@@ -176,7 +180,7 @@ const callTool = async (name: string, prompt: string, signal?: AbortSignal): Pro
   const options = { signal };
 
   try {
-    await client.callTool(params, undefined, options);
+    await client.callTool(params, options);
 
     return 'completed';
   } catch {

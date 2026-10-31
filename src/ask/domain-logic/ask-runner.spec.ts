@@ -1,4 +1,4 @@
-import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ResolvedProviderEntry } from '../../shared';

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import type { AskAllProviderResult, AskAllResult } from '../../ask-all/common';
 import { ValidationError } from '../../shared';
@@ -82,6 +82,12 @@ const buildReportContent = (reportPath: string, structuredContent: AskAllResult)
   return buildJsonReportContent(structuredContent);
 };
 
+const isStructuredContent = (value: unknown): value is StructuredContent => {
+  const result = typeof value === 'object' && value !== null;
+
+  return result;
+};
+
 const hasAskAllCounters = (value: StructuredContent): boolean => {
   const result =
     typeof value.totalProviders === 'number' &&
@@ -102,7 +108,7 @@ const isAskAllResult = (value: StructuredContent): value is AskAllResult => {
 const resolveStructuredContent = (result: CallToolResult): AskAllResult => {
   const { structuredContent } = result;
 
-  if (structuredContent == null) throw new ValidationError(MISSING_STRUCTURED_CONTENT_MESSAGE);
+  if (!isStructuredContent(structuredContent)) throw new ValidationError(MISSING_STRUCTURED_CONTENT_MESSAGE);
 
   if (!isAskAllResult(structuredContent)) throw new ValidationError(MISSING_STRUCTURED_CONTENT_MESSAGE);
 

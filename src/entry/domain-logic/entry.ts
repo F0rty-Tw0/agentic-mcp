@@ -1,27 +1,25 @@
 import process from 'node:process';
 
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { serveStdio } from '@modelcontextprotocol/server/stdio';
 
 import { isCliSubcommand, runCli } from '../../cli';
 import { runProve } from '../../prove';
-import { createServer } from '../../server';
 import { runSetup } from '../../setup';
 import { APP_VERSION } from '../../shared';
 import { HELP_TEXT } from '../common';
 import { parseConfigPath } from '../utils';
 import { registerGracefulShutdown } from './graceful-shutdown';
+import { createServerFactory } from './server-factory';
 import type { ConfigPathOptions } from '../../shared/provider/common';
 
 const startServer = async (configPath?: string): Promise<void> => {
   const configPathOptions: ConfigPathOptions = { configPath };
   const options = configPath ? configPathOptions : undefined;
-  const server = await createServer(options);
-  const transport = new StdioServerTransport();
-
-  await server.connect(transport);
+  const serverFactory = await createServerFactory(options);
+  const stdioServer = serveStdio(serverFactory);
 
   registerGracefulShutdown(async () => {
-    await server.close();
+    await stdioServer.close();
   });
 };
 

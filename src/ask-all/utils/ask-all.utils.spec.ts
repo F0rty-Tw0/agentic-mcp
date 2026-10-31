@@ -1,5 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/spec.types.js';
-import type { ContentBlock, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextprotocol/server';
 import { describe, expect, it } from 'vitest';
 
 import { extractResponseText } from './ask-all.utils';

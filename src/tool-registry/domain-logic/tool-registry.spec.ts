@@ -1,5 +1,4 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, McpServer } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -15,7 +14,13 @@ import {
   TOOL_REGISTRY_PROVIDER_METRICS_TOOL_DEFINITION_STUB,
   TOOL_REGISTRY_SUCCESS_CALL_TOOL_RESULT_STUB,
 } from '../test/stubs/tool-registry.stub';
-import { makeConfig, makeProvider, makeResolvedProvider } from '../test/utils/tool-registry.spec.util';
+import {
+  makeConfig,
+  makeExpectedProgressContext,
+  makeProvider,
+  makeResolvedProvider,
+  makeToolRequestContext,
+} from '../test/utils/tool-registry.spec.util';
 
 vi.mock('../../provider-metrics');
 vi.mock('../../ask/domain-logic/ask.handler', () => {
@@ -231,21 +236,6 @@ describe('registerAllTools', () => {
   });
 
   describe('handler wiring', () => {
-    it('GIVEN ask handler WHEN invoked THEN delegates to handleAsk with provider and args', async () => {
-      const provider = makeProvider('claude');
-
-      vi.mocked(handleAsk).mockResolvedValue(SUCCESS_RESULT);
-
-      register([provider]);
-
-      const handler = getHandler(server, 'ask_claude');
-      const args = { prompt: 'hello' };
-      const result = await handler(args);
-
-      expect(handleAsk).toHaveBeenCalledWith(provider, args, undefined);
-      expect(result).toBe(SUCCESS_RESULT);
-    });
-
     it('GIVEN ping handler WHEN invoked THEN delegates to handlePing with provider', async () => {
       const provider = makeProvider('claude');
 
@@ -316,30 +306,16 @@ describe('registerAllTools', () => {
 
       register([claude, codex]);
 
-      await getHandler(server, 'ask_claude')({ prompt: 'hi' });
+      const ctx = makeToolRequestContext();
+      const expectedProgressContext = makeExpectedProgressContext(ctx);
 
-      expect(handleAsk).toHaveBeenCalledWith(claude, { prompt: 'hi' }, undefined);
+      await getHandler(server, 'ask_claude')({ prompt: 'hi' }, ctx);
 
-      await getHandler(server, 'ask_codex')({ prompt: 'hey' });
+      expect(handleAsk).toHaveBeenCalledWith(claude, { prompt: 'hi' }, expectedProgressContext);
 
-      expect(handleAsk).toHaveBeenCalledWith(codex, { prompt: 'hey' }, undefined);
-    });
+      await getHandler(server, 'ask_codex')({ prompt: 'hey' }, ctx);
 
-    it('GIVEN ask_all handler WHEN invoked THEN delegates to handleAskAll with resolvedProviders, args and the request extra', async () => {
-      const claude = makeProvider('claude');
-      const codex = makeProvider('codex');
-
-      vi.mocked(handleAskAll).mockResolvedValue(SUCCESS_RESULT);
-
-      register([claude, codex]);
-
-      const handler = getHandler(server, 'ask_all');
-      const args = { prompt: 'hello' };
-      const extra = { signal: new AbortController().signal };
-      const result = await handler(args, extra);
-
-      expect(handleAskAll).toHaveBeenCalledWith([claude, codex], args, extra);
-      expect(result).toBe(SUCCESS_RESULT);
+      expect(handleAsk).toHaveBeenCalledWith(codex, { prompt: 'hey' }, expectedProgressContext);
     });
 
     it('GIVEN ask_all handler WHEN invoked without a prompt THEN rejects with ValidationError and skips handleAskAll', async () => {

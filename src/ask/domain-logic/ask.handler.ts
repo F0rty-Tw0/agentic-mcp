@@ -1,4 +1,4 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import { runAskInvocation } from './ask-runner';
 import { createBackgroundJob } from '../../background-jobs/data-access';
