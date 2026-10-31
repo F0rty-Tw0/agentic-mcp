@@ -72,7 +72,7 @@ describe('executeCommand timeouts', () => {
       const result = await resultPromise;
 
       expect(result.timedOut).toBe(true);
-      expect(killProcess).toHaveBeenCalledWith(1234);
+      expect(killProcess).toHaveBeenCalledWith(1234, { childExited: false });
     });
 
     it('GIVEN a process exceeding timeoutMs WHEN timeout fires THEN the result names the wall-clock limit as the cause', async () => {
