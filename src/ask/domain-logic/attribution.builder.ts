@@ -14,11 +14,15 @@ type BuildAttributionInput = {
   readonly outputFormat: OutputFormat;
   readonly metadata?: AttributionMetadata;
   readonly sessionMode: SessionMode;
+  readonly warning?: string;
 };
 
 export const buildAttribution = (buildAttributionInput: BuildAttributionInput): ProviderAttribution => {
-  const { provider, model, result, outputFormat, metadata, sessionMode } = buildAttributionInput;
+  const { provider, model, result, outputFormat, metadata, sessionMode, warning } = buildAttributionInput;
   const attributedSessionMode = sessionMode !== 'none' ? sessionMode : undefined;
+  const noWarning = {};
+  const warningPatch = { warning };
+  const warningContent = warning !== undefined ? warningPatch : noWarning;
   const attribution: ProviderAttribution = {
     provider,
     model,
@@ -28,6 +32,7 @@ export const buildAttribution = (buildAttributionInput: BuildAttributionInput): 
     outputFormat,
     sessionMode: attributedSessionMode,
     outputFormatObserved: metadata?.outputFormatObserved,
+    ...warningContent,
   };
 
   return attribution;

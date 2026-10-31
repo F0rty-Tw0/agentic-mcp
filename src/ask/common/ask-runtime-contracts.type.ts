@@ -42,4 +42,5 @@ export type SuccessResponseInput = {
   readonly streamNotifier: StreamNotifier;
   readonly summary: AskStreamExecutionSummary;
   readonly sessionMode: SessionMode;
+  readonly warning?: string;
 };

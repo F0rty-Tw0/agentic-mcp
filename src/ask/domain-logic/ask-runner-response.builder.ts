@@ -60,6 +60,7 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
     streamNotifier,
     summary,
     sessionMode,
+    warning,
   } = successResponseInput;
   const parsedOutput = parseProviderOutput(stdout, outputFormat);
   const modelHint = await resolveModelHint({ context, args, stdout: parsedOutput.text, stderr, env });
@@ -79,6 +80,7 @@ export const buildSuccessfulResponse = async (successResponseInput: SuccessRespo
     outputFormat,
     metadata: parsedOutput.metadata,
     sessionMode,
+    warning,
   };
   const attribution = buildAttribution(buildAttributionInput);
   const responseText = buildCappedOutput(parsedOutput.text) || '(no output)';

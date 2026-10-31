@@ -259,6 +259,31 @@ describe('buildAttribution', () => {
     });
   });
 
+  describe('warning field', () => {
+    it('GIVEN a warning WHEN buildAttribution called THEN the attribution carries it', () => {
+      const result = buildAttribution({
+        provider: 'antigravity',
+        result: BASE_RESULT,
+        outputFormat: 'json',
+        sessionMode: 'none',
+        warning: 'stopped after result',
+      });
+
+      expect(result.warning).toBe('stopped after result');
+    });
+
+    it('GIVEN no warning WHEN buildAttribution called THEN the attribution has no warning key', () => {
+      const result = buildAttribution({
+        provider: 'claude',
+        result: BASE_RESULT,
+        outputFormat: 'json',
+        sessionMode: 'none',
+      });
+
+      expect(Object.keys(result)).not.toContain('warning');
+    });
+  });
+
   describe('full attribution shape', () => {
     it('GIVEN all fields WHEN buildAttribution called THEN returns complete ProviderAttribution', () => {
       const metadata = { outputFormatObserved: 'stream-json' as const };

@@ -9,4 +9,5 @@ export type ProviderAttribution = {
   readonly outputFormat: OutputFormat;
   readonly sessionMode?: string;
   readonly outputFormatObserved?: OutputFormat;
+  readonly warning?: string;
 };
