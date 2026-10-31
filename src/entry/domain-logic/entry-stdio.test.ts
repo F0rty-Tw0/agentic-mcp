@@ -4,10 +4,19 @@ import path from 'node:path';
 
 import { Client } from '@modelcontextprotocol/client';
 import type { VersionNegotiationOptions } from '@modelcontextprotocol/client';
-import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
+import { StdioClientTransport, getDefaultEnvironment } from '@modelcontextprotocol/client/stdio';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const ENTRY_PATH = path.join(import.meta.dirname, '..', '..', 'index.ts');
+// The transport passes only a whitelist of env vars by default, so the test metrics path is added back.
+const buildServerEnv = (): Record<string, string> => {
+  const serverEnv = getDefaultEnvironment();
+
+  serverEnv.AGENTIC_MCP_METRICS_PATH = process.env.AGENTIC_MCP_METRICS_PATH ?? '';
+
+  return serverEnv;
+};
+const SERVER_ENV = buildServerEnv();
 const CALL_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 100;
 const POLL_LIMIT_MS = 15_000;
@@ -97,6 +106,7 @@ const openSession = async (directory: string, era: Era): Promise<StdioSession> =
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: ['--import', 'tsx', ENTRY_PATH, '--config', configPath],
+    env: SERVER_ENV,
     stderr: 'pipe',
   });
 
