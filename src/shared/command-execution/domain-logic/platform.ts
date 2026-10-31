@@ -25,6 +25,21 @@ const SAFE_ENV_KEYS = [
   'LANG',
   'SYSTEMROOT',
   'COMSPEC',
+  'USER',
+  'LOGNAME',
+  'SHELL',
+  'LC_ALL',
+  'HTTP_PROXY',
+  'HTTPS_PROXY',
+  'NO_PROXY',
+  'ALL_PROXY',
+  'http_proxy',
+  'https_proxy',
+  'no_proxy',
+  'all_proxy',
+  'NODE_EXTRA_CA_CERTS',
+  'SSL_CERT_FILE',
+  'SSL_CERT_DIR',
 ] as const;
 
 const sendSignal = (target: number, signal: NodeJS.Signals): boolean => {
@@ -111,17 +126,22 @@ export const killProcess = async (pid: number): Promise<boolean> => {
 
 export const buildMinimalEnv = (providerEnv: ProviderEnv): MinimalEnv => {
   const env: MutableMinimalEnv = {};
+  const providerKeys = Object.keys(providerEnv);
+  // Windows env names are case-insensitive and proxy vars come in both cases, so a provider entry replaces every spelling.
+  const providerKeysUpper = new Set(providerKeys.map((key) => key.toUpperCase()));
 
   for (const key of SAFE_ENV_KEYS) {
     const value = process.env[key];
+    const upperKey = key.toUpperCase();
+    const isSetByProvider = providerKeysUpper.has(upperKey);
 
-    if (value !== undefined) {
+    if (value !== undefined && !isSetByProvider) {
       env[key] = value;
     }
   }
 
   for (const [key, value] of Object.entries(providerEnv)) {
-    env[key] = value ?? '';
+    if (value !== null) env[key] = value;
   }
 
   return env;

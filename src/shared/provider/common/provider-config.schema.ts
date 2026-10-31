@@ -23,6 +23,8 @@ const leveledFlagSchema = z.object({
 });
 
 const flagValueSchema = z.union([z.string(), z.array(z.string()).min(1), leveledFlagSchema, z.null(), z.undefined()]);
+const ENV_VAR_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
 const supportLevelSchema = z.enum(['stable', 'beta', 'experimental', 'community']);
 const outputFormatSchema: z.ZodType<OutputFormat> = z.enum(['json', 'stream-json', 'text']);
 
@@ -66,6 +68,7 @@ const providerConfigSchema = z.object({
   maxConcurrency: z.number().int().positive().optional(),
   queueTimeoutMs: timerDelayMsSchema.optional(),
   env: z.record(z.string(), z.string().nullable()),
+  envPassthrough: z.array(z.string().regex(ENV_VAR_NAME_PATTERN)).optional(),
   prerequisites: z.array(z.string()).optional(),
   versionCheck: versionCheckSchema.optional(),
   outputFormat: outputFormatSchema,

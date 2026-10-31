@@ -190,7 +190,12 @@
           "additionalProperties": {
             "type": ["string", "null"]
           },
-          "description": "Environment variables injected into the spawned process. The child inherits a minimal base environment plus these overrides. Keys with null values remove variables from the inherited environment. Use empty string to set a variable without a value (e.g. {\"CLAUDECODE\": \"\"})."
+          "description": "Environment variables injected into the spawned process. The child inherits a minimal base environment plus these overrides. Keys with null values remove variables from the inherited base environment. Use empty string to set a variable without a value (e.g. {\"CLAUDECODE\": \"\"})."
+        },
+        "envPassthrough": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "description": "Names of environment variables copied from the agentic-mcp process into the spawned CLI when they are set, e.g. API keys (OPENAI_API_KEY). Everything else stays out apart from a fixed base set (PATH, HOME, locale, proxy and CA variables). An explicit env entry wins over a passed-through value."
         },
         "prerequisites": {
           "type": "array",
