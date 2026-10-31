@@ -94,7 +94,7 @@ describe('handleHelp', () => {
       });
     });
 
-    it('GIVEN provider context WHEN handling help THEN calls executeCommand with --help flag and 30s timeout', async () => {
+    it('GIVEN provider context WHEN handling help THEN calls executeCommand with --help flag, a 30s timeout and a 30s queue wait', async () => {
       const context = createSimpleToolsContext();
 
       await handleHelp(context);
@@ -102,7 +102,8 @@ describe('handleHelp', () => {
       const providerQueue = {
         providerName: 'test',
         maxConcurrency: 1,
-        queueTimeoutMs: 600_000,
+        queueTimeoutMs: 30_000,
+        globalSlotExtraWaitMs: 0,
       };
 
       expect(executeCommand).toHaveBeenCalledWith({
@@ -112,6 +113,17 @@ describe('handleHelp', () => {
         timeoutMs: 30_000,
         providerQueue,
       });
+    });
+
+    it('GIVEN a request signal WHEN handling help THEN executeCommand receives that signal', async () => {
+      const context = createSimpleToolsContext();
+      const controller = new AbortController();
+
+      await handleHelp(context, controller.signal);
+
+      const executeOptions = vi.mocked(executeCommand).mock.calls[0]?.[0];
+
+      expect(executeOptions?.signal).toBe(controller.signal);
     });
 
     it('GIVEN output with ANSI codes WHEN handling help THEN strips ANSI from output', async () => {
