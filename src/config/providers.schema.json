@@ -166,7 +166,7 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 2147483647,
-          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 600000 (10 min) for fast providers and 1800000 (30 min) for reasoning-heavy providers."
+          "description": "Maximum execution time in milliseconds before the spawned process is killed. Prevents runaway processes. Typical values: 600000 (10 min) for fast providers and 3600000 (60 min) for reasoning-heavy providers and long runs such as a big code review."
         },
         "idleTimeout": {
           "type": "number",
