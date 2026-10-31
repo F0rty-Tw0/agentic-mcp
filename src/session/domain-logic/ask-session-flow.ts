@@ -4,12 +4,12 @@ import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
 import { canStartNativeSession } from '../../ask/utils/session-flag-args.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
+import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
 import type { SessionFlowResult, SessionFlowState } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
-import { canFallBackToTier1 } from '../utils/session-flow-retry.util';
+import { canFallBackToTier1, canRetryWithoutStartFlag } from '../utils/session-flow-retry.util';
 
 type SessionExecutionInput = {
   readonly context: ResolvedProviderEntry;
@@ -18,7 +18,7 @@ type SessionExecutionInput = {
   readonly state: SessionFlowState;
 };
 
-const runSessionExecution = async (
+const runSingleExecution = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
   extra: ProgressContext | undefined,
@@ -34,6 +34,25 @@ const runSessionExecution = async (
   });
   const nativeSessionId = state.startSessionId ?? execution.nativeSessionId;
   const result: SessionFlowResult = { ...execution, nativeSessionId, sessionMode: state.mode };
+
+  return result;
+};
+
+// A CLI that rejects the start flag (copilot before 1.0.51) fails the run; one retry without it replays as before.
+const runSessionExecution = async (
+  context: ResolvedProviderEntry,
+  args: AskToolArgs,
+  extra: ProgressContext | undefined,
+  state: SessionFlowState
+): Promise<SessionFlowResult> => {
+  const execution = await runSingleExecution(context, args, extra, state);
+  const shouldRetry = canRetryWithoutStartFlag(execution, state, extra);
+
+  if (!shouldRetry) return execution;
+
+  const retryState: SessionFlowState = { ...state, startSessionId: undefined };
+  const retryExecution = await runSingleExecution(context, args, extra, retryState);
+  const result: SessionFlowResult = { ...retryExecution, hasDroppedStartFlag: true };
 
   return result;
 };
@@ -54,9 +73,13 @@ const buildMissingPromptResult = (state: SessionFlowState): SessionFlowResult =>
   return result;
 };
 
-const resolveStartSessionId = (config: ProviderConfig): string | undefined => {
+const resolveStartSessionId = (context: ResolvedProviderEntry, sessionId: string): string | undefined => {
+  const isStartDisabled = SESSION_STORE.isNativeStartDisabled(context.name, sessionId);
+
+  if (isStartDisabled) return;
+
   const candidateId = randomUUID();
-  const canStart = canStartNativeSession(config, candidateId);
+  const canStart = canStartNativeSession(context.config, candidateId);
 
   if (!canStart) return;
 
@@ -82,7 +105,7 @@ export const executeSessionFlow = async ({
     prompt: fallbackPrompt,
     mode: 'tier2-fallback-to-tier1',
     nativeSessionId: undefined,
-    startSessionId: resolveStartSessionId(context.config),
+    startSessionId: resolveStartSessionId(context, state.sessionId),
   };
   const fallbackExecution = await runSessionExecution(context, args, extra, fallbackState);
   const result: SessionFlowResult = {
@@ -91,6 +114,7 @@ export const executeSessionFlow = async ({
     nativeSessionId: fallbackExecution.nativeSessionId,
     sessionMode: 'tier2-fallback-to-tier1',
     wasCancelled: fallbackExecution.wasCancelled,
+    hasDroppedStartFlag: fallbackExecution.hasDroppedStartFlag,
   };
 
   return result;
@@ -115,7 +139,7 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
   }
 
   const prompt = buildTier1Prompt(context, args, sessionId);
-  const startSessionId = resolveStartSessionId(context.config);
+  const startSessionId = resolveStartSessionId(context, sessionId);
   const tier1State: SessionFlowState = { sessionId, prompt, mode: 'tier1-prepend' };
   const startState: SessionFlowState = { ...tier1State, startSessionId };
   const result = startSessionId ? startState : tier1State;

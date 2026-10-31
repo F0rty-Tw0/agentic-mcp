@@ -11,11 +11,13 @@ const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
 const mockCreateOrGet = vi.hoisted(() => vi.fn());
 const mockGetNativeSessionId = vi.hoisted(() => vi.fn<() => string | undefined>());
 const mockGetPrependContext = vi.hoisted(() => vi.fn<() => string>());
+const mockIsNativeStartDisabled = vi.hoisted(() => vi.fn<() => boolean>());
 const mockSessionStore = vi.hoisted(() => {
   const result = {
     createOrGet: mockCreateOrGet,
     getNativeSessionId: mockGetNativeSessionId,
     getPrependContext: mockGetPrependContext,
+    isNativeStartDisabled: mockIsNativeStartDisabled,
   };
 
   return result;

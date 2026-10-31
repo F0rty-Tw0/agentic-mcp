@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
     randomUUID: vi.fn<() => string>(),
     createOrGet: vi.fn(),
     getNativeSessionId: vi.fn<() => string | undefined>(),
+    isNativeStartDisabled: vi.fn<() => boolean>(),
     getPrependContext: vi.fn<() => string>(),
     buildSessionPrompt: vi.fn<() => string>(),
   };
@@ -44,6 +45,7 @@ vi.mock('../data-access', () => {
   const sessionStore = {
     createOrGet: mocks.createOrGet,
     getNativeSessionId: mocks.getNativeSessionId,
+    isNativeStartDisabled: mocks.isNativeStartDisabled,
     getPrependContext: mocks.getPrependContext,
   };
   const result = Object.fromEntries([['SESSION_STORE', sessionStore]]);
@@ -98,6 +100,7 @@ describe('FEATURE: session flow with a caller-chosen native session id', () => {
 
     mocks.randomUUID.mockReturnValue(GENERATED_ID);
     mocks.getNativeSessionId.mockReturnValue(undefined);
+    mocks.isNativeStartDisabled.mockReturnValue(false);
     mocks.getPrependContext.mockReturnValue('');
     mocks.buildSessionPrompt.mockReturnValue(TIER1_PROMPT);
   });
@@ -173,6 +176,36 @@ describe('FEATURE: session flow with a caller-chosen native session id', () => {
     const result = await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
 
     expect(result.nativeSessionId).toBe(GENERATED_ID);
+  });
+
+  describe('GIVEN a provider with a startWithId flag and a CLI that rejects the start flag', () => {
+    it('WHEN executing the flow THEN the retry passes no start session id', async () => {
+      const state = buildSessionFlowState(START_CONTEXT, ARGS);
+
+      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION).mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
+
+      await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
+
+      expect(mocks.runAskInvocation).toHaveBeenLastCalledWith(expect.objectContaining({ startSessionId: undefined }));
+    });
+
+    it('WHEN executing the flow THEN the result says the start flag was dropped and carries no native id', async () => {
+      const state = buildSessionFlowState(START_CONTEXT, ARGS);
+
+      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION).mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
+
+      const result = await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
+
+      expect([result.hasDroppedStartFlag, result.nativeSessionId]).toStrictEqual([true, undefined]);
+    });
+  });
+
+  it('GIVEN a session whose native start is disabled WHEN building the flow state THEN no start session id is set', () => {
+    mocks.isNativeStartDisabled.mockReturnValue(true);
+
+    const state = buildSessionFlowState(START_CONTEXT, ARGS);
+
+    expect(state).toStrictEqual({ sessionId: 'agentic-session', prompt: TIER1_PROMPT, mode: 'tier1-prepend' });
   });
 
   describe('GIVEN a provider without a startWithId flag', () => {
