@@ -6,6 +6,7 @@ export type {
   ExecutionTimeoutCause,
   ExecutionTimeoutKind,
   IdleTimeoutHandle,
+  KillProcessOptions,
   ProviderQueueOptions,
   ResolveExecutionResultInput,
   ResolveTimeoutCauseInput,

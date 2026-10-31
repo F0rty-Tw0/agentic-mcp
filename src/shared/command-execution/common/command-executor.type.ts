@@ -6,6 +6,10 @@ export type UntrackChildGroup = () => void;
 
 export type StopChild = () => void;
 
+export type KillProcessOptions = {
+  readonly childExited: boolean;
+};
+
 export type ChildStop = {
   readonly stop: StopChild | undefined;
   readonly exitedBeforeStop: () => boolean;
