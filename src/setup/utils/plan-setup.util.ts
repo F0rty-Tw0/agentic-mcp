@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { buildClientConfig } from './build-client-config.util';
 import { CLIENT_TARGETS } from '../common';
-import type { ClientConfigMergeResult, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
+import type { ClientConfigMergeResult, ClientTarget, SetupMergeStatus, SetupPlan, SetupPlanInput } from '../common';
 
 const BLOCKING_MERGE_STATUSES: SetupMergeStatus[] = ['invalid-json', 'invalid-toml', 'rewrite-unsafe', 'unmergeable'];
 
@@ -125,6 +125,14 @@ const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
   return warnings;
 };
 
+const buildTargetNotes = (target: ClientTarget): string[] => {
+  if (target.timeoutNote == null) return [];
+
+  const notes = [target.timeoutNote];
+
+  return notes;
+};
+
 export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
   const targetPath = resolveTargetPath(input);
   const target = CLIENT_TARGETS[input.client];
@@ -153,6 +161,8 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     target,
   });
   const mergeResult = isMergeMode ? mergedConfig : overwriteConfig;
+  const targetNotes = buildTargetNotes(target);
+  const notes = [...mergeResult.notes, ...targetNotes];
 
   const result: SetupPlan = {
     client: input.client,
@@ -164,7 +174,7 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
     mergeStatusPreview: mergeResult.status,
     configText: mergeResult.configText,
     warnings,
-    notes: mergeResult.notes,
+    notes,
   };
 
   return result;

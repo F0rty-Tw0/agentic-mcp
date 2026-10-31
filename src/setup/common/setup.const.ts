@@ -38,14 +38,19 @@ const CODEX_TOOL_TIMEOUT_RULE: TimeoutKeyRule = { key: 'tool_timeout_sec' };
 // Codex also reads startup_timeout_ms, and startup_timeout_sec wins when both are set.
 const CODEX_STARTUP_TIMEOUT_RULE: TimeoutKeyRule = { key: 'startup_timeout_sec', msAliasKey: 'startup_timeout_ms' };
 
+// Claude Code's per-server timeout is a hard wall-clock limit that replaces its default (code.claude.com/docs/en/mcp).
+const CLAUDE_CODE_TIMEOUT_NOTE =
+  'agentic-mcp timeout: not written for Claude Code. Its default tool-call limit (MCP_TOOL_TIMEOUT, about 28 h) is already longer, and progress notifications reset its 30 min stdio idle limit; a per-server timeout would replace that default with a hard limit.';
+
 // configPathEnvKeys: variables that move the file the client reads away from configPath.
 const CLAUDE_CODE_TARGET: ClientTarget = {
   configPath: '.claude.json',
   format: 'json',
   serversKey: 'mcpServers',
-  timeoutKeys: [TIMEOUT_MS_RULE],
+  timeoutKeys: [],
   preservedKeys: [],
   configPathEnvKeys: ['CLAUDE_CONFIG_DIR'],
+  timeoutNote: CLAUDE_CODE_TIMEOUT_NOTE,
 };
 
 const CODEX_TARGET: ClientTarget = {

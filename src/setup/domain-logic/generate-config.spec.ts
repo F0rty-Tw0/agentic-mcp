@@ -14,13 +14,12 @@ const makeProvider = (name: string, available: boolean, binaryPath?: string): De
 };
 
 describe('generateClientConfigEntry', () => {
-  it('GIVEN claude-code WHEN generating entry THEN the per-server timeout is above the provider timeout plus queue wait', () => {
+  it('GIVEN claude-code WHEN generating entry THEN no timeout key is written, so its longer default stays', () => {
     const result = generateClientConfigEntry('claude-code', []);
 
     expect(result).toStrictEqual({
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
-      timeout: 4_260_000,
     });
   });
 

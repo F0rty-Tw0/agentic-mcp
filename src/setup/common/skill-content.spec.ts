@@ -72,6 +72,6 @@ describe('SKILL_CONTENT', () => {
   });
 
   it('GIVEN installed skill WHEN describing long-running work THEN it says which clients setup writes a tool-call timeout for', () => {
-    expect(SKILL_CONTENT).toContain('`agentic-mcp setup --client <claude-code|codex|copilot|gemini|opencode>`');
+    expect(SKILL_CONTENT).toContain('`agentic-mcp setup --client <codex|copilot|gemini|opencode>`');
   });
 });

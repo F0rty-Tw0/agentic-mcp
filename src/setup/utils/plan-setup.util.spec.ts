@@ -12,6 +12,9 @@ const AGENTIC_SERVER_ENTRY: McpServerEntry = {
 
 const TIMED_SERVER_ENTRY: McpServerEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 4_260_000 };
 
+const CLAUDE_CODE_TIMEOUT_NOTE =
+  'agentic-mcp timeout: not written for Claude Code. Its default tool-call limit (MCP_TOOL_TIMEOUT, about 28 h) is already longer, and progress notifications reset its 30 min stdio idle limit; a per-server timeout would replace that default with a hard limit.';
+
 describe('buildSetupPlan', () => {
   it('GIVEN claude-code client without path override WHEN building plan THEN resolves default client path', () => {
     const result = buildSetupPlan({
@@ -155,13 +158,48 @@ describe('buildSetupPlan', () => {
     expect(result.writeIntent).toBe('write');
   });
 
-  it('GIVEN claude-code merge with a lower agentic-mcp timeout WHEN building plan THEN the plan raises it and says so', () => {
+  it('GIVEN claude-code merge WHEN building plan THEN no timeout is written and the note says why', () => {
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: undefined,
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.configText).not.toContain('timeout');
+    expect(result.notes).toStrictEqual([CLAUDE_CODE_TIMEOUT_NOTE]);
+  });
+
+  it('GIVEN claude-code merge with a timeout the user set WHEN building plan THEN it is kept as is', () => {
     const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 600_000 };
     const existingServers = { 'agentic-mcp': existingEntry };
     const existingConfig = { mcpServers: existingServers };
 
     const result = buildSetupPlan({
       client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: AGENTIC_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+
+    expect(result.mergeStatusPreview).toBe('unchanged');
+  });
+
+  it('GIVEN gemini merge with a lower agentic-mcp timeout WHEN building plan THEN the plan raises it and says so', () => {
+    const existingEntry = { ...AGENTIC_SERVER_ENTRY, timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'gemini',
       homeDirectory: '/home/dev',
       pathOverride: undefined,
       mode: 'merge',
