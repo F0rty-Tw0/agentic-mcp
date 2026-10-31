@@ -109,4 +109,13 @@ describe('parseSetupArgs', () => {
     expect(result.client).toBe('gemini');
     expect(stderrWrite).not.toHaveBeenCalled();
   });
+
+  it('GIVEN --client copilot WHEN parsing setup args THEN the copilot client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'copilot'], stderrWrite });
+
+    expect(result.client).toBe('copilot');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
 });

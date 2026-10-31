@@ -5,6 +5,7 @@ export { SKILL_CONTENT } from './skill-content';
 export type {
   ClientConfigTemplate,
   ClientTarget,
+  CopilotServerEntry,
   DetectedProvider,
   McpServerEntry,
   MinimalSetupOutputInput,
@@ -25,5 +26,6 @@ export type {
   SetupWriteIntent,
   SkillInstallDependencies,
   SkillInstallResult,
+  StdioServerEntry,
   SupportedClient,
 } from './setup.type';

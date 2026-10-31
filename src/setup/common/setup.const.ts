@@ -6,7 +6,14 @@ const CLIENT_TIMEOUT_MARGIN_MS = 60_000;
 // A client must wait longer than one provider run, or it cancels the call and agentic-mcp stops the CLI.
 export const CLIENT_TOOL_TIMEOUT_MS = DEFAULT_MCP_TOOL_TIMEOUT_MS + CLIENT_TIMEOUT_MARGIN_MS;
 
-export const SUPPORTED_CLIENTS: SupportedClient[] = ['claude-code', 'cursor', 'gemini', 'windsurf', 'generic'];
+export const SUPPORTED_CLIENTS: SupportedClient[] = [
+  'claude-code',
+  'copilot',
+  'cursor',
+  'gemini',
+  'windsurf',
+  'generic',
+];
 
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;
 
@@ -17,6 +24,13 @@ const CLAUDE_CODE_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: ['timeout'],
   preservedKeys: [],
+};
+
+const COPILOT_TARGET: ClientTarget = {
+  configPath: '.copilot/mcp-config.json',
+  serversKey: 'mcpServers',
+  timeoutKeys: ['timeout'],
+  preservedKeys: ['tools'],
 };
 
 const CURSOR_TARGET: ClientTarget = {
@@ -49,6 +63,7 @@ const GENERIC_TARGET: ClientTarget = {
 
 export const CLIENT_TARGETS: ClientTargetMap = {
   'claude-code': CLAUDE_CODE_TARGET,
+  copilot: COPILOT_TARGET,
   cursor: CURSOR_TARGET,
   gemini: GEMINI_TARGET,
   windsurf: WINDSURF_TARGET,

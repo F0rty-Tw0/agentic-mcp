@@ -76,4 +76,16 @@ describe('generateClientConfigEntry', () => {
       timeout: 3_660_000,
     });
   });
+
+  it('GIVEN copilot WHEN generating entry THEN it is a local server with all tools and the timeout in ms', () => {
+    const result = generateClientConfigEntry('copilot', []);
+
+    expect(result).toStrictEqual({
+      type: 'local',
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tools: ['*'],
+      timeout: 3_660_000,
+    });
+  });
 });

@@ -1,4 +1,4 @@
-export type SupportedClient = 'claude-code' | 'cursor' | 'gemini' | 'windsurf' | 'generic';
+export type SupportedClient = 'claude-code' | 'copilot' | 'cursor' | 'gemini' | 'windsurf' | 'generic';
 
 export type SetupMode = 'merge' | 'overwrite';
 
@@ -10,11 +10,21 @@ export type SetupMergeStatus = 'created' | 'merged' | 'unchanged' | 'invalid-jso
 
 export type SetupOutputMode = 'human' | 'json';
 
-export type McpServerEntry = {
+export type StdioServerEntry = {
   readonly command: string;
   readonly args: string[];
   readonly timeout?: number;
 };
+
+export type CopilotServerEntry = {
+  readonly type: 'local';
+  readonly command: string;
+  readonly args: string[];
+  readonly tools: string[];
+  readonly timeout: number;
+};
+
+export type McpServerEntry = StdioServerEntry | CopilotServerEntry;
 
 export type ClientTarget = {
   readonly configPath?: string;

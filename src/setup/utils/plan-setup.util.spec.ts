@@ -216,4 +216,33 @@ describe('buildSetupPlan', () => {
     expect(JSON.parse(result.configText)).toStrictEqual(writtenConfig);
     expect(result.notes).toStrictEqual(['agentic-mcp timeout: set to 3660000 (was not set).']);
   });
+
+  it('GIVEN copilot with a tool allow-list on agentic-mcp WHEN building plan THEN it targets ~/.copilot/mcp-config.json and keeps the list', () => {
+    const userEntry = {
+      type: 'local',
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tools: ['ask_codex'],
+      timeout: 600_000,
+    };
+    const existingServers = { 'agentic-mcp': userEntry };
+    const existingConfig = { mcpServers: existingServers };
+    const copilotEntry: McpServerEntry = { ...userEntry, type: 'local', tools: ['*'], timeout: 3_660_000 };
+
+    const result = buildSetupPlan({
+      client: 'copilot',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: copilotEntry,
+      backup: 'if-exists',
+    });
+    const writtenEntry = { ...userEntry, timeout: 3_660_000 };
+    const writtenServers = { 'agentic-mcp': writtenEntry };
+
+    expect(result.targetPath).toBe(path.join('/home/dev', '.copilot/mcp-config.json'));
+    expect(JSON.parse(result.configText)).toStrictEqual({ mcpServers: writtenServers });
+  });
 });

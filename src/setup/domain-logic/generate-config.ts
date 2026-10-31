@@ -1,13 +1,28 @@
 import { CLIENT_TOOL_TIMEOUT_MS } from '../common';
-import type { DetectedProvider, McpServerEntry, SupportedClient } from '../common';
+import type {
+  CopilotServerEntry,
+  DetectedProvider,
+  McpServerEntry,
+  StdioServerEntry,
+  SupportedClient,
+} from '../common';
 
-const BASE_ENTRY: McpServerEntry = {
+const BASE_ENTRY: StdioServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
 };
 
-const TIMED_ENTRY: McpServerEntry = {
+const TIMED_ENTRY: StdioServerEntry = {
   ...BASE_ENTRY,
+  timeout: CLIENT_TOOL_TIMEOUT_MS,
+};
+
+// Copilot CLI requires `tools` on a local server.
+const COPILOT_ENTRY: CopilotServerEntry = {
+  type: 'local',
+  command: BASE_ENTRY.command,
+  args: BASE_ENTRY.args,
+  tools: ['*'],
   timeout: CLIENT_TOOL_TIMEOUT_MS,
 };
 
@@ -21,6 +36,8 @@ export const generateClientConfigEntry = (
     case 'claude-code':
     case 'gemini':
       return TIMED_ENTRY;
+    case 'copilot':
+      return COPILOT_ENTRY;
     case 'cursor':
     case 'windsurf':
       // Intentionally explicit per-client branches to support project-specific overrides later.
