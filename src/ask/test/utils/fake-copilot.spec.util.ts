@@ -20,6 +20,7 @@ export const FAKE_COPILOT_ENV_KEYS = [
   'FAKE_COPILOT_RUN_LOG',
   'FAKE_COPILOT_LOST_SESSION',
   'FAKE_COPILOT_REJECT_SESSION_ID',
+  'FAKE_COPILOT_FAIL_RUN',
 ];
 
 export const createFakeCopilotContext = async (): Promise<ResolvedProviderEntry> => {
