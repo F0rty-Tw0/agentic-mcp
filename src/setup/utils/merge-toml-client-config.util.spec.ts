@@ -153,6 +153,8 @@ describe('FEATURE: TOML client config merge', () => {
     it('WHEN the file is rewritten THEN the integer keeps every digit', () => {
       const result = mergeToml(`big = 9223372036854775807\n${LOW_TIMEOUT_CONFIG}`);
 
+      expect(result.status).toBe('merged');
+      expect(result.rewritten).toBe(true);
       expect(result.configText).toContain('big = 9223372036854775807');
     });
   });

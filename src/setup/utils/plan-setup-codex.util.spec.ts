@@ -64,6 +64,16 @@ describe('FEATURE: codex setup plan', () => {
     });
   });
 
+  describe('GIVEN a config.toml that a rewrite would change', () => {
+    it('WHEN building the merge plan THEN nothing is written and the warning says why', () => {
+      const result = planCodex(`zero = -0.0\n${LOW_TIMEOUT_CONFIG}`);
+
+      expect(result.writeIntent).toBe('manual');
+      expect(result.mergeStatusPreview).toBe('rewrite-unsafe');
+      expect(result.warnings).toContainEqual(expect.stringContaining('would change other values'));
+    });
+  });
+
   describe('GIVEN an agentic-mcp table with a lower tool timeout', () => {
     it('WHEN building the merge plan THEN it warns that the rewrite drops comments and formatting', () => {
       const result = planCodex(LOW_TIMEOUT_CONFIG);
