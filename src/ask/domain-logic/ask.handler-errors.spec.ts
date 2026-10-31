@@ -3,14 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAsk } from './ask.handler';
 import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import type { McpPlainTextContent } from '../../shared';
-import {
-  TEST_MINIMAL_ENV_STUB,
-  buildMinimalEnv,
-  buildModelHint,
-  detectModelError,
-  executeCommand,
-  stripAnsi,
-} from '../../shared';
+import { buildMinimalEnv, buildModelHint, detectModelError, executeCommand, stripAnsi } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import { ASK_DEFAULT_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,

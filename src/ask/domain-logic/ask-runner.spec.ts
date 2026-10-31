@@ -2,7 +2,7 @@ import type { CallToolResult, ContentBlock, TextContent } from '@modelcontextpro
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ResolvedProviderEntry } from '../../shared';
-import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
+import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/provider/test/stubs/provider-config.stub';
 import type { AskExecution } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils/ask-runner-response.util';
 

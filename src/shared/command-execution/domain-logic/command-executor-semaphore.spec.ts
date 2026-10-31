@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { executeCommand } from './command-executor';
 import type { ExecutionResult } from '../common';
-import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs/execute-command-options.stub';
 import { createControllableChild } from '../test/utils/controllable-child.spec.util';
 
 vi.mock('cross-spawn', () => {

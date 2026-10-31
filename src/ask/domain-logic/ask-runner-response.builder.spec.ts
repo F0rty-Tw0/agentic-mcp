@@ -4,7 +4,7 @@ import { resolveModelHint } from './ask-command';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { buildAttribution } from './attribution.builder';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
-import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
+import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/provider/test/stubs/provider-config.stub';
 import type { ProviderOutputMetadata, SuccessResponseInput } from '../common';
 import { buildCappedOutput, parseProviderOutput } from '../utils';
 

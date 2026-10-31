@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandOptions, buildNativeSessionArgs, validateAndResolveArgs } from './ask-command.util';
 import type { ExecuteCommandOptions, ProviderConfig, ResolvedProviderEntry } from '../../shared';
-import { TEST_MINIMAL_ENV_STUB, ValidationError } from '../../shared';
+import { ValidationError } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => {

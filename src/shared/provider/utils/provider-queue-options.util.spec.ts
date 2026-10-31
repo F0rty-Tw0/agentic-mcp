@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { buildProbeQueueOptions, buildProviderQueueOptions } from './provider-queue-options.util';
 import type { ProviderQueueOptions } from '../../command-execution/common';
 import type { ResolvedProviderEntry } from '../common';
-import { TEST_PROVIDER_CONFIG_STUB, TEST_RESOLVED_PROVIDER_ENTRY_STUB } from '../test/stubs';
+import { TEST_PROVIDER_CONFIG_STUB } from '../test/stubs/provider-config.stub';
+import { TEST_RESOLVED_PROVIDER_ENTRY_STUB } from '../test/stubs/resolved-provider-entry.stub';
 
 const TEN_MINUTES_MS = 600_000;
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ProviderConfig, ProvidersFile } from './provider-config.schema';
 import { providersFileSchema } from './provider-config.schema';
 import { MAX_TIMER_DELAY_MS } from './provider-timeout.const';
-import { TEST_PROVIDER_CONFIG_STUB } from '../test/stubs';
+import { TEST_PROVIDER_CONFIG_STUB } from '../test/stubs/provider-config.stub';
 
 const buildProvidersFile = (overrides: Partial<ProviderConfig>): ProvidersFile => {
   const provider: ProviderConfig = { ...TEST_PROVIDER_CONFIG_STUB, ...overrides };

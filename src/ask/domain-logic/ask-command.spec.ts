@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCommandFailure, buildExecutionEnv, resolveModelFallback, resolveModelHint } from './ask-command';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
-import { CommandExecutionError, TEST_MINIMAL_ENV_STUB } from '../../shared';
+import { CommandExecutionError } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import type { AskToolArgs } from '../common';
 
 const mocks = vi.hoisted(() => {

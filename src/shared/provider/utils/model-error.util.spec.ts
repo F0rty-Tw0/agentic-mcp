@@ -10,9 +10,11 @@ import {
   selectClosestAvailableModel,
 } from './model-error.util';
 import type { ExecuteCommandOptions, ExecutionResult } from '../../command-execution/common';
-import { SUCCESS_EXECUTION_RESULT_STUB, TEST_MINIMAL_ENV_STUB } from '../../command-execution/test/stubs';
+import { TEST_MINIMAL_ENV_STUB } from '../../command-execution/test/stubs/env.stub';
+import { SUCCESS_EXECUTION_RESULT_STUB } from '../../command-execution/test/stubs/execution-result.stub';
 import type { ProviderConfig, ResolvedProviderEntry } from '../common';
-import { TEST_PROVIDER_CONFIG_STUB, TEST_RESOLVED_PROVIDER_ENTRY_STUB } from '../test/stubs';
+import { TEST_PROVIDER_CONFIG_STUB } from '../test/stubs/provider-config.stub';
+import { TEST_RESOLVED_PROVIDER_ENTRY_STUB } from '../test/stubs/resolved-provider-entry.stub';
 
 type MinimalEnv = Readonly<Record<string, string>>;
 
