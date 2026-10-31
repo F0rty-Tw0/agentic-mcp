@@ -84,6 +84,12 @@ describe('FEATURE: canRetryWithoutStartFlag', () => {
     expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, START_STATE, START_FLAG)).toBe(true);
   });
 
+  it('GIVEN a run whose CLI reports the flag as an unrecognized argument WHEN checked THEN it retries', () => {
+    const execution = createFailedExecution("error: unrecognized argument '--session-id=start-a'");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
+  });
+
   it('GIVEN a run that passed a start id and failed for another reason WHEN checked THEN it does not retry', () => {
     expect(canRetryWithoutStartFlag(createExecution(), START_STATE, START_FLAG)).toBe(false);
   });
