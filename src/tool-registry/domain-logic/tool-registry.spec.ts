@@ -236,17 +236,18 @@ describe('registerAllTools', () => {
   });
 
   describe('handler wiring', () => {
-    it('GIVEN ping handler WHEN invoked THEN delegates to handlePing with provider', async () => {
+    it('GIVEN ping handler WHEN invoked THEN delegates to handlePing with provider and the request signal', async () => {
       const provider = makeProvider('claude');
+      const ctx = makeToolRequestContext();
 
       vi.mocked(handlePing).mockResolvedValue(SUCCESS_RESULT);
 
       register([provider]);
 
       const handler = getHandler(server, 'ping_claude');
-      const result = await handler();
+      const result = await handler(ctx);
 
-      expect(handlePing).toHaveBeenCalledWith(provider);
+      expect(vi.mocked(handlePing).mock.calls[0]).toStrictEqual([provider, ctx.mcpReq.signal]);
       expect(result).toBe(SUCCESS_RESULT);
     });
 
@@ -270,17 +271,18 @@ describe('registerAllTools', () => {
       expect(result).toBe(SUCCESS_RESULT);
     });
 
-    it('GIVEN help handler WHEN invoked THEN delegates to handleHelp with provider', async () => {
+    it('GIVEN help handler WHEN invoked THEN delegates to handleHelp with provider and the request signal', async () => {
       const provider = makeProvider('claude');
+      const ctx = makeToolRequestContext();
 
       vi.mocked(handleHelp).mockResolvedValue(SUCCESS_RESULT);
 
       register([provider]);
 
       const handler = getHandler(server, 'help_claude');
-      const result = await handler();
+      const result = await handler(ctx);
 
-      expect(handleHelp).toHaveBeenCalledWith(provider);
+      expect(vi.mocked(handleHelp).mock.calls[0]).toStrictEqual([provider, ctx.mcpReq.signal]);
       expect(result).toBe(SUCCESS_RESULT);
     });
 

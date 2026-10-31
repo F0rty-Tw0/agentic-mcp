@@ -80,7 +80,11 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
     annotations: pingDef.annotations,
   };
 
-  server.registerTool(pingDef.name, pingConfig, async (): Promise<CallToolResult> => handlePing(provider));
+  server.registerTool(pingDef.name, pingConfig, async (ctx: ServerContext): Promise<CallToolResult> => {
+    const signal = ctx.mcpReq.signal;
+
+    return handlePing(provider, signal);
+  });
 
   const helpDef = buildHelpToolDefinition(name);
   const helpConfig = {
@@ -88,7 +92,11 @@ const registerProviderTools = (server: McpServer, provider: ResolvedProviderEntr
     annotations: helpDef.annotations,
   };
 
-  server.registerTool(helpDef.name, helpConfig, async (): Promise<CallToolResult> => handleHelp(provider));
+  server.registerTool(helpDef.name, helpConfig, async (ctx: ServerContext): Promise<CallToolResult> => {
+    const signal = ctx.mcpReq.signal;
+
+    return handleHelp(provider, signal);
+  });
 };
 
 export const registerAllTools = (
