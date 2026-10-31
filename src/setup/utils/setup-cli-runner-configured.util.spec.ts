@@ -38,20 +38,47 @@ describe('runConfiguredSetup', () => {
     expect(applySetupPlan).not.toHaveBeenCalled();
   });
 
-  it('GIVEN an unchanged plan without yes WHEN running configured setup non-interactively THEN it applies the plan without aborting', async () => {
+  it('GIVEN an unchanged claude-code plan without yes WHEN running configured setup non-interactively THEN aborts before applying the plan or installing the skill', async () => {
     const stderrWrite = vi.fn<(text: string) => void>();
     const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'unchanged' }));
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
     const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'unchanged' });
-    const dependencies = createSetupCliDependencies({ stderrWrite, applySetupPlan, buildSetupPlan });
+    const dependencies = createSetupCliDependencies({ stderrWrite, applySetupPlan, installSkill, buildSetupPlan });
 
     await runConfiguredSetup({
-      parsedArgs: createParsedSetupArgs({ yes: false }),
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
       dependencies,
       detectedProviders: TEST_PROVIDERS,
     });
 
-    expect(stderrWrite).not.toHaveBeenCalled();
-    expect(applySetupPlan).toHaveBeenCalledTimes(1);
+    expect(stderrWrite).toHaveBeenCalledWith(
+      'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
+    );
+    expect(applySetupPlan).not.toHaveBeenCalled();
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN an unchanged claude-code plan without yes and declined prompt WHEN running configured setup interactively THEN aborts before installing the skill', async () => {
+    const stdoutWrite = vi.fn<(text: string) => void>();
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const promptConfirm = vi.fn().mockResolvedValue(false);
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'unchanged' });
+    const dependencies = createSetupCliDependencies({
+      stdoutWrite,
+      installSkill,
+      promptConfirm,
+      buildSetupPlan,
+      isInteractive: true,
+    });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(stdoutWrite).toHaveBeenCalledWith('Aborted. No files written.\n');
+    expect(installSkill).not.toHaveBeenCalled();
   });
 
   it('GIVEN interactive write without yes and declined prompt WHEN running configured setup THEN aborts without applying', async () => {

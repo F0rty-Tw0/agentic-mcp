@@ -17,6 +17,7 @@ import {
   formatHumanSetupOutput,
   formatJsonMinimalSetupOutput,
   formatJsonSetupOutput,
+  isConsentRequired,
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
@@ -131,7 +132,9 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
     return;
   }
 
-  if (dependencies.isInteractive && !parsedArgs.yes && plan.writeIntent === 'write') {
+  const isConsentNeeded = isConsentRequired(plan);
+
+  if (dependencies.isInteractive && !parsedArgs.yes && isConsentNeeded) {
     const confirmed = await dependencies.promptConfirm(`Write config to ${plan.targetPath}? [y/N] `);
 
     if (!confirmed) {
