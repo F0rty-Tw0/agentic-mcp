@@ -218,4 +218,16 @@ describe('createProviderQueueStore', () => {
     busyLease.release();
     vi.useRealTimers();
   });
+  it('GIVEN an already aborted signal and a free slot WHEN acquiring THEN it rejects instead of granting the slot', async () => {
+    const store = createProviderQueueStore();
+    const controller = new AbortController();
+
+    controller.abort();
+
+    const readSettlement = trackSettlement(store.acquireSlot(createQueueInput({ signal: controller.signal })));
+
+    await Promise.resolve();
+
+    expect(readSettlement()).toBe('CommandExecutionError: Command cancelled while waiting for provider queue slot');
+  });
 });

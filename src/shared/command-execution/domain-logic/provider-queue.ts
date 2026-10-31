@@ -68,8 +68,6 @@ const waitForQueuedSlot = async (
   const enqueuedAtMs = Date.now();
   const signal = options.signal;
 
-  if (signal?.aborted) throw buildQueueAbortError();
-
   await new Promise<void>((resolve, reject) => {
     const queuedRequestRef: QueuedRequestRef = {};
     const onAbort = (): void => {
@@ -133,6 +131,8 @@ export const createProviderQueueStore = (options: CreateProviderQueueStoreOption
   );
   const releaseProviderSlot = createReleaseProviderSlot(providerStates, decrementGlobalActiveCount, drainQueues);
   const acquireSlot = async (providerQueueOptions: ProviderQueueOptions): Promise<ProviderQueueLease> => {
+    if (providerQueueOptions.signal?.aborted) throw buildQueueAbortError();
+
     const normalizedOptions: ProviderQueueOptions = {
       ...providerQueueOptions,
       queueTimeoutMs: providerQueueOptions.queueTimeoutMs || DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS,
