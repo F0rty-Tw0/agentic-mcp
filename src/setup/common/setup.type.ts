@@ -10,7 +10,7 @@ export type SetupEnv = Readonly<Record<string, string | undefined>>;
 
 export type SetupBackupPolicy = 'if-exists' | 'always' | 'never';
 
-export type SetupWriteIntent = 'write' | 'skip' | 'manual';
+export type SetupWriteIntent = 'write' | 'unchanged' | 'skip' | 'manual';
 
 export type SetupOutputMode = 'human' | 'json';
 
@@ -76,7 +76,7 @@ export type SetupPlanInput = {
   readonly toolTimeout?: ClientToolTimeout;
 };
 
-type SetupApplyStatus = 'written' | 'skipped' | 'manual' | 'verification-failed';
+type SetupApplyStatus = 'written' | 'unchanged' | 'skipped' | 'manual' | 'verification-failed';
 
 export type SetupApplyResult = {
   readonly status: SetupApplyStatus;
@@ -97,7 +97,7 @@ export type ParsedSetupArgs = {
 };
 
 export type SkillInstallResult = {
-  readonly status: 'installed' | 'already-exists' | 'error';
+  readonly status: 'installed' | 'already-exists' | 'skipped' | 'error';
   readonly skillPath: string;
   readonly reason?: string;
 };
@@ -135,6 +135,14 @@ export type SetupResult = {
   readonly configJson: string;
   readonly configPath?: string;
   readonly written: boolean;
+};
+
+export type ConfiguredSetupOutputInput = {
+  readonly parsedArgs: ParsedSetupArgs;
+  readonly plan: SetupPlan;
+  readonly result: SetupApplyResult;
+  readonly detectedProviders: DetectedProvider[];
+  readonly skillResult?: SkillInstallResult;
 };
 
 export type MinimalSetupOutputInput = {

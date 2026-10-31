@@ -1,15 +1,10 @@
-import type {
-  DetectedProvider,
-  MinimalSetupOutputInput,
-  ParsedSetupArgs,
-  SetupApplyResult,
-  SetupPlan,
-} from '../common';
+import type { ConfiguredSetupOutputInput, MinimalSetupOutputInput } from '../common';
 import {
   buildConfiguredSummary,
   buildMinimalNextSteps,
   buildMinimalSummary,
   buildProviderBlock,
+  formatSkillOutput,
 } from './setup-cli-output-helpers.util';
 
 const buildSection = (title: string, values: string[]): string[] => {
@@ -45,12 +40,8 @@ export const readExistingConfigText = async (
   }
 };
 
-export const formatJsonSetupOutput = (
-  args: ParsedSetupArgs,
-  plan: SetupPlan,
-  result: SetupApplyResult,
-  detectedProviders: DetectedProvider[]
-): string => {
+export const formatJsonSetupOutput = (input: ConfiguredSetupOutputInput): string => {
+  const { parsedArgs: args, plan, result, detectedProviders, skillResult } = input;
   const summary = buildConfiguredSummary(args, result, detectedProviders);
   const payload = {
     client: args.client,
@@ -64,18 +55,15 @@ export const formatJsonSetupOutput = (
     warnings: plan.warnings,
     providers: detectedProviders,
     result,
+    skillResult,
     summary,
   };
 
   return `${JSON.stringify(payload, null, 2)}\n`;
 };
 
-export const formatHumanSetupOutput = (
-  args: ParsedSetupArgs,
-  plan: SetupPlan,
-  result: SetupApplyResult,
-  detectedProviders: DetectedProvider[]
-): string => {
+export const formatHumanSetupOutput = (input: ConfiguredSetupOutputInput): string => {
+  const { parsedArgs: args, plan, result, detectedProviders, skillResult } = input;
   const summary = buildConfiguredSummary(args, result, detectedProviders);
   const completedSection = buildSection('What was done:', summary.completedSteps);
   const unprovenSection = buildSection('What remains unproven:', summary.unproven);
@@ -109,7 +97,13 @@ export const formatHumanSetupOutput = (
     lines.push('', 'Warnings:', ...warningLines);
   }
 
-  return `${lines.join('\n')}\n`;
+  const humanOutput = `${lines.join('\n')}\n`;
+
+  if (skillResult == null) return humanOutput;
+
+  const skillOutput = formatSkillOutput(skillResult);
+
+  return `${humanOutput}${skillOutput}`;
 };
 
 export const formatJsonMinimalSetupOutput = (input: MinimalSetupOutputInput): string => {
@@ -152,12 +146,4 @@ export const formatHumanMinimalSetupOutput = (input: MinimalSetupOutputInput): s
   }
 
   return `${lines.join('\n')}\n`;
-};
-
-export const isNonInteractiveWriteBlocked = (
-  args: ParsedSetupArgs,
-  plan: SetupPlan,
-  isInteractive: boolean
-): boolean => {
-  return !isInteractive && !args.yes && plan.writeIntent === 'write';
 };

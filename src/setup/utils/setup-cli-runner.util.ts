@@ -3,23 +3,24 @@ import path from 'node:path';
 import { CLIENT_TARGETS } from '../common';
 import type {
   ClientToolTimeout,
+  ConfiguredSetupOutputInput,
   DetectedProvider,
   ParsedSetupArgs,
-  SetupApplyResult,
   SetupCliDependencies,
   SetupPlan,
+  SkillInstallResult,
   SupportedClient,
 } from '../common';
+import { buildSkippedSkillResult, hasClientSkill } from './client-skill.util';
 import { buildDefaultClientToolTimeout, resolveClientToolTimeout } from './resolve-client-tool-timeout.util';
 import {
   formatHumanMinimalSetupOutput,
   formatHumanSetupOutput,
   formatJsonMinimalSetupOutput,
   formatJsonSetupOutput,
-  formatSkillOutput,
-  isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
+import { buildConsentPrompt, isConsentRequired, isNonInteractiveWriteBlocked } from './setup-consent.util';
 
 type SetupCliFlowInput = {
   readonly parsedArgs: ParsedSetupArgs;
@@ -51,15 +52,32 @@ const resolveSuggestedClient = (client: SupportedClient): SupportedClient => {
   return client;
 };
 
-const buildConfiguredOutput = (
-  parsedArgs: ParsedSetupArgs,
-  plan: SetupPlan,
-  result: SetupApplyResult,
-  detectedProviders: DetectedProvider[]
-): string => {
-  if (parsedArgs.output === 'json') return formatJsonSetupOutput(parsedArgs, plan, result, detectedProviders);
+const buildConfiguredOutput = (input: ConfiguredSetupOutputInput): string => {
+  if (input.parsedArgs.output === 'json') return formatJsonSetupOutput(input);
 
-  return formatHumanSetupOutput(parsedArgs, plan, result, detectedProviders);
+  return formatHumanSetupOutput(input);
+};
+
+const installClientSkill = async (
+  input: SetupCliFlowInput,
+  plan: SetupPlan
+): Promise<SkillInstallResult | undefined> => {
+  const { parsedArgs, dependencies } = input;
+  const hasSkill = hasClientSkill(parsedArgs.client);
+
+  if (!hasSkill) return undefined;
+
+  if (plan.writeIntent === 'skip') return undefined;
+
+  // A plan that needs consent only gets here once --yes or the prompt gave it; any other plan needs --yes.
+  const isConsentGated = isConsentRequired(plan);
+  const hasConsent = parsedArgs.yes || isConsentGated;
+
+  if (!hasConsent) return buildSkippedSkillResult(dependencies.homeDirectory);
+
+  const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
+
+  return skillResult;
 };
 
 // The server fails to start on a config that does not load, so the defaults only shape the preview here.
@@ -126,8 +144,11 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
     return;
   }
 
-  if (dependencies.isInteractive && !parsedArgs.yes && plan.writeIntent === 'write') {
-    const confirmed = await dependencies.promptConfirm(`Write config to ${plan.targetPath}? [y/N] `);
+  const isConsentNeeded = isConsentRequired(plan);
+
+  if (dependencies.isInteractive && !parsedArgs.yes && isConsentNeeded) {
+    const consentPrompt = buildConsentPrompt(plan);
+    const confirmed = await dependencies.promptConfirm(consentPrompt);
 
     if (!confirmed) {
       dependencies.stdoutWrite('Aborted. No files written.\n');
@@ -137,13 +158,8 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   }
 
   const result = await dependencies.applySetupPlan(plan);
-  const output = buildConfiguredOutput(parsedArgs, plan, result, detectedProviders);
+  const skillResult = await installClientSkill(input, plan);
+  const output = buildConfiguredOutput({ parsedArgs, plan, result, detectedProviders, skillResult });
 
   dependencies.stdoutWrite(output);
-
-  if (parsedArgs.client !== 'claude-code') return;
-
-  const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
-
-  dependencies.stdoutWrite(formatSkillOutput(skillResult));
 };

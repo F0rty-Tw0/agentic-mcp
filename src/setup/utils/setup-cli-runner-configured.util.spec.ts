@@ -3,6 +3,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runConfiguredSetup } from './setup-cli-runner.util';
+import type { SetupPlan, SkillInstallResult } from '../common';
 import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
 import type { ConfiguredJsonOutput } from '../test/common/setup.type';
 import {
@@ -10,7 +11,6 @@ import {
   createSetupApplyResult,
   createSetupCliDependencies,
   createSetupPlan,
-  readStdoutCallOutput,
   readStdoutOutput,
 } from '../test/utils/setup-cli-runner.spec.util';
 
@@ -36,6 +36,94 @@ describe('runConfiguredSetup', () => {
       'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
     );
     expect(applySetupPlan).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN an unchanged claude-code plan without yes WHEN running configured setup non-interactively THEN aborts before applying the plan or installing the skill', async () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'unchanged' }));
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'unchanged' });
+    const dependencies = createSetupCliDependencies({ stderrWrite, applySetupPlan, installSkill, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(stderrWrite).toHaveBeenCalledWith(
+      'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
+    );
+    expect(applySetupPlan).not.toHaveBeenCalled();
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN an unchanged claude-code plan without yes and declined prompt WHEN running configured setup interactively THEN aborts before installing the skill', async () => {
+    const stdoutWrite = vi.fn<(text: string) => void>();
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const promptConfirm = vi.fn().mockResolvedValue(false);
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'unchanged' });
+    const dependencies = createSetupCliDependencies({
+      stdoutWrite,
+      installSkill,
+      promptConfirm,
+      buildSetupPlan,
+      isInteractive: true,
+    });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(stdoutWrite).toHaveBeenCalledWith('Aborted. No files written.\n');
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN a claude-code dry run with yes WHEN running configured setup THEN it skips the skill install', async () => {
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'skipped' }));
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'skip', dryRun: true });
+    const dependencies = createSetupCliDependencies({ installSkill, applySetupPlan, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', dryRun: true, yes: true }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN a claude-code manual plan without yes WHEN running configured setup THEN it skips the skill install', async () => {
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'manual' }));
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'manual' });
+    const dependencies = createSetupCliDependencies({ installSkill, applySetupPlan, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN a claude-code manual plan with yes WHEN running configured setup THEN it installs the skill', async () => {
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'manual' }));
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'manual' });
+    const dependencies = createSetupCliDependencies({ installSkill, applySetupPlan, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: true }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
   });
 
   it('GIVEN interactive write without yes and declined prompt WHEN running configured setup THEN aborts without applying', async () => {
@@ -118,13 +206,14 @@ describe('runConfiguredSetup', () => {
     expect(output).toContain('Warnings:');
   });
 
-  it('GIVEN claude-code client with json output WHEN running configured setup THEN prints json output with truthful summary and skill output', async () => {
+  it('GIVEN claude-code client with json output WHEN running configured setup THEN stdout is one json document holding the summary and the skill result', async () => {
     const stdoutWrite = vi.fn<(text: string) => void>();
-    const installSkill = vi.fn().mockResolvedValue({
+    const skillResult: SkillInstallResult = {
       status: 'error',
       skillPath: DEFAULT_SKILL_PATH,
       reason: 'permission denied',
-    });
+    };
+    const installSkill = vi.fn().mockResolvedValue(skillResult);
     const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ path: DEFAULT_CLAUDE_PATH }));
     const dependencies = createSetupCliDependencies({ stdoutWrite, installSkill, applySetupPlan });
 
@@ -134,9 +223,8 @@ describe('runConfiguredSetup', () => {
       detectedProviders: TEST_PROVIDERS,
     });
 
-    const configuredOutput = readStdoutCallOutput(stdoutWrite, 0);
-    const skillOutput = readStdoutCallOutput(stdoutWrite, 1);
-    const parsed = JSON.parse(configuredOutput) as ConfiguredJsonOutput;
+    const stdout = readStdoutOutput(stdoutWrite);
+    const parsed = JSON.parse(stdout) as ConfiguredJsonOutput;
 
     expect(parsed.backup).toBe('if-exists');
     expect(parsed.client).toBe('claude-code');
@@ -155,7 +243,7 @@ describe('runConfiguredSetup', () => {
     expect(parsed.warnings).toStrictEqual([]);
     expect(parsed.writeIntent).toBe('write');
     expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
-    expect(skillOutput).toBe('Skill install failed: permission denied\n');
+    expect(parsed.skillResult).toStrictEqual(skillResult);
   });
 
   it('GIVEN generic client without path override WHEN running configured setup THEN it skips reading an existing config file', async () => {

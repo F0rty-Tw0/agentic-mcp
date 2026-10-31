@@ -4,6 +4,7 @@ export {
   CLIENT_TOOL_TIMEOUT_MS,
   CODEX_STARTUP_TIMEOUT_SEC,
   KNOWN_PROVIDER_COMMANDS,
+  SKILL_CONSENT_REASON,
   SUPPORTED_CLIENTS,
 } from './setup.const';
 
@@ -30,6 +31,7 @@ export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord
 
 export type {
   ClientConfigTemplate,
+  ConfiguredSetupOutputInput,
   DetectedProvider,
   MinimalSetupOutputInput,
   ParsedSetupArgs,

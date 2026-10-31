@@ -21,6 +21,8 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
   'generic',
 ];
 
+export const SKILL_CONSENT_REASON = 'rerun with --yes to install it';
+
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;
 
 type ClientTargetMap = Readonly<Record<SupportedClient, ClientTarget>>;
@@ -41,6 +43,10 @@ const CODEX_HOME_RULE: ConfigPathEnvRule = { key: 'CODEX_HOME', relativePath: 'c
 
 const COPILOT_HOME_RULE: ConfigPathEnvRule = { key: 'COPILOT_HOME', relativePath: 'mcp-config.json' };
 
+// Gemini CLI's homedir() returns GEMINI_CLI_HOME when set, and its user settings live at <home>/.gemini/settings.json
+// (packages/core/src/utils/paths.ts homedir, packages/core/src/config/storage.ts getGlobalSettingsPath).
+const GEMINI_CLI_HOME_RULE: ConfigPathEnvRule = { key: 'GEMINI_CLI_HOME', relativePath: '.gemini/settings.json' };
+
 // OpenCode merges OPENCODE_CONFIG over its global config, which lives under XDG_CONFIG_HOME.
 const OPENCODE_CONFIG_RULE: ConfigPathEnvRule = { key: 'OPENCODE_CONFIG', relativePath: '' };
 
@@ -58,6 +64,7 @@ const CLAUDE_CODE_TARGET: ClientTarget = {
   preservedKeys: [],
   configPathEnvRules: [CLAUDE_CONFIG_DIR_RULE],
   timeoutNote: CLAUDE_CODE_TIMEOUT_NOTE,
+  keptTimeoutKey: 'timeout',
 };
 
 const CODEX_TARGET: ClientTarget = {
@@ -93,7 +100,7 @@ const GEMINI_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: [],
-  configPathEnvRules: [],
+  configPathEnvRules: [GEMINI_CLI_HOME_RULE],
 };
 
 const OPENCODE_TARGET: ClientTarget = {

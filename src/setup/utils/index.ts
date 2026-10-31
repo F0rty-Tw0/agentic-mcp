@@ -1,3 +1,5 @@
+export { resolveSkillPath } from './client-skill.util';
+
 export { buildMergedClientConfig } from './merge-client-config.util';
 
 export { buildSetupPlan } from './plan-setup.util';
@@ -13,8 +15,9 @@ export {
   formatJsonSetupOutput,
   formatProviderSummary,
   formatSkillOutput,
-  isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
+
+export { isNonInteractiveWriteBlocked } from './setup-consent.util';
 
 export { verifyWrittenConfig } from './verify-written-config.util';

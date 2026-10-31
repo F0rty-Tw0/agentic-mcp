@@ -9,8 +9,9 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Supports multiple MCP clients: Claude Code, Codex CLI (TOML), Copilot CLI, Gemini CLI, OpenCode, Cursor, Windsurf, and a generic JSON format
 - Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower. An `agentic-mcp` entry with `url`, `httpUrl` or `serverUrl` (a remote server), or a TOML `mcp_servers` that is not a table, is left for a manual edit (status `unmergeable`)
 - Merges Codex's `config.toml` with `smol-toml`: appends a new table so comments stay, rewrites the file only to update an existing table (with a warning), and refuses a file that is not valid TOML or that a rewrite would change
-- Creates `.bak` backup files before modifying existing configs
-- Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) points at a file other than the one setup writes, and names that file
+- Creates `.bak` backup files before modifying existing configs; a merge that leaves the `agentic-mcp` entry as it is writes nothing and makes no backup (write intent and result `unchanged`, "already configured")
+- Keeps a Claude Code `timeout` the user set, with a note when it is lower than the derived tool-call timeout, since it cuts long runs short
+- Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) points at a file other than the one setup writes, and names that file
 - Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 

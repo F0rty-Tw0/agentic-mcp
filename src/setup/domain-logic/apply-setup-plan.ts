@@ -29,7 +29,8 @@ const hasExistingFile = async (targetPath: string, fs: SetupFs): Promise<boolean
   }
 };
 
-export const applySetupPlan = async (plan: SetupPlan, fs: SetupFs = defaultFs): Promise<SetupApplyResult> => {
+// A dry run, or an entry that already matches: nothing is written and nothing is backed up.
+const resolveNoWriteResult = (plan: SetupPlan): SetupApplyResult | undefined => {
   if (plan.writeIntent === 'skip') {
     const skippedResult: SetupApplyResult = {
       status: 'skipped',
@@ -39,6 +40,25 @@ export const applySetupPlan = async (plan: SetupPlan, fs: SetupFs = defaultFs): 
 
     return skippedResult;
   }
+
+  if (plan.writeIntent === 'unchanged') {
+    const unchangedResult: SetupApplyResult = {
+      status: 'unchanged',
+      path: plan.targetPath,
+      backupPath: undefined,
+      reason: 'already configured; the agentic-mcp entry is up to date, so no file or backup was written',
+    };
+
+    return unchangedResult;
+  }
+
+  return undefined;
+};
+
+export const applySetupPlan = async (plan: SetupPlan, fs: SetupFs = defaultFs): Promise<SetupApplyResult> => {
+  const noWriteResult = resolveNoWriteResult(plan);
+
+  if (noWriteResult != null) return noWriteResult;
 
   if (plan.writeIntent === 'manual' || plan.targetPath == null) {
     const manualResult: SetupApplyResult = {
