@@ -5,9 +5,10 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 ## What It Does
 
 - Detects which AI provider CLIs are installed on the system (Claude, Codex, Copilot, Gemini, Antigravity `agy`, OpenCode)
-- Generates an MCP server entry (`agentic-mcp`) for the target client's config format
-- Supports multiple MCP clients: Claude Code, VS Code, Cursor, Windsurf, and a generic JSON format
-- Merges the generated entry into existing config files, preserving other servers
+- Generates an MCP server entry (`agentic-mcp`) for the target client's config format, with the client's tool-call timeout one minute above the provider timeout (`CLIENT_TOOL_TIMEOUT_MS`) where the client has a per-server key
+- Supports multiple MCP clients: Claude Code, Codex CLI (TOML), Copilot CLI, Gemini CLI, OpenCode, Cursor, Windsurf, and a generic JSON format
+- Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower
+- Merges Codex's `config.toml` with `smol-toml`: appends a new table so comments stay, rewrites the file only to update an existing table (with a warning), and refuses a file that is not valid TOML or that a rewrite would change
 - Creates `.bak` backup files before modifying existing configs
 - Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
@@ -23,7 +24,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 
 | Directory       | Purpose                                                                  |
 | --------------- | ------------------------------------------------------------------------ |
-| `common/`       | Client path definitions, setup types                                     |
+| `common/`       | Client targets (path, format, servers key, timeout keys), setup types    |
 | `domain-logic/` | Setup CLI orchestration, provider detection, config generation, file I/O |
 | `utils/`        | Setup plan builder, config merging, CLI output formatting                |
 | `test/`         | Test-only constants, types, and spec utils                               |
@@ -32,7 +33,10 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 
 - `domain-logic/setup-cli.ts` — `runSetup()` — orchestrates the full setup flow with dependency injection for testability
 - `domain-logic/detect-providers.ts` — Scans the system for installed provider binaries
-- `domain-logic/generate-config.ts` — Generates the MCP server JSON entry
+- `domain-logic/generate-config.ts` — Generates the per-client MCP server entry, including its timeout keys
+- `utils/merge-server-entry.util.ts` — Merges the `agentic-mcp` entry key by key and never lowers a timeout
+- `utils/merge-client-config.util.ts`, `utils/merge-toml-client-config.util.ts` — JSON and TOML document merges
+- `utils/verify-written-config.util.ts` — Parses the written file again and checks the entry is there
 - `domain-logic/apply-setup-plan.ts` — Atomic file write using temp file + rename + verification
 - `domain-logic/install-skill.ts` — Installs the `using-agentic-mcp` Claude Code skill
 
@@ -55,4 +59,4 @@ Exercises the setup CLI with real filesystem operations in a temp directory. Use
 
 ## Unit Tests
 
-8 `.spec.ts` files covering the setup CLI orchestration, provider detection, config generation, setup plan building, config merging, output formatting, and file I/O utilities.
+`.spec.ts` files covering the setup CLI orchestration, provider detection, per-client config generation, setup plan building, JSON and TOML config merging, timeout merging, written-file verification, output formatting, and file I/O utilities.
