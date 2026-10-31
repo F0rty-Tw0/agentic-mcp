@@ -1,14 +1,14 @@
 import { buildCommandFailure, buildExecutionEnv, resolveModelFallback } from './ask-command';
 import { resolveRequestId, runCommandExecution } from './ask-command-execution';
+import { startAskHeartbeat } from './ask-heartbeat';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { recordCall } from '../../provider-metrics';
-import { CommandExecutionError, startHeartbeat, toMcpError, unregisterActiveRequest } from '../../shared';
+import { CommandExecutionError, toMcpError, unregisterActiveRequest } from '../../shared';
 import type { ExecutionResult } from '../../shared/command-execution/common';
 import type { McpErrorResponse, ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
 import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
-import { noop } from '../common';
 import type { AskExecution, AskToolArgs } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils';
 
@@ -25,16 +25,6 @@ type ExecuteInput = {
   readonly extra?: ProgressContext;
   readonly tier2SessionId?: string;
   readonly streamNotifier: StreamNotifier;
-};
-
-type StopHeartbeat = () => void;
-
-const resolveStopHeartbeat = (streamNotifier: StreamNotifier, extra?: ProgressContext): StopHeartbeat => {
-  if (streamNotifier.enabled) return noop;
-
-  const stopHeartbeat = startHeartbeat(extra);
-
-  return stopHeartbeat;
 };
 
 const toErrorResponse = (error: unknown): McpErrorResponse => {
@@ -117,7 +107,7 @@ export const runAskInvocation = async (runInvocationInput: RunInvocationInput): 
   const { context, args, extra, tier2SessionId } = runInvocationInput;
   const input = { providerName: context.name, args, extra };
   const streamNotifier = createStreamNotifier(input);
-  const stopHeartbeat = resolveStopHeartbeat(streamNotifier, extra);
+  const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
   const requestId = resolveRequestId(extra);
 
   try {
