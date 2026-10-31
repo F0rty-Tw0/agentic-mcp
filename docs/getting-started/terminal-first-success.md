@@ -20,7 +20,7 @@ This path does not require MCP client setup.
 
 ## Prerequisites
 
-- Node.js 22 or newer
+- Node.js 26 or newer
 - One supported provider CLI installed locally
 - That provider CLI already authenticated
 

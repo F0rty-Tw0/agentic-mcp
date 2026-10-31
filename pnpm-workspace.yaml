@@ -9,7 +9,7 @@ catalogs:
   dev:
     '@release-it/keep-a-changelog': ^8.0.1
     '@types/cross-spawn': ^6.0.6
-    '@types/node': ^22.19.0
+    '@types/node': ^26.6.6
     '@vitest/coverage-v8': ^5.0.5
     tsx: ^4.23.15
     typescript: ^7.0.2
@@ -24,5 +24,5 @@ catalogs:
     '@modelcontextprotocol/client': ^2.4.0
     '@modelcontextprotocol/server': ^2.4.0
     cross-spawn: ^7.0.6
-    which: ^6.0.1
+    which: ^7.0.0
     zod: ^4.3.6

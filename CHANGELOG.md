@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **Breaking:** require Node.js 26 or newer (`engines >=26`). Node 26 is the current LTS; builds now target Node 26 and ES2025
+
 - Fix `ask_codex`: codex 0.166 removed `--full-auto`, which made every call fail. Codex now runs with its default read-only sandbox unless `sandbox=workspace-write` is passed
 - Update provider flags to the current CLIs: Claude permission modes `auto`/`manual` (`delegate` removed) and effort `xhigh`/`max`, Gemini `--approval-mode yolo`, OpenCode `--auto`, Copilot `--reasoning-effort`
 - Fix native session resume for Codex (`exec resume <id>`) and OpenCode (`--session`), and add it for Gemini (`--resume`)
@@ -12,7 +14,7 @@
 - Fix process handling: a CLI that exits before reading stdin no longer crashes the server, kills reach the whole process group, a killed call settles even when a grandchild holds its output, and Ctrl-C stops provider CLIs in CLI mode
 - Fix state handling: running async jobs are no longer pruned after 15 minutes, in-use sessions are not evicted, and the session fallback keeps the conversation history
 - Guard prompts that start with `-` so CLIs do not read them as options, and prompts like `constructor` are no longer swallowed by the CLI parser
-- Move the toolchain to TypeScript 7, Vitest 5, ESLint 10, lint-suite 3, pnpm 12 and Node 26 LTS (Node 22 and 24 still supported)
+- Move the toolchain to TypeScript 7, Vitest 5, ESLint 10, lint-suite 3, pnpm 12 and Node 26 LTS
 - Move from `@modelcontextprotocol/sdk` 1.x to the v2 packages `@modelcontextprotocol/server` and `@modelcontextprotocol/client` ^2.4; the stdio server keeps serving 2025-era clients and now also accepts 2026-07-28 clients, and tool input schemas declare JSON Schema 2020-12 instead of draft-07
 - **Changed:** with the v2 SDK, closing stdin while a call is running aborts that call without a response (the v2 stdio transport's behavior; it used to answer, then exit). Calling an unknown tool now returns a JSON-RPC error (`-32602 Tool X not found`) instead of a tool result with `isError`, invalid-argument messages are worded differently, CLI errors for an unknown tool start with `agentic-mcp:` instead of `MCP error -32602:`, and tool definitions no longer carry `execution.taskSupport`
 

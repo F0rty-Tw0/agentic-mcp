@@ -18,7 +18,7 @@ By the end of this path, you will have:
 
 ## Prerequisites
 
-- Node.js 22 or newer
+- Node.js 26 or newer
 - Claude Code installed
 - At least one supported provider CLI installed and authenticated
 - Permission to restart Claude Code after setup
