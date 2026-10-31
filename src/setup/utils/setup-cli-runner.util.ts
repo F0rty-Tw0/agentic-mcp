@@ -68,6 +68,12 @@ const installClientSkill = async (
 
   if (plan.writeIntent === 'skip') return undefined;
 
+  // A plan that needs consent only gets here once --yes or the prompt gave it; any other plan needs --yes.
+  const isConsentGated = isConsentRequired(plan);
+  const hasConsent = parsedArgs.yes || isConsentGated;
+
+  if (!hasConsent) return undefined;
+
   const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
 
   return skillResult;

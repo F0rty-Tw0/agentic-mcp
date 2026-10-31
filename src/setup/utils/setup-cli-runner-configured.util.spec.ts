@@ -96,6 +96,36 @@ describe('runConfiguredSetup', () => {
     expect(installSkill).not.toHaveBeenCalled();
   });
 
+  it('GIVEN a claude-code manual plan without yes WHEN running configured setup THEN it skips the skill install', async () => {
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'manual' }));
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'manual' });
+    const dependencies = createSetupCliDependencies({ installSkill, applySetupPlan, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(installSkill).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN a claude-code manual plan with yes WHEN running configured setup THEN it installs the skill', async () => {
+    const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'manual' }));
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'manual' });
+    const dependencies = createSetupCliDependencies({ installSkill, applySetupPlan, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: true }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(installSkill).toHaveBeenCalledWith({ homeDirectory: '/home/dev' });
+  });
+
   it('GIVEN interactive write without yes and declined prompt WHEN running configured setup THEN aborts without applying', async () => {
     const stdoutWrite = vi.fn<(text: string) => void>();
     const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult());
