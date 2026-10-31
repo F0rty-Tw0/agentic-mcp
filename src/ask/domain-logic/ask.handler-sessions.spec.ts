@@ -7,7 +7,8 @@ import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import { SESSION_STORE } from '../../session';
 import type { SessionRecord, SessionTurn } from '../../session';
 import type { McpPlainTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared';
-import { TEST_MINIMAL_ENV_STUB, executeCommand } from '../../shared';
+import { executeCommand } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import { ASK_STREAM_EVENT_SCHEMA, HEARTBEAT_IDLE_INTERVAL_MS } from '../../streaming/common';
 import type { AskStreamEvent } from '../../streaming/common';
 import type { AskToolArgs, ProgressNotification } from '../common';
@@ -17,6 +18,7 @@ import {
   ASK_SUCCESS_EXECUTION_RESULT_STUB,
 } from '../test/stubs/ask-execution-result.stub';
 import { createAskContext } from '../test/utils/ask-context.spec.util';
+import { readFirstText } from '../test/utils/text-content.spec.util';
 
 vi.mock('../../cli-args/domain-logic/arg.builder', () => {
   const result = {
@@ -85,16 +87,8 @@ const createProgressContext = (notifications: ProgressNotification[]): ProgressC
 const parseEvents = (notifications: ProgressNotification[]): AskStreamEvent[] =>
   notifications.map((notification) => JSON.parse(notification.params.message) as AskStreamEvent);
 
-const readTextContent = (result: CallToolResult): string => {
-  const content = result.content[0];
-
-  if (content?.type !== 'text') return '';
-
-  return content.text;
-};
-
 const readAsyncJobPayload = (result: CallToolResult): AsyncJobPayload => {
-  const payload = JSON.parse(readTextContent(result)) as AsyncJobPayload;
+  const payload = JSON.parse(readFirstText(result)) as AsyncJobPayload;
 
   return payload;
 };
@@ -282,7 +276,7 @@ describe('handleAsk', () => {
       const context = createAskContext();
 
       const result = await handleAsk(context, { prompt: 'x', mode: 'async' });
-      const payload = JSON.parse(readTextContent(result)) as AsyncJobPayload;
+      const payload = JSON.parse(readFirstText(result)) as AsyncJobPayload;
 
       expect(payload.job_id).toBeDefined();
       expect(payload.state).toBe('pending');

@@ -62,17 +62,17 @@ MCP protocol utilities — types and helpers for MCP communication.
 
 ### validation
 
-Request validation and registry — validates tool arguments and provides Zod utilities.
+Request validation — checks tool arguments (prompt size, files, model, session id, working directory).
 
-- Maintains a request registry for tracking active ask invocations
-- Provides date/time validation utilities
-- Exports Zod validation helpers used across the project
+- Provides the `ValidationError` class and validation limits
+- Provides the `nowIso` timestamp helper
+- Exports the validators the ask and session modules share
 
 **Key files:**
 
-- `domain-logic/request-registry.ts` — Validates and registers ask args with active process tracking
+- `utils/validation.util.ts` — Argument validators and the model / session-id patterns
 
-**Unit tests:** 3 `.spec.ts` files covering request registry, date/time validation, and Zod utilities.
+**Unit tests:** 2 `.spec.ts` files covering date/time and validation utilities.
 
 ## Integration Tests
 

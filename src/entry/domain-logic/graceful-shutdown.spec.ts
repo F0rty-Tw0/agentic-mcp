@@ -1,8 +1,37 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { registerGracefulShutdown } from './graceful-shutdown';
+import { defaultChildGroupRegistry } from '../../shared';
+import { SHUTDOWN_CLOSE_TIMEOUT_MS } from '../common';
+
+type SignalHandler = () => unknown | Promise<void>;
+
+const captureHandler = (signal: string): (() => SignalHandler) => {
+  let captured: SignalHandler = () => undefined;
+
+  vi.spyOn(process, 'on').mockImplementation((event: string | symbol, handler: (...args: unknown[]) => void) => {
+    if (event === signal) captured = handler;
+
+    return process;
+  });
+
+  const readHandler = (): SignalHandler => captured;
+
+  return readHandler;
+};
+
+// The registered listener only starts the async shutdown, so the test waits for its promise chain to drain.
+const flushShutdown = async (): Promise<void> => {
+  await new Promise<void>((resolve) => {
+    setImmediate(resolve);
+  });
+};
 
 describe('registerGracefulShutdown', () => {
+  beforeEach(() => {
+    vi.spyOn(defaultChildGroupRegistry, 'terminateAll').mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -54,6 +83,7 @@ describe('registerGracefulShutdown', () => {
 
     registerGracefulShutdown(closeFn);
     await sigintHandler();
+    await flushShutdown();
 
     expect(closeFn).toHaveBeenCalledOnce();
     expect(exitSpy).toHaveBeenCalledWith(0);
@@ -73,6 +103,7 @@ describe('registerGracefulShutdown', () => {
 
     registerGracefulShutdown(closeFn);
     await sigtermHandler();
+    await flushShutdown();
 
     expect(closeFn).toHaveBeenCalledOnce();
     expect(exitSpy).toHaveBeenCalledWith(0);
@@ -92,7 +123,64 @@ describe('registerGracefulShutdown', () => {
 
     registerGracefulShutdown(closeFn);
     await sigintHandler();
+    await flushShutdown();
 
     expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('GIVEN SIGTERM fires WHEN handler runs THEN provider groups are terminated before the process exits', async () => {
+    const readHandler = captureHandler('SIGTERM');
+    const terminateSpy = vi.mocked(defaultChildGroupRegistry.terminateAll);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+
+    registerGracefulShutdown(vi.fn().mockResolvedValue(undefined));
+    await readHandler()();
+    await flushShutdown();
+
+    expect(terminateSpy).toHaveBeenCalledBefore(exitSpy);
+  });
+
+  it('GIVEN close function throws WHEN signal fires THEN provider groups are still terminated', async () => {
+    const readHandler = captureHandler('SIGINT');
+    const terminateSpy = vi.mocked(defaultChildGroupRegistry.terminateAll);
+
+    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    registerGracefulShutdown(vi.fn().mockRejectedValue(new Error('close failed')));
+    await readHandler()();
+    await flushShutdown();
+
+    expect(terminateSpy).toHaveBeenCalledOnce();
+  });
+
+  describe('GIVEN a close that never settles', () => {
+    const neverSettles = async (): Promise<void> => new Promise<void>(() => undefined);
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('WHEN a signal fires THEN provider groups are terminated without waiting for close', async () => {
+      const readHandler = captureHandler('SIGTERM');
+      const terminateSpy = vi.mocked(defaultChildGroupRegistry.terminateAll);
+
+      vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      registerGracefulShutdown(neverSettles);
+      void readHandler()();
+      await flushShutdown();
+
+      expect(terminateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('WHEN the close timeout passes THEN the process exits with code 1', async () => {
+      vi.useFakeTimers();
+      const readHandler = captureHandler('SIGTERM');
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+
+      registerGracefulShutdown(neverSettles);
+      void readHandler()();
+      await vi.advanceTimersByTimeAsync(SHUTDOWN_CLOSE_TIMEOUT_MS);
+
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
   });
 });

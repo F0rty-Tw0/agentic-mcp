@@ -65,7 +65,17 @@ describe('FEATURE: stop a child and release its stdio', () => {
 
       childStop.stop?.();
 
-      expect(killProcessMock).toHaveBeenCalledWith(CHILD_PID);
+      expect(killProcessMock).toHaveBeenCalledWith(CHILD_PID, { childExited: false });
+    });
+
+    it('WHEN a stop is requested after the child exited THEN the kill knows the child exited', () => {
+      const fake = createFakeChild();
+      const childStop = setupChildStop(fake.child);
+
+      fake.emitExit();
+      childStop.stop?.();
+
+      expect(killProcessMock).toHaveBeenCalledWith(CHILD_PID, { childExited: true });
     });
   });
 

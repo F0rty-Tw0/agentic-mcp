@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { buildExecution, buildFailureExecution } from './ask-runner-response.util';
 import type { ResolvedProviderEntry } from '../../shared';
-import { TEST_PROVIDER_CONFIG_STUB } from '../../shared';
+import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/provider/test/stubs/provider-config.stub';
 import type { AskExecution } from '../common';
 
 vi.mock('../../session', () => {

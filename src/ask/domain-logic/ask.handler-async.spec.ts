@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAsk } from './ask.handler';
 import { resetBackgroundJobStoreForTests } from '../../background-jobs/data-access';
-import { TEST_MINIMAL_ENV_STUB, executeCommand } from '../../shared';
+import { executeCommand } from '../../shared';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import { ValidationError } from '../../shared/validation/common';
 import type { AskToolArgs } from '../common';
 import { ASK_DEFAULT_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';

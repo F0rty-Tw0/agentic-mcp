@@ -1,13 +1,16 @@
-import type { ChildStop, StopChild, StoppableChild } from '../common';
+import type { ChildStop, KillProcessOptions, StopChild, StoppableChild } from '../common';
 import { STDIO_RELEASE_GRACE_MS } from '../common';
 import { killProcess } from './platform';
 
-const buildStopChild = (pid: number | undefined, requestStop: () => void): StopChild | undefined => {
+type StopRequest = () => KillProcessOptions;
+
+const buildStopChild = (pid: number | undefined, requestStop: StopRequest): StopChild | undefined => {
   if (pid === undefined) return;
 
   const stopChild: StopChild = (): void => {
-    requestStop();
-    void killProcess(pid);
+    const killProcessOptions = requestStop();
+
+    void killProcess(pid, killProcessOptions);
   };
 
   return stopChild;
@@ -38,10 +41,14 @@ export const setupChildStop = (child: StoppableChild): ChildStop => {
     if (stopRequested) scheduleRelease();
   });
 
-  const requestStop = (): void => {
+  const requestStop: StopRequest = () => {
     stopRequested = true;
 
     if (hasExited) scheduleRelease();
+
+    const killProcessOptions: KillProcessOptions = { childExited: hasExited };
+
+    return killProcessOptions;
   };
 
   const cancelRelease = (): void => {

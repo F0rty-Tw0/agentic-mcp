@@ -9,7 +9,7 @@
 
 ## Architecture
 
-- Multi-model AI gateway wrapping CLI tools (Claude, Codex, Copilot, Gemini, OpenCode) as MCP servers
+- Multi-model AI gateway wrapping CLI tools as MCP servers: Claude, Codex, Copilot, Gemini, OpenCode (stable) and Antigravity `agy` (beta), plus the other beta/community CLIs and disabled templates in `providers.json`
 - Config-driven: providers defined in `src/config/providers.json` with Zod-validated schema (`providers.schema.json`)
 - Entry point: `src/index.ts` -> `src/entry/domain-logic/entry.ts` (handles --version, --help, setup subcommand, or starts MCP server)
 
@@ -25,7 +25,7 @@
 - `server/` — MCP server factory
 - `session/` — session store with locking for multi-turn conversations
 - `setup/` — `agentic-mcp setup` CLI for configuring MCP clients
-- `shared/` — cross-cutting: command-execution (spawning, semaphore), mcp-protocol (types, heartbeat), provider (config types, env resolver, model error detection), validation (request registry, Zod utils)
+- `shared/` — cross-cutting: command-execution (spawning, semaphore), mcp-protocol (types, heartbeat), provider (config types, env resolver, model error detection), validation (argument validators, ValidationError)
 - `simple-tools/` — ping, help, list_providers handlers
 - `streaming/` — live output streaming via MCP progress notifications
 - `tool-registry/` — MCP tool registration (builds tool definitions from provider config)
@@ -33,7 +33,7 @@
 
 ## MCP Tools Exposed
 
-Per provider (5 providers = 5x each):
+Per enabled provider whose CLI is installed (12 enabled in the bundled `providers.json`, so up to 12x each):
 
 - `ask_<provider>` — query a provider
 - `sessions_<provider>` — list known sessions (if provider supports sessions)

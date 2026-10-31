@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { runConfiguredSetup } from './setup-cli-runner.util';
 import type { ProviderConfig, ProvidersFile } from '../../shared/provider/common';
-import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/provider/test/stubs';
+import { TEST_PROVIDER_CONFIG_STUB } from '../../shared/provider/test/stubs/provider-config.stub';
 import type { McpServerEntry, SetupEnv } from '../common';
 import { TEST_PROVIDERS } from '../test/common/setup.const';
 import {

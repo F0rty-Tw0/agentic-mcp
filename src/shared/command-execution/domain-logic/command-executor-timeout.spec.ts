@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { executeCommand } from './command-executor';
 import { killProcess } from './platform';
 import type { ExecutionTimeoutCause } from '../common';
-import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs/execute-command-options.stub';
 import { createControllableChild } from '../test/utils/controllable-child.spec.util';
 
 vi.mock('cross-spawn', () => {
@@ -72,7 +72,7 @@ describe('executeCommand timeouts', () => {
       const result = await resultPromise;
 
       expect(result.timedOut).toBe(true);
-      expect(killProcess).toHaveBeenCalledWith(1234);
+      expect(killProcess).toHaveBeenCalledWith(1234, { childExited: false });
     });
 
     it('GIVEN a process exceeding timeoutMs WHEN timeout fires THEN the result names the wall-clock limit as the cause', async () => {

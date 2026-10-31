@@ -1,11 +1,10 @@
 import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import { buildCommandFailure, buildExecutionEnv } from './ask-command';
-import { buildOnSpawned, resolveRequestId } from './ask-command-execution';
 import { startAskHeartbeat } from './ask-heartbeat';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { buildReviewArgArray } from '../../cli-args';
-import { executeCommand, unregisterActiveRequest } from '../../shared';
+import { executeCommand } from '../../shared';
 import type { ExecuteCommandOptions, ExecutionResult } from '../../shared/command-execution/common';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
@@ -53,7 +52,6 @@ type BuildReviewCommandOptionsInput = {
   readonly env: Readonly<Record<string, string>>;
   readonly extra?: ProgressContext;
   readonly streamNotifier: StreamNotifier;
-  readonly requestId?: string;
 };
 
 type HandleReviewFailureInput = {
@@ -66,8 +64,7 @@ type HandleReviewFailureInput = {
 };
 
 const buildReviewCommandOptions = (input: BuildReviewCommandOptionsInput): ExecuteCommandOptions => {
-  const { context, responseArgs, builtArgs, env, extra, streamNotifier, requestId } = input;
-  const onSpawned = buildOnSpawned(requestId);
+  const { context, responseArgs, builtArgs, env, extra, streamNotifier } = input;
   const commandOptions = buildCommandOptions({
     context,
     resolved: responseArgs,
@@ -77,7 +74,6 @@ const buildReviewCommandOptions = (input: BuildReviewCommandOptionsInput): Execu
     onStdoutChunk: streamNotifier.onStdoutChunk,
     onStderrChunk: streamNotifier.onStderrChunk,
     signal: extra?.signal,
-    onSpawned,
   });
 
   return commandOptions;
@@ -103,7 +99,6 @@ export const handleReview = async (
   const env = buildExecutionEnv(context);
   const builtArgs = buildReviewArgArray(context.config, args);
   const responseArgs = buildResponseArgs(args);
-  const requestId = resolveRequestId(extra);
   const streamNotifier = createStreamNotifier({ providerName: context.name, args: responseArgs, extra });
   const commandOptions = buildReviewCommandOptions({
     context,
@@ -112,7 +107,6 @@ export const handleReview = async (
     env,
     extra,
     streamNotifier,
-    requestId,
   });
 
   const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
@@ -142,8 +136,6 @@ export const handleReview = async (
       sessionMode: 'none',
     });
   } finally {
-    if (requestId) unregisterActiveRequest(requestId);
-
     stopHeartbeat();
     streamNotifier.stop();
   }

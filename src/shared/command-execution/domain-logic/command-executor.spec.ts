@@ -7,7 +7,7 @@ import { executeCommand } from './command-executor';
 import { killProcess } from './platform';
 import { CommandExecutionError } from '../common/errors';
 import type { ControllableChild } from '../test/common/controllable-child.type';
-import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs';
+import { TEST_EXECUTE_COMMAND_OPTIONS_STUB } from '../test/stubs/execute-command-options.stub';
 import { createControllableChild } from '../test/utils/controllable-child.spec.util';
 
 vi.mock('cross-spawn', () => {
@@ -235,7 +235,7 @@ describe('executeCommand', () => {
 
       await resultPromise;
 
-      expect(killProcess).toHaveBeenCalledWith(5678);
+      expect(killProcess).toHaveBeenCalledWith(5678, { childExited: false });
     });
 
     it('GIVEN an already-aborted signal WHEN executeCommand is called THEN killProcess is called immediately', async () => {
@@ -257,7 +257,7 @@ describe('executeCommand', () => {
 
       await resultPromise;
 
-      expect(killProcess).toHaveBeenCalledWith(9999);
+      expect(killProcess).toHaveBeenCalledWith(9999, { childExited: false });
     });
 
     it('GIVEN an AbortSignal with no-pid child WHEN signal fires THEN killProcess is not called', async () => {

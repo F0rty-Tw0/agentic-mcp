@@ -4,14 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAsk } from './ask.handler';
 import { buildArgArray } from '../../cli-args/domain-logic/arg.builder';
 import type { McpPlainTextContent, ProgressContext, ResolvedProviderEntry } from '../../shared';
-import {
-  DEFAULT_MCP_TOOL_TIMEOUT_MS,
-  TEST_MINIMAL_ENV_STUB,
-  buildMinimalEnv,
-  executeCommand,
-  getActiveRequest,
-  stripAnsi,
-} from '../../shared';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS, buildMinimalEnv, executeCommand, stripAnsi } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import { ASK_DEFAULT_ARG_ARRAY_STUB, ASK_STDIN_ARG_ARRAY_STUB } from '../test/stubs/ask-arg-array.stub';
 import {
   ASK_COMMAND_OUTPUT_EXECUTION_RESULT_STUB,
@@ -320,27 +314,6 @@ describe('handleAsk', () => {
       expect(text).toContain('[output truncated —');
       expect(text).toContain('bytes total]');
       expect(text.length).toBeLessThan(largeOutput.length);
-    });
-  });
-
-  describe('request tracking', () => {
-    it('GIVEN requestId and spawned process WHEN command completes THEN active request is cleaned up', async () => {
-      const context = createAskContext();
-      const extra: ProgressContext = {
-        sendNotification: vi.fn(async () => Promise.resolve()),
-        requestId: 'req-1',
-      };
-
-      vi.mocked(executeCommand).mockImplementation(async (options) => {
-        await Promise.resolve();
-        options.onSpawned?.(777);
-
-        return ASK_SUCCESS_EXECUTION_RESULT_STUB;
-      });
-
-      await handleAsk(context, { prompt: 'track process' }, extra);
-
-      expect(getActiveRequest('req-1')).toBeUndefined();
     });
   });
 });

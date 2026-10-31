@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveRequestedModel } from './resolve-requested-model.util';
 import type { ProviderConfig, ResolvedProviderEntry } from '../../shared';
-import { TEST_MINIMAL_ENV_STUB } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import * as modelErrorUtil from '../../shared/provider/utils/model-error.util';
 import type { AskToolArgs } from '../common';
 

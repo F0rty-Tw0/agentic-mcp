@@ -2,13 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleHelp } from './help.handler';
 import type { McpPlainTextContent, ResolvedProviderEntry } from '../../shared';
-import {
-  DEFAULT_MCP_TOOL_TIMEOUT_MS,
-  TEST_MINIMAL_ENV_STUB,
-  buildMinimalEnv,
-  executeCommand,
-  stripAnsi,
-} from '../../shared';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS, buildMinimalEnv, executeCommand, stripAnsi } from '../../shared';
+import { TEST_MINIMAL_ENV_STUB } from '../../shared/command-execution/test/stubs/env.stub';
 import {
   SIMPLE_TOOLS_HELP_OUTPUT_RESULT_STUB,
   SIMPLE_TOOLS_SUCCESS_EXECUTION_RESULT_STUB,

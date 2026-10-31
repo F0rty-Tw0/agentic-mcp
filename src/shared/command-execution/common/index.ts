@@ -6,12 +6,14 @@ export type {
   ExecutionTimeoutCause,
   ExecutionTimeoutKind,
   IdleTimeoutHandle,
+  KillProcessOptions,
   ProviderQueueOptions,
   ResolveExecutionResultInput,
   ResolveTimeoutCauseInput,
   ResultCompleteDetector,
   ResultExitWatch,
   RetryWithExponentialBackoffInput,
+  SignalForwarderInput,
   StopChild,
   StoppableChild,
   StreamChunkCallback,
@@ -20,6 +22,8 @@ export type {
 } from './command-executor.type';
 
 export {
+  CHILD_GROUP_KILL_GRACE_MS,
+  CHILD_GROUP_POLL_INTERVAL_MS,
   DEFAULT_PROVIDER_MAX_CONCURRENCY,
   DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS,
   GLOBAL_MAX_CONCURRENT_SPAWNS,

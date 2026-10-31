@@ -4,11 +4,14 @@ import process from 'node:process';
 import which from 'which';
 
 import type { ProviderEnv } from '../../provider/common';
+import type { KillProcessOptions } from '../common';
 
 type MinimalEnv = Readonly<Record<string, string>>;
 type MutableMinimalEnv = Record<string, string>;
 
 const KILL_GRACE_MS = 5_000;
+
+const LIVE_CHILD: KillProcessOptions = { childExited: false };
 
 const SAFE_ENV_KEYS = [
   'PATH',
@@ -52,12 +55,15 @@ const sendSignal = (target: number, signal: NodeJS.Signals): boolean => {
   return true;
 };
 
-const resolveTerminatedTarget = (pid: number): number | undefined => {
+// A live group keeps its id reserved, but an exited child's bare pid may already belong to an unrelated process.
+const resolveTerminatedTarget = (pid: number, childExited: boolean): number | undefined => {
   const groupTarget = -pid;
 
   const groupSignalled = sendSignal(groupTarget, 'SIGTERM');
 
   if (groupSignalled) return groupTarget;
+
+  if (childExited) return undefined;
 
   const pidSignalled = sendSignal(pid, 'SIGTERM');
 
@@ -76,8 +82,13 @@ const isAlive = (target: number): boolean => {
   return true;
 };
 
-export const killProcess = async (pid: number): Promise<boolean> => {
-  if (process.platform === 'win32') {
+export const killProcess = async (pid: number, options: KillProcessOptions = LIVE_CHILD): Promise<boolean> => {
+  const { childExited } = options;
+  const isWindows = process.platform === 'win32';
+
+  if (isWindows && childExited) return false;
+
+  if (isWindows) {
     return new Promise<boolean>((resolve) => {
       execFile('taskkill', ['/pid', String(pid), '/t', '/f'], (error) => {
         resolve(error === null);
@@ -86,7 +97,7 @@ export const killProcess = async (pid: number): Promise<boolean> => {
   }
 
   // POSIX: children are spawned as group leaders, so -pid also reaches descendants holding their stdio.
-  const target = resolveTerminatedTarget(pid);
+  const target = resolveTerminatedTarget(pid, childExited);
 
   if (target === undefined) return false;
 

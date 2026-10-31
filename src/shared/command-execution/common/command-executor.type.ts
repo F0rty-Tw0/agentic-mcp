@@ -6,6 +6,10 @@ export type UntrackChildGroup = () => void;
 
 export type StopChild = () => void;
 
+export type KillProcessOptions = {
+  readonly childExited: boolean;
+};
+
 export type ChildStop = {
   readonly stop: StopChild | undefined;
   readonly exitedBeforeStop: () => boolean;
@@ -14,7 +18,14 @@ export type ChildStop = {
 
 export type ChildGroupRegistry = {
   readonly track: (pid: number) => UntrackChildGroup;
-  readonly terminateAll: () => void;
+  readonly terminateAll: () => Promise<void>;
+  readonly killAll: () => void;
+};
+
+export type SignalForwarderInput = {
+  readonly terminateAll: () => Promise<void>;
+  readonly killAll: () => void;
+  readonly isShuttingDown: () => boolean;
 };
 
 export type StoppableChild = {

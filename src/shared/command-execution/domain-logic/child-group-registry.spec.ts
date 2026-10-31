@@ -1,38 +1,116 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createChildGroupRegistry } from './child-group-registry';
+import { CHILD_GROUP_KILL_GRACE_MS } from '../common';
 
 const throwEsrch = (): never => {
   throw new Error('ESRCH');
 };
 
+const ignoreSigterm = (): true => true;
+
+type ProcessKill = (target: number, signal?: string | number) => true;
+
+const exitOnSigterm = (): ProcessKill => {
+  const received = new Set<string | number | undefined>();
+
+  const kill: ProcessKill = (_target, signal) => {
+    received.add(signal);
+
+    const isGone = received.has('SIGTERM');
+
+    if (signal === 0 && isGone) throw new Error('ESRCH');
+
+    return true;
+  };
+
+  return kill;
+};
+
 describe('FEATURE: child process group registry', () => {
   beforeEach(() => {
     vi.spyOn(process, 'once').mockReturnValue(process);
+    vi.spyOn(process, 'on').mockReturnValue(process);
+    vi.spyOn(process, 'removeListener').mockReturnValue(process);
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
   describe('GIVEN a tracked child group', () => {
-    it('WHEN the server exits THEN the group receives SIGTERM', () => {
-      const killSpy = vi.spyOn(process, 'kill').mockReturnValue(true);
+    it('WHEN all groups are terminated THEN the group receives SIGTERM', async () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(exitOnSigterm());
       const registry = createChildGroupRegistry();
 
       registry.track(4242);
-      registry.terminateAll();
+      await registry.terminateAll();
 
       expect(killSpy).toHaveBeenCalledWith(-4242, 'SIGTERM');
     });
 
-    it('WHEN the group is already gone THEN terminating it does not throw', () => {
+    it('WHEN the group exits on SIGTERM THEN it never receives SIGKILL', async () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(exitOnSigterm());
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+      await registry.terminateAll();
+
+      expect(killSpy).not.toHaveBeenCalledWith(-4242, 'SIGKILL');
+    });
+
+    it('WHEN the group ignores SIGTERM past the grace period THEN it receives SIGKILL', async () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+      const terminated = registry.terminateAll();
+
+      await vi.advanceTimersByTimeAsync(CHILD_GROUP_KILL_GRACE_MS);
+      await terminated;
+
+      expect(killSpy).toHaveBeenCalledWith(-4242, 'SIGKILL');
+    });
+
+    it('WHEN the group ignores SIGTERM inside the grace period THEN it has not received SIGKILL yet', async () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+      void registry.terminateAll();
+      await vi.advanceTimersByTimeAsync(CHILD_GROUP_KILL_GRACE_MS / 2);
+
+      expect(killSpy).not.toHaveBeenCalledWith(-4242, 'SIGKILL');
+    });
+
+    it('WHEN the group is already gone THEN terminating it resolves', async () => {
       vi.spyOn(process, 'kill').mockImplementation(throwEsrch);
       const registry = createChildGroupRegistry();
 
       registry.track(4242);
 
-      expect(registry.terminateAll).not.toThrow();
+      await expect(registry.terminateAll()).resolves.toBeUndefined();
+    });
+
+    it('WHEN the server exits THEN the sync exit hook sends SIGKILL, since nothing can wait for a grace period there', () => {
+      const killSpy = vi.spyOn(process, 'kill').mockReturnValue(true);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+      registry.killAll();
+
+      expect(killSpy).toHaveBeenCalledWith(-4242, 'SIGKILL');
+    });
+
+    it('WHEN the group is already gone THEN killing it on exit does not throw', () => {
+      vi.spyOn(process, 'kill').mockImplementation(throwEsrch);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      expect(registry.killAll).not.toThrow();
     });
 
     it('WHEN the first group is tracked THEN one exit hook is installed for the registry', () => {
@@ -43,7 +121,7 @@ describe('FEATURE: child process group registry', () => {
 
       const exitHookCalls = vi.mocked(process.once).mock.calls.filter(([event]) => event === 'exit');
 
-      expect(exitHookCalls).toStrictEqual([['exit', registry.terminateAll]]);
+      expect(exitHookCalls).toStrictEqual([['exit', registry.killAll]]);
     });
   });
 
@@ -54,27 +132,86 @@ describe('FEATURE: child process group registry', () => {
 
       registry.track(4242);
 
-      const onceCalls = vi.mocked(process.once).mock.calls;
-      const events = onceCalls.map(([event]) => event);
-      const signalEvents = events.filter((event) => event !== 'exit');
+      const onCalls = vi.mocked(process.on).mock.calls;
+      const signalEvents = onCalls.map(([event]) => event);
 
       expect(signalEvents).toStrictEqual(['SIGINT', 'SIGTERM', 'SIGHUP']);
     });
 
-    it('WHEN the signal arrives THEN the groups are terminated and the signal is re-raised', () => {
+    it('WHEN the signal arrives THEN the groups are terminated and the signal is re-raised', async () => {
       vi.spyOn(process, 'listenerCount').mockReturnValue(0);
-      const killSpy = vi.spyOn(process, 'kill').mockReturnValue(true);
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(exitOnSigterm());
       const registry = createChildGroupRegistry();
 
       registry.track(4242);
 
-      const sigintCall = vi.mocked(process.once).mock.calls.find(([event]) => event === 'SIGINT');
+      const sigintCall = vi.mocked(process.on).mock.calls.find(([event]) => event === 'SIGINT');
       const forwardSignal = sigintCall?.[1];
 
       forwardSignal?.('SIGINT');
+      await vi.advanceTimersByTimeAsync(CHILD_GROUP_KILL_GRACE_MS);
 
-      expect(killSpy).toHaveBeenNthCalledWith(1, -4242, 'SIGTERM');
-      expect(killSpy).toHaveBeenNthCalledWith(2, process.pid, 'SIGINT');
+      expect(killSpy).toHaveBeenCalledWith(-4242, 'SIGTERM');
+      expect(killSpy).toHaveBeenLastCalledWith(process.pid, 'SIGINT');
+    });
+
+    it('WHEN the signal arrives and the group ignores SIGTERM THEN it gets SIGKILL before the signal is re-raised', async () => {
+      vi.spyOn(process, 'listenerCount').mockReturnValue(0);
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      const sigintCall = vi.mocked(process.on).mock.calls.find(([event]) => event === 'SIGINT');
+      const forwardSignal = sigintCall?.[1];
+
+      forwardSignal?.('SIGINT');
+      await vi.advanceTimersByTimeAsync(CHILD_GROUP_KILL_GRACE_MS);
+
+      const signals = killSpy.mock.calls.filter(([, signal]) => signal !== 0);
+
+      expect(signals).toStrictEqual([
+        [-4242, 'SIGTERM'],
+        [-4242, 'SIGKILL'],
+        [process.pid, 'SIGINT'],
+      ]);
+    });
+
+    it('WHEN a second signal arrives inside the grace period THEN the groups get SIGKILL and it is re-raised at once', () => {
+      vi.spyOn(process, 'listenerCount').mockReturnValue(0);
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+
+      const onCalls = vi.mocked(process.on).mock.calls;
+      const sigintCall = onCalls.find(([event]) => event === 'SIGINT');
+      const sigtermCall = onCalls.find(([event]) => event === 'SIGTERM');
+
+      sigintCall?.[1]('SIGINT');
+      sigtermCall?.[1]('SIGTERM');
+
+      const signals = killSpy.mock.calls.filter(([, signal]) => signal !== 0);
+
+      expect(signals).toStrictEqual([
+        [-4242, 'SIGTERM'],
+        [-4242, 'SIGKILL'],
+        [process.pid, 'SIGTERM'],
+      ]);
+      expect(process.removeListener).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('GIVEN shutdown has started', () => {
+    it('WHEN a new group is tracked during the grace period THEN it gets SIGKILL at once', () => {
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(ignoreSigterm);
+      const registry = createChildGroupRegistry();
+
+      registry.track(4242);
+      void registry.terminateAll();
+      registry.track(5555);
+
+      expect(killSpy).toHaveBeenCalledWith(-5555, 'SIGKILL');
     });
   });
 
@@ -92,14 +229,15 @@ describe('FEATURE: child process group registry', () => {
   });
 
   describe('GIVEN a child group that was untracked after it closed', () => {
-    it('WHEN the server exits THEN the group is not signalled', () => {
+    it('WHEN the server exits THEN the group is not signalled', async () => {
       const killSpy = vi.spyOn(process, 'kill').mockReturnValue(true);
       const registry = createChildGroupRegistry();
 
       const untrack = registry.track(4242);
 
       untrack();
-      registry.terminateAll();
+      await registry.terminateAll();
+      registry.killAll();
 
       expect(killSpy).not.toHaveBeenCalled();
     });
