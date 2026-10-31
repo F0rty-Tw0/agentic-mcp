@@ -33,6 +33,7 @@ export const SKILL_CONTENT_GUIDE_LINES = [
   '- Poll `ask_<provider>` with `action: "status"` and that `job_id` every 30 s or so until the job is done, then read the result.',
   '- `review_<provider>` and `ask_all` run only synchronously; for a big review, send a review prompt to `ask_<provider>` in async mode instead.',
   '- Async jobs do not accept `session_id`, cannot be cancelled, are kept only in memory, and are dropped 15 minutes after they finish.',
+  "- `agentic-mcp setup --client <claude-code|codex|copilot|gemini|opencode>` writes that client's tool-call timeout for the agentic-mcp entry (61 min, one minute above a provider run). Cursor and Windsurf have no such setting, so use async mode there.",
   '',
 
   '## prove Command Guide',
