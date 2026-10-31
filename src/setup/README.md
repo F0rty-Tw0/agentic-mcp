@@ -10,6 +10,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Merges the generated entry into existing config files, preserving other servers and keys; inside the `agentic-mcp` entry it keeps the user's own keys and raises a timeout key only when it is missing or lower. An `agentic-mcp` entry with `url`, `httpUrl` or `serverUrl` (a remote server), or a TOML `mcp_servers` that is not a table, is left for a manual edit (status `unmergeable`)
 - Merges Codex's `config.toml` with `smol-toml`: appends a new table so comments stay, rewrites the file only to update an existing table (with a warning), and refuses a file that is not valid TOML or that a rewrite would change
 - Creates `.bak` backup files before modifying existing configs
+- Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) is set
 - Supports `--dry-run` to preview changes without writing, `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 

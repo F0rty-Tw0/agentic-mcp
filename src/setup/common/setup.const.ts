@@ -38,12 +38,14 @@ const CODEX_TOOL_TIMEOUT_RULE: TimeoutKeyRule = { key: 'tool_timeout_sec' };
 // Codex also reads startup_timeout_ms, and startup_timeout_sec wins when both are set.
 const CODEX_STARTUP_TIMEOUT_RULE: TimeoutKeyRule = { key: 'startup_timeout_sec', msAliasKey: 'startup_timeout_ms' };
 
+// configPathEnvKeys: variables that move the file the client reads away from configPath.
 const CLAUDE_CODE_TARGET: ClientTarget = {
   configPath: '.claude.json',
   format: 'json',
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: [],
+  configPathEnvKeys: ['CLAUDE_CONFIG_DIR'],
 };
 
 const CODEX_TARGET: ClientTarget = {
@@ -52,6 +54,7 @@ const CODEX_TARGET: ClientTarget = {
   serversKey: 'mcp_servers',
   timeoutKeys: [CODEX_TOOL_TIMEOUT_RULE, CODEX_STARTUP_TIMEOUT_RULE],
   preservedKeys: [],
+  configPathEnvKeys: ['CODEX_HOME'],
 };
 
 const COPILOT_TARGET: ClientTarget = {
@@ -60,6 +63,7 @@ const COPILOT_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: ['tools'],
+  configPathEnvKeys: ['COPILOT_HOME'],
 };
 
 const CURSOR_TARGET: ClientTarget = {
@@ -68,6 +72,7 @@ const CURSOR_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
+  configPathEnvKeys: [],
 };
 
 const GEMINI_TARGET: ClientTarget = {
@@ -76,6 +81,7 @@ const GEMINI_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: [],
+  configPathEnvKeys: [],
 };
 
 const OPENCODE_TARGET: ClientTarget = {
@@ -84,6 +90,7 @@ const OPENCODE_TARGET: ClientTarget = {
   serversKey: 'mcp',
   timeoutKeys: [TIMEOUT_MS_RULE],
   preservedKeys: ['enabled'],
+  configPathEnvKeys: ['OPENCODE_CONFIG', 'XDG_CONFIG_HOME'],
 };
 
 const WINDSURF_TARGET: ClientTarget = {
@@ -92,6 +99,7 @@ const WINDSURF_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
+  configPathEnvKeys: [],
 };
 
 const GENERIC_TARGET: ClientTarget = {
@@ -100,6 +108,7 @@ const GENERIC_TARGET: ClientTarget = {
   serversKey: 'mcpServers',
   timeoutKeys: [],
   preservedKeys: [],
+  configPathEnvKeys: [],
 };
 
 export const CLIENT_TARGETS: ClientTargetMap = {

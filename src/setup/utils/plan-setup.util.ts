@@ -77,6 +77,20 @@ const buildRewriteWarning = (
   return `Updating the existing agentic-mcp entry rewrites ${target} with a TOML serializer, ${keptNote}`;
 };
 
+// A client reading its config elsewhere would never see the file setup writes.
+const buildMovedConfigWarnings = (input: SetupPlanInput, targetPath: string | undefined): string[] => {
+  if (input.pathOverride != null || targetPath == null) return [];
+
+  const env = input.env ?? {};
+  const setKeys = CLIENT_TARGETS[input.client].configPathEnvKeys.filter((key) => Boolean(env[key]));
+  const warnings = setKeys.map(
+    (key) =>
+      `${key} is set, so ${input.client} may read a config other than ${targetPath}, which setup writes. If it does, run setup again with --path set to that file.`
+  );
+
+  return warnings;
+};
+
 const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
   const { input, targetPath, isClaudeStateOverwrite, isInvalidMerge, mergedConfig } = planWarningsInput;
   const isMergeRewrite = input.mode === 'merge' && mergedConfig.rewritten;
@@ -103,6 +117,10 @@ const buildPlanWarnings = (planWarningsInput: PlanWarningsInput): string[] => {
   if (isMergeRewrite) {
     warnings.push(buildRewriteWarning(targetPath, input.client, mergedConfig));
   }
+
+  const movedConfigWarnings = buildMovedConfigWarnings(input, targetPath);
+
+  warnings.push(...movedConfigWarnings);
 
   return warnings;
 };

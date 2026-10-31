@@ -74,6 +74,7 @@ const buildSetupPlanFromArgs = async (input: SetupCliFlowInput): Promise<SetupPl
     existingConfigText,
     agenticServerEntry: serverEntry,
     backup: parsedArgs.backup,
+    env: dependencies.env,
   });
 
   return plan;

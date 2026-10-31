@@ -214,7 +214,7 @@ If you are using MCP mode, restart your client after setup and confirm that tool
 
 Setup uses merge mode by default, preserves existing MCP servers and every other key, creates backups when appropriate, and verifies writes after updating the file. Inside the `agentic-mcp` entry it sets the command, keeps keys it does not write (such as `env`), and writes the client's tool-call timeout (see [Long-running calls](#long-running-calls)). If the existing file is not strict JSON (comments, trailing commas), or for Codex not valid TOML, merge mode leaves it unchanged and warns you to add the entry by hand.
 
-The paths above are the defaults. If you moved a client's config with `CODEX_HOME`, `COPILOT_HOME`, `XDG_CONFIG_HOME`, `OPENCODE_CONFIG` or a project-level file, pass that file with `--path`. OpenCode also reads `opencode.jsonc`; setup writes `opencode.json` only.
+The paths above are the defaults. If you moved a client's config with `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `XDG_CONFIG_HOME`, `OPENCODE_CONFIG` or a project-level file, pass that file with `--path`. Without `--path`, setup warns when the client's variable is set, since the client may then read a file other than the one setup wrote. OpenCode also reads `opencode.jsonc`; setup writes `opencode.json` only.
 
 For Claude Code, setup adds the server to the user-scope `mcpServers` in `~/.claude.json`, the same place `claude mcp add --scope user` writes. Check it with `claude mcp get agentic-mcp`.
 

@@ -33,6 +33,7 @@ const defaultDependencies: SetupCliDependencies = {
   isInteractive: Boolean(process.stdin.isTTY && process.stdout.isTTY),
   promptConfirm: defaultPromptConfirm,
   readConfigFile: async (configPath: string) => readFile(configPath, 'utf8'),
+  env: process.env,
 };
 
 export const runSetup = async (args: string[], injectedDependencies?: Partial<SetupCliDependencies>): Promise<void> => {

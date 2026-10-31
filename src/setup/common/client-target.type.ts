@@ -56,4 +56,5 @@ export type ClientTarget = {
   readonly serversKey: string;
   readonly timeoutKeys: TimeoutKeyRule[];
   readonly preservedKeys: string[];
+  readonly configPathEnvKeys: string[];
 };

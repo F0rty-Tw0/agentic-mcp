@@ -78,6 +78,7 @@ export const createSetupCliDependencies = (overrides: Partial<SetupCliDependenci
     isInteractive: false,
     promptConfirm: async () => Promise.resolve(false),
     readConfigFile: async () => Promise.resolve('{"mcpServers":{}}'),
+    env: {},
     ...overrides,
   };
 

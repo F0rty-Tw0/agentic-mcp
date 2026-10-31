@@ -32,6 +32,7 @@ export type {
   ParsedSetupArgs,
   SetupApplyResult,
   SetupBackupPolicy,
+  SetupEnv,
   SetupCliDependencies,
   SetupFileStat,
   SetupWriteOptions,

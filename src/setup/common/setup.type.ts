@@ -5,6 +5,8 @@ export type SupportedClient =
 
 export type SetupMode = 'merge' | 'overwrite';
 
+export type SetupEnv = Readonly<Record<string, string | undefined>>;
+
 export type SetupBackupPolicy = 'if-exists' | 'always' | 'never';
 
 export type SetupWriteIntent = 'write' | 'skip' | 'manual';
@@ -69,6 +71,7 @@ export type SetupPlanInput = {
   readonly existingConfigText?: string;
   readonly agenticServerEntry: McpServerEntry;
   readonly backup: SetupBackupPolicy;
+  readonly env?: SetupEnv;
 };
 
 type SetupApplyStatus = 'written' | 'skipped' | 'manual' | 'verification-failed';
@@ -119,6 +122,7 @@ export type SetupCliDependencies = {
   readonly isInteractive: boolean;
   readonly promptConfirm: (question: string) => Promise<boolean>;
   readonly readConfigFile: (path: string) => Promise<string>;
+  readonly env: SetupEnv;
 };
 
 export type SetupResult = {
