@@ -7,6 +7,11 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
+    ignore:
+      # @types/node tracks the engines floor (Node 26); bump its major together with engines.
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
     groups:
       dev-dependencies:
         dependency-type: development

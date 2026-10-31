@@ -12,7 +12,7 @@ await esbuild.build({
   platform: 'node',
   format: 'esm',
   outfile: 'dist/index.js',
-  target: 'node22',
+  target: 'node26',
   packages: 'external',
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),

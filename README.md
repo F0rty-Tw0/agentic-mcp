@@ -64,7 +64,7 @@ MCP is how editor and agent clients reach the same workflow. It is the delivery 
 
 You need:
 
-- Node.js 22 or newer
+- Node.js 26 or newer
 - At least one supported provider CLI installed locally and already authenticated
 - An MCP client only if you want editor or agent integration; direct CLI usage works without one
 

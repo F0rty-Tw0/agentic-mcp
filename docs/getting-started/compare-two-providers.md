@@ -20,7 +20,7 @@ This path is only worth it when comparison itself is the goal.
 
 ## Prerequisites
 
-- Node.js 22 or newer
+- Node.js 26 or newer
 - Two supported provider CLIs installed locally
 - Both CLIs authenticated
 - Both providers visible as `binary detected` in `list_providers`
