@@ -7,7 +7,7 @@ import {
 } from './output-text.util';
 import { stripAnsi } from '../../shared';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
-import { FAILED_FINISHED_REASONS, SUCCESS_STATUS } from '../common';
+import { FAILED_FINISHED_REASONS, PARTIAL_FINISHED_REASONS, SUCCESS_STATUS } from '../common';
 import type { ProviderJsonRecord } from '../common';
 
 const readEnvelopeString = (envelope: ProviderJsonRecord, key: string): string | undefined => {
@@ -115,7 +115,12 @@ export const describeEnvelopeStatus = (providerName: string, envelope: ProviderJ
 export const describeFinishedReason = (providerName: string, envelope: ProviderJsonRecord): string | undefined => {
   const finishedReason = readEnvelopeString(envelope, 'finished_reason');
 
-  if (finishedReason === undefined || finishedReason.trim().length === 0) return;
+  if (finishedReason === undefined) return;
+
+  const normalizedReason = finishedReason.toLowerCase();
+  const isPartial = PARTIAL_FINISHED_REASONS.includes(normalizedReason);
+
+  if (!isPartial) return;
 
   const finishedReasonNote = `${providerName} finished with finished_reason "${finishedReason}", so the answer may be partial.`;
 

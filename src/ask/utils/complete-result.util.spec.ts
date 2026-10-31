@@ -86,6 +86,19 @@ describe('FEATURE: result warnings', () => {
     expect(warning).toContain('"print_timeout"');
   });
 
+  it('GIVEN a provider that did not opt in to result acceptance WHEN its envelope finished with reason stop THEN there is no warning', () => {
+    const result = { stdout: '{"result":"answer","finished_reason":"stop"}', timedOut: false };
+    const resultWarnings = resolveResultWarnings({
+      providerName: 'claude',
+      config: {},
+      result,
+      outputFormat: 'json',
+      wasCancelled: false,
+    });
+
+    expect(resultWarnings.warning).toBeUndefined();
+  });
+
   describe('GIVEN a timed-out json run whose envelope finished with reason print_timeout', () => {
     const stdout = '{"status":"SUCCESS","response":"half","finished_reason":"print_timeout"}';
 

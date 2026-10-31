@@ -91,7 +91,23 @@ describe('FEATURE: result envelope reading', () => {
       expect(note).toBeUndefined();
     });
 
-    it('WHEN it is set THEN the note names it', () => {
+    it('WHEN it means a normal finish THEN there is no note', () => {
+      const envelope: ProviderJsonRecord = { response: 'answer', finished_reason: 'stop' };
+
+      const note = describeFinishedReason('claude', envelope);
+
+      expect(note).toBeUndefined();
+    });
+
+    it('WHEN it is an upper-case token limit THEN the note names it', () => {
+      const envelope: ProviderJsonRecord = { response: 'answer', finished_reason: 'MAX_TOKENS' };
+
+      const note = describeFinishedReason('gemini', envelope);
+
+      expect(note).toContain('"MAX_TOKENS"');
+    });
+
+    it('WHEN it means a cut-off answer THEN the note names it', () => {
       const envelope: ProviderJsonRecord = { response: 'answer', finished_reason: 'print_timeout' };
 
       const note = describeFinishedReason('antigravity', envelope);
