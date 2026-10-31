@@ -16,6 +16,7 @@ describe('resolveProviderMetricsFilePath', () => {
     const result = resolveProviderMetricsFilePath();
 
     expect(result.startsWith(os.tmpdir())).toBe(true);
+    expect(result).toMatch(/agentic-mcp-vitest-\d+/);
   });
 
   it('GIVEN AGENTIC_MCP_METRICS_PATH WHEN resolved THEN the absolute override path wins', () => {
