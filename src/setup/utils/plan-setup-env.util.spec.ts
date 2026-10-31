@@ -81,6 +81,18 @@ describe('FEATURE: setup plan warnings for a client config moved by an environme
     });
   });
 
+  describe('GIVEN GEMINI_CLI_HOME is set', () => {
+    it('WHEN building the gemini plan THEN it warns that gemini may read the settings under that home', () => {
+      const env = createEnv([['GEMINI_CLI_HOME', '/srv/gemini']]);
+
+      const result = planWithEnv({ client: 'gemini', env });
+
+      expect(result.warnings).toStrictEqual([
+        'GEMINI_CLI_HOME is set, so gemini may read /srv/gemini/.gemini/settings.json instead of /home/dev/.gemini/settings.json, which setup writes. If it does, run setup again with --path /srv/gemini/.gemini/settings.json.',
+      ]);
+    });
+  });
+
   describe('GIVEN XDG_CONFIG_HOME and OPENCODE_CONFIG are set', () => {
     it('WHEN building the opencode plan THEN it warns about each variable', () => {
       const env = createEnv([
