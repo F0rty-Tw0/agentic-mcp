@@ -53,6 +53,16 @@ Runs the bundled `antigravity` config against a fake `agy` (`test/fixtures/fake-
 | stream-json answer and resume    | `{"event":"result","result":{...}}` gives the answer and the conversation id             | Same as json                                           |
 | Result printed, then never exits | The run is stopped after `resultExitGraceMs` and the printed answer returned (agy #1313) | Success, well under the timeout, attribution `warning` |
 
+### `ask.handler-copilot.test.ts`
+
+Runs the bundled `copilot` config against a fake `copilot` (`test/fixtures/fake-copilot/copilot`) that rejects unknown or stray arguments and prints the argv it received.
+
+| Test                     | What It Verifies                                                                 | Expected Output                                          |
+| ------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| First ask in a session   | The run starts copilot with one `--session-id=<uuid>` argument and no `--resume` | argv holds `--session-id=<uuid>`                         |
+| Follow-up in the session | The run passes `--resume <same uuid>` and only the new prompt, with no replay    | argv ends with `--resume <uuid>`, `-p` is the new prompt |
+| `help_copilot`           | The help text ends with the agentic-mcp session support line                     | `agentic-mcp sessions: native resume. ...`               |
+
 ### `ask.handler-cancellation.test.ts`
 
 Tests request cancellation and timeout behavior using real child processes that run for 5 seconds.

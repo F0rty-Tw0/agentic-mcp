@@ -36,3 +36,4 @@ Session behavior is covered by unit tests in this module plus ask integration te
 - Sequential turn accumulation across multiple ask calls
 - Session listing by provider name
 - Native session ID extraction and fallback behavior
+- Starting a native session with a generated id when the provider sets `commands.sessions.flags.startWithId` (`ask/domain-logic/ask.handler-copilot.test.ts`)

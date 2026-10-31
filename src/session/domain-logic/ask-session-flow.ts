@@ -1,9 +1,12 @@
+import { randomUUID } from 'node:crypto';
+
 import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
+import { canStartNativeSession } from '../../ask/utils/session-flag-args.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
-import type { ResolvedProviderEntry } from '../../shared/provider/common';
+import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
 import type { SessionMode } from '../common';
 import { SESSION_STORE } from '../data-access';
@@ -13,6 +16,7 @@ type SessionFlowState = {
   readonly sessionId: string;
   readonly prompt?: string;
   readonly nativeSessionId?: string;
+  readonly startSessionId?: string;
   readonly mode: SessionMode;
 };
 
@@ -44,8 +48,10 @@ const runSessionExecution = async (
     args: promptArgs,
     extra,
     tier2SessionId: state.nativeSessionId,
+    startSessionId: state.startSessionId,
   });
-  const result: SessionFlowResult = { ...execution, sessionMode: state.mode };
+  const nativeSessionId = state.startSessionId ?? execution.nativeSessionId;
+  const result: SessionFlowResult = { ...execution, nativeSessionId, sessionMode: state.mode };
 
   return result;
 };
@@ -113,6 +119,15 @@ export const executeSessionFlow = async ({
   return result;
 };
 
+const resolveStartSessionId = (config: ProviderConfig): string | undefined => {
+  const candidateId = randomUUID();
+  const canStart = canStartNativeSession(config, candidateId);
+
+  if (!canStart) return;
+
+  return candidateId;
+};
+
 export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskToolArgs): SessionFlowState => {
   const { session_id: sessionId = '' } = args;
 
@@ -132,11 +147,10 @@ export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskT
   }
 
   const prompt = buildTier1Prompt(context, args, sessionId);
-  const result: SessionFlowState = {
-    sessionId,
-    prompt,
-    mode: 'tier1-prepend',
-  };
+  const startSessionId = resolveStartSessionId(context.config);
+  const tier1State: SessionFlowState = { sessionId, prompt, mode: 'tier1-prepend' };
+  const startState: SessionFlowState = { ...tier1State, startSessionId };
+  const result = startSessionId ? startState : tier1State;
 
   return result;
 };
