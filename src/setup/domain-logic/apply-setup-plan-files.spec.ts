@@ -161,4 +161,37 @@ describe('applySetupPlan on a real filesystem', () => {
 
     expect(result.reason).toMatch(/^Invalid TOML in written file: /);
   });
+
+  it('GIVEN an unchanged plan WHEN setup applies it THEN the file keeps its inode and no backup is made', async () => {
+    const targetPath = path.join(directory, '.claude.json');
+
+    await writeFile(targetPath, CONFIG_TEXT, 'utf8');
+
+    const before = await stat(targetPath);
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, writeIntent: 'unchanged', backup: 'always' };
+
+    await applySetupPlan(plan);
+
+    const after = await stat(targetPath);
+    const entries = await readdir(directory);
+
+    expect([after.ino, after.mtimeMs]).toStrictEqual([before.ino, before.mtimeMs]);
+    expect(entries).toStrictEqual(['.claude.json']);
+  });
+
+  it('GIVEN an unchanged plan WHEN setup applies it THEN the result says it is already configured', async () => {
+    const targetPath = path.join(directory, '.claude.json');
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, writeIntent: 'unchanged' };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result).toStrictEqual({
+      status: 'unchanged',
+      path: targetPath,
+      backupPath: undefined,
+      reason: 'already configured; the agentic-mcp entry is up to date, so no file or backup was written',
+    });
+  });
 });

@@ -20,16 +20,23 @@ const resolveTargetPath = (input: SetupPlanInput): string | undefined => {
 
 type WriteIntent = SetupPlan['writeIntent'];
 
-const resolveWriteIntent = (
-  input: SetupPlanInput,
-  targetPath: string | undefined,
-  isWriteBlocked: boolean
-): WriteIntent => {
+type WriteIntentInput = {
+  readonly input: SetupPlanInput;
+  readonly targetPath: string | undefined;
+  readonly isWriteBlocked: boolean;
+  readonly isUnchanged: boolean;
+};
+
+const resolveWriteIntent = (writeIntentInput: WriteIntentInput): WriteIntent => {
+  const { input, targetPath, isWriteBlocked, isUnchanged } = writeIntentInput;
+
   if (input.dryRun) return 'skip';
 
   if (targetPath == null) return 'manual';
 
   if (isWriteBlocked) return 'manual';
+
+  if (isUnchanged) return 'unchanged';
 
   return 'write';
 };
@@ -139,7 +146,8 @@ export const buildSetupPlan = (input: SetupPlanInput): SetupPlan => {
   const isInvalidMerge = isMergeMode && isBlockedMerge;
   const isClaudeStateOverwrite = isClaudeCodeStateOverwrite(input);
   const isWriteBlocked = isInvalidMerge || isClaudeStateOverwrite;
-  const writeIntent = resolveWriteIntent(input, targetPath, isWriteBlocked);
+  const isUnchanged = isMergeMode && mergedConfig.status === 'unchanged';
+  const writeIntent = resolveWriteIntent({ input, targetPath, isWriteBlocked, isUnchanged });
   const warnings = buildPlanWarnings({
     input,
     targetPath,

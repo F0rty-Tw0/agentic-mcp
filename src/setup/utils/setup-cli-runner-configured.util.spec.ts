@@ -3,7 +3,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runConfiguredSetup } from './setup-cli-runner.util';
-import type { SkillInstallResult } from '../common';
+import type { SetupPlan, SkillInstallResult } from '../common';
 import { DEFAULT_CLAUDE_PATH, DEFAULT_SKILL_PATH, TEST_PROVIDERS } from '../test/common/setup.const';
 import type { ConfiguredJsonOutput } from '../test/common/setup.type';
 import {
@@ -36,6 +36,22 @@ describe('runConfiguredSetup', () => {
       'Aborted: non-interactive write requires explicit --yes. Use --yes to run non-interactive writes.\n'
     );
     expect(applySetupPlan).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN an unchanged plan without yes WHEN running configured setup non-interactively THEN it applies the plan without aborting', async () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+    const applySetupPlan = vi.fn().mockResolvedValue(createSetupApplyResult({ status: 'unchanged' }));
+    const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent: 'unchanged' });
+    const dependencies = createSetupCliDependencies({ stderrWrite, applySetupPlan, buildSetupPlan });
+
+    await runConfiguredSetup({
+      parsedArgs: createParsedSetupArgs({ yes: false }),
+      dependencies,
+      detectedProviders: TEST_PROVIDERS,
+    });
+
+    expect(stderrWrite).not.toHaveBeenCalled();
+    expect(applySetupPlan).toHaveBeenCalledTimes(1);
   });
 
   it('GIVEN interactive write without yes and declined prompt WHEN running configured setup THEN aborts without applying', async () => {

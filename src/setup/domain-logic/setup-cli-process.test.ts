@@ -2,7 +2,7 @@
 
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -15,6 +15,11 @@ const BINARY_PATH = 'dist/index.js';
 const TIMEOUT_MS = 30_000;
 const SETUP_ARGS = ['setup', '--client', 'claude-code', '--output', 'json', '--yes'];
 
+type FileIdentity = {
+  readonly inode: number;
+  readonly mtimeMs: number;
+};
+
 let homeDirectory: string;
 
 const runSetupProcess = async (): Promise<string> => {
@@ -23,6 +28,20 @@ const runSetupProcess = async (): Promise<string> => {
   const { stdout } = await execFileAsync(process.execPath, [BINARY_PATH, ...SETUP_ARGS], { env });
 
   return stdout;
+};
+
+const readIdentity = async (targetPath: string): Promise<FileIdentity> => {
+  const details = await stat(targetPath);
+  const identity: FileIdentity = { inode: details.ino, mtimeMs: details.mtimeMs };
+
+  return identity;
+};
+
+const listBackups = async (): Promise<string[]> => {
+  const entries = await readdir(homeDirectory);
+  const backups = entries.filter((entry) => entry.endsWith('.bak'));
+
+  return backups;
 };
 
 beforeEach(async () => {
@@ -43,6 +62,26 @@ describe.skipIf(!existsSync(BINARY_PATH))('integration: setup binary with a scra
       const skillResult = { status: 'installed', skillPath };
 
       expect(parsed).toHaveProperty('skillResult', skillResult);
+    },
+    TIMEOUT_MS
+  );
+
+  it(
+    'GIVEN a configured claude-code entry WHEN setup runs again THEN the file is not rewritten and no backup is made',
+    async () => {
+      const configPath = path.join(homeDirectory, '.claude.json');
+
+      await runSetupProcess();
+
+      const before = await readIdentity(configPath);
+      const stdout = await runSetupProcess();
+      const after = await readIdentity(configPath);
+      const backups = await listBackups();
+      const parsed: unknown = JSON.parse(stdout);
+
+      expect(after).toStrictEqual(before);
+      expect(backups).toStrictEqual([]);
+      expect(parsed).toHaveProperty('result.status', 'unchanged');
     },
     TIMEOUT_MS
   );
