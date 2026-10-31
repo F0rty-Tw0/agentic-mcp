@@ -20,3 +20,15 @@ export const canFallBackToTier1 = (
 
   return result;
 };
+
+export const canRetryWithoutStartFlag = (
+  execution: SessionFlowResult,
+  state: SessionFlowState,
+  extra?: ProgressContext
+): boolean => {
+  if (!execution.response.isError || !state.startSessionId) return false;
+
+  const result = !wasInterrupted(execution, extra);
+
+  return result;
+};

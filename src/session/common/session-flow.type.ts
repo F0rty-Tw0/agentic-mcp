@@ -17,4 +17,5 @@ export type SessionFlowResult = {
   readonly sessionMode: SessionMode;
   readonly wasCancelled: boolean;
   readonly wasStopped?: boolean;
+  readonly hasDroppedStartFlag?: boolean;
 };
