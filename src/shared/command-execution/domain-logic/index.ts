@@ -1,3 +1,5 @@
+export { defaultChildGroupRegistry } from './child-group-registry';
+
 export { executeCommand } from './command-executor';
 
 export { buildMinimalEnv, killProcess, resolveCliBinary } from './platform';
