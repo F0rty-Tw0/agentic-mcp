@@ -1,4 +1,4 @@
-export { CLIENT_TARGETS, KNOWN_PROVIDER_COMMANDS, SUPPORTED_CLIENTS } from './setup.const';
+export { CLIENT_TARGETS, CLIENT_TOOL_TIMEOUT_MS, KNOWN_PROVIDER_COMMANDS, SUPPORTED_CLIENTS } from './setup.const';
 
 export { SKILL_CONTENT } from './skill-content';
 

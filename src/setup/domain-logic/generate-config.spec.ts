@@ -14,8 +14,18 @@ const makeProvider = (name: string, available: boolean, binaryPath?: string): De
 };
 
 describe('generateClientConfigEntry', () => {
-  it('GIVEN any client and providers WHEN generating entry THEN returns deterministic agentic-mcp entry', () => {
+  it('GIVEN claude-code WHEN generating entry THEN the per-server timeout is one minute above the provider timeout', () => {
     const result = generateClientConfigEntry('claude-code', []);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      timeout: 3_660_000,
+    });
+  });
+
+  it('GIVEN cursor WHEN generating entry THEN no timeout key is written', () => {
+    const result = generateClientConfigEntry('cursor', []);
 
     expect(result).toStrictEqual({
       command: 'npx',

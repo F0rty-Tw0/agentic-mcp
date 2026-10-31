@@ -1,4 +1,10 @@
 import type { ClientTarget, SupportedClient } from './setup.type';
+import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/provider/common';
+
+const CLIENT_TIMEOUT_MARGIN_MS = 60_000;
+
+// A client must wait longer than one provider run, or it cancels the call and agentic-mcp stops the CLI.
+export const CLIENT_TOOL_TIMEOUT_MS = DEFAULT_MCP_TOOL_TIMEOUT_MS + CLIENT_TIMEOUT_MARGIN_MS;
 
 export const SUPPORTED_CLIENTS: SupportedClient[] = ['claude-code', 'cursor', 'windsurf', 'generic'];
 

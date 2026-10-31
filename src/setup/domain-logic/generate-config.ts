@@ -1,8 +1,14 @@
+import { CLIENT_TOOL_TIMEOUT_MS } from '../common';
 import type { DetectedProvider, McpServerEntry, SupportedClient } from '../common';
 
 const BASE_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
+};
+
+const TIMED_ENTRY: McpServerEntry = {
+  ...BASE_ENTRY,
+  timeout: CLIENT_TOOL_TIMEOUT_MS,
 };
 
 export const generateClientConfigEntry = (
@@ -13,6 +19,7 @@ export const generateClientConfigEntry = (
 
   switch (client) {
     case 'claude-code':
+      return TIMED_ENTRY;
     case 'cursor':
     case 'windsurf':
       // Intentionally explicit per-client branches to support project-specific overrides later.
