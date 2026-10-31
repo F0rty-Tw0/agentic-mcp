@@ -77,6 +77,16 @@ describe('resolveProviderEnv', () => {
       expect('OPENAI_API_KEY' in resolvedEnv).toBe(false);
     });
 
+    it('GIVEN a passthrough name that is an Object.prototype member WHEN resolving env THEN nothing is passed', () => {
+      const context = createContext({ envPassthrough: ['constructor', 'toString'] });
+
+      const resolvedEnv = resolveProviderEnv(context);
+      const keys = Object.keys(resolvedEnv);
+
+      expect(keys).not.toContain('constructor');
+      expect(keys).not.toContain('toString');
+    });
+
     it('GIVEN a key in both env and envPassthrough WHEN resolving env THEN the explicit env value wins', () => {
       vi.stubEnv('OPENAI_API_KEY', 'sk-parent');
       const env = { OPENAI_API_KEY: 'sk-config' };

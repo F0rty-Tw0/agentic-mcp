@@ -127,12 +127,16 @@ export const killProcess = async (pid: number): Promise<boolean> => {
 
 export const buildMinimalEnv = (providerEnv: ProviderEnv): MinimalEnv => {
   const env: MutableMinimalEnv = {};
+  const providerKeys = Object.keys(providerEnv);
+  // Windows env names are case-insensitive and proxy vars come in both cases, so a provider entry replaces every spelling.
+  const providerKeysUpper = new Set(providerKeys.map((key) => key.toUpperCase()));
 
   for (const key of SAFE_ENV_KEYS) {
     const value = process.env[key];
-    const isRemoved = providerEnv[key] === null;
+    const upperKey = key.toUpperCase();
+    const isSetByProvider = providerKeysUpper.has(upperKey);
 
-    if (value !== undefined && !isRemoved) {
+    if (value !== undefined && !isSetByProvider) {
       env[key] = value;
     }
   }

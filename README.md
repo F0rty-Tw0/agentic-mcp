@@ -325,7 +325,7 @@ Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp 
 "envPassthrough": ["OPENAI_API_KEY", "AZURE_OPENAI_API_KEY"]
 ```
 
-`env` sets fixed values and wins over a passed-through one; `"KEY": null` removes a base variable.
+`env` sets fixed values and wins over a passed-through one; `"KEY": null` removes a base variable in every spelling (`"https_proxy": null` also drops `HTTPS_PROXY`). Anything the provider CLI runs, including tools it starts in your working directory, can read the variables it was given, so keep each list to what that CLI needs.
 
 ## Useful setup flags
 

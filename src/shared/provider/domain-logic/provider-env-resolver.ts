@@ -19,9 +19,10 @@ const pickPassthroughEnv = (keys: string[]): ProviderEnv => {
   const passthroughEnv: Record<string, string> = {};
 
   for (const key of keys) {
-    const value = process.env[key];
+    const isOwnKey = Object.hasOwn(process.env, key);
+    const value = isOwnKey ? process.env[key] : undefined;
 
-    if (value !== undefined) passthroughEnv[key] = value;
+    if (typeof value === 'string') passthroughEnv[key] = value;
   }
 
   return passthroughEnv;
