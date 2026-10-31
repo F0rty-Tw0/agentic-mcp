@@ -90,7 +90,7 @@ describe('FEATURE: executeCommand with real child processes', () => {
     const isResultComplete = (chunk: string): boolean => chunk.includes('RESULT');
 
     it('WHEN a result detector is set THEN the child is stopped well before the timeout', async () => {
-      const options = buildNodeOptions(script, { timeoutMs: 30_000, isResultComplete });
+      const options = buildNodeOptions(script, { timeoutMs: 30_000, isResultComplete, resultExitGraceMs: 500 });
 
       const result = await executeCommand(options);
 
@@ -98,7 +98,7 @@ describe('FEATURE: executeCommand with real child processes', () => {
     }, 20_000);
 
     it('WHEN a result detector is set THEN the result reports the stop as a timeout', async () => {
-      const options = buildNodeOptions(script, { timeoutMs: 30_000, isResultComplete });
+      const options = buildNodeOptions(script, { timeoutMs: 30_000, isResultComplete, resultExitGraceMs: 500 });
 
       const result = await executeCommand(options);
 

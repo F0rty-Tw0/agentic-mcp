@@ -82,7 +82,6 @@ const writeStdin = (child: ChildProcess, stdin?: string): void => {
 
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
   const { binaryPath, timeoutMs, idleTimeoutMs, stdin, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
-  const { isResultComplete } = options;
 
   return new Promise<ExecutionResult>((resolve, reject) => {
     const child = spawnProcess(options);
@@ -92,7 +91,7 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     const timeout = setupTimeout(timeoutMs, child.pid);
     const idleTimeout = setupIdleTimeout(idleTimeoutMs, child.pid);
-    const resultExitWatch = setupResultExitWatch(isResultComplete, child.pid);
+    const resultExitWatch = setupResultExitWatch(options, child.pid);
     const stdout = attachStreamCollector(child.stdout, wrapStdoutCallback(idleTimeout, resultExitWatch, onStdoutChunk));
     const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
     const abort = createAbortSubscription(signal, child.pid);

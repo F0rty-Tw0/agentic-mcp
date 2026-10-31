@@ -1,13 +1,17 @@
-import type { ResultCompleteDetector, ResultExitWatch } from '../common';
+import type { ExecuteCommandOptions, ResultExitWatch } from '../common';
 import { RESULT_EXIT_GRACE_MS } from '../common';
 import { killProcess } from './platform';
 
 const NOOP_WATCH: ResultExitWatch = { observe: () => undefined, clear: () => undefined, stopped: () => false };
 
+type ResultExitWatchOptions = Pick<ExecuteCommandOptions, 'isResultComplete' | 'resultExitGraceMs'>;
+
 export const setupResultExitWatch = (
-  isResultComplete: ResultCompleteDetector | undefined,
+  resultExitWatchOptions: ResultExitWatchOptions,
   pid: number | undefined
 ): ResultExitWatch => {
+  const { isResultComplete, resultExitGraceMs = RESULT_EXIT_GRACE_MS } = resultExitWatchOptions;
+
   if (!isResultComplete || pid === undefined) return NOOP_WATCH;
 
   let timer: NodeJS.Timeout | undefined;
@@ -25,7 +29,7 @@ export const setupResultExitWatch = (
 
     if (!isComplete) return;
 
-    timer = setTimeout(stopChild, RESULT_EXIT_GRACE_MS);
+    timer = setTimeout(stopChild, resultExitGraceMs);
   };
 
   const clear = (): void => {

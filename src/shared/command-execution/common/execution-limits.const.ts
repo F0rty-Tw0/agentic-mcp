@@ -16,5 +16,6 @@ export const MS_PER_SECOND = 1_000;
 // After a kill, a descendant outside the process group may keep the pipes open; release them this long after exit.
 export const STDIO_RELEASE_GRACE_MS = 1_000;
 
-// A CLI that printed a complete result but has not exited by then is stopped (agy #1313 hangs after printing).
-export const RESULT_EXIT_GRACE_MS = 5_000;
+// Default wait for a CLI that printed a complete result to exit before it is stopped (agy #1313 hangs after
+// printing). agy may still finish background tasks after its answer, so this is not a few seconds.
+export const RESULT_EXIT_GRACE_MS = 30_000;

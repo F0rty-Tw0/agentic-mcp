@@ -69,6 +69,7 @@ export type ExecuteCommandOptions = {
   readonly signal?: AbortSignal;
   readonly onSpawned?: (pid: number) => void;
   readonly isResultComplete?: ResultCompleteDetector;
+  readonly resultExitGraceMs?: number;
 };
 
 export type ExecutionTimeoutKind = 'wall-clock' | 'idle' | 'result-exit';

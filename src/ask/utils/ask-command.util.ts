@@ -115,6 +115,7 @@ export const buildCommandOptions = (buildCommandOptionsInput: BuildCommandOption
     signal,
     onSpawned,
     isResultComplete,
+    resultExitGraceMs: context.config.resultExitGraceMs,
   };
 
   return commandOptions;

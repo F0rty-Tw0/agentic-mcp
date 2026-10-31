@@ -30,7 +30,7 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
   describe('GIVEN a watch with a result detector', () => {
     describe('WHEN a complete result is seen and the grace period elapses', () => {
       it('THEN the child is killed', async () => {
-        const watch = setupResultExitWatch(isResultChunk, 4321);
+        const watch = setupResultExitWatch({ isResultComplete: isResultChunk }, 4321);
 
         watch.observe('RESULT');
         await vi.advanceTimersByTimeAsync(RESULT_EXIT_GRACE_MS);
@@ -39,7 +39,7 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
       });
 
       it('THEN the watch reports that it stopped the child', async () => {
-        const watch = setupResultExitWatch(isResultChunk, 4321);
+        const watch = setupResultExitWatch({ isResultComplete: isResultChunk }, 4321);
 
         watch.observe('RESULT');
         await vi.advanceTimersByTimeAsync(RESULT_EXIT_GRACE_MS);
@@ -49,7 +49,7 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
     });
 
     it('WHEN the child exits within the grace period THEN it is not killed', async () => {
-      const watch = setupResultExitWatch(isResultChunk, 4321);
+      const watch = setupResultExitWatch({ isResultComplete: isResultChunk }, 4321);
 
       watch.observe('RESULT');
       await vi.advanceTimersByTimeAsync(RESULT_EXIT_GRACE_MS - 1);
@@ -60,7 +60,7 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
     });
 
     it('WHEN only partial output is seen THEN the child is not killed', async () => {
-      const watch = setupResultExitWatch(isResultChunk, 4321);
+      const watch = setupResultExitWatch({ isResultComplete: isResultChunk }, 4321);
 
       watch.observe('step');
       await vi.advanceTimersByTimeAsync(RESULT_EXIT_GRACE_MS * 2);
@@ -70,7 +70,7 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
 
     it('WHEN more output follows the result THEN the detector is not asked again', () => {
       const detector = vi.fn(isResultChunk);
-      const watch = setupResultExitWatch(detector, 4321);
+      const watch = setupResultExitWatch({ isResultComplete: detector }, 4321);
 
       watch.observe('RESULT');
       watch.observe('trailing');
@@ -79,9 +79,29 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
     });
   });
 
+  describe('GIVEN a watch with a custom grace period', () => {
+    it('WHEN that period elapses after the result THEN the child is killed', async () => {
+      const watch = setupResultExitWatch({ isResultComplete: isResultChunk, resultExitGraceMs: 200 }, 4321);
+
+      watch.observe('RESULT');
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(killProcessMock).toHaveBeenCalledWith(4321);
+    });
+
+    it('WHEN that period has not elapsed THEN the child is not killed', async () => {
+      const watch = setupResultExitWatch({ isResultComplete: isResultChunk, resultExitGraceMs: 200 }, 4321);
+
+      watch.observe('RESULT');
+      await vi.advanceTimersByTimeAsync(199);
+
+      expect(killProcessMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe('GIVEN a watch without a result detector', () => {
     it('WHEN output arrives THEN the child is never killed', async () => {
-      const watch = setupResultExitWatch(undefined, 4321);
+      const watch = setupResultExitWatch({}, 4321);
 
       watch.observe('RESULT');
       await vi.advanceTimersByTimeAsync(RESULT_EXIT_GRACE_MS * 2);
@@ -91,7 +111,7 @@ describe('FEATURE: stop a child that does not exit after its result', () => {
   });
 
   it('GIVEN a child without a pid WHEN a result is seen THEN the child is never killed', async () => {
-    const watch = setupResultExitWatch(isResultChunk, undefined);
+    const watch = setupResultExitWatch({ isResultComplete: isResultChunk }, undefined);
 
     watch.observe('RESULT');
     await vi.advanceTimersByTimeAsync(RESULT_EXIT_GRACE_MS * 2);

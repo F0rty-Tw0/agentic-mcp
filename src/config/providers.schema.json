@@ -176,7 +176,13 @@
         },
         "acceptResultOnTimeout": {
           "type": "boolean",
-          "description": "Opt-in workaround for CLIs that print their final result and then fail to exit. When true, an ask whose stdout already holds a complete result envelope with a non-empty answer (a json envelope, or a terminal stream-json result event) is returned as a success even if the process was then killed by timeout or idleTimeout. An ask process that has not exited 5 seconds after printing that envelope is stopped instead of waiting for the timeout. The response attribution carries a warning. Defaults to false: a killed run is a failure."
+          "description": "Opt-in workaround for CLIs that print their final result and then fail to exit. When true, an ask whose stdout already holds a complete result envelope with a non-empty answer (a json envelope, or a terminal stream-json result event) is returned as a success even if the process was then killed by timeout or idleTimeout. An ask process that has not exited resultExitGraceMs after printing that envelope is stopped instead of waiting for the timeout. The response attribution carries a warning. Defaults to false: a killed run is a failure."
+        },
+        "resultExitGraceMs": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2147483647,
+          "description": "Used only with acceptResultOnTimeout: how long, in milliseconds, the process may keep running after it printed a complete result envelope before it is stopped and that result is returned. Leave room for a CLI that finishes background work after its answer. Defaults to 30000."
         },
         "maxConcurrency": {
           "type": "integer",

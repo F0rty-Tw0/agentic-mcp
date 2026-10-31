@@ -252,6 +252,15 @@ describe('buildCommandOptions', () => {
 
       expect(isComplete).toBe(true);
     });
+
+    it('WHEN the provider sets resultExitGraceMs THEN the options carry it', () => {
+      const config = buildProviderConfig({ acceptResultOnTimeout: true, resultExitGraceMs: 10_000 });
+      const graceContext = buildContext({ config });
+
+      const options = buildCommandOptions({ context: graceContext, resolved: {}, cliArgs: [], env: {} });
+
+      expect(options.resultExitGraceMs).toBe(10_000);
+    });
   });
 
   it('GIVEN a provider without the opt-in WHEN called with json output THEN no result detector is set', () => {
