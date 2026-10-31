@@ -46,6 +46,17 @@ const buildFakeProviderConfig = (pidFile: string): string => {
   return configText;
 };
 
+// SIGTERM first lets the server stop its provider group; client.close() alone SIGKILLs the server
+// within 4 s, before its 5 s group grace ends, and orphans a provider that ignores SIGTERM.
+const stopFailedStart = async (client: Client, serverPid: number | null): Promise<void> => {
+  if (serverPid !== null) {
+    process.kill(serverPid, 'SIGTERM');
+    await waitUntilDead(serverPid, SHUTDOWN_BUDGET_MS);
+  }
+
+  await client.close();
+};
+
 // Starts an ask without awaiting it, then sends SIGTERM to the server once the provider runs.
 const startAskAndSigterm = async (directory: string): Promise<ShutdownRun> => {
   const pidFile = path.join(directory, 'provider.pid');
@@ -74,8 +85,7 @@ const startAskAndSigterm = async (directory: string): Promise<ShutdownRun> => {
   const serverPid = transport.pid;
 
   if (providerPid === undefined || serverPid === null) {
-    // Closing the client stops the server, which stops its provider group, so a failed start leaks nothing.
-    await client.close();
+    await stopFailedStart(client, serverPid);
 
     throw new Error('server or provider did not start');
   }
