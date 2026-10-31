@@ -115,7 +115,7 @@ describe('buildMergedClientConfig', () => {
       mcpServers: expectedServers,
     });
   });
-  it('GIVEN existing mcpServers is not an object WHEN merging THEN replaces it with the agentic server entry', () => {
+  it('GIVEN existing mcpServers is not an object WHEN merging THEN it is unmergeable instead of replaced', () => {
     const existingConfig = { version: 1, mcpServers: ['invalid-shape'] };
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(existingConfig),
@@ -123,19 +123,23 @@ describe('buildMergedClientConfig', () => {
       target: MCP_SERVERS_TARGET,
     });
 
-    expect(result.status).toBe('merged');
-    expect(result.mergedConfig).toStrictEqual({ version: 1, mcpServers: AGENTIC_ONLY_SERVERS });
+    expect(result.status).toBe('unmergeable');
+    expect(result.reason).toBe(
+      'mcpServers is not an object, and setup will not replace it; make it an object or remove it, then run setup again'
+    );
   });
 
-  it('GIVEN parsed JSON is not an object WHEN merging THEN creates a config with only the agentic server entry', () => {
+  it('GIVEN parsed JSON is not an object WHEN merging THEN it is unmergeable instead of replaced', () => {
     const result = buildMergedClientConfig({
       existingConfigText: JSON.stringify(['not-an-object']),
       agenticServerEntry: AGENTIC_SERVER_ENTRY,
       target: MCP_SERVERS_TARGET,
     });
 
-    expect(result.status).toBe('merged');
-    expect(result.mergedConfig).toStrictEqual(AGENTIC_ONLY_CONFIG);
+    expect(result.status).toBe('unmergeable');
+    expect(result.reason).toBe(
+      'the config file is not a JSON object, and setup will not replace it; fix or remove the file, then run setup again'
+    );
   });
 
   it('GIVEN JSON parse throws a non-Error value WHEN merging THEN returns invalid-json with the fallback reason', () => {

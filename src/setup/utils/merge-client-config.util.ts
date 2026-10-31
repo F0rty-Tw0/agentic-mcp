@@ -34,18 +34,6 @@ const isRecord = (value: unknown): value is JsonRecord => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const normalizeMcpServers = (value: unknown): JsonRecord => {
-  if (!isRecord(value)) {
-    const emptyServers: JsonRecord = {};
-
-    return emptyServers;
-  }
-
-  const servers: JsonRecord = value;
-
-  return servers;
-};
-
 const parseExistingConfig = (existingConfigText: string): ParsedConfigResult => {
   try {
     const parsedConfig: unknown = JSON.parse(existingConfigText);
@@ -58,6 +46,27 @@ const parseExistingConfig = (existingConfigText: string): ParsedConfigResult => 
 
     return failureResult;
   }
+};
+
+// Replacing a non-object root or servers value drops it; adding a command to a remote entry mixes transports.
+const findUnmergeableReason = (parsedConfig: unknown, serversKey: string): string | undefined => {
+  if (!isRecord(parsedConfig))
+    return 'the config file is not a JSON object, and setup will not replace it; fix or remove the file, then run setup again';
+
+  const serversValue = parsedConfig[serversKey];
+
+  if (serversValue === undefined) return undefined;
+
+  if (!isRecord(serversValue))
+    return `${serversKey} is not an object, and setup will not replace it; make it an object or remove it, then run setup again`;
+
+  const remoteKey = findRemoteTransportKey(serversValue['agentic-mcp']);
+
+  if (remoteKey == null) return undefined;
+
+  const reason = buildRemoteTransportReason(remoteKey);
+
+  return reason;
 };
 
 const createServersConfig = (parsedRoot: JsonRecord, serversKey: string, servers: JsonRecord): JsonRecord => {
@@ -100,21 +109,23 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
     return invalidJsonResult;
   }
 
-  const parsedRoot = isRecord(parseResult.parsedConfig) ? parseResult.parsedConfig : emptyRoot;
-  const currentServers = normalizeMcpServers(parsedRoot[target.serversKey]);
-  const currentAgentic = currentServers['agentic-mcp'];
-  const remoteKey = findRemoteTransportKey(currentAgentic);
+  const unmergeableReason = findUnmergeableReason(parseResult.parsedConfig, target.serversKey);
 
-  if (remoteKey != null) {
+  if (unmergeableReason != null) {
     const unmergeableResult: MergeClientConfigResult = {
       status: 'unmergeable',
       mergedConfig: createdConfig,
       notes: [],
-      reason: buildRemoteTransportReason(remoteKey),
+      reason: unmergeableReason,
     };
 
     return unmergeableResult;
   }
+
+  const parsedRoot = isRecord(parseResult.parsedConfig) ? parseResult.parsedConfig : emptyRoot;
+  const serversValue = parsedRoot[target.serversKey];
+  const currentServers = isRecord(serversValue) ? serversValue : emptyRoot;
+  const currentAgentic = currentServers['agentic-mcp'];
 
   const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
   const mergedServers = { ...currentServers, 'agentic-mcp': mergedEntry.entry };
