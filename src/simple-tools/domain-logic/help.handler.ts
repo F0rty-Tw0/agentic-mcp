@@ -9,6 +9,7 @@ import {
   toMcpError,
 } from '../../shared';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
+import { describeSessionSupport } from '../utils';
 
 const HELP_TIMEOUT_MS = 30_000;
 
@@ -57,7 +58,9 @@ export const handleHelp = async (context: ResolvedProviderEntry, signal?: AbortS
       return helpEmpty;
     }
 
-    const content: CallToolResult['content'] = [{ type: 'text', text: output }];
+    const sessionSupport = describeSessionSupport(context.config);
+    const text = sessionSupport ? `${output}\n\n${sessionSupport}` : output;
+    const content: CallToolResult['content'] = [{ type: 'text', text }];
     const helpResponse: CallToolResult = { content };
 
     return helpResponse;
