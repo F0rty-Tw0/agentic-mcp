@@ -2,6 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import { buildCommandFailure, buildExecutionEnv } from './ask-command';
 import { buildOnSpawned, resolveRequestId } from './ask-command-execution';
+import { startAskHeartbeat } from './ask-heartbeat';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { buildReviewArgArray } from '../../cli-args';
 import { executeCommand, unregisterActiveRequest } from '../../shared';
@@ -114,6 +115,8 @@ export const handleReview = async (
     requestId,
   });
 
+  const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
+
   streamNotifier.emitStart();
 
   try {
@@ -141,6 +144,7 @@ export const handleReview = async (
   } finally {
     if (requestId) unregisterActiveRequest(requestId);
 
+    stopHeartbeat();
     streamNotifier.stop();
   }
 };
