@@ -1,4 +1,5 @@
 import { chooseAliasTimeout, chooseTimeout } from './choose-timeout.util';
+import { buildDisabledEntryWarnings } from './disabled-entry-warning.util';
 import { buildKeptTimeoutNote } from './kept-timeout-note.util';
 import type { ClientTarget, McpServerEntry, TimeoutValue } from '../common';
 
@@ -79,6 +80,10 @@ export const mergeAgenticServerEntry = (input: MergeServerEntryInput): MergeServ
 
     timeoutValues[key] = choice.value;
   }
+
+  const disabledWarnings = buildDisabledEntryWarnings(existingEntry);
+
+  warnings.push(...disabledWarnings);
 
   const keptTimeoutNote = buildKeptTimeoutNote({ key: target.keptTimeoutKey, existingEntry, toolTimeoutMs });
 
