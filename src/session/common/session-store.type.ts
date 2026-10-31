@@ -14,3 +14,16 @@ export type SessionRecord = {
   readonly lastAccessedAt: string;
   readonly nativeSessionId?: string;
 };
+
+export type SessionStoreEntry = {
+  readonly id: string;
+  readonly provider: string;
+  turns: SessionTurn[];
+  readonly createdAt: string;
+  // eslint-disable-next-line local/readonly-type-properties -- the store refreshes the access time in place
+  lastAccessedAt: string;
+  // eslint-disable-next-line local/readonly-type-properties -- the store records the native id in place
+  nativeSessionId?: string;
+  // eslint-disable-next-line local/readonly-type-properties -- the store turns native start off in place
+  isNativeStartDisabled?: boolean;
+};
