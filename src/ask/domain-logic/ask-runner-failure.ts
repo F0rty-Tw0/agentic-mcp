@@ -38,8 +38,10 @@ export const buildFailedRunExecution = async (
   await recordCall(context.name, result.executionTimeMs, false);
   const wasCancelled = extra?.signal?.aborted ?? false;
   const wasStopped = result.timedOut || result.signal !== null;
+  const failureExecution = buildFailureExecution(errorResponse, wasCancelled, wasStopped);
+  const execution: AskExecution = { ...failureExecution, stderr: result.stderr };
 
-  return buildFailureExecution(errorResponse, wasCancelled, wasStopped);
+  return execution;
 };
 
 export const buildThrownRunExecution = async (

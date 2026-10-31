@@ -90,11 +90,14 @@ const createExecution = (nativeSessionId?: string): AskExecution => {
 const FAILED_RESPONSE: CallToolResult = { content: [], isError: true };
 const SUCCESSFUL_EXECUTION = createExecution();
 const FAILED_EXECUTION: AskExecution = { ...SUCCESSFUL_EXECUTION, response: FAILED_RESPONSE };
-const REJECTED_TEXT: TextContent[] = [
-  { type: 'text', text: `Stderr: error: unknown option '--session-id=${GENERATED_ID}'` },
-];
+const REJECTED_STDERR = `error: unknown option '--session-id=${GENERATED_ID}'`;
+const REJECTED_TEXT: TextContent[] = [{ type: 'text', text: `Stderr: ${REJECTED_STDERR}` }];
 const REJECTED_RESPONSE: CallToolResult = { content: REJECTED_TEXT, isError: true };
-const REJECTED_EXECUTION: AskExecution = { ...SUCCESSFUL_EXECUTION, response: REJECTED_RESPONSE };
+const REJECTED_EXECUTION: AskExecution = {
+  ...SUCCESSFUL_EXECUTION,
+  response: REJECTED_RESPONSE,
+  stderr: REJECTED_STDERR,
+};
 const START_CONTEXT = createContext({ resume: ['--resume'], startWithId: '--session-id=' });
 const RESUME_ONLY_CONTEXT = createContext({ resume: ['--resume'] });
 const ARGS: AskToolArgs = { prompt: 'hello', session_id: 'agentic-session' };

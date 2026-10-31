@@ -26,7 +26,7 @@ Session state and session-aware ask orchestration — provides in-memory multi-t
 - `data-access/session-store.ts` — `InMemorySessionStore` with locking, turn storage, native session tracking, and provider-scoped listing
 - `data-access/session-native-start.ts` — records a native session id on a store entry, or turns native start off for it
 - `domain-logic/ask-session-flow.ts` — builds session flow state, retries native-session failures with tier-1 fallback, and reruns once without the start flag only when the CLI rejects it as an unknown option; a run it will retry sends no `error` stream event
-- `utils/session-flow-retry.util.ts` — decides when a failed run falls back to tier 1, or retries without the start flag (only when the output has an unknown-option error naming that flag); `canSessionFlowRetry` is either
+- `utils/session-flow-retry.util.ts` — decides when a failed run falls back to tier 1, or retries without the start flag (only when one stderr line rejects that flag: `unknown option`, `unrecognized argument`, clap's `unexpected argument '--flag' found`, or yargs' `Unknown argument: flag`); `canSessionFlowRetry` is either
 - `domain-logic/sessions.handler.ts` — renders provider-scoped session listings for MCP tools
 - `utils/session-metadata.util.ts` — merges session mode metadata into MCP responses
 
