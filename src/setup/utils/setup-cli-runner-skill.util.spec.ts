@@ -59,6 +59,31 @@ describe('runConfiguredSetup skill install', () => {
     });
   });
 
+  describe.each(['write', 'unchanged'] as const)(
+    'GIVEN a claude-code %s plan without yes and a confirmed interactive prompt',
+    (writeIntent) => {
+      it('WHEN running configured setup THEN it installs the skill once', async () => {
+        const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+        const promptConfirm = vi.fn().mockResolvedValue(true);
+        const buildSetupPlan = (): SetupPlan => createSetupPlan({ writeIntent });
+        const dependencies = createSetupCliDependencies({
+          installSkill,
+          promptConfirm,
+          buildSetupPlan,
+          isInteractive: true,
+        });
+
+        await runConfiguredSetup({
+          parsedArgs: createParsedSetupArgs({ client: 'claude-code', yes: false }),
+          dependencies,
+          detectedProviders: TEST_PROVIDERS,
+        });
+
+        expect(installSkill).toHaveBeenCalledTimes(1);
+      });
+    }
+  );
+
   describe('GIVEN an unchanged claude-code plan without yes and an interactive terminal', () => {
     it('WHEN running configured setup THEN the prompt says the config is already there and asks about the skill', async () => {
       const promptConfirm = vi.fn().mockResolvedValue(false);
