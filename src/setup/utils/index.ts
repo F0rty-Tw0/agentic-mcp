@@ -16,3 +16,5 @@ export {
   isNonInteractiveWriteBlocked,
   readExistingConfigText,
 } from './setup-cli-output.util';
+
+export { verifyWrittenConfig } from './verify-written-config.util';

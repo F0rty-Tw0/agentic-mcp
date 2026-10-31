@@ -213,6 +213,9 @@ catalogs:
     cross-spawn:
       specifier: ^7.0.6
       version: 7.0.6
+    smol-toml:
+      specifier: ^1.9.1
+      version: 1.9.1
     which:
       specifier: ^7.0.0
       version: 7.0.0
@@ -235,6 +238,9 @@ importers:
       cross-spawn:
         specifier: catalog:runtime
         version: 7.0.6
+      smol-toml:
+        specifier: catalog:runtime
+        version: 1.9.1
       which:
         specifier: catalog:runtime
         version: 7.0.0
@@ -2772,6 +2778,10 @@ packages:
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
+
+  smol-toml@1.9.1:
+    resolution: {integrity: sha512-j7WyPdf0CJoutMzMoPLF/bVXHtKZIT9Rb4eGeEbWw8X2t5oirjPgpL+OpaENZrILYaXqYwnVH+qgUwVbl+pUJQ==}
+    engines: {node: '>= 18'}
 
   socks-proxy-agent@10.1.0:
     resolution: {integrity: sha512-WlMj/67cEJ6MDI1OcsnjuYKDNDoyPCCYZ249kuuXPiMDw9F8PXkVaQ7YWu3siTydfQ/4BEZcvGzu+aYvz7dDCQ==}
@@ -5582,6 +5592,8 @@ snapshots:
       is-fullwidth-code-point: 3.0.0
 
   smart-buffer@4.2.0: {}
+
+  smol-toml@1.9.1: {}
 
   socks-proxy-agent@10.1.0(supports-color@10.2.2):
     dependencies:

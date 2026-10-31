@@ -1,15 +1,31 @@
-export { CLIENT_TARGETS, CLIENT_TOOL_TIMEOUT_MS, KNOWN_PROVIDER_COMMANDS, SUPPORTED_CLIENTS } from './setup.const';
+export {
+  CLIENT_TARGETS,
+  CLIENT_TOOL_TIMEOUT_MS,
+  CLIENT_TOOL_TIMEOUT_SEC,
+  CODEX_STARTUP_TIMEOUT_SEC,
+  KNOWN_PROVIDER_COMMANDS,
+  SUPPORTED_CLIENTS,
+} from './setup.const';
 
 export { SKILL_CONTENT } from './skill-content';
 
 export type {
-  ClientConfigTemplate,
+  ClientConfigFormat,
+  ClientConfigMergeResult,
   ClientTarget,
+  CodexServerEntry,
   CopilotServerEntry,
-  DetectedProvider,
   McpServerEntry,
-  MinimalSetupOutputInput,
   OpenCodeServerEntry,
+  SetupMergeStatus,
+  StdioServerEntry,
+  TimeoutKeyRule,
+} from './client-target.type';
+
+export type {
+  ClientConfigTemplate,
+  DetectedProvider,
+  MinimalSetupOutputInput,
   ParsedSetupArgs,
   SetupApplyResult,
   SetupBackupPolicy,
@@ -17,7 +33,6 @@ export type {
   SetupFileStat,
   SetupWriteOptions,
   SetupFs,
-  SetupMergeStatus,
   SetupMkdirOptions,
   SetupMode,
   SetupOutputMode,
@@ -27,6 +42,5 @@ export type {
   SetupWriteIntent,
   SkillInstallDependencies,
   SkillInstallResult,
-  StdioServerEntry,
   SupportedClient,
 } from './setup.type';

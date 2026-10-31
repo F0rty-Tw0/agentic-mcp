@@ -95,4 +95,15 @@ describe('generateClientConfigEntry', () => {
       timeout: 3_660_000,
     });
   });
+
+  it('GIVEN codex WHEN generating entry THEN the tool timeout is in seconds and startup gets 60 s for a cold npx', () => {
+    const result = generateClientConfigEntry('codex', []);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      tool_timeout_sec: 3660,
+      startup_timeout_sec: 60,
+    });
+  });
 });

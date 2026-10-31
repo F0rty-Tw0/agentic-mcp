@@ -127,4 +127,38 @@ describe('applySetupPlan on a real filesystem', () => {
 
     expect(result.status).toBe('written');
   });
+
+  it('GIVEN a codex plan WHEN setup writes the TOML file THEN it passes verification', async () => {
+    const targetPath = path.join(directory, 'config.toml');
+    const configText = '[mcp_servers.agentic-mcp]\ncommand = "npx"\ntool_timeout_sec = 3660\n';
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'codex', configText };
+
+    const result = await applySetupPlan(plan);
+    const written = await readFile(targetPath, 'utf8');
+
+    expect(result.status).toBe('written');
+    expect(written).toBe(configText);
+  });
+
+  it('GIVEN a codex plan without the agentic-mcp table WHEN setup writes it THEN verification fails', async () => {
+    const targetPath = path.join(directory, 'config.toml');
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'codex', configText: 'model = "gpt-6"\n' };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result.status).toBe('verification-failed');
+    expect(result.reason).toBe('Written config must include object key mcp_servers.');
+  });
+
+  it('GIVEN a codex plan whose text is not TOML WHEN setup writes it THEN verification fails with the parser message', async () => {
+    const targetPath = path.join(directory, 'config.toml');
+    const basePlan = createPlan(targetPath);
+    const plan: SetupPlan = { ...basePlan, client: 'codex', configText: '[mcp_servers\n' };
+
+    const result = await applySetupPlan(plan);
+
+    expect(result.reason).toMatch(/^Invalid TOML in written file: /);
+  });
 });

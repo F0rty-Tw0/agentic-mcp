@@ -47,6 +47,7 @@
     "@modelcontextprotocol/client": "catalog:runtime",
     "@modelcontextprotocol/server": "catalog:runtime",
     "cross-spawn": "catalog:runtime",
+    "smol-toml": "catalog:runtime",
     "which": "catalog:runtime",
     "zod": "catalog:runtime"
   },

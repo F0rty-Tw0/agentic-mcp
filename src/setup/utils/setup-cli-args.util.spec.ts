@@ -127,4 +127,13 @@ describe('parseSetupArgs', () => {
     expect(result.client).toBe('opencode');
     expect(stderrWrite).not.toHaveBeenCalled();
   });
+
+  it('GIVEN --client codex WHEN parsing setup args THEN the codex client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'codex'], stderrWrite });
+
+    expect(result.client).toBe('codex');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
 });

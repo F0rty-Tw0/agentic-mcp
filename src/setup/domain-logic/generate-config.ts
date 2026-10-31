@@ -1,5 +1,6 @@
-import { CLIENT_TOOL_TIMEOUT_MS } from '../common';
+import { CLIENT_TOOL_TIMEOUT_MS, CLIENT_TOOL_TIMEOUT_SEC, CODEX_STARTUP_TIMEOUT_SEC } from '../common';
 import type {
+  CodexServerEntry,
   CopilotServerEntry,
   DetectedProvider,
   McpServerEntry,
@@ -16,6 +17,14 @@ const BASE_ENTRY: StdioServerEntry = {
 const TIMED_ENTRY: StdioServerEntry = {
   ...BASE_ENTRY,
   timeout: CLIENT_TOOL_TIMEOUT_MS,
+};
+
+// Codex reads both timeouts in seconds from ~/.codex/config.toml.
+const CODEX_ENTRY: CodexServerEntry = {
+  command: BASE_ENTRY.command,
+  args: BASE_ENTRY.args,
+  tool_timeout_sec: CLIENT_TOOL_TIMEOUT_SEC,
+  startup_timeout_sec: CODEX_STARTUP_TIMEOUT_SEC,
 };
 
 // Copilot CLI requires `tools` on a local server.
@@ -45,6 +54,8 @@ export const generateClientConfigEntry = (
     case 'claude-code':
     case 'gemini':
       return TIMED_ENTRY;
+    case 'codex':
+      return CODEX_ENTRY;
     case 'copilot':
       return COPILOT_ENTRY;
     case 'opencode':

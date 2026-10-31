@@ -1,13 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
 import { mergeAgenticServerEntry } from './merge-server-entry.util';
-import type { ClientTarget, McpServerEntry } from '../common';
+import type { ClientTarget, McpServerEntry, TimeoutKeyRule } from '../common';
+
+const TIMEOUT_RULE: TimeoutKeyRule = { key: 'timeout' };
+
+const STARTUP_RULE: TimeoutKeyRule = { key: 'startup_timeout_sec', msAliasKey: 'startup_timeout_ms' };
 
 const TIMED_TARGET: ClientTarget = {
   configPath: '.client.json',
+  format: 'json',
   serversKey: 'mcpServers',
-  timeoutKeys: ['timeout'],
+  timeoutKeys: [TIMEOUT_RULE],
   preservedKeys: ['tools'],
+};
+
+const CODEX_LIKE_TARGET: ClientTarget = {
+  configPath: '.codex/config.toml',
+  format: 'toml',
+  serversKey: 'mcp_servers',
+  timeoutKeys: [STARTUP_RULE],
+  preservedKeys: [],
+};
+
+const CODEX_LIKE_ENTRY: McpServerEntry = {
+  command: 'npx',
+  args: ['-y', 'agentic-mcp'],
+  tool_timeout_sec: 3660,
+  startup_timeout_sec: 60,
 };
 
 const TIMED_ENTRY: McpServerEntry = {
@@ -112,6 +132,61 @@ describe('FEATURE: agentic-mcp server entry merge', () => {
       });
 
       expect(result.entry).toStrictEqual(TIMED_ENTRY);
+    });
+  });
+
+  describe('GIVEN a seconds timeout key whose ms alias is already as long', () => {
+    it('WHEN merging THEN the seconds key is not added and the alias is kept', () => {
+      const existingEntry = {
+        command: 'npx',
+        args: ['-y', 'agentic-mcp'],
+        tool_timeout_sec: 3660,
+        startup_timeout_ms: 120_000,
+      };
+
+      const result = mergeAgenticServerEntry({
+        existingEntry,
+        agenticServerEntry: CODEX_LIKE_ENTRY,
+        target: CODEX_LIKE_TARGET,
+      });
+
+      expect(result).toStrictEqual({
+        entry: existingEntry,
+        notes: ['agentic-mcp startup_timeout_sec: not set; kept your startup_timeout_ms 120000 (not lower than 60 s).'],
+      });
+    });
+  });
+
+  describe('GIVEN a seconds timeout key whose ms alias is lower', () => {
+    it('WHEN merging THEN the seconds key is added, since it wins over the alias', () => {
+      const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], startup_timeout_ms: 10_000 };
+
+      const result = mergeAgenticServerEntry({
+        existingEntry,
+        agenticServerEntry: CODEX_LIKE_ENTRY,
+        target: CODEX_LIKE_TARGET,
+      });
+
+      const expectedEntry = { ...CODEX_LIKE_ENTRY, startup_timeout_ms: 10_000 };
+
+      expect(result).toStrictEqual({
+        entry: expectedEntry,
+        notes: ['agentic-mcp startup_timeout_sec: set to 60 (your startup_timeout_ms 10000 was lower).'],
+      });
+    });
+  });
+
+  describe('GIVEN a seconds timeout key with a non-numeric ms alias', () => {
+    it('WHEN merging THEN the seconds key is set as if no alias were there', () => {
+      const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], startup_timeout_ms: 'slow' };
+
+      const result = mergeAgenticServerEntry({
+        existingEntry,
+        agenticServerEntry: CODEX_LIKE_ENTRY,
+        target: CODEX_LIKE_TARGET,
+      });
+
+      expect(result.notes).toStrictEqual(['agentic-mcp startup_timeout_sec: set to 60 (was not set).']);
     });
   });
 });

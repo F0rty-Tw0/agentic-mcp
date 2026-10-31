@@ -1,4 +1,7 @@
-export type SupportedClient = 'claude-code' | 'copilot' | 'cursor' | 'gemini' | 'opencode' | 'windsurf' | 'generic';
+import type { McpServerEntry, SetupMergeStatus } from './client-target.type';
+
+export type SupportedClient =
+  'claude-code' | 'codex' | 'copilot' | 'cursor' | 'gemini' | 'opencode' | 'windsurf' | 'generic';
 
 export type SetupMode = 'merge' | 'overwrite';
 
@@ -6,39 +9,7 @@ export type SetupBackupPolicy = 'if-exists' | 'always' | 'never';
 
 export type SetupWriteIntent = 'write' | 'skip' | 'manual';
 
-export type SetupMergeStatus = 'created' | 'merged' | 'unchanged' | 'invalid-json';
-
 export type SetupOutputMode = 'human' | 'json';
-
-export type StdioServerEntry = {
-  readonly command: string;
-  readonly args: string[];
-  readonly timeout?: number;
-};
-
-export type CopilotServerEntry = {
-  readonly type: 'local';
-  readonly command: string;
-  readonly args: string[];
-  readonly tools: string[];
-  readonly timeout: number;
-};
-
-export type OpenCodeServerEntry = {
-  readonly type: 'local';
-  readonly command: string[];
-  readonly enabled: boolean;
-  readonly timeout: number;
-};
-
-export type McpServerEntry = StdioServerEntry | CopilotServerEntry | OpenCodeServerEntry;
-
-export type ClientTarget = {
-  readonly configPath?: string;
-  readonly serversKey: string;
-  readonly timeoutKeys: string[];
-  readonly preservedKeys: string[];
-};
 
 export type SetupFileStat = {
   readonly mode: number;

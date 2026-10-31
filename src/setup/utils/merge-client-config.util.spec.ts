@@ -1,17 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildMergedClientConfig } from './merge-client-config.util';
-import type { ClientTarget, McpServerEntry } from '../common';
+import type { ClientTarget, McpServerEntry, TimeoutKeyRule } from '../common';
 
 const AGENTIC_SERVER_ENTRY: McpServerEntry = {
   command: 'npx',
   args: ['-y', 'agentic-mcp'],
 };
 
+const TIMEOUT_RULE: TimeoutKeyRule = { key: 'timeout' };
+
 const MCP_SERVERS_TARGET: ClientTarget = {
   configPath: '.client.json',
+  format: 'json',
   serversKey: 'mcpServers',
-  timeoutKeys: ['timeout'],
+  timeoutKeys: [TIMEOUT_RULE],
   preservedKeys: [],
 };
 
