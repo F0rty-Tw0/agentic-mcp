@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
-import { canStartNativeSession } from '../../ask/utils/session-flag-args.util';
+import { canStartNativeSession, resolveStartFlagName } from '../../ask/utils/session-flag-args.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
@@ -38,7 +38,8 @@ const runSingleExecution = async (
   return result;
 };
 
-// A CLI that rejects the start flag (copilot before 1.0.51) fails the run; one retry without it replays as before.
+// Only a run the CLI fails with an unknown-option error naming the start flag (copilot before 1.0.51) is rerun once
+// without it as a replay; any other failure is returned as is, so a run that did work is never repeated.
 const runSessionExecution = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
@@ -46,7 +47,8 @@ const runSessionExecution = async (
   state: SessionFlowState
 ): Promise<SessionFlowResult> => {
   const execution = await runSingleExecution(context, args, extra, state);
-  const shouldRetry = canRetryWithoutStartFlag(execution, state, extra);
+  const startFlag = resolveStartFlagName(context.config);
+  const shouldRetry = canRetryWithoutStartFlag(execution, state, startFlag, extra);
 
   if (!shouldRetry) return execution;
 

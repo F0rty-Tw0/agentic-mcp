@@ -90,6 +90,11 @@ const createExecution = (nativeSessionId?: string): AskExecution => {
 const FAILED_RESPONSE: CallToolResult = { content: [], isError: true };
 const SUCCESSFUL_EXECUTION = createExecution();
 const FAILED_EXECUTION: AskExecution = { ...SUCCESSFUL_EXECUTION, response: FAILED_RESPONSE };
+const REJECTED_TEXT: TextContent[] = [
+  { type: 'text', text: `Stderr: error: unknown option '--session-id=${GENERATED_ID}'` },
+];
+const REJECTED_RESPONSE: CallToolResult = { content: REJECTED_TEXT, isError: true };
+const REJECTED_EXECUTION: AskExecution = { ...SUCCESSFUL_EXECUTION, response: REJECTED_RESPONSE };
 const START_CONTEXT = createContext({ resume: ['--resume'], startWithId: '--session-id=' });
 const RESUME_ONLY_CONTEXT = createContext({ resume: ['--resume'] });
 const ARGS: AskToolArgs = { prompt: 'hello', session_id: 'agentic-session' };
@@ -182,7 +187,7 @@ describe('FEATURE: session flow with a caller-chosen native session id', () => {
     it('WHEN executing the flow THEN the retry passes no start session id', async () => {
       const state = buildSessionFlowState(START_CONTEXT, ARGS);
 
-      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION).mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
+      mocks.runAskInvocation.mockResolvedValueOnce(REJECTED_EXECUTION).mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
 
       await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
 
@@ -192,11 +197,50 @@ describe('FEATURE: session flow with a caller-chosen native session id', () => {
     it('WHEN executing the flow THEN the result says the start flag was dropped and carries no native id', async () => {
       const state = buildSessionFlowState(START_CONTEXT, ARGS);
 
-      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION).mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
+      mocks.runAskInvocation.mockResolvedValueOnce(REJECTED_EXECUTION).mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
 
       const result = await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
 
       expect([result.hasDroppedStartFlag, result.nativeSessionId]).toStrictEqual([true, undefined]);
+    });
+
+    it('WHEN a failed resume falls back and the replay is rejected THEN the fallback result says the start flag was dropped', async () => {
+      const state: SessionFlowState = {
+        sessionId: 'agentic-session',
+        prompt: 'hello',
+        nativeSessionId: 'lost-id',
+        mode: 'tier2-native',
+      };
+
+      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION);
+      mocks.runAskInvocation.mockResolvedValueOnce(REJECTED_EXECUTION);
+      mocks.runAskInvocation.mockResolvedValueOnce(SUCCESSFUL_EXECUTION);
+
+      const result = await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
+
+      expect([result.sessionMode, result.hasDroppedStartFlag]).toStrictEqual(['tier2-fallback-to-tier1', true]);
+    });
+  });
+
+  describe('GIVEN a provider with a startWithId flag and a start run that fails for another reason', () => {
+    it('WHEN executing the flow THEN the CLI runs once', async () => {
+      const state = buildSessionFlowState(START_CONTEXT, ARGS);
+
+      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION);
+
+      await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
+
+      expect(mocks.runAskInvocation).toHaveBeenCalledOnce();
+    });
+
+    it('WHEN executing the flow THEN the error is returned without dropping the start flag', async () => {
+      const state = buildSessionFlowState(START_CONTEXT, ARGS);
+
+      mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION);
+
+      const result = await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
+
+      expect([result.response.isError, result.hasDroppedStartFlag]).toStrictEqual([true, undefined]);
     });
   });
 

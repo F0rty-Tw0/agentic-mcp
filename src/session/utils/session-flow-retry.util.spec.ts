@@ -23,6 +23,19 @@ const TIER2_STATE: SessionFlowState = { sessionId: 'session-a', nativeSessionId:
 const TIER1_STATE: SessionFlowState = { sessionId: 'session-a', mode: 'tier1-prepend' };
 const START_STATE: SessionFlowState = { sessionId: 'session-a', startSessionId: 'start-a', mode: 'tier1-prepend' };
 const SUCCESS_RESPONSE: CallToolResult = { content: [] };
+const START_FLAG = '--session-id';
+
+const createFailedExecution = (text: string): SessionFlowResult => {
+  const content: TextContent[] = [{ type: 'text', text }];
+  const response: CallToolResult = { content, isError: true };
+  const result = createExecution({ response });
+
+  return result;
+};
+
+const REJECTED_EXECUTION = createFailedExecution(
+  "copilot command failed Exit code: 2. Stderr: error: unknown option '--session-id=start-a'\n"
+);
 
 const createAbortedExtra = (): ProgressContext => {
   const controller = new AbortController();
@@ -67,33 +80,53 @@ describe('FEATURE: canFallBackToTier1', () => {
 });
 
 describe('FEATURE: canRetryWithoutStartFlag', () => {
-  it('GIVEN a failed run that passed a start id WHEN checked THEN it retries', () => {
-    expect(canRetryWithoutStartFlag(createExecution(), START_STATE)).toBe(true);
+  it('GIVEN a run that passed a start id and the CLI rejected the flag WHEN checked THEN it retries', () => {
+    expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, START_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a run that passed a start id and failed for another reason WHEN checked THEN it does not retry', () => {
+    expect(canRetryWithoutStartFlag(createExecution(), START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN a run that passed a start id and the CLI rejected another option WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution("error: unknown option '--yolo-mode'");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN a rejection naming the flag and an unknown-option line elsewhere WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution("argv: --session-id=start-a\nerror: unknown option '--yolo-mode'");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN a rejected run and no configured start flag WHEN checked THEN it does not retry', () => {
+    expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, START_STATE, undefined)).toBe(false);
   });
 
   it('GIVEN a successful run that passed a start id WHEN checked THEN it does not retry', () => {
     const execution = createExecution({ response: SUCCESS_RESPONSE });
 
-    expect(canRetryWithoutStartFlag(execution, START_STATE)).toBe(false);
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
   });
 
-  it('GIVEN a failed run without a start id WHEN checked THEN it does not retry', () => {
-    expect(canRetryWithoutStartFlag(createExecution(), TIER1_STATE)).toBe(false);
+  it('GIVEN a rejected run without a start id WHEN checked THEN it does not retry', () => {
+    expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, TIER1_STATE, START_FLAG)).toBe(false);
   });
 
-  it('GIVEN a cancelled run that passed a start id WHEN checked THEN it does not retry', () => {
-    const execution = createExecution({ wasCancelled: true });
+  it('GIVEN a cancelled rejected run that passed a start id WHEN checked THEN it does not retry', () => {
+    const execution: SessionFlowResult = { ...REJECTED_EXECUTION, wasCancelled: true };
 
-    expect(canRetryWithoutStartFlag(execution, START_STATE)).toBe(false);
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
   });
 
-  it('GIVEN a stopped run that passed a start id WHEN checked THEN it does not retry', () => {
-    const execution = createExecution({ wasStopped: true });
+  it('GIVEN a stopped rejected run that passed a start id WHEN checked THEN it does not retry', () => {
+    const execution: SessionFlowResult = { ...REJECTED_EXECUTION, wasStopped: true };
 
-    expect(canRetryWithoutStartFlag(execution, START_STATE)).toBe(false);
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
   });
 
   it('GIVEN an aborted request WHEN checked THEN it does not retry', () => {
-    expect(canRetryWithoutStartFlag(createExecution(), START_STATE, createAbortedExtra())).toBe(false);
+    expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, START_STATE, START_FLAG, createAbortedExtra())).toBe(false);
   });
 });
