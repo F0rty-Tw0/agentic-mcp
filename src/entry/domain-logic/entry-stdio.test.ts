@@ -7,6 +7,8 @@ import type { VersionNegotiationOptions } from '@modelcontextprotocol/client';
 import { StdioClientTransport, getDefaultEnvironment } from '@modelcontextprotocol/client/stdio';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { readPid } from '../test/utils/provider-process.spec.util';
+
 const ENTRY_PATH = path.join(import.meta.dirname, '..', '..', 'index.ts');
 // The transport passes only a whitelist of env vars by default, so the test metrics path is added back.
 const buildServerEnv = (): Record<string, string> => {
@@ -46,17 +48,6 @@ const waitFor = async <T>(probe: () => Promise<T | undefined>): Promise<T> => {
   }
 
   throw new Error(`condition not met within ${String(POLL_LIMIT_MS)} ms`);
-};
-
-const readPid = async (pidFile: string): Promise<number | undefined> => {
-  try {
-    const pidText = await readFile(pidFile, 'utf8');
-    const pid = Number(pidText);
-
-    return pid;
-  } catch {
-    return undefined;
-  }
 };
 
 // A provider CLI that records its pid and prints a line every 200 ms for 8 s.
