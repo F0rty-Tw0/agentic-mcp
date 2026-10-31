@@ -81,5 +81,23 @@ describe('FEATURE: setup plan input from the CLI runner', () => {
 
       expect(generateClientConfigEntry).toHaveBeenCalledWith('gemini', TEST_PROVIDERS, 4_260_000);
     });
+
+    it('WHEN running configured setup THEN the fallback reason names the load error', async () => {
+      const buildSetupPlan = vi.fn(() => createSetupPlan({ client: 'gemini' }));
+      const loadProvidersConfig = async (): Promise<ProvidersFile> =>
+        Promise.reject(new Error('ENOENT: no such file\n    at open'));
+      const dependencies = createSetupCliDependencies({ buildSetupPlan, loadProvidersConfig });
+      const fallbackReason = 'the providers config could not be loaded (ENOENT: no such file)';
+
+      await runConfiguredSetup({
+        parsedArgs: createParsedSetupArgs({ client: 'gemini' }),
+        dependencies,
+        detectedProviders: TEST_PROVIDERS,
+      });
+
+      const toolTimeout: unknown = expect.objectContaining({ fallbackReason });
+
+      expect(buildSetupPlan).toHaveBeenCalledWith(expect.objectContaining({ toolTimeout }));
+    });
   });
 });

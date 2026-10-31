@@ -69,8 +69,13 @@ const resolveToolTimeout = async (dependencies: SetupCliDependencies): Promise<C
     const providers = Object.values(providersConfig.providers);
 
     return resolveClientToolTimeout(providers);
-  } catch {
-    return buildDefaultClientToolTimeout('the providers config could not be loaded');
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : '';
+    const [firstLine = ''] = message.split('\n');
+    const cause = firstLine === '' ? '' : ` (${firstLine})`;
+    const defaultTimeout = buildDefaultClientToolTimeout(`the providers config could not be loaded${cause}`);
+
+    return defaultTimeout;
   }
 };
 
