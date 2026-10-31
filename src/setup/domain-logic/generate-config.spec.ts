@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { generateClientConfigEntry } from './generate-config';
 import { CLIENT_TOOL_TIMEOUT_MS } from '../common';
 import type { DetectedProvider, SupportedClient } from '../common';
+import { buildSetupPlan } from '../utils/plan-setup.util';
 
 const makeProvider = (name: string, available: boolean, binaryPath?: string): DetectedProvider => {
   const provider: DetectedProvider = {
@@ -22,6 +23,26 @@ describe('generateClientConfigEntry', () => {
       command: 'npx',
       args: ['-y', 'agentic-mcp'],
     });
+  });
+
+  it('GIVEN claude-code with a timeout the user set WHEN the generated entry is planned THEN the file is left unchanged', () => {
+    const existingEntry = { command: 'npx', args: ['-y', 'agentic-mcp'], timeout: 600_000 };
+    const existingServers = { 'agentic-mcp': existingEntry };
+    const existingConfig = { mcpServers: existingServers };
+    const agenticServerEntry = generateClientConfigEntry('claude-code', [], CLIENT_TOOL_TIMEOUT_MS);
+
+    const result = buildSetupPlan({
+      client: 'claude-code',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry,
+      backup: 'if-exists',
+    });
+
+    expect(result.mergeStatusPreview).toBe('unchanged');
   });
 
   it('GIVEN cursor WHEN generating entry THEN no timeout key is written', () => {

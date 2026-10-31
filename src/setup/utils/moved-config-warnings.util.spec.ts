@@ -46,6 +46,18 @@ describe('FEATURE: warnings for a client config moved by an environment variable
     });
   });
 
+  describe('GIVEN --path chooses the file', () => {
+    it('WHEN OPENCODE_CONFIG names another file THEN there is no warning, since the user picked the target', () => {
+      const env: SetupEnv = Object.fromEntries([['OPENCODE_CONFIG', '/srv/opencode.json']]);
+      const baseInput = createInput(env);
+      const input: SetupPlanInput = { ...baseInput, pathOverride: OPENCODE_PATH };
+
+      const result = buildMovedConfigWarnings(input, OPENCODE_PATH);
+
+      expect(result).toStrictEqual([]);
+    });
+  });
+
   describe('GIVEN no target path', () => {
     it('WHEN building warnings THEN there is none', () => {
       const env: SetupEnv = Object.fromEntries([['XDG_CONFIG_HOME', '/srv/xdg']]);
