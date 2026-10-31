@@ -17,6 +17,7 @@ export type { AskExecution } from './ask-execution.type';
 
 export type {
   ParsedProviderOutput,
+  ProviderJsonRecord,
   ProviderLiveOutputAdapter,
   ProviderOutputMetadata,
   ResolvedAskCommand,
