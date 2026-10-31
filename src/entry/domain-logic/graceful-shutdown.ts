@@ -15,7 +15,7 @@ const closeServer = async (close: CloseFn): Promise<number> => {
 
 const closeTimeout = async (): Promise<number> => {
   const timedOutCode = await new Promise<number>((resolve) => {
-    setTimeout(resolve, SHUTDOWN_CLOSE_TIMEOUT_MS, 1).unref();
+    setTimeout(resolve, SHUTDOWN_CLOSE_TIMEOUT_MS, 1);
   });
 
   return timedOutCode;
