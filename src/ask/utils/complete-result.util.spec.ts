@@ -224,7 +224,7 @@ describe('FEATURE: timeout result acceptance', () => {
     });
 
     expect(warning).toBe(
-      'antigravity exited after printing a complete result, but a process it started kept its output open, so that process was stopped; the printed result is returned.'
+      'antigravity exited after printing a complete result, but a process it started kept its output open, so the output was closed; the printed result is returned.'
     );
   });
 

@@ -86,7 +86,7 @@ const describeStop = (providerName: string, timeoutCause?: ExecutionTimeoutCause
 
   if (!timeoutCause?.outputHeldAfterExit) return hungNote;
 
-  const heldOutputNote = `${providerName} exited after printing a complete result, but a process it started kept its output open, so that process was stopped; the printed result is returned.`;
+  const heldOutputNote = `${providerName} exited after printing a complete result, but a process it started kept its output open, so the output was closed; the printed result is returned.`;
 
   return heldOutputNote;
 };
