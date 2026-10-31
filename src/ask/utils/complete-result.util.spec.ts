@@ -4,6 +4,8 @@ import { createResultEnvelopeDetector, resolveTimeoutResultWarning } from './com
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 
 const AGY_RESULT_EVENT = '{"event":"result","result":{"status":"SUCCESS","response":"agy answer"}}';
+const AGY_ERROR_RESULT_EVENT =
+  '{"event":"result","result":{"status":"ERROR","error":"RESOURCE_EXHAUSTED: quota","response":"I started to answer but"}}';
 const AGY_STEP_EVENT = '{"event":"step_update","step_update":{"step_index":1,"state":"DONE"}}';
 
 const resolveWarning = (stdout: string, outputFormat: OutputFormat, timedOut = true): string | undefined => {
@@ -46,6 +48,14 @@ describe('FEATURE: timeout result acceptance', () => {
       expect(warning).toBeUndefined();
     });
 
+    it('WHEN the terminal result event carries an error THEN no warning is returned', () => {
+      const stdout = `${AGY_STEP_EVENT}\n${AGY_ERROR_RESULT_EVENT}\n`;
+
+      const warning = resolveWarning(stdout, 'stream-json');
+
+      expect(warning).toBeUndefined();
+    });
+
     it('WHEN nothing was printed THEN no warning is returned', () => {
       const warning = resolveWarning('', 'stream-json');
 
@@ -60,6 +70,54 @@ describe('FEATURE: timeout result acceptance', () => {
       const warning = resolveWarning(stdout, 'json');
 
       expect(warning).toBeDefined();
+    });
+
+    it('WHEN the envelope carries an error THEN no warning is returned', () => {
+      const stdout = '{"status":"ERROR","error":"RESOURCE_EXHAUSTED: quota","response":"I started to answer but"}';
+
+      const warning = resolveWarning(stdout, 'json');
+
+      expect(warning).toBeUndefined();
+    });
+
+    it('WHEN the envelope finished with reason error THEN no warning is returned', () => {
+      const stdout = '{"status":"SUCCESS","response":"I started to answer but","finished_reason":"error"}';
+
+      const warning = resolveWarning(stdout, 'json');
+
+      expect(warning).toBeUndefined();
+    });
+
+    it('WHEN the envelope finished with reason interrupted THEN no warning is returned', () => {
+      const stdout = '{"status":"SUCCESS","response":"I started to answer but","finished_reason":"interrupted"}';
+
+      const warning = resolveWarning(stdout, 'json');
+
+      expect(warning).toBeUndefined();
+    });
+
+    it('WHEN the envelope has an empty error THEN a warning is returned', () => {
+      const stdout = '{"status":"SUCCESS","response":"agy answer","error":""}';
+
+      const warning = resolveWarning(stdout, 'json');
+
+      expect(warning).toBeDefined();
+    });
+
+    it('WHEN the envelope answer comes with status ERROR and no error THEN the warning names the status', () => {
+      const stdout = '{"status":"ERROR","response":"agy answer"}';
+
+      const warning = resolveWarning(stdout, 'json');
+
+      expect(warning).toContain('status ERROR');
+    });
+
+    it('WHEN the envelope status is SUCCESS THEN the warning does not mention a status', () => {
+      const stdout = '{"status":"SUCCESS","response":"agy answer"}';
+
+      const warning = resolveWarning(stdout, 'json');
+
+      expect(warning).not.toContain('status');
     });
 
     it('WHEN stdout holds log lines around the envelope THEN no warning is returned', () => {

@@ -1,6 +1,6 @@
 import type { ProviderJsonRecord } from '../common';
 
-const isProviderJsonRecord = (value: unknown): value is ProviderJsonRecord =>
+export const isProviderJsonRecord = (value: unknown): value is ProviderJsonRecord =>
   typeof value === 'object' && value !== null;
 
 export const parseStructuredLine = (line: string): ProviderJsonRecord | undefined => {

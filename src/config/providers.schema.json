@@ -176,7 +176,7 @@
         },
         "acceptResultOnTimeout": {
           "type": "boolean",
-          "description": "Opt-in workaround for CLIs that print their final result and then fail to exit. When true, an ask whose stdout already holds a complete result envelope with a non-empty answer (a json envelope, or a terminal stream-json result event) is returned as a success even if the process was then killed by timeout or idleTimeout. An ask process that has not exited resultExitGraceMs after printing that envelope is stopped instead of waiting for the timeout. The response attribution carries a warning. Defaults to false: a killed run is a failure."
+          "description": "Opt-in workaround for CLIs that print their final result and then fail to exit. When true, an ask whose stdout already holds a complete result envelope with a non-empty answer (a json envelope, or a terminal stream-json result event) and no error (a non-empty error field, or finished_reason error or interrupted) is returned as a success even if the process was then killed by timeout or idleTimeout. An ask process that has not exited resultExitGraceMs after printing that envelope is stopped instead of waiting for the timeout. The response attribution carries a warning. Defaults to false: a killed run is a failure."
         },
         "resultExitGraceMs": {
           "type": "number",

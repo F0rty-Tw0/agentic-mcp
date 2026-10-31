@@ -131,6 +131,17 @@ describe('FEATURE: ask result accepted after a timeout', () => {
       expect(result.isError).toBe(true);
     });
 
+    it('WHEN the killed run printed an error envelope THEN the response is an error', async () => {
+      const errorEnvelope =
+        '{"status":"ERROR","error":"RESOURCE_EXHAUSTED: quota","response":"I started to answer but"}';
+
+      vi.mocked(executeCommand).mockResolvedValue(buildKilledResult(errorEnvelope));
+
+      const result = await handleAsk(context, { prompt: 'test prompt' });
+
+      expect(result.isError).toBe(true);
+    });
+
     it('WHEN the caller cancelled the run THEN the response is an error', async () => {
       const controller = new AbortController();
       const sendNotification = async (): Promise<void> => {
