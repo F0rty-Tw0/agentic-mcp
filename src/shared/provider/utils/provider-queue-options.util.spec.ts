@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildProviderQueueOptions } from './provider-queue-options.util';
+import { buildProbeQueueOptions, buildProviderQueueOptions } from './provider-queue-options.util';
 import type { ProviderQueueOptions } from '../../command-execution/common';
 import type { ResolvedProviderEntry } from '../common';
 import { TEST_PROVIDER_CONFIG_STUB, TEST_RESOLVED_PROVIDER_ENTRY_STUB } from '../test/stubs';
@@ -29,6 +29,32 @@ describe('FEATURE: buildProviderQueueOptions', () => {
       const expected: ProviderQueueOptions = { providerName: 'test', maxConcurrency: 2, queueTimeoutMs: 5_000 };
 
       expect(result).toStrictEqual(expected);
+    });
+  });
+});
+
+describe('FEATURE: buildProbeQueueOptions', () => {
+  describe('GIVEN a provider that waits 10 minutes for a busy slot', () => {
+    it('WHEN building probe queue options THEN the probe waits at most 30 s and gets no extra global wait', () => {
+      const result = buildProbeQueueOptions(TEST_RESOLVED_PROVIDER_ENTRY_STUB);
+      const expected: ProviderQueueOptions = {
+        providerName: 'test',
+        maxConcurrency: 1,
+        queueTimeoutMs: 30_000,
+        globalSlotExtraWaitMs: 0,
+      };
+
+      expect(result).toStrictEqual(expected);
+    });
+  });
+
+  describe('GIVEN a provider whose queue timeout is shorter than the probe limit', () => {
+    it('WHEN building probe queue options THEN the provider queue timeout is kept', () => {
+      const config = { ...TEST_PROVIDER_CONFIG_STUB, queueTimeoutMs: 5_000 };
+      const context: ResolvedProviderEntry = { ...TEST_RESOLVED_PROVIDER_ENTRY_STUB, config };
+      const result = buildProbeQueueOptions(context);
+
+      expect(result.queueTimeoutMs).toBe(5_000);
     });
   });
 });
