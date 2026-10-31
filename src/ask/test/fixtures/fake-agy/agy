@@ -3,6 +3,8 @@
 // -p <prompt>, --output-format json|stream-json, a JSON envelope with top-level response and conversation_id,
 // stream-json events shaped {"event":"result","result":{...}}, and strict rejection of unknown or stray arguments.
 // A prompt of "hang" prints the complete result and then never exits and ignores SIGTERM, like agy issue #1313.
+// A prompt of "print-timeout" prints a result with finished_reason "print_timeout" and exits 0, as agy 1.4.11+ does
+// when --print-timeout expires.
 
 const VALUE_FLAGS = new Set([
   '-p',
@@ -62,7 +64,15 @@ const resumedId = values['--conversation'];
 const conversationId = resumedId ?? NEW_CONVERSATION_ID;
 const resumeNote = resumedId === undefined ? '' : ` (resumed ${resumedId})`;
 const response = `agy-fake: ${prompt}${resumeNote}`;
-const result = { conversation_id: conversationId, status: 'SUCCESS', response, duration_seconds: 0.01, num_turns: 1 };
+const finishedReason = prompt === 'print-timeout' ? { finished_reason: 'print_timeout' } : {};
+const result = {
+  conversation_id: conversationId,
+  status: 'SUCCESS',
+  response,
+  duration_seconds: 0.01,
+  num_turns: 1,
+  ...finishedReason,
+};
 
 if (outputFormat === 'json') {
   process.stdout.write(`${JSON.stringify(result)}\n`);

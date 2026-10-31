@@ -1,15 +1,14 @@
 import {
-  extractParsedText,
-  extractTerminalResultText,
-  parseStructuredLine,
-  splitTrimmedLines,
-} from './output-text.util';
-import { describeEnvelopeStatus, hasEnvelopeFailure, unwrapResultEnvelope } from './result-envelope.util';
-import { stripAnsi } from '../../shared';
+  describeEnvelopeStatus,
+  describeFinishedReason,
+  extractCompleteEnvelope,
+  extractFinalEnvelope,
+  hasEnvelopeFailure,
+} from './result-envelope.util';
 import type { ExecutionResult, ResultCompleteDetector } from '../../shared/command-execution/common';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ProviderConfig } from '../../shared/provider/common';
-import type { ProviderJsonRecord } from '../common';
+import type { ResultWarnings } from '../common';
 
 type TimeoutResultInput = {
   readonly providerName: string;
@@ -17,49 +16,6 @@ type TimeoutResultInput = {
   readonly result: Pick<ExecutionResult, 'stdout' | 'timedOut'>;
   readonly outputFormat: OutputFormat;
   readonly wasCancelled: boolean;
-};
-
-const hasAnswerText = (text?: string): boolean => {
-  const hasAnswer = text !== undefined && text.trim().length > 0;
-
-  return hasAnswer;
-};
-
-const toCompleteEnvelope = (envelope?: ProviderJsonRecord, text?: string): ProviderJsonRecord | undefined => {
-  const hasAnswer = hasAnswerText(text);
-
-  if (!hasAnswer) return;
-
-  return envelope;
-};
-
-const extractJsonEnvelope = (stdout: string): ProviderJsonRecord | undefined => {
-  const envelope = parseStructuredLine(stdout.trim());
-  const text = extractParsedText(envelope);
-
-  return toCompleteEnvelope(envelope, text);
-};
-
-const extractLastResultEnvelope = (stdout: string): ProviderJsonRecord | undefined => {
-  const lastLine = splitTrimmedLines(stdout).at(-1);
-
-  if (lastLine === undefined) return;
-
-  const event = parseStructuredLine(lastLine);
-  const text = extractTerminalResultText(event);
-  const envelope = unwrapResultEnvelope(event);
-
-  return toCompleteEnvelope(envelope, text);
-};
-
-const extractCompleteEnvelope = (stdout: string, outputFormat: OutputFormat): ProviderJsonRecord | undefined => {
-  const cleanOutput = stripAnsi(stdout);
-
-  if (outputFormat === 'json') return extractJsonEnvelope(cleanOutput);
-
-  if (outputFormat === 'stream-json') return extractLastResultEnvelope(cleanOutput);
-
-  return;
 };
 
 const hasCompleteResult = (stdout: string, outputFormat: OutputFormat): boolean => {
@@ -128,4 +84,25 @@ export const resolveTimeoutResultWarning = (timeoutResultInput: TimeoutResultInp
   const warning = notes.filter((note) => note !== undefined).join(' ');
 
   return warning;
+};
+
+const resolveFinishedReasonNote = (timeoutResultInput: TimeoutResultInput): string | undefined => {
+  const { providerName, result, outputFormat } = timeoutResultInput;
+  const envelope = extractFinalEnvelope(result.stdout, outputFormat);
+
+  if (envelope === undefined) return;
+
+  return describeFinishedReason(providerName, envelope);
+};
+
+export const resolveResultWarnings = (timeoutResultInput: TimeoutResultInput): ResultWarnings => {
+  const acceptedWarning = resolveTimeoutResultWarning(timeoutResultInput);
+  const finishedReasonNote = resolveFinishedReasonNote(timeoutResultInput);
+  const candidateNotes = [acceptedWarning, finishedReasonNote];
+  const notes = candidateNotes.filter((note) => note !== undefined);
+  const joinedWarning = notes.join(' ');
+  const warning = notes.length > 0 ? joinedWarning : undefined;
+  const resultWarnings: ResultWarnings = { acceptedWarning, warning };
+
+  return resultWarnings;
 };

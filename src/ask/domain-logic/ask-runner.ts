@@ -9,9 +9,9 @@ import type { McpErrorResponse, OutputFormat, ProgressContext } from '../../shar
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
 import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
-import type { AskExecution, AskToolArgs } from '../common';
+import type { AskExecution, AskToolArgs, ResultWarnings } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils';
-import { resolveTimeoutResultWarning } from '../utils/complete-result.util';
+import { resolveResultWarnings } from '../utils/complete-result.util';
 
 type RunInvocationInput = {
   readonly context: ResolvedProviderEntry;
@@ -38,14 +38,14 @@ const isFailedExecution = (result: FinishedExecution, acceptedWarning?: string):
   return hasFailed;
 };
 
-const resolveAcceptedWarning = (
+const resolveWarnings = (
   executeInput: ExecuteInput,
   outputFormat: OutputFormat,
   result: ExecutionResult
-): string | undefined => {
+): ResultWarnings => {
   const { context, extra } = executeInput;
   const wasCancelled = extra?.signal?.aborted ?? false;
-  const warning = resolveTimeoutResultWarning({
+  const warnings = resolveResultWarnings({
     providerName: context.name,
     config: context.config,
     result,
@@ -53,7 +53,7 @@ const resolveAcceptedWarning = (
     wasCancelled,
   });
 
-  return warning;
+  return warnings;
 };
 
 const toErrorResponse = (error: unknown): McpErrorResponse => {
@@ -87,8 +87,8 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
   const { context, args, streamNotifier } = executeInput;
   const { result, outputFormat } = await runCommandExecution(executeInput);
   const summary = buildExecutionSummary(result);
-  const warning = resolveAcceptedWarning(executeInput, outputFormat, result);
-  const hasFailed = isFailedExecution(result, warning);
+  const { acceptedWarning, warning } = resolveWarnings(executeInput, outputFormat, result);
+  const hasFailed = isFailedExecution(result, acceptedWarning);
 
   if (hasFailed) {
     if (!isRetry) {

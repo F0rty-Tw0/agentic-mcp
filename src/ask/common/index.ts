@@ -23,6 +23,7 @@ export type {
   ProviderLiveOutputAdapter,
   ProviderOutputMetadata,
   ResolvedAskCommand,
+  ResultWarnings,
   SuccessResponseInput,
 } from './ask-runtime-contracts.type';
 

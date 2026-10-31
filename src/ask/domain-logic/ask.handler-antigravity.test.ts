@@ -100,6 +100,22 @@ describe('FEATURE: antigravity provider against a fake agy CLI', () => {
     });
   });
 
+  describe('GIVEN an agy run whose --print-timeout expires', () => {
+    it('WHEN asked in json mode THEN the attribution warns that the answer may be partial', async () => {
+      const result = await askFakeAgy({ prompt: 'print-timeout', include_structured: true });
+      const attribution = readAttribution(result);
+
+      expect(attribution?.warning).toContain('finished_reason "print_timeout"');
+    });
+
+    it('WHEN asked with stream_live THEN the attribution warns that the answer may be partial', async () => {
+      const result = await askFakeAgy({ prompt: 'print-timeout', stream_live: true, include_structured: true });
+      const attribution = readAttribution(result);
+
+      expect(attribution?.warning).toContain('finished_reason "print_timeout"');
+    });
+  });
+
   describe('GIVEN an agy run that prints a complete json result and then never exits', () => {
     it(
       'WHEN asked THEN the printed answer is returned as a success',

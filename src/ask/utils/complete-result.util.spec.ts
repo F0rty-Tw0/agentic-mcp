@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createResultEnvelopeDetector, resolveTimeoutResultWarning } from './complete-result.util';
+import {
+  createResultEnvelopeDetector,
+  resolveResultWarnings,
+  resolveTimeoutResultWarning,
+} from './complete-result.util';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 
 const AGY_RESULT_EVENT = '{"event":"result","result":{"status":"SUCCESS","response":"agy answer"}}';
@@ -21,6 +25,66 @@ const resolveWarning = (stdout: string, outputFormat: OutputFormat, timedOut = t
 
   return warning;
 };
+
+const resolveAttributionWarning = (
+  stdout: string,
+  outputFormat: OutputFormat,
+  timedOut = false
+): string | undefined => {
+  const config = { acceptResultOnTimeout: true };
+  const result = { stdout, timedOut };
+  const resultWarnings = resolveResultWarnings({
+    providerName: 'antigravity',
+    config,
+    result,
+    outputFormat,
+    wasCancelled: false,
+  });
+
+  return resultWarnings.warning;
+};
+
+describe('FEATURE: result warnings', () => {
+  describe('GIVEN a json run that exited on its own', () => {
+    it('WHEN the envelope finished with reason print_timeout THEN the warning says the answer may be partial', () => {
+      const stdout = '{"status":"SUCCESS","response":"half","finished_reason":"print_timeout"}\n';
+
+      const warning = resolveAttributionWarning(stdout, 'json');
+
+      expect(warning).toBe('antigravity finished with finished_reason "print_timeout", so the answer may be partial.');
+    });
+
+    it('WHEN the envelope has no finished_reason THEN there is no warning', () => {
+      const warning = resolveAttributionWarning('{"status":"SUCCESS","response":"agy answer"}', 'json');
+
+      expect(warning).toBeUndefined();
+    });
+  });
+
+  it('GIVEN a stream-json run that exited on its own WHEN the result event finished with reason print_timeout THEN the warning names it', () => {
+    const stdout = `${AGY_STEP_EVENT}\n{"event":"result","result":{"response":"half","finished_reason":"print_timeout"}}\n`;
+
+    const warning = resolveAttributionWarning(stdout, 'stream-json');
+
+    expect(warning).toContain('"print_timeout"');
+  });
+
+  describe('GIVEN a timed-out json run whose envelope finished with reason print_timeout', () => {
+    const stdout = '{"status":"SUCCESS","response":"half","finished_reason":"print_timeout"}';
+
+    it('WHEN the result is accepted THEN the warning says the process was stopped', () => {
+      const warning = resolveAttributionWarning(stdout, 'json', true);
+
+      expect(warning).toContain('antigravity did not exit');
+    });
+
+    it('WHEN the result is accepted THEN the warning also names the finished_reason', () => {
+      const warning = resolveAttributionWarning(stdout, 'json', true);
+
+      expect(warning).toContain('"print_timeout"');
+    });
+  });
+});
 
 describe('FEATURE: timeout result acceptance', () => {
   describe('GIVEN a timed-out stream-json run', () => {

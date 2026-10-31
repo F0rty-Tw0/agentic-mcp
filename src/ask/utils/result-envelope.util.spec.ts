@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { describeEnvelopeStatus, hasEnvelopeFailure, unwrapResultEnvelope } from './result-envelope.util';
+import {
+  describeEnvelopeStatus,
+  describeFinishedReason,
+  extractFinalEnvelope,
+  hasEnvelopeFailure,
+  unwrapResultEnvelope,
+} from './result-envelope.util';
 import type { ProviderJsonRecord } from '../common';
 
 describe('FEATURE: result envelope reading', () => {
@@ -73,6 +79,38 @@ describe('FEATURE: result envelope reading', () => {
       const envelope = unwrapResultEnvelope(event);
 
       expect(envelope).toBe(event);
+    });
+  });
+
+  describe('GIVEN a finished_reason', () => {
+    it('WHEN it is blank THEN there is no note', () => {
+      const envelope: ProviderJsonRecord = { response: 'answer', finished_reason: '' };
+
+      const note = describeFinishedReason('antigravity', envelope);
+
+      expect(note).toBeUndefined();
+    });
+
+    it('WHEN it is set THEN the note names it', () => {
+      const envelope: ProviderJsonRecord = { response: 'answer', finished_reason: 'print_timeout' };
+
+      const note = describeFinishedReason('antigravity', envelope);
+
+      expect(note).toContain('"print_timeout"');
+    });
+  });
+
+  describe('GIVEN the final envelope of a run', () => {
+    it('WHEN a json run printed an envelope with an empty answer THEN it is still returned', () => {
+      const envelope = extractFinalEnvelope('{"response":"","finished_reason":"print_timeout"}', 'json');
+
+      expect(envelope?.finished_reason).toBe('print_timeout');
+    });
+
+    it('WHEN a text run printed JSON THEN there is no envelope', () => {
+      const envelope = extractFinalEnvelope('{"response":"answer"}', 'text');
+
+      expect(envelope).toBeUndefined();
     });
   });
 });

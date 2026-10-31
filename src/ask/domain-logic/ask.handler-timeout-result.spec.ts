@@ -169,6 +169,18 @@ describe('FEATURE: ask result accepted after a timeout', () => {
     });
   });
 
+  it('GIVEN a provider whose run exits after a print timeout WHEN asked THEN the attribution warns that the answer may be partial', async () => {
+    const stdout = '{"status":"SUCCESS","response":"half","finished_reason":"print_timeout"}\n';
+    const finished: ExecutionResult = { ...ASK_SUCCESS_EXECUTION_RESULT_STUB, stdout };
+
+    vi.mocked(executeCommand).mockResolvedValue(finished);
+
+    const result = await handleAsk(createAskContext(), { prompt: 'test prompt', include_structured: true });
+    const structured = readStructured(result.structuredContent);
+
+    expect(structured?.attribution.warning).toContain('may be partial');
+  });
+
   describe('GIVEN a provider without the opt-in', () => {
     const context = createAskContext();
 

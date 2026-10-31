@@ -9,6 +9,7 @@ Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to 
 - Handles live output streaming via MCP progress notifications when `stream_live` is enabled
 - Supports request cancellation via `AbortSignal` and per-provider timeout enforcement
 - For providers with `acceptResultOnTimeout`, returns a complete printed result (json envelope or terminal stream-json result event) that reports no error (`error`, or `finished_reason` `error`/`interrupted`) as a success with an attribution `warning` when the CLI is killed by timeout or does not exit `resultExitGraceMs` after printing it (`utils/complete-result.util.ts`)
+- Names a json or stream-json result's `finished_reason` (such as agy's `print_timeout`) in the attribution `warning`, on any exit path, because the answer may be partial (`utils/result-envelope.util.ts`)
 - Manages session locking to prevent concurrent writes to the same conversation thread
 
 ## Structure

@@ -11,6 +11,11 @@ export type ResolvedAskCommand = {
 
 export type ProviderJsonRecord = Readonly<Record<string, unknown>>;
 
+export type ResultWarnings = {
+  readonly acceptedWarning?: string;
+  readonly warning?: string;
+};
+
 export type ProviderOutputMetadata = {
   readonly outputFormatObserved: OutputFormat;
   readonly parsed?: unknown;
