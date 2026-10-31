@@ -72,11 +72,15 @@ export const emitSystemEvent = (state: NotifierState, context: EmitterContext, t
   emitEvent(state, context, { type, channel: 'system' });
 };
 
+export const flushPendingChunks = (state: NotifierState, context: EmitterContext): void => {
+  if (!state.flushTimer) return;
+
+  clearTimeout(state.flushTimer);
+  flushQueuedChunks(state, context);
+};
+
 export const emitDone = (state: NotifierState, context: EmitterContext, summary: AskStreamExecutionSummary): void => {
-  if (state.flushTimer) {
-    clearTimeout(state.flushTimer);
-    flushQueuedChunks(state, context);
-  }
+  flushPendingChunks(state, context);
 
   emitEvent(state, context, {
     type: 'done',
@@ -92,10 +96,7 @@ export const emitError = (
   error: string,
   summary?: AskStreamExecutionSummary
 ): void => {
-  if (state.flushTimer) {
-    clearTimeout(state.flushTimer);
-    flushQueuedChunks(state, context);
-  }
+  flushPendingChunks(state, context);
 
   emitEvent(state, context, {
     type: 'error',
