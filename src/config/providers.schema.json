@@ -174,6 +174,16 @@
           "maximum": 2147483647,
           "description": "Idle timeout in milliseconds. Once the process has written output, if it then stays silent for this long it is killed and the call fails as a timeout. Silence before the first output is bounded by timeout only. Optional — omit to disable idle-based termination."
         },
+        "acceptResultOnTimeout": {
+          "type": "boolean",
+          "description": "Opt-in workaround for CLIs that print their final result and then fail to exit. When true, an ask whose stdout already holds a complete result envelope with a non-empty answer (a json envelope, or a terminal stream-json result event) and no error (a non-empty error field, or finished_reason error or interrupted) is returned as a success even if the process was then killed by timeout or idleTimeout. An ask process that has not exited resultExitGraceMs after printing that envelope is stopped instead of waiting for the timeout. The response attribution carries a warning. Defaults to false: a killed run is a failure."
+        },
+        "resultExitGraceMs": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2147483647,
+          "description": "Used only with acceptResultOnTimeout: how long, in milliseconds, the process may keep running after it printed a complete result envelope before it is stopped and that result is returned. Leave room for a CLI that finishes background work after its answer. Defaults to 30000."
+        },
         "maxConcurrency": {
           "type": "integer",
           "exclusiveMinimum": 0,

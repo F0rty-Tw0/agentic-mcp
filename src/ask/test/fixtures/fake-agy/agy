@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+// Fake Antigravity CLI (agy) for integration tests. It mimics agy print mode:
+// -p <prompt>, --output-format json|stream-json, a JSON envelope with top-level response and conversation_id,
+// stream-json events shaped {"event":"result","result":{...}}, and strict rejection of unknown or stray arguments.
+// A prompt of "hang" prints the complete result and then never exits and ignores SIGTERM, like agy issue #1313.
+// A prompt of "exit-held" starts a background child that keeps stdout open, prints the result and exits 0.
+// A prompt of "print-timeout" prints a result with finished_reason "print_timeout" and exits 0, as agy 1.4.11+ does
+// when --print-timeout expires.
+
+const VALUE_FLAGS = new Set([
+  '-p',
+  '--output-format',
+  '--print-timeout',
+  '--model',
+  '--effort',
+  '--add-dir',
+  '--conversation',
+]);
+const BOOLEAN_FLAGS = new Set(['--disable-slash-commands', '--dangerously-skip-permissions']);
+const NEW_CONVERSATION_ID = '11a21e91-0000-4000-8000-0000000000aa';
+
+const fail = (message) => {
+  process.stderr.write(`error: ${message}\n`);
+  process.exit(2);
+};
+
+const parseArgs = (argv) => {
+  const values = {};
+  const booleans = [];
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+
+    if (BOOLEAN_FLAGS.has(arg)) {
+      booleans.push(arg);
+      continue;
+    }
+
+    if (!VALUE_FLAGS.has(arg)) fail(`unexpected argument ${JSON.stringify(arg)}`);
+
+    const value = argv[index + 1];
+
+    if (value === undefined) fail(`flag ${arg} needs a value`);
+
+    values[arg] = value;
+    index += 1;
+  }
+
+  return { values, booleans };
+};
+
+const { values, booleans } = parseArgs(process.argv.slice(2));
+const prompt = values['-p'];
+const outputFormat = values['--output-format'] ?? 'text';
+
+if (prompt === undefined) fail('a prompt is required in print mode');
+
+if (!['json', 'stream-json'].includes(outputFormat)) fail(`unsupported --output-format ${outputFormat}`);
+
+if (!booleans.includes('--disable-slash-commands')) fail('the gateway must pass --disable-slash-commands');
+
+if (values['--print-timeout'] === undefined) fail('the gateway must pass --print-timeout');
+
+const resumedId = values['--conversation'];
+const conversationId = resumedId ?? NEW_CONVERSATION_ID;
+const resumeNote = resumedId === undefined ? '' : ` (resumed ${resumedId})`;
+const response = `agy-fake: ${prompt}${resumeNote}`;
+const finishedReason = prompt === 'print-timeout' ? { finished_reason: 'print_timeout' } : {};
+const result = {
+  conversation_id: conversationId,
+  status: 'SUCCESS',
+  response,
+  duration_seconds: 0.01,
+  num_turns: 1,
+  ...finishedReason,
+};
+
+if (outputFormat === 'json') {
+  process.stdout.write(`${JSON.stringify(result)}\n`);
+} else {
+  const init = { event: 'init', init: { tools: [] } };
+  const step = { event: 'step_update', step_update: { step_index: 1, state: 'DONE', step_type: 'agent_response' } };
+
+  process.stdout.write(`${JSON.stringify(init)}\n`);
+  process.stdout.write(`${JSON.stringify(step)}\n`);
+  process.stdout.write(`${JSON.stringify({ event: 'result', result })}\n`);
+}
+
+if (prompt === 'hang') {
+  process.on('SIGTERM', () => undefined);
+  setInterval(() => undefined, 60_000);
+}
+
+if (prompt === 'exit-held') {
+  const { spawn } = process.getBuiltinModule('node:child_process');
+
+  spawn(process.execPath, ['-e', 'setTimeout(() => undefined, 20_000)'], { stdio: ['ignore', 'inherit', 'inherit'] });
+  process.exit(0);
+}

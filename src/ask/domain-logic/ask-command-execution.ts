@@ -78,6 +78,7 @@ export const runCommandExecution = async (
     onStderrChunk: liveOutputAdapter.onStderrChunk,
     signal: extra?.signal,
     onSpawned,
+    outputFormat,
   });
 
   try {

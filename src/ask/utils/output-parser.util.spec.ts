@@ -221,6 +221,30 @@ describe('parseProviderOutput', () => {
     expect(result.metadata?.parsed).toStrictEqual([parsedLine]);
   });
 
+  describe('GIVEN antigravity stream-json events with a nested result envelope', () => {
+    const outputLines = [
+      '{"event":"init","init":{"conversation_id":"11a21e91-0000-4000-8000-000000000001"}}',
+      '{"event":"step_update","step_update":{"step_index":1,"state":"DONE","step_type":"agent_response"}}',
+      '{"event":"result","result":{"status":"SUCCESS","response":"agy answer","conversation_id":"11a21e91-0000-4000-8000-000000000001"}}',
+    ];
+
+    it('WHEN parsing THEN the nested result response is the answer text', () => {
+      const output = outputLines.join('\n');
+
+      const result = parseProviderOutput(output, 'stream-json');
+
+      expect(result.text).toBe('agy answer');
+    });
+  });
+
+  it('GIVEN a stream-json event whose nested result has no string response WHEN parsing THEN the events are pretty-printed', () => {
+    const output = '{"event":"result","result":{"status":"ERROR","response":null}}';
+
+    const result = parseProviderOutput(output, 'stream-json');
+
+    expect(result.text).toContain('"status": "ERROR"');
+  });
+
   it('GIVEN text output with ansi WHEN parsing THEN strips ansi and marks text format metadata', () => {
     const result = parseProviderOutput('\u001b[33mplain text\u001b[39m', 'text');
 

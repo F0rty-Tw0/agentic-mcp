@@ -9,6 +9,13 @@ export type ResolvedAskCommand = {
   readonly outputFormat: OutputFormat;
 };
 
+export type ProviderJsonRecord = Readonly<Record<string, unknown>>;
+
+export type ResultWarnings = {
+  readonly acceptedWarning?: string;
+  readonly warning?: string;
+};
+
 export type ProviderOutputMetadata = {
   readonly outputFormatObserved: OutputFormat;
   readonly parsed?: unknown;
@@ -40,4 +47,5 @@ export type SuccessResponseInput = {
   readonly streamNotifier: StreamNotifier;
   readonly summary: AskStreamExecutionSummary;
   readonly sessionMode: SessionMode;
+  readonly warning?: string;
 };

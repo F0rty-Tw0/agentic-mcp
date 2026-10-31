@@ -1,14 +1,12 @@
-import { killProcess } from './platform';
+import type { StopChild } from '../common';
 
 type TimeoutHandle = { readonly timer: NodeJS.Timeout; readonly markTimedOut: () => boolean };
 
 type AbortSubscription = { readonly abortHandler: () => void; readonly detach: () => void };
 
-export const createAbortSubscription = (signal?: AbortSignal, childPid?: number): AbortSubscription => {
+export const createAbortSubscription = (signal?: AbortSignal, stopChild?: StopChild): AbortSubscription => {
   const abortHandler = (): void => {
-    if (childPid === undefined) return;
-
-    void killProcess(childPid);
+    stopChild?.();
   };
 
   if (!signal) {
@@ -31,15 +29,12 @@ export const createAbortSubscription = (signal?: AbortSignal, childPid?: number)
   return abortSubscription;
 };
 
-export const setupTimeout = (timeoutMs: number, pid?: number): TimeoutHandle => {
+export const setupTimeout = (timeoutMs: number, stopChild?: StopChild): TimeoutHandle => {
   let timedOut = false;
 
   const timer = setTimeout(() => {
     timedOut = true;
-
-    if (pid === undefined) return;
-
-    void killProcess(pid);
+    stopChild?.();
   }, timeoutMs);
 
   const timeoutHandle: TimeoutHandle = {

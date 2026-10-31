@@ -4,34 +4,20 @@ import process from 'node:process';
 import crossSpawn from 'cross-spawn';
 
 import { defaultProviderQueueStore } from './provider-queue';
-import type {
-  ExecuteCommandOptions,
-  ExecutionResult,
-  IdleTimeoutHandle,
-  ProviderQueueOptions,
-  UntrackChildGroup,
-} from '../common';
+import type { ExecuteCommandOptions, ExecutionResult, ProviderQueueOptions, UntrackChildGroup } from '../common';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import { defaultChildGroupRegistry } from './child-group-registry';
+import { setupChildStop } from './command-child-stop';
 import { setupIdleTimeout } from './command-idle-timeout';
-import { releaseStdioAfterKilledExit } from './command-stdio-release';
+import { setupResultExitWatch } from './command-result-exit';
 import { createAbortSubscription, setupTimeout } from './command-timeout';
 import { CommandExecutionError } from '../common/errors';
 import type { ProviderQueueLease } from '../common/provider-queue.type';
+import { wrapChunkCallback, wrapStdoutCallback } from '../utils/command-chunk-callback.util';
 import { attachStreamCollector } from '../utils/command-stream-collector.util';
 import { resolveExecutionResult, resolveTimeoutCause } from '../utils/execution-result.util';
 
 type QueueLease = ProviderQueueLease | undefined;
-
-const wrapChunkCallback = (
-  idleTimeout: IdleTimeoutHandle,
-  callback?: (chunk: string) => void
-): ((chunk: string) => void) => {
-  return (chunk: string): void => {
-    idleTimeout.reset();
-    callback?.(chunk);
-  };
-};
 
 // A CLI that exits before reading stdin fails the write with EPIPE; its exit code already reports the failure.
 const ignoreStdinError = (): void => undefined;
@@ -94,6 +80,13 @@ const writeStdin = (child: ChildProcess, stdin?: string): void => {
   child.stdin.end();
 };
 
+const buildSpawnError = (binaryPath: string, error: Error): CommandExecutionError => {
+  const message = `Failed to spawn "${binaryPath}": ${error.message}`;
+  const spawnError = new CommandExecutionError(message, { stderr: error.message }, { cause: error });
+
+  return spawnError;
+};
+
 const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Promise<ExecutionResult> => {
   const { binaryPath, timeoutMs, idleTimeoutMs, stdin, onStdoutChunk, onStderrChunk, signal, onSpawned } = options;
 
@@ -103,32 +96,27 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
 
     if (child.pid !== undefined && onSpawned) onSpawned(child.pid);
 
-    const timeout = setupTimeout(timeoutMs, child.pid);
-    const idleTimeout = setupIdleTimeout(idleTimeoutMs, child.pid);
-    const stdout = attachStreamCollector(child.stdout, wrapChunkCallback(idleTimeout, onStdoutChunk));
+    const childStop = setupChildStop(child);
+    const stopChild = childStop.stop;
+    const timeout = setupTimeout(timeoutMs, stopChild);
+    const idleTimeout = setupIdleTimeout(idleTimeoutMs, stopChild);
+    const resultExitWatch = setupResultExitWatch(options, stopChild);
+    const stdout = attachStreamCollector(child.stdout, wrapStdoutCallback(idleTimeout, resultExitWatch, onStdoutChunk));
     const stderr = attachStreamCollector(child.stderr, wrapChunkCallback(idleTimeout, onStderrChunk));
-    const abort = createAbortSubscription(signal, child.pid);
-    const wasKillRequested = (): boolean =>
-      timeout.markTimedOut() || idleTimeout.timedOut() || signal?.aborted === true;
-    const cancelStdioRelease = releaseStdioAfterKilledExit(child, wasKillRequested);
+    const abort = createAbortSubscription(signal, stopChild);
 
     const cleanup = (): void => {
       clearTimeout(timeout.timer);
       idleTimeout.clear();
+      resultExitWatch.clear();
       abort.detach();
-      cancelStdioRelease();
+      childStop.cancelRelease();
       untrackGroup();
     };
 
     child.on('error', (error: Error) => {
       cleanup();
-      reject(
-        new CommandExecutionError(
-          `Failed to spawn "${binaryPath}": ${error.message}`,
-          { stderr: error.message },
-          { cause: error }
-        )
-      );
+      reject(buildSpawnError(binaryPath, error));
     });
 
     child.on('close', (exitCode, closeSignal) => {
@@ -136,6 +124,8 @@ const spawnChild = async (options: ExecuteCommandOptions, startTime: number): Pr
       const timeoutCause = resolveTimeoutCause({
         wallClockTimedOut: timeout.markTimedOut(),
         idleTimedOut: idleTimeout.timedOut(),
+        resultExitStopped: resultExitWatch.stopped(),
+        exitedBeforeKill: childStop.exitedBeforeStop(),
         timeoutMs,
         idleTimeoutMs,
       });

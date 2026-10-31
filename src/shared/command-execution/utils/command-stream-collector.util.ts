@@ -1,9 +1,8 @@
 import type { Readable } from 'node:stream';
 import { StringDecoder } from 'node:string_decoder';
 
+import { MAX_OUTPUT_BYTES } from '../common';
 import type { StreamChunkCallback, StreamCollector } from '../common';
-
-const MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
 
 type CollectStreamResult = { readonly bytes: number; readonly truncated: boolean };
 

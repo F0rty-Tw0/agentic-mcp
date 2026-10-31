@@ -65,6 +65,8 @@ const providerConfigSchema = z.object({
   command: z.string(),
   timeout: timerDelayMsSchema,
   idleTimeout: timerDelayMsSchema.optional(),
+  acceptResultOnTimeout: z.boolean().optional(),
+  resultExitGraceMs: timerDelayMsSchema.optional(),
   maxConcurrency: z.number().int().positive().optional(),
   queueTimeoutMs: timerDelayMsSchema.optional(),
   env: z.record(z.string(), z.string().nullable()),

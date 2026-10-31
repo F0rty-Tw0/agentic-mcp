@@ -5,12 +5,13 @@ import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { recordCall } from '../../provider-metrics';
 import { CommandExecutionError, toMcpError, unregisterActiveRequest } from '../../shared';
 import type { ExecutionResult } from '../../shared/command-execution/common';
-import type { McpErrorResponse, ProgressContext } from '../../shared/mcp-protocol/common';
+import type { McpErrorResponse, OutputFormat, ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { buildExecutionSummary, createStreamNotifier } from '../../streaming';
 import type { AskStreamExecutionSummary, StreamNotifier } from '../../streaming/common';
-import type { AskExecution, AskToolArgs } from '../common';
+import type { AskExecution, AskToolArgs, ResultWarnings } from '../common';
 import { buildExecution, buildFailureExecution } from '../utils';
+import { resolveResultWarnings } from '../utils/complete-result.util';
 
 type RunInvocationInput = {
   readonly context: ResolvedProviderEntry;
@@ -25,6 +26,34 @@ type ExecuteInput = {
   readonly extra?: ProgressContext;
   readonly tier2SessionId?: string;
   readonly streamNotifier: StreamNotifier;
+};
+
+type FinishedExecution = Pick<ExecutionResult, 'exitCode' | 'signal' | 'timedOut'>;
+
+const isFailedExecution = (result: FinishedExecution, acceptedWarning?: string): boolean => {
+  if (acceptedWarning !== undefined) return false;
+
+  const hasFailed = result.timedOut || result.signal !== null || result.exitCode !== 0;
+
+  return hasFailed;
+};
+
+const resolveWarnings = (
+  executeInput: ExecuteInput,
+  outputFormat: OutputFormat,
+  result: ExecutionResult
+): ResultWarnings => {
+  const { context, extra } = executeInput;
+  const wasCancelled = extra?.signal?.aborted ?? false;
+  const warnings = resolveResultWarnings({
+    providerName: context.name,
+    config: context.config,
+    result,
+    outputFormat,
+    wasCancelled,
+  });
+
+  return warnings;
 };
 
 const toErrorResponse = (error: unknown): McpErrorResponse => {
@@ -58,8 +87,10 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
   const { context, args, streamNotifier } = executeInput;
   const { result, outputFormat } = await runCommandExecution(executeInput);
   const summary = buildExecutionSummary(result);
+  const { acceptedWarning, warning } = resolveWarnings(executeInput, outputFormat, result);
+  const hasFailed = isFailedExecution(result, acceptedWarning);
 
-  if (result.timedOut || result.signal !== null || result.exitCode !== 0) {
+  if (hasFailed) {
     if (!isRetry) {
       const env = buildExecutionEnv(context);
       const fallbackModel = await resolveModelFallback({
@@ -95,6 +126,7 @@ const executeAndBuildResponse = async (executeInput: ExecuteInput, isRetry = fal
     streamNotifier,
     summary,
     sessionMode: 'none' as const,
+    warning,
   };
   const response = await buildSuccessfulResponse(successResponseInput);
 

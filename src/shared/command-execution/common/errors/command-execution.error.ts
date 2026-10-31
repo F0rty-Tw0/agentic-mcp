@@ -22,6 +22,15 @@ const formatDuration = (durationMs: number): string => {
   return formattedDuration;
 };
 
+const buildResultExitText = (timeoutCause: ExecutionTimeoutCause): string => {
+  if (!timeoutCause.outputHeldAfterExit) return 'Process stopped after it printed a complete result but did not exit.';
+
+  const heldOutputText =
+    'Process exited after it printed a complete result, but a process it started kept its output open, so the output was closed.';
+
+  return heldOutputText;
+};
+
 const buildTimeoutText = (timeoutCause?: ExecutionTimeoutCause): string => {
   if (!timeoutCause) return 'Process timed out.';
 
@@ -29,6 +38,8 @@ const buildTimeoutText = (timeoutCause?: ExecutionTimeoutCause): string => {
   const idleText = `Process killed after no output for ${limit} (provider idleTimeout).`;
 
   if (timeoutCause.kind === 'idle') return idleText;
+
+  if (timeoutCause.kind === 'result-exit') return buildResultExitText(timeoutCause);
 
   const wallClockText = `Process timed out after ${limit} (provider timeout).`;
 

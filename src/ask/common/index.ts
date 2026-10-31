@@ -13,13 +13,17 @@ export {
 
 export { MAX_RESPONSE_TEXT_BYTES, noop } from './streaming.const';
 
+export { FAILED_FINISHED_REASONS, PARTIAL_FINISHED_REASONS, SUCCESS_STATUS } from './result-envelope.const';
+
 export type { AskExecution } from './ask-execution.type';
 
 export type {
   ParsedProviderOutput,
+  ProviderJsonRecord,
   ProviderLiveOutputAdapter,
   ProviderOutputMetadata,
   ResolvedAskCommand,
+  ResultWarnings,
   SuccessResponseInput,
 } from './ask-runtime-contracts.type';
 

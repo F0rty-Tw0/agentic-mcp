@@ -1,79 +1,9 @@
+import { extractParsedText, parseStructuredLine, splitTrimmedLines } from './output-text.util';
 import { stripAnsi } from '../../shared';
 import type { OutputFormat } from '../../shared/mcp-protocol/common';
 import type { ParsedProviderOutput, ProviderOutputMetadata } from '../common';
 
-type JsonRecord = Readonly<Record<string, unknown>>;
-
-const isJsonRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
-
 const isDefined = <T>(value: T | undefined): value is T => value !== undefined;
-
-const parseStructuredLine = (line: string): JsonRecord | undefined => {
-  try {
-    const parsed: unknown = JSON.parse(line);
-
-    if (!isJsonRecord(parsed)) return;
-
-    return parsed;
-  } catch {
-    return;
-  }
-};
-
-const extractAgentMessageText = (value: unknown): string | undefined => {
-  if (!isJsonRecord(value)) return;
-
-  const item = value.item;
-
-  if (!isJsonRecord(item)) return;
-
-  if (item.type !== 'agent_message') return;
-
-  return typeof item.text === 'string' ? item.text : undefined;
-};
-
-const extractTopLevelResultText = (value: unknown): string | undefined => {
-  if (!isJsonRecord(value)) return;
-
-  if (value.type !== 'result') return;
-
-  return typeof value.result === 'string' ? value.result : undefined;
-};
-
-const extractTopLevelResponseText = (value: unknown): string | undefined => {
-  if (!isJsonRecord(value)) return;
-
-  return typeof value.response === 'string' ? value.response : undefined;
-};
-
-const extractTopLevelTextEventText = (value: unknown): string | undefined => {
-  if (!isJsonRecord(value)) return;
-
-  if (value.type !== 'text') return;
-
-  const part = value.part;
-
-  if (isJsonRecord(part) && typeof part.text === 'string') return part.text;
-
-  return typeof value.text === 'string' ? value.text : undefined;
-};
-
-const extractParsedText = (value: unknown): string | undefined => {
-  return (
-    extractTopLevelResultText(value) ??
-    extractTopLevelResponseText(value) ??
-    extractAgentMessageText(value) ??
-    extractTopLevelTextEventText(value)
-  );
-};
-
-const splitTrimmedLines = (stdout: string): string[] => {
-  const rawLines = stdout.split(/\r?\n/);
-  const trimmedLines = rawLines.map((line) => line.trim());
-  const lines = trimmedLines.filter((line) => line.length);
-
-  return lines;
-};
 
 const stringifyParsed = (parsed: unknown): string => {
   if (typeof parsed === 'string') return parsed;

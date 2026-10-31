@@ -4,7 +4,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 
 ## What It Does
 
-- Detects which AI provider CLIs are installed on the system (Claude, Codex, Copilot, Gemini, OpenCode)
+- Detects which AI provider CLIs are installed on the system (Claude, Codex, Copilot, Gemini, Antigravity `agy`, OpenCode)
 - Generates an MCP server entry (`agentic-mcp`) for the target client's config format
 - Supports multiple MCP clients: Claude Code, VS Code, Cursor, Windsurf, and a generic JSON format
 - Merges the generated entry into existing config files, preserving other servers

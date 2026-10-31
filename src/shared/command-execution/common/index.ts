@@ -1,5 +1,6 @@
 export type {
   ChildGroupRegistry,
+  ChildStop,
   ExecuteCommandOptions,
   ExecutionResult,
   ExecutionTimeoutCause,
@@ -8,8 +9,11 @@ export type {
   ProviderQueueOptions,
   ResolveExecutionResultInput,
   ResolveTimeoutCauseInput,
+  ResultCompleteDetector,
+  ResultExitWatch,
   RetryWithExponentialBackoffInput,
-  StdioReleasableChild,
+  StopChild,
+  StoppableChild,
   StreamChunkCallback,
   StreamCollector,
   UntrackChildGroup,
@@ -21,6 +25,8 @@ export {
   GLOBAL_MAX_CONCURRENT_SPAWNS,
   GLOBAL_SLOT_MAX_EXTRA_WAIT_MS,
   MAX_ERROR_STDERR_BYTES,
+  MAX_OUTPUT_BYTES,
   PROBE_QUEUE_TIMEOUT_MS,
+  RESULT_EXIT_GRACE_MS,
   STDIO_RELEASE_GRACE_MS,
 } from './execution-limits.const';
