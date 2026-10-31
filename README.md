@@ -356,7 +356,7 @@ These provider definitions ship with the project. Whether they are actually usab
 | ----------- | ----------- | ------------- | ------------------ | --------------------------------------- |
 | Claude      | `claude`    | stable        | Yes                | ask, sessions                           |
 | Codex       | `codex`     | stable        | Yes                | ask, review, sessions                   |
-| Copilot     | `copilot`   | stable        | Yes                | ask, sessions                           |
+| Copilot     | `copilot`   | stable        | Yes                | ask, sessions (native resume, 1.0.51+)  |
 | Gemini      | `gemini`    | stable        | Yes                | ask, sessions                           |
 | Antigravity | `agy`       | beta          | Yes                | ask, sessions, model listing; see below |
 | OpenCode    | `opencode`  | stable        | Yes                | ask, sessions, model listing            |
