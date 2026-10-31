@@ -23,6 +23,7 @@ Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to 
 
 - `domain-logic/ask.handler.ts` — Main entry point; routes to sync/async/session code paths
 - `domain-logic/ask-runner.ts` — Executes the provider CLI command and collects output
+- `domain-logic/ask-heartbeat.ts` — Starts the caller heartbeat for `ask_<provider>` and `review_<provider>` runs unless `stream_live` sends its own
 - `domain-logic/ask-command.ts` — Builds the CLI command array from tool arguments
 - `domain-logic/ask-runner-response.builder.ts` — Formats raw output into MCP `CallToolResult`
 - `session/domain-logic/ask-session-flow.ts` — Orchestrates multi-turn session execution

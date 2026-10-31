@@ -15,6 +15,7 @@ const emitEvent = (state: NotifierState, context: EmitterContext, event: AskStre
   const currentSequence = state.sequence;
 
   state.sequence += 1;
+  state.lastEmitAtMs = Date.now();
 
   const params = {
     progressToken: context.progressToken,
@@ -53,8 +54,6 @@ export const queueChunk = (
   context: EmitterContext
 ): void => {
   if (chunk.length === 0) return;
-
-  state.lastChunkAtMs = Date.now();
 
   if (channel === 'stdout') {
     if (state.queuedStdout.length > 0) state.coalescedChunks += 1;

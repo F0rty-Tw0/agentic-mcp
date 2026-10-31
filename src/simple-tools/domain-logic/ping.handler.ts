@@ -2,7 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import {
   buildMinimalEnv,
-  buildProviderQueueOptions,
+  buildProbeQueueOptions,
   executeCommand,
   resolveProviderEnv,
   stripAnsi,
@@ -55,19 +55,20 @@ const resolveVersion = (output: string, pattern?: string): string => {
   return match[1];
 };
 
-export const handlePing = async (context: ResolvedProviderEntry): Promise<CallToolResult> => {
+export const handlePing = async (context: ResolvedProviderEntry, signal?: AbortSignal): Promise<CallToolResult> => {
   try {
     if (!context.config.versionCheck) return createPingResponse(createBinaryDetectedText(context));
 
     const providerEnv = resolveProviderEnv(context);
     const env = buildMinimalEnv(providerEnv);
-    const providerQueue = buildProviderQueueOptions(context);
+    const providerQueue = buildProbeQueueOptions(context);
     const result = await executeCommand({
       binaryPath: context.binaryPath,
       args: [context.config.versionCheck.flag],
       env,
       timeoutMs: PING_TIMEOUT_MS,
       providerQueue,
+      signal,
     });
 
     if (result.timedOut || result.signal !== null || result.exitCode !== 0) {

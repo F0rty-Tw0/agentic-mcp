@@ -7,4 +7,4 @@ export {
   selectClosestAvailableModel,
 } from './model-error.util';
 
-export { buildProviderQueueOptions } from './provider-queue-options.util';
+export { buildProbeQueueOptions, buildProviderQueueOptions } from './provider-queue-options.util';

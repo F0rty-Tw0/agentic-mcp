@@ -81,6 +81,7 @@ export const buildCommandFailure = async (
     exitCode: result.exitCode,
     signal: result.signal,
     timedOut: result.timedOut,
+    timeoutCause: result.timeoutCause,
     stderr: result.stderr,
     output: buildFailureOutput(context, result),
   };

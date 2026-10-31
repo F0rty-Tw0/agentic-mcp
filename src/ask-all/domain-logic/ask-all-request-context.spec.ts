@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleAskAll } from './ask-all.handler';
 import type { AskToolArgs } from '../../ask/common';
 import { handleAsk } from '../../ask/domain-logic/ask.handler';
+import { GLOBAL_MAX_CONCURRENT_SPAWNS } from '../../shared';
 import type { ProgressContext, ResolvedProviderEntry } from '../../shared';
 import type { AskAllToolArgs } from '../common';
 import { makeErrorResult, makeProvider, makeSuccessResult } from '../test/utils/ask-all-handler.spec.util';
@@ -16,6 +17,7 @@ vi.mock('../../ask/domain-logic/ask.handler', () => {
 
 const CLIENT_TOKEN = 'client-token';
 const ASK_ALL_ARGS: AskAllToolArgs = { prompt: 'hello' };
+const LEG_CAP_PROVIDER_NAMES = ['claude', 'codex', 'copilot', 'gemini', 'opencode', 'goose', 'aider'];
 
 const createCallerContext = (signal?: AbortSignal): ProgressContext => {
   const sendNotification = vi.fn(async (): Promise<void> => {
@@ -31,12 +33,19 @@ const createCallerContext = (signal?: AbortSignal): ProgressContext => {
   return callerContext;
 };
 
+const isSignalAborted = (providerContext?: ProgressContext): boolean => providerContext?.signal?.aborted === true;
+
 const resolveOnAbort = async (
   provider: ResolvedProviderEntry,
   args: AskToolArgs,
   extra?: ProgressContext
 ): Promise<CallToolResult> => {
   const cancelled = makeErrorResult(`${provider.name} cancelled: ${args.prompt ?? ''}`);
+
+  const alreadyAborted = isSignalAborted(extra);
+
+  if (alreadyAborted) return cancelled;
+
   const result = await new Promise<CallToolResult>((resolve) => {
     extra?.signal?.addEventListener('abort', () => resolve(cancelled), { once: true });
   });
@@ -51,7 +60,13 @@ const readProviderContext = (callIndex: number): ProgressContext | undefined => 
   return providerContext;
 };
 
-const isSignalAborted = (providerContext?: ProgressContext): boolean => providerContext?.signal?.aborted === true;
+const countProviderAsks = (): number => vi.mocked(handleAsk).mock.calls.length;
+
+const waitForProviderAsks = async (count: number): Promise<void> => {
+  await vi.waitFor(() => {
+    expect(countProviderAsks()).toBe(count);
+  });
+};
 
 const readProviderSignalStates = (): boolean[] => {
   const calls = vi.mocked(handleAsk).mock.calls;
@@ -83,6 +98,7 @@ describe('handleAskAll request context', () => {
 
       const asked = handleAskAll([claude, codex], ASK_ALL_ARGS, extra);
 
+      await waitForProviderAsks(2);
       controller.abort();
 
       expect(readProviderSignalStates()).toStrictEqual([true, true]);
@@ -90,7 +106,7 @@ describe('handleAskAll request context', () => {
       await asked;
     });
 
-    it('GIVEN a caller signal that is already aborted WHEN ask_all starts THEN providers receive an aborted signal', async () => {
+    it('GIVEN a caller signal that is already aborted WHEN ask_all starts THEN no provider is asked', async () => {
       const controller = new AbortController();
       const extra = createCallerContext(controller.signal);
 
@@ -99,7 +115,23 @@ describe('handleAskAll request context', () => {
 
       await handleAskAll([claude, codex], ASK_ALL_ARGS, extra);
 
-      expect(readProviderSignalStates()).toStrictEqual([true, true]);
+      expect(countProviderAsks()).toBe(0);
+    });
+
+    it('GIVEN legs waiting for the ask_all spawn cap WHEN the caller signal aborts THEN no waiting leg asks its provider', async () => {
+      const controller = new AbortController();
+      const extra = createCallerContext(controller.signal);
+      const providers = LEG_CAP_PROVIDER_NAMES.map((name) => makeProvider(name));
+
+      vi.mocked(handleAsk).mockImplementation(resolveOnAbort);
+
+      const asked = handleAskAll(providers, ASK_ALL_ARGS, extra);
+
+      await waitForProviderAsks(GLOBAL_MAX_CONCURRENT_SPAWNS);
+      controller.abort();
+      await asked;
+
+      expect(countProviderAsks()).toBe(GLOBAL_MAX_CONCURRENT_SPAWNS);
     });
   });
 

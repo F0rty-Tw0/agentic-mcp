@@ -1,8 +1,10 @@
 export type QueuedRequest = {
   readonly enqueuedAtMs: number;
-  readonly timer: ReturnType<typeof setTimeout>;
+  timer: ReturnType<typeof setTimeout>;
   readonly resolve: () => void;
 };
+
+export type QueuedRequestRef = { current?: QueuedRequest };
 
 export type ProviderQueueState = {
   // eslint-disable-next-line local/readonly-type-properties -- the queue store counts slots in place

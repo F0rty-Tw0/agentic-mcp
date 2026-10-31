@@ -109,7 +109,7 @@ describe('handlePing', () => {
       });
     });
 
-    it('GIVEN provider with versionCheck WHEN handling ping THEN calls executeCommand with correct args and 30s timeout', async () => {
+    it('GIVEN provider with versionCheck WHEN handling ping THEN calls executeCommand with correct args, a 30s timeout and a 30s queue wait', async () => {
       const versionCheck = { flag: '--version' };
       const context = createSimpleToolsContext({ versionCheck });
 
@@ -119,6 +119,7 @@ describe('handlePing', () => {
         providerName: 'test',
         maxConcurrency: 1,
         queueTimeoutMs: 30_000,
+        globalSlotExtraWaitMs: 0,
       };
 
       expect(executeCommand).toHaveBeenCalledWith({
@@ -128,6 +129,18 @@ describe('handlePing', () => {
         timeoutMs: 30_000,
         providerQueue,
       });
+    });
+
+    it('GIVEN a request signal WHEN handling ping THEN executeCommand receives that signal', async () => {
+      const versionCheck = { flag: '--version' };
+      const context = createSimpleToolsContext({ versionCheck });
+      const controller = new AbortController();
+
+      await handlePing(context, controller.signal);
+
+      const executeOptions = vi.mocked(executeCommand).mock.calls[0]?.[0];
+
+      expect(executeOptions?.signal).toBe(controller.signal);
     });
 
     it('GIVEN provider env without MCP_TOOL_TIMEOUT WHEN handling ping THEN injects default timeout env', async () => {

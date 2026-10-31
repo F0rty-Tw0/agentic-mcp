@@ -188,7 +188,7 @@ describe('callCliTool', () => {
     expect(mocks.clientCallTool).toHaveBeenCalledWith(expectedRequest, {
       onprogress: onProgress,
       resetTimeoutOnProgress: true,
-      timeout: 1_800_000,
+      timeout: 3_600_000,
     });
     expect(mocks.clientClose).toHaveBeenCalledTimes(1);
     expect(mocks.serverClose).toHaveBeenCalledTimes(1);

@@ -17,7 +17,7 @@ export const NOTIFIER_STATE_STUB: NotifierState = {
   coalescedChunks: 0,
   queuedStdout: '',
   queuedStderr: '',
-  lastChunkAtMs: 0,
+  lastEmitAtMs: 0,
   stopped: false,
   flushTimer: undefined,
 };

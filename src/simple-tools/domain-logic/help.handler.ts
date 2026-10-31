@@ -2,7 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/server';
 
 import {
   buildMinimalEnv,
-  buildProviderQueueOptions,
+  buildProbeQueueOptions,
   executeCommand,
   resolveProviderEnv,
   stripAnsi,
@@ -12,17 +12,18 @@ import type { ResolvedProviderEntry } from '../../shared/provider/common';
 
 const HELP_TIMEOUT_MS = 30_000;
 
-export const handleHelp = async (context: ResolvedProviderEntry): Promise<CallToolResult> => {
+export const handleHelp = async (context: ResolvedProviderEntry, signal?: AbortSignal): Promise<CallToolResult> => {
   try {
     const providerEnv = resolveProviderEnv(context);
     const env = buildMinimalEnv(providerEnv);
-    const providerQueue = buildProviderQueueOptions(context);
+    const providerQueue = buildProbeQueueOptions(context);
     const result = await executeCommand({
       binaryPath: context.binaryPath,
       args: ['--help'],
       env,
       timeoutMs: HELP_TIMEOUT_MS,
       providerQueue,
+      signal,
     });
 
     if (result.timedOut) {

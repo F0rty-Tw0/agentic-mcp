@@ -1,24 +1,28 @@
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import type { ProviderQueueOptions } from '../common';
+import { createQueueTimeoutHandler } from './provider-queue-timeout.util';
 import {
   buildLease,
   buildQueueAbortError,
-  buildQueueTimeoutError,
   cleanupProviderQueueState,
+  findOldestEligibleProvider,
   getOrCreateProviderQueueState,
   rejectQueuedRequest,
   removeAbortListener,
   startQueuedRequest,
 } from './provider-queue.util';
-import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from '../common/provider-queue.type';
+import type {
+  ProviderQueueLease,
+  ProviderQueueState,
+  QueuedRequest,
+  QueuedRequestRef,
+} from '../common/provider-queue.type';
 
 type ProviderQueueStore = {
   readonly acquireSlot: (options: ProviderQueueOptions) => Promise<ProviderQueueLease>;
 };
 
 type CreateProviderQueueStoreOptions = { readonly globalMaxConcurrency?: number };
-
-type QueuedRequestRef = { current?: QueuedRequest };
 
 const createDrainQueues = (
   providerStates: Map<string, ProviderQueueState>,
@@ -27,21 +31,15 @@ const createDrainQueues = (
   incrementGlobalActiveCount: () => void
 ): (() => void) => {
   return (): void => {
-    const initialGlobalActiveCount = getGlobalActiveCount();
+    const globalActiveCount = getGlobalActiveCount();
 
-    if (initialGlobalActiveCount >= globalMaxConcurrency) return;
+    if (globalActiveCount >= globalMaxConcurrency) return;
 
-    for (const [providerName, state] of providerStates.entries()) {
-      const globalActiveCount = getGlobalActiveCount();
+    const providerName = findOldestEligibleProvider(providerStates);
 
-      if (globalActiveCount >= globalMaxConcurrency) return;
+    if (providerName === undefined) return;
 
-      if (state.activeCount >= state.maxConcurrency) continue;
-
-      const hasStartedRequest = startQueuedRequest(providerStates, providerName, state, incrementGlobalActiveCount);
-
-      if (hasStartedRequest) return;
-    }
+    startQueuedRequest(providerStates, providerName, incrementGlobalActiveCount);
   };
 };
 
@@ -70,8 +68,6 @@ const waitForQueuedSlot = async (
   const enqueuedAtMs = Date.now();
   const signal = options.signal;
 
-  if (signal?.aborted) throw buildQueueAbortError();
-
   await new Promise<void>((resolve, reject) => {
     const queuedRequestRef: QueuedRequestRef = {};
     const onAbort = (): void => {
@@ -91,20 +87,19 @@ const waitForQueuedSlot = async (
       });
     };
 
+    const onQueueTimeout = createQueueTimeoutHandler({
+      state,
+      providerStates,
+      options,
+      signal,
+      onAbort,
+      reject,
+      queuedRequestRef,
+    });
+
     const queuedRequest: QueuedRequest = {
       enqueuedAtMs,
-      timer: setTimeout(() => {
-        rejectQueuedRequest({
-          state,
-          providerStates,
-          options,
-          queuedRequest,
-          signal,
-          onAbort,
-          reject,
-          error: buildQueueTimeoutError(options, queuedRequest.enqueuedAtMs),
-        });
-      }, options.queueTimeoutMs),
+      timer: setTimeout(onQueueTimeout, options.queueTimeoutMs),
       resolve: (): void => {
         removeAbortListener(signal, onAbort);
         resolve();
@@ -136,6 +131,8 @@ export const createProviderQueueStore = (options: CreateProviderQueueStoreOption
   );
   const releaseProviderSlot = createReleaseProviderSlot(providerStates, decrementGlobalActiveCount, drainQueues);
   const acquireSlot = async (providerQueueOptions: ProviderQueueOptions): Promise<ProviderQueueLease> => {
+    if (providerQueueOptions.signal?.aborted) throw buildQueueAbortError();
+
     const normalizedOptions: ProviderQueueOptions = {
       ...providerQueueOptions,
       queueTimeoutMs: providerQueueOptions.queueTimeoutMs || DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS,

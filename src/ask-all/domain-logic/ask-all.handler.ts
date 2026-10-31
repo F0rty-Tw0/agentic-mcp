@@ -1,9 +1,9 @@
 import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
-import { buildErrorResult } from './ask-all-result.builder';
+import { buildErrorResult, buildProviderFailure } from './ask-all-result.builder';
 import { runProviderAsk } from './ask-all-runner';
 import { buildAskAllSummary } from './ask-all-summary.builder';
-import { startHeartbeat } from '../../shared';
+import { GLOBAL_MAX_CONCURRENT_SPAWNS, createSemaphore, startHeartbeat } from '../../shared';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import type { AskAllProviderResult, AskAllResult, AskAllToolArgs } from '../common';
@@ -32,6 +32,13 @@ const resolveAskAllInput = (resolvedProviders: ResolvedProviderEntry[], args: As
   return result;
 };
 
+const buildCancelledLegResult = (provider: ResolvedProviderEntry): AskAllProviderResult => {
+  const cancelledText = `ask_all was cancelled before provider "${provider.name}" started`;
+  const result = buildProviderFailure(provider, 0, cancelledText);
+
+  return result;
+};
+
 const runAllProviderAsks = async (
   resolvedInput: ResolvedAskAllInput,
   args: AskAllToolArgs,
@@ -39,8 +46,20 @@ const runAllProviderAsks = async (
 ): Promise<AskAllProviderResult[]> => {
   const callerSignal = extra?.signal;
   const stopHeartbeat = startHeartbeat(extra);
-  const runForProvider = async (provider: ResolvedProviderEntry): Promise<AskAllProviderResult> =>
-    runProviderAsk({ provider, args, model: resolvedInput.model, callerSignal });
+  const spawnSlots = createSemaphore(GLOBAL_MAX_CONCURRENT_SPAWNS);
+  const runForProvider = async (provider: ResolvedProviderEntry): Promise<AskAllProviderResult> => {
+    await spawnSlots.acquireSlot();
+
+    try {
+      if (callerSignal?.aborted) return buildCancelledLegResult(provider);
+
+      const result = await runProviderAsk({ provider, args, model: resolvedInput.model, callerSignal });
+
+      return result;
+    } finally {
+      spawnSlots.releaseSlot();
+    }
+  };
 
   try {
     const results = await Promise.all(resolvedInput.filteredProviders.map(runForProvider));
