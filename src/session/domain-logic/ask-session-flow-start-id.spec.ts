@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
 import type { AskExecution, AskToolArgs } from '../../ask/common';
 import type { CommandDef, ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { SessionFlowState } from '../common';
 
 const GENERATED_ID = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b';
 const TIER1_PROMPT = 'tier1 prompt';
@@ -84,6 +85,9 @@ const createExecution = (nativeSessionId?: string): AskExecution => {
   return result;
 };
 
+const FAILED_RESPONSE: CallToolResult = { content: [], isError: true };
+const SUCCESSFUL_EXECUTION = createExecution();
+const FAILED_EXECUTION: AskExecution = { ...SUCCESSFUL_EXECUTION, response: FAILED_RESPONSE };
 const START_CONTEXT = createContext({ resume: ['--resume'], startWithId: '--session-id=' });
 const RESUME_ONLY_CONTEXT = createContext({ resume: ['--resume'] });
 const ARGS: AskToolArgs = { prompt: 'hello', session_id: 'agentic-session' };
@@ -154,6 +158,21 @@ describe('FEATURE: session flow with a caller-chosen native session id', () => {
       nativeSessionId: GENERATED_ID,
       mode: 'tier2-native',
     });
+  });
+
+  it('GIVEN a provider with a startWithId flag and a failed resume WHEN the flow falls back THEN the replay starts a new native id', async () => {
+    const state: SessionFlowState = {
+      sessionId: 'agentic-session',
+      prompt: 'hello',
+      nativeSessionId: 'lost-id',
+      mode: 'tier2-native',
+    };
+
+    mocks.runAskInvocation.mockResolvedValueOnce(FAILED_EXECUTION).mockResolvedValueOnce(createExecution());
+
+    const result = await executeSessionFlow({ context: START_CONTEXT, args: ARGS, state });
+
+    expect(result.nativeSessionId).toBe(GENERATED_ID);
   });
 
   describe('GIVEN a provider without a startWithId flag', () => {

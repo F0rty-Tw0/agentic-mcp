@@ -1,14 +1,10 @@
-import fs from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-
 import type { CallToolResult } from '@modelcontextprotocol/server';
 import { describe, expect, it } from 'vitest';
 
 import { handleAsk } from './ask.handler';
-import { providersFileSchema } from '../../shared';
-import type { ProviderConfig, ResolvedProviderEntry } from '../../shared/provider/common';
 import { handleHelp } from '../../simple-tools';
 import type { AskToolArgs } from '../common';
+import { createFakeCopilotContext, isStringArray, uniqueCopilotSessionId } from '../test/utils/fake-copilot.spec.util';
 import { readFirstText } from '../test/utils/text-content.spec.util';
 
 type SessionArgv = {
@@ -16,37 +12,8 @@ type SessionArgv = {
   readonly followUp: string[];
 };
 
-const FAKE_COPILOT_PATH = fileURLToPath(new URL('../test/fixtures/fake-copilot/copilot', import.meta.url));
-const PROVIDERS_JSON_URL = new URL('../../config/providers.json', import.meta.url);
 const ARGV_LINE_PREFIX = 'argv: ';
 const SESSION_ID_FLAG_PATTERN = /^--session-id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const TEST_TIMEOUT_MS = 20_000;
-
-let sessionCounter = 0;
-
-const uniqueSessionId = (): string => {
-  sessionCounter += 1;
-
-  const sessionId = `copilot-session-${Date.now()}-${sessionCounter}`;
-
-  return sessionId;
-};
-
-const createFakeCopilotContext = async (): Promise<ResolvedProviderEntry> => {
-  const content = await fs.readFile(PROVIDERS_JSON_URL, 'utf8');
-  const parsedJson: unknown = JSON.parse(content);
-  const bundled = providersFileSchema.parse(parsedJson).providers.copilot;
-
-  if (!bundled) throw new Error('Expected the bundled config to define copilot');
-
-  const config: ProviderConfig = { ...bundled, timeout: TEST_TIMEOUT_MS };
-  const context: ResolvedProviderEntry = { name: 'copilot', binaryPath: FAKE_COPILOT_PATH, config };
-
-  return context;
-};
-
-const isStringArray = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every((item) => typeof item === 'string');
 
 const readArgv = (result: CallToolResult): string[] => {
   const lines = readFirstText(result).split('\n');
@@ -70,7 +37,7 @@ const readFlagValue = (argv: string[], flag: string): string | undefined => {
 
 const askTwiceInOneSession = async (): Promise<SessionArgv> => {
   const context = await createFakeCopilotContext();
-  const sessionId = uniqueSessionId();
+  const sessionId = uniqueCopilotSessionId();
   const firstArgs: AskToolArgs = { prompt: 'remember the word teal', session_id: sessionId };
   const followUpArgs: AskToolArgs = { prompt: 'which word?', session_id: sessionId };
   const firstResult = await handleAsk(context, firstArgs);

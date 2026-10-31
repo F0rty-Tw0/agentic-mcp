@@ -4,6 +4,11 @@
 // starts a new session with that id) and --resume <id>. Unknown or stray arguments fail the run.
 // The answer is "copilot-fake: <prompt>" followed by an "argv: <json>" line so tests can assert the exact argv.
 // `--help` prints a usage line and exits 0.
+// Test switches (env): FAKE_COPILOT_RUN_LOG=<file> appends each run's argv as one JSON line;
+// FAKE_COPILOT_LOST_SESSION=<id> fails `--resume <id>` as copilot does for a session it no longer has;
+// FAKE_COPILOT_REJECT_SESSION_ID=1 rejects `--session-id=` as an unknown option, as copilot before 1.0.51 does.
+
+const fs = process.getBuiltinModule('node:fs');
 
 const VALUE_FLAGS = new Set([
   '-p',
@@ -31,6 +36,9 @@ const fail = (message) => {
 };
 
 const argv = process.argv.slice(2);
+const { FAKE_COPILOT_RUN_LOG, FAKE_COPILOT_LOST_SESSION, FAKE_COPILOT_REJECT_SESSION_ID } = process.env;
+
+if (FAKE_COPILOT_RUN_LOG) fs.appendFileSync(FAKE_COPILOT_RUN_LOG, `${JSON.stringify(argv)}\n`);
 
 if (argv.length === 1 && argv[0] === '--help') {
   process.stdout.write('Usage: copilot [options]\n');
@@ -48,6 +56,8 @@ const parseArgs = (args) => {
       booleans.push(arg);
       continue;
     }
+
+    if (arg.startsWith(SESSION_ID_PREFIX) && FAKE_COPILOT_REJECT_SESSION_ID) fail(`unknown option '${arg}'`);
 
     if (arg.startsWith(SESSION_ID_PREFIX)) {
       values['--session-id'] = arg.slice(SESSION_ID_PREFIX.length);
@@ -76,5 +86,9 @@ if (prompt === undefined) fail('a prompt is required in print mode');
 if (sessionId !== undefined && !UUID_PATTERN.test(sessionId)) fail(`--session-id must be a UUID, got ${sessionId}`);
 
 if (sessionId !== undefined && values['--resume'] !== undefined) fail('use either --session-id or --resume');
+
+if (FAKE_COPILOT_LOST_SESSION && values['--resume'] === FAKE_COPILOT_LOST_SESSION) {
+  fail(`session ${FAKE_COPILOT_LOST_SESSION} not found`);
+}
 
 process.stdout.write(`copilot-fake: ${prompt}\nargv: ${JSON.stringify(argv)}\n`);

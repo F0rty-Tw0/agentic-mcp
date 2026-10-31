@@ -54,6 +54,15 @@ const buildMissingPromptResult = (state: SessionFlowState): SessionFlowResult =>
   return result;
 };
 
+const resolveStartSessionId = (config: ProviderConfig): string | undefined => {
+  const candidateId = randomUUID();
+  const canStart = canStartNativeSession(config, candidateId);
+
+  if (!canStart) return;
+
+  return candidateId;
+};
+
 export const executeSessionFlow = async ({
   context,
   args,
@@ -73,6 +82,7 @@ export const executeSessionFlow = async ({
     prompt: fallbackPrompt,
     mode: 'tier2-fallback-to-tier1',
     nativeSessionId: undefined,
+    startSessionId: resolveStartSessionId(context.config),
   };
   const fallbackExecution = await runSessionExecution(context, args, extra, fallbackState);
   const result: SessionFlowResult = {
@@ -84,15 +94,6 @@ export const executeSessionFlow = async ({
   };
 
   return result;
-};
-
-const resolveStartSessionId = (config: ProviderConfig): string | undefined => {
-  const candidateId = randomUUID();
-  const canStart = canStartNativeSession(config, candidateId);
-
-  if (!canStart) return;
-
-  return candidateId;
 };
 
 export const buildSessionFlowState = (context: ResolvedProviderEntry, args: AskToolArgs): SessionFlowState => {
