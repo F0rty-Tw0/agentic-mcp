@@ -58,10 +58,15 @@ const buildConfiguredOutput = (input: ConfiguredSetupOutputInput): string => {
   return formatHumanSetupOutput(input);
 };
 
-const installClientSkill = async (input: SetupCliFlowInput): Promise<SkillInstallResult | undefined> => {
+const installClientSkill = async (
+  input: SetupCliFlowInput,
+  plan: SetupPlan
+): Promise<SkillInstallResult | undefined> => {
   const { parsedArgs, dependencies } = input;
 
   if (parsedArgs.client !== 'claude-code') return undefined;
+
+  if (plan.writeIntent === 'skip') return undefined;
 
   const skillResult = await dependencies.installSkill({ homeDirectory: dependencies.homeDirectory });
 
@@ -145,7 +150,7 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   }
 
   const result = await dependencies.applySetupPlan(plan);
-  const skillResult = await installClientSkill(input);
+  const skillResult = await installClientSkill(input, plan);
   const output = buildConfiguredOutput({ parsedArgs, plan, result, detectedProviders, skillResult });
 
   dependencies.stdoutWrite(output);
