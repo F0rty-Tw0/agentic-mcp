@@ -100,4 +100,13 @@ describe('parseSetupArgs', () => {
     });
     expect(stderrWrite).toHaveBeenCalledWith('Warning: unknown client "--yes", using "generic"\n');
   });
+
+  it('GIVEN --client gemini WHEN parsing setup args THEN the gemini client is selected', () => {
+    const stderrWrite = vi.fn<(text: string) => void>();
+
+    const result = parseSetupArgs({ args: ['--client', 'gemini'], stderrWrite });
+
+    expect(result.client).toBe('gemini');
+    expect(stderrWrite).not.toHaveBeenCalled();
+  });
 });

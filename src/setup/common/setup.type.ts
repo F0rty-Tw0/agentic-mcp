@@ -1,4 +1,4 @@
-export type SupportedClient = 'claude-code' | 'cursor' | 'windsurf' | 'generic';
+export type SupportedClient = 'claude-code' | 'cursor' | 'gemini' | 'windsurf' | 'generic';
 
 export type SetupMode = 'merge' | 'overwrite';
 

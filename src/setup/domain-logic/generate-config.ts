@@ -19,6 +19,7 @@ export const generateClientConfigEntry = (
 
   switch (client) {
     case 'claude-code':
+    case 'gemini':
       return TIMED_ENTRY;
     case 'cursor':
     case 'windsurf':

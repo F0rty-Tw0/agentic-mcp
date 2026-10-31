@@ -66,4 +66,14 @@ describe('generateClientConfigEntry', () => {
     expect(result.command).toBe('npx');
     expect(result.args).toStrictEqual(['-y', 'agentic-mcp']);
   });
+
+  it('GIVEN gemini WHEN generating entry THEN the timeout in ms is one minute above the provider timeout', () => {
+    const result = generateClientConfigEntry('gemini', []);
+
+    expect(result).toStrictEqual({
+      command: 'npx',
+      args: ['-y', 'agentic-mcp'],
+      timeout: 3_660_000,
+    });
+  });
 });

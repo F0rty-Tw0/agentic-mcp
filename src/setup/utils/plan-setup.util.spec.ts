@@ -193,4 +193,27 @@ describe('buildSetupPlan', () => {
 
     expect(result.configText).not.toContain('7200000');
   });
+
+  it('GIVEN gemini with other servers and settings WHEN building plan THEN it targets ~/.gemini/settings.json and keeps them', () => {
+    const other = { command: 'node', args: ['other.js'] };
+    const existingServers = { other };
+    const existingConfig = { theme: 'dark', mcpServers: existingServers };
+
+    const result = buildSetupPlan({
+      client: 'gemini',
+      homeDirectory: '/home/dev',
+      pathOverride: undefined,
+      mode: 'merge',
+      dryRun: false,
+      existingConfigText: JSON.stringify(existingConfig),
+      agenticServerEntry: TIMED_SERVER_ENTRY,
+      backup: 'if-exists',
+    });
+    const writtenServers = { other, 'agentic-mcp': TIMED_SERVER_ENTRY };
+    const writtenConfig = { theme: 'dark', mcpServers: writtenServers };
+
+    expect(result.targetPath).toBe(path.join('/home/dev', '.gemini/settings.json'));
+    expect(JSON.parse(result.configText)).toStrictEqual(writtenConfig);
+    expect(result.notes).toStrictEqual(['agentic-mcp timeout: set to 3660000 (was not set).']);
+  });
 });
