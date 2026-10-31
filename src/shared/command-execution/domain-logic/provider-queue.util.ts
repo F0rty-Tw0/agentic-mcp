@@ -1,11 +1,6 @@
 import type { ProviderQueueOptions } from '../common';
-import { CommandExecutionError, QueueTimeoutError } from '../common/errors';
-import type {
-  ProviderQueueLease,
-  ProviderQueueState,
-  QueuedRequest,
-  QueuedRequestRef,
-} from '../common/provider-queue.type';
+import { CommandExecutionError } from '../common/errors';
+import type { ProviderQueueLease, ProviderQueueState, QueuedRequest } from '../common/provider-queue.type';
 
 const removeQueuedRequest = (waitQueue: QueuedRequest[], queuedRequest: QueuedRequest): boolean => {
   const index = waitQueue.indexOf(queuedRequest);
@@ -101,74 +96,46 @@ export const rejectQueuedRequest = (input: RejectQueuedRequestInput): void => {
   reject(error);
 };
 
-const buildQueueTimeoutError = (options: ProviderQueueOptions, enqueuedAtMs: number): QueueTimeoutError => {
-  const waitMs = Date.now() - enqueuedAtMs;
-  const error = new QueueTimeoutError({
-    providerName: options.providerName,
-    waitMs,
-    queueTimeoutMs: options.queueTimeoutMs,
-  });
+const isOlderWaiter = (candidate: QueuedRequest | undefined, oldest: QueuedRequest | undefined): boolean => {
+  if (!candidate) return false;
 
-  return error;
+  const isOlder = !oldest || candidate.enqueuedAtMs < oldest.enqueuedAtMs;
+
+  return isOlder;
+};
+
+// A freed global slot goes to the oldest waiter across all providers, so no provider can starve another.
+export const findOldestEligibleProvider = (providerStates: Map<string, ProviderQueueState>): string | undefined => {
+  let oldestProviderName: string | undefined;
+  let oldestRequest: QueuedRequest | undefined;
+
+  for (const [providerName, state] of providerStates.entries()) {
+    const headRequest = state.waitQueue[0];
+    const hasFreeProviderSlot = state.activeCount < state.maxConcurrency;
+    const isOlder = isOlderWaiter(headRequest, oldestRequest);
+    const isOldest = hasFreeProviderSlot && isOlder;
+
+    if (!isOldest) continue;
+
+    oldestProviderName = providerName;
+    oldestRequest = headRequest;
+  }
+
+  return oldestProviderName;
 };
 
 export const startQueuedRequest = (
   providerStates: Map<string, ProviderQueueState>,
   providerName: string,
-  state: ProviderQueueState,
   incrementGlobalActiveCount: () => void
-): boolean => {
-  const queuedRequest = state.waitQueue.shift();
+): void => {
+  const state = providerStates.get(providerName);
+  const queuedRequest = state?.waitQueue.shift();
 
-  if (!queuedRequest) {
-    cleanupProviderQueueState(providerStates, providerName);
-
-    return false;
-  }
+  if (!state || !queuedRequest) return;
 
   clearTimeout(queuedRequest.timer);
   state.activeCount++;
   incrementGlobalActiveCount();
   queuedRequest.resolve();
-  cleanupProviderQueueState(providerStates, providerName);
-
-  return true;
-};
-
-type QueueTimeoutHandlerInput = {
-  readonly state: ProviderQueueState;
-  readonly providerStates: Map<string, ProviderQueueState>;
-  readonly options: ProviderQueueOptions;
-  readonly signal: AbortSignal | undefined;
-  readonly onAbort: () => void;
-  readonly reject: (reason?: unknown) => void;
-  readonly queuedRequestRef: QueuedRequestRef;
-};
-
-// A request whose provider has a free slot waits only for the global spawn cap, which every run frees within its
-// own timeout, so the queue timeout keeps it waiting instead of failing it.
-const isOnlyGloballyBlocked = (state: ProviderQueueState): boolean => state.activeCount < state.maxConcurrency;
-
-export const createQueueTimeoutHandler = (input: QueueTimeoutHandlerInput): (() => void) => {
-  const { state, providerStates, options, signal, onAbort, reject, queuedRequestRef } = input;
-
-  const onQueueTimeout = (): void => {
-    const queuedRequest = queuedRequestRef.current;
-
-    if (!queuedRequest) return;
-
-    const onlyGloballyBlocked = isOnlyGloballyBlocked(state);
-
-    if (onlyGloballyBlocked) {
-      queuedRequest.timer = setTimeout(onQueueTimeout, options.queueTimeoutMs);
-
-      return;
-    }
-
-    const error = buildQueueTimeoutError(options, queuedRequest.enqueuedAtMs);
-
-    rejectQueuedRequest({ state, providerStates, options, queuedRequest, signal, onAbort, reject, error });
-  };
-
-  return onQueueTimeout;
 };

@@ -4,6 +4,9 @@ export const DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS = 600_000;
 
 export const GLOBAL_MAX_CONCURRENT_SPAWNS = 5;
 
+// A call blocked only by the global spawn cap waits this long past its queue timeout: one default provider run.
+export const GLOBAL_SLOT_MAX_EXTRA_WAIT_MS = 3_600_000;
+
 export const MAX_ERROR_STDERR_BYTES = 4096;
 
 export const MS_PER_SECOND = 1_000;

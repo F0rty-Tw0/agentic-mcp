@@ -220,7 +220,7 @@ A big PR review or a multi-file task can run for many minutes. Two sets of limit
 | Waiting for a busy provider slot (`maxConcurrency: 1`) | 10 min        | `queueTimeoutMs` | `Queue timeout for provider "<name>": the provider is busy with other calls` |
 | Copilot silence after its first output                 | 10 min        | `idleTimeout`    | `Process killed after no output for 600 s (provider idleTimeout).`           |
 
-`queueTimeoutMs` defaults to 10 min when a provider omits it. At most 5 provider CLIs run at once; a call whose provider is free waits for one of those 5 slots without timing out, and `ask_all` starts at most 5 providers at a time. The `MCP_TOOL_TIMEOUT` that `agentic-mcp` sets for a child `claude` (60 min) only limits that child's own MCP calls; it does not change your client's limit.
+`queueTimeoutMs` defaults to 10 min when a provider omits it. At most 5 provider CLIs run at once; a call whose provider is free waits for one of those 5 slots (oldest call first) for up to 60 min past its `queueTimeoutMs`, and `ask_all` starts at most 5 providers at a time. The `MCP_TOOL_TIMEOUT` that `agentic-mcp` sets for a child `claude` (60 min) only limits that child's own MCP calls; it does not change your client's limit.
 
 **Your MCP client's limit.** When it expires, the client cancels the call and `agentic-mcp` stops the provider CLI, so the work is lost. `agentic-mcp` sends progress notifications only when the client sends a progress token (every 30 s, and at least every 20 s with `stream_live`), and most clients do not extend their limit on progress. Raise the limit above the provider timeout where the client allows it. Checked in October 2026; `setup` does not write these keys yet.
 

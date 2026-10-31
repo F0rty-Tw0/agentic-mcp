@@ -1,10 +1,11 @@
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS, GLOBAL_MAX_CONCURRENT_SPAWNS } from '../common';
 import type { ProviderQueueOptions } from '../common';
+import { createQueueTimeoutHandler } from './provider-queue-timeout.util';
 import {
   buildLease,
   buildQueueAbortError,
   cleanupProviderQueueState,
-  createQueueTimeoutHandler,
+  findOldestEligibleProvider,
   getOrCreateProviderQueueState,
   rejectQueuedRequest,
   removeAbortListener,
@@ -30,21 +31,15 @@ const createDrainQueues = (
   incrementGlobalActiveCount: () => void
 ): (() => void) => {
   return (): void => {
-    const initialGlobalActiveCount = getGlobalActiveCount();
+    const globalActiveCount = getGlobalActiveCount();
 
-    if (initialGlobalActiveCount >= globalMaxConcurrency) return;
+    if (globalActiveCount >= globalMaxConcurrency) return;
 
-    for (const [providerName, state] of providerStates.entries()) {
-      const globalActiveCount = getGlobalActiveCount();
+    const providerName = findOldestEligibleProvider(providerStates);
 
-      if (globalActiveCount >= globalMaxConcurrency) return;
+    if (providerName === undefined) return;
 
-      if (state.activeCount >= state.maxConcurrency) continue;
-
-      const hasStartedRequest = startQueuedRequest(providerStates, providerName, state, incrementGlobalActiveCount);
-
-      if (hasStartedRequest) return;
-    }
+    startQueuedRequest(providerStates, providerName, incrementGlobalActiveCount);
   };
 };
 
