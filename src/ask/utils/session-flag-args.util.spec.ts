@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildNativeSessionArgs, buildStartSessionArgs, canStartNativeSession } from './session-flag-args.util';
+import {
+  buildNativeSessionArgs,
+  buildStartSessionArgs,
+  canStartNativeSession,
+  resolveStartFlagName,
+} from './session-flag-args.util';
 import type { CommandDef, ProviderConfig } from '../../shared';
 
 const START_SESSION_ID = '0b7c1f9e-2d4a-4c1b-9f3e-5a6b7c8d9e0f';
@@ -210,5 +215,25 @@ describe('FEATURE: session flag args', () => {
     const result = buildNativeSessionArgs(config, 'session-456');
 
     expect(result).toStrictEqual(['--continue', 'session-456']);
+  });
+
+  describe('GIVEN a provider config WHEN resolving the start flag name', () => {
+    it('THEN a joined start flag drops its trailing "="', () => {
+      const config = buildSessionsConfig({ startWithId: '--session-id=' });
+
+      expect(resolveStartFlagName(config)).toBe('--session-id');
+    });
+
+    it('THEN an array start flag resolves to the part before the id', () => {
+      const config = buildSessionsConfig({ startWithId: ['--new', '--id'] });
+
+      expect(resolveStartFlagName(config)).toBe('--id');
+    });
+
+    it('THEN a config without a start flag resolves to undefined', () => {
+      const config = buildSessionsConfig({ resume: ['--resume'] });
+
+      expect(resolveStartFlagName(config)).toBeUndefined();
+    });
   });
 });
