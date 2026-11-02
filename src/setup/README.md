@@ -73,6 +73,16 @@ Exercises the setup CLI with real filesystem operations in a temp directory. Use
 | Dry run                     | With `--dry-run`, output is produced but no file is written to disk                                          | stdout length > 0; target file does not exist                                                              |
 | Minimal setup               | With `--minimal`, the skill is installed and the next real-proof command is surfaced                         | skill file exists; stdout explains what remains unproven and shows the first real-proof command            |
 
+### `setup-cli-process.test.ts`
+
+Spawns the built binary (`dist/index.js`, so run `pnpm run build` first) with a scratch `HOME`. Skipped when the build is missing.
+
+| Test                   | What It Verifies                                             | Expected Output                                                    |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `--output json`        | stdout is one JSON document that includes the skill result   | `skillResult.status` is `installed`                                |
+| Unchanged rerun        | A second run on a configured file writes nothing             | Same inode and mtime, no `.bak`, `result.status` is `unchanged`    |
+| Invalid JSON in config | Setup leaves a config it cannot merge into for a manual edit | Exit code 1, `result` is `{ status: 'manual', path }`, file intact |
+
 ## Unit Tests
 
 `.spec.ts` files covering the setup CLI orchestration, provider detection, per-client config generation, setup plan building, JSON and TOML config merging, timeout merging, written-file verification, output formatting, and file I/O utilities.

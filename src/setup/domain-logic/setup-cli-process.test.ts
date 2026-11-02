@@ -2,7 +2,7 @@
 
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readdir, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -13,21 +13,46 @@ const execFileAsync = promisify(execFile);
 
 const BINARY_PATH = 'dist/index.js';
 const TIMEOUT_MS = 30_000;
+const SPAWN_TIMEOUT_MS = TIMEOUT_MS - 5_000;
 const SETUP_ARGS = ['setup', '--client', 'claude-code', '--output', 'json', '--yes'];
+const INVALID_JSON = '{ "mcpServers": ';
 
 type FileIdentity = {
   readonly inode: number;
   readonly mtimeMs: number;
 };
 
+type SetupExit = {
+  readonly exitCode: number;
+  readonly stdout: string;
+};
+
 let homeDirectory: string;
 
-const runSetupProcess = async (): Promise<string> => {
+const buildSetupEnv = (): NodeJS.ProcessEnv => {
   const inheritedEntries = Object.entries(process.env).filter(([key]) => key !== 'CLAUDE_CONFIG_DIR');
   const env = Object.fromEntries([...inheritedEntries, ['HOME', homeDirectory]]);
-  const { stdout } = await execFileAsync(process.execPath, [BINARY_PATH, ...SETUP_ARGS], { env });
+
+  return env;
+};
+
+const runSetupProcess = async (): Promise<string> => {
+  const options = { env: buildSetupEnv(), timeout: SPAWN_TIMEOUT_MS };
+  const { stdout } = await execFileAsync(process.execPath, [BINARY_PATH, ...SETUP_ARGS], options);
 
   return stdout;
+};
+
+const runSetupExpectingFailure = async (): Promise<SetupExit> => {
+  const result = await new Promise<SetupExit>((resolve) => {
+    const options = { env: buildSetupEnv(), timeout: SPAWN_TIMEOUT_MS };
+
+    execFile(process.execPath, [BINARY_PATH, ...SETUP_ARGS], options, (error, stdout) => {
+      resolve({ exitCode: Number(error?.code ?? 0), stdout });
+    });
+  });
+
+  return result;
 };
 
 const readIdentity = async (targetPath: string): Promise<FileIdentity> => {
@@ -82,6 +107,24 @@ describe.skipIf(!existsSync(BINARY_PATH))('integration: setup binary with a scra
       expect(after).toStrictEqual(before);
       expect(backups).toStrictEqual([]);
       expect(parsed).toHaveProperty('result.status', 'unchanged');
+    },
+    TIMEOUT_MS
+  );
+
+  it(
+    'GIVEN invalid JSON in the claude-code config WHEN setup runs THEN it exits 1 with a manual result and leaves the file as it was',
+    async () => {
+      const configPath = path.join(homeDirectory, '.claude.json');
+
+      await writeFile(configPath, INVALID_JSON);
+
+      const { exitCode, stdout } = await runSetupExpectingFailure();
+      const parsed: unknown = JSON.parse(stdout);
+      const content = await readFile(configPath, 'utf8');
+
+      expect(exitCode).toBe(1);
+      expect(parsed).toHaveProperty('result', { status: 'manual', path: configPath });
+      expect(content).toBe(INVALID_JSON);
     },
     TIMEOUT_MS
   );
