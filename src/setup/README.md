@@ -17,7 +17,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Supports `--dry-run` to preview changes without writing any file (with `--minimal` it skips the skill install too), `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Exits 1 when aborted (the confirmation prompt is declined or closed, or a non-interactive write lacks `--yes`); with `--output json` it prints `result.status: "aborted"` and the reason. The prompt goes to stderr
 - Exits 1 when the written file fails its read-back check (`verification-failed`), and then skips the Claude Code skill install (`skillResult.status: "skipped"` with the reason)
-- Exits 1 when an existing config is left for a manual edit because setup will not merge into it (invalid JSON or TOML, an unmergeable entry, or `--mode overwrite` on Claude Code's state file); the output is unchanged (`result.status: "manual"`). A client with no known config path (`--client generic` without `--path`) still exits 0, since printing the snippet is its normal outcome
+- Exits 1 when an existing config is left for a manual edit because setup will not merge into it (invalid JSON or TOML, an unmergeable entry, a TOML entry setup cannot update safely, or `--mode overwrite` on Claude Code's state file); the output is unchanged (`result.status: "manual"`). A client with no known config path (`--client generic` without `--path`) still exits 0, since printing the snippet is its normal outcome
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 
 ## Output Contract
