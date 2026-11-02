@@ -8,6 +8,7 @@ export type ClientConfigMergeResult = {
   readonly status: SetupMergeStatus;
   readonly configText: string;
   readonly notes: string[];
+  readonly warnings: string[];
   readonly rewritten: boolean;
   readonly rewriteCause?: TomlRewriteCause;
   readonly reason?: string;
@@ -52,9 +53,14 @@ export type McpServerEntry =
 
 export type ClientConfigFormat = 'json' | 'toml';
 
+// smol-toml parses an integer beyond 2^53 as a BigInt, which is still a set timeout.
+export type TimeoutValue = number | bigint;
+
 export type TimeoutKeyRule = {
   readonly key: string;
   readonly msAliasKey?: string;
+  // Keep an existing value of 0 or below instead of raising it, for a client that documents no meaning for one.
+  readonly keepsNonPositive?: boolean;
 };
 
 // A variable that moves the client's config: the client reads <value>/<relativePath> (the value itself when empty).

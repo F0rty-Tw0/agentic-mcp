@@ -1,4 +1,4 @@
-import type { SupportedClient } from './setup.type';
+import type { SetupAbortCause, SupportedClient } from './setup.type';
 import { DEFAULT_PROVIDER_QUEUE_TIMEOUT_MS } from '../../shared/command-execution/common';
 import { DEFAULT_MCP_TOOL_TIMEOUT_MS } from '../../shared/provider/common';
 
@@ -22,5 +22,16 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
 ];
 
 export const SKILL_CONSENT_REASON = 'rerun with --yes to install it';
+
+// The exit code the other subcommands (prove, the ask CLI) use for a run that did not do its job:
+// setup uses it for an aborted run and for a write that fails its read-back check.
+export const SETUP_FAILED_EXIT_CODE = 1;
+
+export const SETUP_ABORT_REASONS: Readonly<Record<SetupAbortCause, string>> = {
+  declined: 'the confirmation prompt was declined, so no files were written',
+  'needs-yes': 'a non-interactive write needs --yes, so no files were written',
+};
+
+export const SKILL_DRY_RUN_REASON = 'dry run, so nothing was written; rerun without --dry-run to install it';
 
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;

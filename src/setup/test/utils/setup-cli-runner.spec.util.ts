@@ -80,6 +80,7 @@ export const createSetupCliDependencies = (overrides: Partial<SetupCliDependenci
     promptConfirm: async () => Promise.resolve(false),
     readConfigFile: async () => Promise.resolve('{"mcpServers":{}}'),
     env: {},
+    setExitCode: vi.fn<(code: number) => void>(),
     ...overrides,
   };
 

@@ -11,13 +11,18 @@ import { detectInstalledProviders } from './detect-providers';
 import { generateClientConfigEntry } from './generate-config';
 import { installSkill } from './install-skill';
 
+// The prompt goes to stderr so --output json keeps stdout parseable; Ctrl-C or Ctrl-D closes the input and declines.
 const defaultPromptConfirm = async (question: string): Promise<boolean> => {
-  const readLine = createInterface({ input: process.stdin, output: process.stdout });
+  const readLine = createInterface({ input: process.stdin, output: process.stderr });
 
   return new Promise<boolean>((resolve) => {
+    readLine.once('close', () => {
+      resolve(false);
+    });
     readLine.question(question, (answer) => {
-      readLine.close();
+      // Settle before close(), whose 'close' event would otherwise settle the promise as declined.
       resolve(answer.trim().toLowerCase() === 'y' || answer.trim().toLowerCase() === 'yes');
+      readLine.close();
     });
   });
 };
@@ -37,6 +42,9 @@ const defaultDependencies: SetupCliDependencies = {
   promptConfirm: defaultPromptConfirm,
   readConfigFile: async (configPath: string) => readFile(configPath, 'utf8'),
   env: process.env,
+  setExitCode: (code) => {
+    process.exitCode = code;
+  },
 };
 
 export const runSetup = async (args: string[], injectedDependencies?: Partial<SetupCliDependencies>): Promise<void> => {

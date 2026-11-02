@@ -18,12 +18,13 @@ import { runSetup } from './setup-cli';
 
 type CommonDeps = Pick<
   SetupCliDependencies,
-  'detectInstalledProviders' | 'stdoutWrite' | 'stderrWrite' | 'homeDirectory' | 'isInteractive'
+  'detectInstalledProviders' | 'stdoutWrite' | 'stderrWrite' | 'homeDirectory' | 'isInteractive' | 'setExitCode'
 >;
 
 let tempDir: string;
 let stdoutOutput: string;
 let stderrOutput: string;
+let exitCode: number | undefined;
 
 const stubProviders: DetectedProvider[] = [{ name: 'claude', available: true, binaryPath: '/usr/bin/claude' }];
 
@@ -41,6 +42,10 @@ const captureStderr = (text: string): void => {
   stderrOutput += text;
 };
 
+const captureExitCode = (code: number): void => {
+  exitCode = code;
+};
+
 const commonDeps = (): CommonDeps => {
   const deps: CommonDeps = {
     detectInstalledProviders: detectStubProviders,
@@ -48,6 +53,7 @@ const commonDeps = (): CommonDeps => {
     stderrWrite: captureStderr,
     homeDirectory: tempDir,
     isInteractive: false,
+    setExitCode: captureExitCode,
   };
 
   return deps;
@@ -57,6 +63,7 @@ beforeEach(async () => {
   tempDir = await mkdtemp(path.join(os.tmpdir(), 'setup-test-'));
   stdoutOutput = '';
   stderrOutput = '';
+  exitCode = undefined;
 });
 
 afterEach(async () => {
@@ -123,6 +130,7 @@ describe('integration: non-interactive safety gate', () => {
     await runSetup(['--client', 'generic', '--path', targetPath], commonDeps());
 
     expect(stderrOutput).toContain('non-interactive write requires explicit --yes');
+    expect(exitCode).toBe(1);
 
     let fileExists = true;
 

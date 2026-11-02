@@ -142,6 +142,7 @@ describe('FEATURE: TOML client config merge', () => {
         status: 'unmergeable',
         configText: existingText,
         notes: [],
+        warnings: [],
         rewritten: false,
         rewriteCause: undefined,
         reason:

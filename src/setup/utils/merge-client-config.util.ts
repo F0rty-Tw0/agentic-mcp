@@ -18,6 +18,7 @@ type MergeClientConfigResult = {
   readonly status: MergeResultStatus;
   readonly mergedConfig: JsonRecord;
   readonly notes: string[];
+  readonly warnings: string[];
   readonly reason?: string;
 };
 
@@ -79,6 +80,18 @@ const createServersConfig = (parsedRoot: JsonRecord, serversKey: string, servers
   return result;
 };
 
+type RefusedResultInput = {
+  readonly status: Extract<MergeResultStatus, 'invalid-json' | 'unmergeable'>;
+  readonly mergedConfig: JsonRecord;
+  readonly reason: string;
+};
+
+const buildRefusedResult = (input: RefusedResultInput): MergeClientConfigResult => {
+  const refusedResult: MergeClientConfigResult = { ...input, notes: [], warnings: [] };
+
+  return refusedResult;
+};
+
 export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeClientConfigResult => {
   const { existingConfigText, agenticServerEntry, target } = input;
   const emptyRoot: JsonRecord = {};
@@ -89,6 +102,7 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
     status: 'created',
     mergedConfig: createdConfig,
     notes: createdEntry.notes,
+    warnings: createdEntry.warnings,
   };
 
   if (existingConfigText == null) return createdResult;
@@ -100,27 +114,13 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
   const parseResult = parseExistingConfig(existingConfigText);
 
   if ('reason' in parseResult) {
-    const invalidJsonResult: MergeClientConfigResult = {
-      status: 'invalid-json',
-      mergedConfig: createdConfig,
-      notes: [],
-      reason: parseResult.reason,
-    };
-
-    return invalidJsonResult;
+    return buildRefusedResult({ status: 'invalid-json', mergedConfig: createdConfig, reason: parseResult.reason });
   }
 
   const unmergeableReason = findUnmergeableReason(parseResult.parsedConfig, target.serversKey);
 
   if (unmergeableReason != null) {
-    const unmergeableResult: MergeClientConfigResult = {
-      status: 'unmergeable',
-      mergedConfig: createdConfig,
-      notes: [],
-      reason: unmergeableReason,
-    };
-
-    return unmergeableResult;
+    return buildRefusedResult({ status: 'unmergeable', mergedConfig: createdConfig, reason: unmergeableReason });
   }
 
   const parsedRoot = isRecord(parseResult.parsedConfig) ? parseResult.parsedConfig : emptyRoot;
@@ -137,6 +137,7 @@ export const buildMergedClientConfig = (input: MergeClientConfigInput): MergeCli
     status,
     mergedConfig,
     notes: mergedEntry.notes,
+    warnings: mergedEntry.warnings,
   };
 
   return mergedResult;

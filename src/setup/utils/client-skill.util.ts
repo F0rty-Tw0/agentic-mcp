@@ -15,9 +15,9 @@ export const resolveSkillPath = (homeDirectory: string): string => {
   return skillPath;
 };
 
-export const buildSkippedSkillResult = (homeDirectory: string): SkillInstallResult => {
+export const buildSkippedSkillResult = (homeDirectory: string, reason = SKILL_CONSENT_REASON): SkillInstallResult => {
   const skillPath = resolveSkillPath(homeDirectory);
-  const skippedResult: SkillInstallResult = { status: 'skipped', skillPath, reason: SKILL_CONSENT_REASON };
+  const skippedResult: SkillInstallResult = { status: 'skipped', skillPath, reason };
 
   return skippedResult;
 };

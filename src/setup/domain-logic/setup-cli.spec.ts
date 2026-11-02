@@ -67,6 +67,7 @@ const createDependencies = (overrides?: Record<string, unknown>): Record<string,
     stdoutWrite: vi.fn(),
     stderrWrite: vi.fn(),
     isInteractive: false,
+    setExitCode: vi.fn(),
   };
 
   const result = { ...defaults, ...overrides };
@@ -308,6 +309,7 @@ describe('runSetup', () => {
       applySetupPlan,
       homeDirectory: '/home/dev',
       isInteractive: false,
+      setExitCode: vi.fn(),
     });
 
     const writtenChunks = stderrWriteSpy.mock.calls.map((call) => decodeWriteChunk(call[0]));
@@ -331,6 +333,7 @@ describe('runSetup', () => {
       applySetupPlan,
       homeDirectory: '/home/dev',
       isInteractive: false,
+      setExitCode: vi.fn(),
     });
 
     const writtenChunks = stdoutWriteSpy.mock.calls.map((call) => decodeWriteChunk(call[0]));

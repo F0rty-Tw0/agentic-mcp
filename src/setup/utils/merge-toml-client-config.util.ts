@@ -18,6 +18,7 @@ type MergedTomlDocument = {
   readonly agenticTable: TomlRecord;
   readonly isNewEntry: boolean;
   readonly notes: string[];
+  readonly warnings: string[];
 };
 
 const REWRITE_UNSAFE_REASON =
@@ -38,14 +39,15 @@ type ResultInput = {
   readonly status: ClientConfigMergeResult['status'];
   readonly configText: string;
   readonly notes: string[];
+  readonly warnings?: string[];
   readonly rewriteCause?: TomlRewriteCause;
   readonly reason?: string;
 };
 
 const createResult = (resultInput: ResultInput): ClientConfigMergeResult => {
-  const { status, configText, notes, rewriteCause, reason } = resultInput;
+  const { status, configText, notes, warnings = [], rewriteCause, reason } = resultInput;
   const rewritten = rewriteCause != null;
-  const result: ClientConfigMergeResult = { status, configText, notes, rewritten, rewriteCause, reason };
+  const result: ClientConfigMergeResult = { status, configText, notes, warnings, rewritten, rewriteCause, reason };
 
   return result;
 };
@@ -66,10 +68,10 @@ const appendAgenticTable = (mergedDocument: MergedTomlDocument): string | undefi
 };
 
 const writeMergedDocument = (mergedDocument: MergedTomlDocument): ClientConfigMergeResult => {
-  const { existingText, expectedRoot, notes, isNewEntry } = mergedDocument;
+  const { existingText, expectedRoot, notes, warnings, isNewEntry } = mergedDocument;
   const appendedText = appendAgenticTable(mergedDocument);
 
-  if (appendedText != null) return createResult({ status: 'merged', configText: appendedText, notes });
+  if (appendedText != null) return createResult({ status: 'merged', configText: appendedText, notes, warnings });
 
   const rewrittenText = stringify(expectedRoot);
   const isFaithful = parsesTo(rewrittenText, expectedRoot);
@@ -85,7 +87,7 @@ const writeMergedDocument = (mergedDocument: MergedTomlDocument): ClientConfigMe
 
   const rewriteCause: TomlRewriteCause = isNewEntry ? 'new-entry' : 'existing-entry';
 
-  return createResult({ status: 'merged', configText: rewrittenText, notes, rewriteCause });
+  return createResult({ status: 'merged', configText: rewrittenText, notes, warnings, rewriteCause });
 };
 
 // Replacing a non-table servers value drops it; adding a command to a remote entry mixes transports.
@@ -141,8 +143,11 @@ export const buildMergedTomlClientConfig = (input: MergeTomlClientConfigInput): 
   const mergedEntry = mergeAgenticServerEntry({ existingEntry: currentAgentic, agenticServerEntry, target });
   const isUnchanged = isDeepStrictEqual(currentAgentic, mergedEntry.entry);
 
-  if (isUnchanged)
-    return createResult({ status: 'unchanged', configText: existingConfigText, notes: mergedEntry.notes });
+  if (isUnchanged) {
+    const { notes, warnings } = mergedEntry;
+
+    return createResult({ status: 'unchanged', configText: existingConfigText, notes, warnings });
+  }
 
   const mergedServers = { ...currentServers, 'agentic-mcp': mergedEntry.entry };
   const expectedRoot: TomlRecord = { ...parseResult.table, [target.serversKey]: mergedServers };
@@ -152,6 +157,7 @@ export const buildMergedTomlClientConfig = (input: MergeTomlClientConfigInput): 
     agenticTable: buildAgenticTable(target.serversKey, mergedEntry.entry),
     isNewEntry: currentAgentic === undefined,
     notes: mergedEntry.notes,
+    warnings: mergedEntry.warnings,
   };
 
   return writeMergedDocument(mergedDocument);

@@ -16,7 +16,9 @@ const processMocks = vi.hoisted(() => {
     isTTY: true,
   };
 
+  const processDefault = { stdin, stdout, stderr };
   const hoistedProcessMocks = {
+    processDefault,
     stderr,
     stderrWrite,
     stdin,
@@ -28,12 +30,7 @@ const processMocks = vi.hoisted(() => {
 });
 
 vi.mock('node:process', () => {
-  const processDefault = {
-    stdin: processMocks.stdin,
-    stdout: processMocks.stdout,
-    stderr: processMocks.stderr,
-  };
-  const nodeProcessModule = { default: processDefault };
+  const nodeProcessModule = { default: processMocks.processDefault };
 
   return nodeProcessModule;
 });
@@ -125,6 +122,16 @@ describe('runSetup default process-backed io', () => {
 
     expect(stderrOutput).toContain('Use --yes to run non-interactive writes.');
     expect(applySetupPlan).not.toHaveBeenCalled();
+  });
+
+  it('GIVEN default non-interactive process io WHEN running setup without yes THEN it sets the process exit code to 1', async () => {
+    processMocks.stdin.isTTY = false;
+
+    const runSetup = await loadRunSetup();
+
+    await runSetup([], createDependencies());
+
+    expect(processMocks.processDefault).toHaveProperty('exitCode', 1);
   });
 
   it('GIVEN default interactive process io WHEN running setup with yes THEN it writes output using process stdout', async () => {

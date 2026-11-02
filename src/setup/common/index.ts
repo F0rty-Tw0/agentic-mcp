@@ -4,7 +4,10 @@ export {
   CLIENT_TIMEOUT_MARGIN_MS,
   CLIENT_TOOL_TIMEOUT_MS,
   KNOWN_PROVIDER_COMMANDS,
+  SETUP_ABORT_REASONS,
+  SETUP_FAILED_EXIT_CODE,
   SKILL_CONSENT_REASON,
+  SKILL_DRY_RUN_REASON,
   SUPPORTED_CLIENTS,
 } from './setup.const';
 
@@ -25,10 +28,13 @@ export type {
   SetupMergeStatus,
   StdioServerEntry,
   TimeoutKeyRule,
+  TimeoutValue,
   TomlRewriteCause,
 } from './client-target.type';
 
 export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord } from './toml-parse.type';
+
+export type { SetupCliFlowInput } from './setup-cli-flow.type';
 
 export type {
   ClientConfigTemplate,
@@ -36,6 +42,7 @@ export type {
   DetectedProvider,
   MinimalSetupOutputInput,
   ParsedSetupArgs,
+  SetupAbortCause,
   SetupApplyResult,
   SetupBackupPolicy,
   SetupEnv,
