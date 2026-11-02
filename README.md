@@ -409,7 +409,7 @@ Provider CLIs start with a small base environment: `PATH`, `HOME`, locale, temp 
 - `--backup if-exists|always|never` - control backup behavior
 - `--output json` - machine-readable setup output
 
-Setup exits 1 when it is aborted: you answer no at the confirmation prompt (or close it with Ctrl-C or Ctrl-D), or a non-interactive run would write without `--yes`. Nothing is written, and with `--output json` stdout is still one JSON document, with `result.status` `"aborted"` and the reason. The prompt is printed on stderr, so stdout stays clean. A `--dry-run` and a run that finds the entry already configured exit 0.
+Setup exits 1 when it is aborted: you answer no at the confirmation prompt (or close it with Ctrl-C or Ctrl-D), or a non-interactive run would write without `--yes`. Nothing is written, and with `--output json` stdout is still one JSON document, with `result.status` `"aborted"` and the reason. The prompt is printed on stderr, so stdout stays clean. A `--dry-run` and a run that finds the entry already configured exit 0. Setup also exits 1 when it wrote the file but reading it back does not find the `agentic-mcp` entry (`Setup result: verification-failed.`, with the reason, and `result.status` `"verification-failed"` in JSON).
 
 ## Command overview
 

@@ -16,6 +16,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Keeps a disabled `agentic-mcp` entry (`"disabled": true` or `enabled: false`) disabled, with a warning that the client will not start it
 - Supports `--dry-run` to preview changes without writing any file (with `--minimal` it skips the skill install too), `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Exits 1 when aborted (the confirmation prompt is declined or closed, or a non-interactive write lacks `--yes`); with `--output json` it prints `result.status: "aborted"` and the reason. The prompt goes to stderr
+- Exits 1 when the written file fails its read-back check (`verification-failed`); the output is unchanged
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 
 ## Output Contract
@@ -43,6 +44,9 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - `utils/choose-timeout.util.ts` — Picks each timeout key's value (kept, raised, or kept at 0 or below for a `keepsNonPositive` rule)
 - `utils/disabled-entry-warning.util.ts` — Warns when the existing entry is disabled
 - `utils/setup-abort.util.ts` — Reports an aborted run (exit code 1, JSON `aborted` result)
+- `utils/setup-cli-runner.util.ts` — Runs the minimal and configured flows: consent, apply, skill install, exit code
+- `utils/setup-plan-from-args.util.ts` — Turns the parsed args into a setup plan (target path, tool-call timeout, existing config)
+- `utils/plan-setup.util.ts`, `utils/plan-warnings.util.ts` — Build the setup plan and its warnings
 - `utils/merge-client-config.util.ts`, `utils/merge-toml-client-config.util.ts` — JSON and TOML document merges
 - `utils/resolve-client-tool-timeout.util.ts` — Derives the client tool-call timeout from the providers config and describes it in the output
 - `utils/moved-config-warnings.util.ts` — Warns when an environment variable points the client at another config file
