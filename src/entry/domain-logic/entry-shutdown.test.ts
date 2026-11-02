@@ -13,6 +13,11 @@ import { isProcessDead, waitForPid, waitUntilDead } from '../test/utils/provider
 const DIST_ENTRY_PATH = path.join(import.meta.dirname, '..', '..', '..', 'dist', 'index.js');
 // Close and the group kill run side by side, so their sum bounds the exit with headroom.
 const SHUTDOWN_BUDGET_MS = SHUTDOWN_CLOSE_TIMEOUT_MS + CHILD_GROUP_KILL_GRACE_MS;
+// A provider that ignores SIGTERM holds the exit for the group grace, then SIGKILL frees it (2.0 to 2.2 s
+// measured). The headroom covers a slow runner yet keeps the limit under SHUTDOWN_CLOSE_TIMEOUT_MS, so an
+// exit that waits for that timeout, or a grace that runs long, fails here.
+const EXIT_HEADROOM_MS = 1_500;
+const SHUTDOWN_EXIT_LIMIT_MS = CHILD_GROUP_KILL_GRACE_MS + EXIT_HEADROOM_MS;
 const PROVIDER_START_LIMIT_MS = 15_000;
 const REAP_LIMIT_MS = 1_000;
 const TEST_TIMEOUT_MS = 30_000;
@@ -46,8 +51,8 @@ const buildFakeProviderConfig = (pidFile: string): string => {
   return configText;
 };
 
-// SIGTERM first lets the server stop its provider group; client.close() alone SIGKILLs the server
-// within 4 s, before its 5 s group grace ends, and orphans a provider that ignores SIGTERM.
+// SIGTERM first lets the server stop its provider group within CHILD_GROUP_KILL_GRACE_MS; client.close()
+// alone escalates to SIGKILL on the server and could orphan a provider that ignores SIGTERM.
 const stopFailedStart = async (client: Client, serverPid: number | null): Promise<void> => {
   if (serverPid !== null) {
     process.kill(serverPid, 'SIGTERM');
@@ -114,6 +119,14 @@ const disposeRun = async (run: ShutdownRun | undefined): Promise<void> => {
   await run.client.close();
 };
 
+describe('FEATURE: shutdown exit limit', () => {
+  describe('GIVEN the exit limit and the close timeout', () => {
+    it('WHEN they are compared THEN the exit limit is the smaller one', () => {
+      expect(SHUTDOWN_EXIT_LIMIT_MS).toBeLessThan(SHUTDOWN_CLOSE_TIMEOUT_MS);
+    });
+  });
+});
+
 describe.skipIf(process.platform !== 'linux')('FEATURE: server-mode shutdown stops provider CLIs', () => {
   let directory: string;
   let run: ShutdownRun | undefined;
@@ -131,13 +144,15 @@ describe.skipIf(process.platform !== 'linux')('FEATURE: server-mode shutdown sto
   describe('GIVEN an ask running on a provider CLI that ignores SIGTERM', () => {
     describe('WHEN the server process gets SIGTERM', () => {
       it(
-        'THEN the server exits within the shutdown budget',
+        'THEN the server exits soon after the group grace ends',
         async () => {
           run = await startAskAndSigterm(directory);
+          const signalledAt = Date.now();
 
-          const serverStopped = await waitUntilDead(run.serverPid, SHUTDOWN_BUDGET_MS);
+          await waitUntilDead(run.serverPid, SHUTDOWN_BUDGET_MS);
+          const exitMs = Date.now() - signalledAt;
 
-          expect(serverStopped).toBe(true);
+          expect(exitMs).toBeLessThan(SHUTDOWN_EXIT_LIMIT_MS);
         },
         TEST_TIMEOUT_MS
       );
