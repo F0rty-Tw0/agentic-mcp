@@ -16,9 +16,9 @@ export const buildDisabledEntryWarnings = (existingEntry: JsonRecord): string[] 
   const disabledFlags = DISABLED_FLAGS.filter((flag) => existingEntry[flag.key] === flag.disabledValue);
   const warnings = disabledFlags.map(({ key, disabledValue }) => {
     const setting = `"${key}": ${String(disabledValue)}`;
-    const enabling = `Set "${key}" to ${String(!disabledValue)} or remove it to use agentic-mcp.`;
+    const enabling = `To re-enable it, set "${key}" to ${String(!disabledValue)} or remove it in the client config.`;
 
-    return `The agentic-mcp entry is disabled in the client config (${setting}), so the client will not start it; setup kept it disabled. ${enabling}`;
+    return `The existing agentic-mcp entry is marked disabled (${setting}) and setup kept it that way. ${enabling}`;
   });
 
   return warnings;

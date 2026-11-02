@@ -37,10 +37,10 @@ const PLAN_INPUT: SetupPlanInput = {
 };
 
 const DISABLED_TRUE_WARNING =
-  'The agentic-mcp entry is disabled in the client config ("disabled": true), so the client will not start it; setup kept it disabled. Set "disabled" to false or remove it to use agentic-mcp.';
+  'The existing agentic-mcp entry is marked disabled ("disabled": true) and setup kept it that way. To re-enable it, set "disabled" to false or remove it in the client config.';
 
 const ENABLED_FALSE_WARNING =
-  'The agentic-mcp entry is disabled in the client config ("enabled": false), so the client will not start it; setup kept it disabled. Set "enabled" to true or remove it to use agentic-mcp.';
+  'The existing agentic-mcp entry is marked disabled ("enabled": false) and setup kept it that way. To re-enable it, set "enabled" to true or remove it in the client config.';
 
 const buildJsonConfig = (serversKey: string, agenticEntry: AgenticEntry): AgenticEntry => {
   const servers = { 'agentic-mcp': agenticEntry };
