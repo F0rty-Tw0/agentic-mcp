@@ -2,7 +2,7 @@ import process from 'node:process';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SETUP_ABORTED_EXIT_CODE } from '../common';
+import { SETUP_FAILED_EXIT_CODE } from '../common';
 import type { McpServerEntry, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
 type ReadLineInterfaceMock = {
@@ -201,6 +201,6 @@ describe('runSetup default promptConfirm', () => {
     await runSetup([], createDependencies({ setExitCode, applySetupPlan }));
 
     expect(applySetupPlan).not.toHaveBeenCalled();
-    expect(setExitCode).toHaveBeenCalledWith(SETUP_ABORTED_EXIT_CODE);
+    expect(setExitCode).toHaveBeenCalledWith(SETUP_FAILED_EXIT_CODE);
   });
 });

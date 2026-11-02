@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { CLIENT_TARGETS, SKILL_DRY_RUN_REASON } from '../common';
+import { CLIENT_TARGETS, SETUP_FAILED_EXIT_CODE, SKILL_DRY_RUN_REASON } from '../common';
 import type {
   ClientToolTimeout,
   ConfiguredSetupOutputInput,
@@ -171,4 +171,6 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   const output = buildConfiguredOutput({ parsedArgs, plan, result, detectedProviders, skillResult });
 
   dependencies.stdoutWrite(output);
+
+  if (result.status === 'verification-failed') dependencies.setExitCode(SETUP_FAILED_EXIT_CODE);
 };

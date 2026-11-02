@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runConfiguredSetup } from './setup-cli-runner.util';
-import { SETUP_ABORTED_EXIT_CODE } from '../common';
+import { SETUP_FAILED_EXIT_CODE } from '../common';
 import type { SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 import { TEST_PROVIDERS } from '../test/common/setup.const';
 import {
@@ -44,7 +44,7 @@ describe('runConfiguredSetup abort', () => {
         detectedProviders: TEST_PROVIDERS,
       });
 
-      expect(setExitCode).toHaveBeenCalledWith(SETUP_ABORTED_EXIT_CODE);
+      expect(setExitCode).toHaveBeenCalledWith(SETUP_FAILED_EXIT_CODE);
     });
 
     it('WHEN running configured setup with json output THEN it prints only json with an aborted result', async () => {
@@ -80,7 +80,7 @@ describe('runConfiguredSetup abort', () => {
         detectedProviders: TEST_PROVIDERS,
       });
 
-      expect(setExitCode).toHaveBeenCalledWith(SETUP_ABORTED_EXIT_CODE);
+      expect(setExitCode).toHaveBeenCalledWith(SETUP_FAILED_EXIT_CODE);
     });
 
     it('WHEN running configured setup with json output THEN it prints json with an aborted result', async () => {

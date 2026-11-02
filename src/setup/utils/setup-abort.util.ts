@@ -1,4 +1,4 @@
-import { SETUP_ABORTED_EXIT_CODE, SETUP_ABORT_REASONS } from '../common';
+import { SETUP_ABORT_REASONS, SETUP_FAILED_EXIT_CODE } from '../common';
 import type { ParsedSetupArgs, SetupAbortCause, SetupApplyResult, SetupCliDependencies, SetupPlan } from '../common';
 
 type SetupAbortInput = {
@@ -35,7 +35,7 @@ export const reportSetupAbort = (input: SetupAbortInput): void => {
   const { parsedArgs, dependencies, cause } = input;
   const isJsonOutput = parsedArgs.output === 'json';
 
-  dependencies.setExitCode(SETUP_ABORTED_EXIT_CODE);
+  dependencies.setExitCode(SETUP_FAILED_EXIT_CODE);
 
   if (cause === 'needs-yes') dependencies.stderrWrite(NEEDS_YES_MESSAGE);
 
