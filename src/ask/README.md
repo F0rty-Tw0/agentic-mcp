@@ -24,9 +24,10 @@ Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to 
 ## Key Files
 
 - `domain-logic/ask.handler.ts` — Main entry point; routes to sync/async/session code paths
-- `domain-logic/ask-runner.ts` — Executes the provider CLI command and collects output; with `willRetry`, a failed run its caller will retry sends no terminal `error` stream event
+- `domain-logic/ask-runner.ts` — Executes the provider CLI command and collects output into the stream notifier its caller passes; with `willRetry`, a failed run its caller will retry sends no terminal `error` stream event
+- `domain-logic/ask-stream.ts` — `withAskStream()`: opens one stream notifier and one heartbeat per `ask_<provider>` call, so every CLI run of a retried call shares one `streamId` and rising `progress`
 - `domain-logic/ask-runner-failure.ts` — Builds the failed-run result and its stream error for a non-zero exit or a thrown error
-- `domain-logic/ask-heartbeat.ts` — Starts the caller heartbeat for `ask_<provider>` and `review_<provider>` runs unless `stream_live` sends its own
+- `domain-logic/ask-heartbeat.ts` — Starts the caller heartbeat for `ask_<provider>` and `review_<provider>` calls unless `stream_live` sends its own
 - `domain-logic/ask-command.ts` — Builds the CLI command array from tool arguments
 - `domain-logic/ask-runner-response.builder.ts` — Formats raw output into MCP `CallToolResult`
 - `session/domain-logic/ask-session-flow.ts` — Orchestrates multi-turn session execution
@@ -86,6 +87,17 @@ Runs the same fake with `stream_live: true` and records the type of each progres
 | Start flag rejected, then rerun  | The rejected run sends its output but no `error`; the rerun ends it  | `start`, `chunk`, `start`, `chunk`, `done` |
 | Lost session, then replay        | The failed resume sends no `error`; the replay's run ends the stream | No `error` event; last event is `done`     |
 | Generic failure on the start run | A failure that is not retried still ends the stream with `error`     | Last event is `error`                      |
+
+### `ask.handler-copilot-retry-progress.test.ts`
+
+Runs the same fake with a progress token and records each progress notification of one retried `ask_copilot` call. The rerun's second `start` continues the call's stream.
+
+| Test                                     | What It Verifies                                              | Expected Output                                |
+| ---------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |
+| Start flag rejected, then rerun          | Both runs stream under one id with rising progress            | One `streamId`; `progress` and `sequence` rise |
+| Start flag rejected, rerun fails too     | The failed rerun's `error` ends the same stream               | One `streamId`; `progress` rises               |
+| Lost session, then replay                | The failed resume and the replay stream under one id          | One `streamId`; `progress` rises               |
+| Start flag rejected, without stream_live | The rerun does not restart the caller heartbeat at progress 0 | Heartbeat `progress` values are `[0]`          |
 
 ### `ask.handler-cancellation.test.ts`
 

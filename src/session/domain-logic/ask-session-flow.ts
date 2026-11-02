@@ -2,10 +2,12 @@ import { randomUUID } from 'node:crypto';
 
 import type { AskToolArgs } from '../../ask/common';
 import { runAskInvocation } from '../../ask/domain-logic/ask-runner';
+import { withAskStream } from '../../ask/domain-logic/ask-stream';
 import { canStartNativeSession, resolveStartFlagName } from '../../ask/utils/session-flag-args.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
+import type { StreamNotifier } from '../../streaming/common';
 import type { SessionFlowResult, SessionFlowState } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
@@ -18,8 +20,16 @@ type SessionExecutionInput = {
   readonly state: SessionFlowState;
 };
 
-const runSingleExecution = async (input: SessionExecutionInput): Promise<SessionFlowResult> => {
-  const { context, args, extra, state } = input;
+type StreamedSessionExecutionInput = {
+  readonly context: ResolvedProviderEntry;
+  readonly args: AskToolArgs;
+  readonly extra?: ProgressContext;
+  readonly state: SessionFlowState;
+  readonly streamNotifier: StreamNotifier;
+};
+
+const runSingleExecution = async (input: StreamedSessionExecutionInput): Promise<SessionFlowResult> => {
+  const { context, args, extra, state, streamNotifier } = input;
   const promptArgs: AskToolArgs = { ...args, prompt: state.prompt };
   const startFlag = resolveStartFlagName(context.config);
   const willRetry = (execution: SessionFlowResult): boolean => canSessionFlowRetry(execution, state, startFlag, extra);
@@ -30,6 +40,7 @@ const runSingleExecution = async (input: SessionExecutionInput): Promise<Session
     tier2SessionId: state.nativeSessionId,
     startSessionId: state.startSessionId,
     willRetry,
+    streamNotifier,
   });
   const nativeSessionId = state.startSessionId ?? execution.nativeSessionId;
   const result: SessionFlowResult = { ...execution, nativeSessionId, sessionMode: state.mode };
@@ -39,7 +50,7 @@ const runSingleExecution = async (input: SessionExecutionInput): Promise<Session
 
 // Only a run the CLI fails with an unknown-option error naming the start flag (copilot before 1.0.51) is rerun once
 // without it as a replay; any other failure is returned as is, so a run that did work is never repeated.
-const runSessionExecution = async (input: SessionExecutionInput): Promise<SessionFlowResult> => {
+const runSessionExecution = async (input: StreamedSessionExecutionInput): Promise<SessionFlowResult> => {
   const { context, extra, state } = input;
   const execution = await runSingleExecution(input);
   const startFlag = resolveStartFlagName(context.config);
@@ -83,15 +94,9 @@ const resolveStartSessionId = (context: ResolvedProviderEntry, sessionId: string
   return candidateId;
 };
 
-export const executeSessionFlow = async ({
-  context,
-  args,
-  extra,
-  state,
-}: SessionExecutionInput): Promise<SessionFlowResult> => {
-  if (!args.prompt) return buildMissingPromptResult(state);
-
-  const firstExecution = await runSessionExecution({ context, args, extra, state });
+const runStreamedSessionFlow = async (input: StreamedSessionExecutionInput): Promise<SessionFlowResult> => {
+  const { context, args, extra, state } = input;
+  const firstExecution = await runSessionExecution(input);
   const shouldFallBack = canFallBackToTier1(firstExecution, state, extra);
 
   if (!shouldFallBack) return firstExecution;
@@ -104,7 +109,7 @@ export const executeSessionFlow = async ({
     nativeSessionId: undefined,
     startSessionId: resolveStartSessionId(context, state.sessionId),
   };
-  const fallbackExecution = await runSessionExecution({ context, args, extra, state: fallbackState });
+  const fallbackExecution = await runSessionExecution({ ...input, state: fallbackState });
   const result: SessionFlowResult = {
     response: fallbackExecution.response,
     responseText: fallbackExecution.responseText,
@@ -113,6 +118,18 @@ export const executeSessionFlow = async ({
     wasCancelled: fallbackExecution.wasCancelled,
     hasDroppedStartFlag: fallbackExecution.hasDroppedStartFlag,
   };
+
+  return result;
+};
+
+export const executeSessionFlow = async (input: SessionExecutionInput): Promise<SessionFlowResult> => {
+  const { args, state } = input;
+
+  if (!args.prompt) return buildMissingPromptResult(state);
+
+  const runFlow = async (streamNotifier: StreamNotifier): Promise<SessionFlowResult> =>
+    runStreamedSessionFlow({ ...input, streamNotifier });
+  const result = await withAskStream(input, runFlow);
 
   return result;
 };
