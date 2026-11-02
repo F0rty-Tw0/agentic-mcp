@@ -33,6 +33,8 @@ export type {
   TomlRewriteCause,
 } from './client-target.type';
 
+export type { PlanWarningsInput } from './plan-warnings.type';
+
 export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord } from './toml-parse.type';
 
 export type { SetupCliFlowInput } from './setup-cli-flow.type';
