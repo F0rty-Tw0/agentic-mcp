@@ -119,6 +119,14 @@ const disposeRun = async (run: ShutdownRun | undefined): Promise<void> => {
   await run.client.close();
 };
 
+describe('FEATURE: shutdown exit limit', () => {
+  describe('GIVEN the exit limit and the close timeout', () => {
+    it('WHEN they are compared THEN the exit limit is the smaller one', () => {
+      expect(SHUTDOWN_EXIT_LIMIT_MS).toBeLessThan(SHUTDOWN_CLOSE_TIMEOUT_MS);
+    });
+  });
+});
+
 describe.skipIf(process.platform !== 'linux')('FEATURE: server-mode shutdown stops provider CLIs', () => {
   let directory: string;
   let run: ShutdownRun | undefined;
