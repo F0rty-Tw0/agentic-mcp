@@ -18,6 +18,20 @@ const buildProject = (metricsPath: string | undefined): Parameters<typeof setup>
 describe('FEATURE: vitest metrics dir teardown', () => {
   let parentDir: string;
 
+  const runTeardownIn = async (dirName: string): Promise<boolean> => {
+    const metricsDir = path.join(parentDir, dirName);
+    const project = buildProject(path.join(metricsDir, 'provider-metrics.json'));
+
+    await mkdir(metricsDir);
+
+    const removeMetricsDir = setup(project);
+
+    await removeMetricsDir();
+    const dirExists = existsSync(metricsDir);
+
+    return dirExists;
+  };
+
   beforeEach(async () => {
     parentDir = await mkdtemp(path.join(os.tmpdir(), 'agentic-metrics-dir-'));
   });
@@ -53,6 +67,30 @@ describe('FEATURE: vitest metrics dir teardown', () => {
 
       await removeMetricsDir();
       const dirExists = existsSync(metricsDir);
+
+      expect(dirExists).toBe(true);
+    });
+  });
+
+  describe('GIVEN the dir name has a non-digit suffix after the pid', () => {
+    it('WHEN the teardown runs THEN the dir is kept', async () => {
+      const dirExists = await runTeardownIn('agentic-mcp-vitest-12x');
+
+      expect(dirExists).toBe(true);
+    });
+  });
+
+  describe('GIVEN the dir name has a prefix before agentic-mcp-vitest', () => {
+    it('WHEN the teardown runs THEN the dir is kept', async () => {
+      const dirExists = await runTeardownIn('xagentic-mcp-vitest-12');
+
+      expect(dirExists).toBe(true);
+    });
+  });
+
+  describe('GIVEN the dir name has no pid', () => {
+    it('WHEN the teardown runs THEN the dir is kept', async () => {
+      const dirExists = await runTeardownIn('agentic-mcp-vitest-');
 
       expect(dirExists).toBe(true);
     });
