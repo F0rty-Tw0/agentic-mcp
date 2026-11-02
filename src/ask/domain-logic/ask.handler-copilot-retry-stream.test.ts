@@ -54,6 +54,14 @@ const askStreamingTurn = async (
   return eventTypes;
 };
 
+const TERMINAL_EVENT_TYPES = new Set(['done', 'error']);
+
+const readTerminalEvents = (eventTypes: string[]): string[] => {
+  const terminalEvents = eventTypes.filter((eventType) => TERMINAL_EVENT_TYPES.has(eventType));
+
+  return terminalEvents;
+};
+
 const askRejectedStartStream = async (): Promise<string[]> => {
   vi.stubEnv('FAKE_COPILOT_REJECT_SESSION_ID', '1');
 
@@ -63,7 +71,16 @@ const askRejectedStartStream = async (): Promise<string[]> => {
   return eventTypes;
 };
 
-const askLostSessionStream = async (): Promise<string[]> => {
+const askRejectedStartFailedRerunStream = async (): Promise<string[]> => {
+  vi.stubEnv('FAKE_COPILOT_FAIL_RUN', '1');
+
+  const eventTypes = await askRejectedStartStream();
+
+  return eventTypes;
+};
+
+// An empty replayFailRun leaves FAKE_COPILOT_FAIL_RUN off, so the replay succeeds.
+const askLostSessionStream = async (replayFailRun = ''): Promise<string[]> => {
   const context = await createFakeCopilotContext();
   const sessionId = uniqueCopilotSessionId();
 
@@ -72,6 +89,7 @@ const askLostSessionStream = async (): Promise<string[]> => {
   const [firstRun] = await readFakeCopilotRuns(runLogPath);
 
   vi.stubEnv('FAKE_COPILOT_LOST_SESSION', readStartedId(firstRun) ?? '');
+  vi.stubEnv('FAKE_COPILOT_FAIL_RUN', replayFailRun);
 
   const eventTypes = await askStreamingTurn(context, sessionId, 'which word?');
 
@@ -132,6 +150,34 @@ describe('FEATURE: copilot session retries streamed live against a fake copilot 
       const eventTypes = await askLostSessionStream();
 
       expect(eventTypes.at(-1)).toBe('done');
+    });
+  });
+
+  describe('GIVEN a copilot that rejects --session-id and also fails the rerun without it', () => {
+    it('WHEN the ask streams THEN the only terminal event is one error', async () => {
+      const eventTypes = await askRejectedStartFailedRerunStream();
+
+      expect(readTerminalEvents(eventTypes)).toStrictEqual(['error']);
+    });
+
+    it('WHEN the ask streams THEN the error ends the rerun stream', async () => {
+      const eventTypes = await askRejectedStartFailedRerunStream();
+
+      expect(eventTypes).toStrictEqual(['start', 'chunk', 'start', 'chunk', 'error']);
+    });
+  });
+
+  describe('GIVEN a copilot that lost the native session and also fails the replay', () => {
+    it('WHEN the follow-up streams THEN the only terminal event is one error', async () => {
+      const eventTypes = await askLostSessionStream('1');
+
+      expect(readTerminalEvents(eventTypes)).toStrictEqual(['error']);
+    });
+
+    it('WHEN the follow-up streams THEN the error ends the replay stream', async () => {
+      const eventTypes = await askLostSessionStream('1');
+
+      expect(eventTypes).toStrictEqual(['start', 'chunk', 'start', 'chunk', 'error']);
     });
   });
 
