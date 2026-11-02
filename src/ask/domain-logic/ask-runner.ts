@@ -1,13 +1,12 @@
 import { buildExecutionEnv, resolveModelFallback } from './ask-command';
 import { runCommandExecution } from './ask-command-execution';
-import { startAskHeartbeat } from './ask-heartbeat';
 import { buildFailedRunExecution, buildThrownRunExecution } from './ask-runner-failure';
 import { buildSuccessfulResponse } from './ask-runner-response.builder';
 import { recordCall } from '../../provider-metrics';
 import type { ExecutionResult } from '../../shared/command-execution/common';
 import type { OutputFormat, ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
-import { buildExecutionSummary, createStreamNotifier, holdStreamError } from '../../streaming';
+import { buildExecutionSummary, holdStreamError } from '../../streaming';
 import type { StreamNotifier } from '../../streaming/common';
 import type { AskExecution, AskToolArgs, ResultWarnings } from '../common';
 import { buildExecution } from '../utils';
@@ -20,6 +19,7 @@ type RunInvocationInput = {
   readonly tier2SessionId?: string;
   readonly startSessionId?: string;
   readonly willRetry?: (execution: AskExecution) => boolean;
+  readonly streamNotifier: StreamNotifier;
 };
 
 type ExecuteInput = {
@@ -122,23 +122,15 @@ const executeOrFail = async (executeInput: ExecuteInput): Promise<AskExecution> 
 };
 
 // A run the caller will retry keeps its terminal error off the stream; the retry's own run ends the stream.
+// The caller owns the live notifier (withAskStream), so it stays open for that retry.
 export const runAskInvocation = async (runInvocationInput: RunInvocationInput): Promise<AskExecution> => {
   const { context, args, extra, tier2SessionId, startSessionId, willRetry } = runInvocationInput;
-  const input = { providerName: context.name, args, extra };
-  const liveNotifier = createStreamNotifier(input);
-  const { notifier: streamNotifier, releaseError } = holdStreamError(liveNotifier);
-  const stopHeartbeat = startAskHeartbeat(streamNotifier, extra);
+  const { notifier: streamNotifier, releaseError } = holdStreamError(runInvocationInput.streamNotifier);
+  const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, startSessionId, streamNotifier };
+  const execution = await executeOrFail(executeInput);
+  const isRetried = willRetry?.(execution) ?? false;
 
-  try {
-    const executeInput: ExecuteInput = { context, args, extra, tier2SessionId, startSessionId, streamNotifier };
-    const execution = await executeOrFail(executeInput);
-    const isRetried = willRetry?.(execution) ?? false;
+  if (!isRetried) releaseError();
 
-    if (!isRetried) releaseError();
-
-    return execution;
-  } finally {
-    stopHeartbeat();
-    streamNotifier.stop();
-  }
+  return execution;
 };

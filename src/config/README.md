@@ -25,7 +25,7 @@ None. Config loading is exercised indirectly through `server/` integration tests
 
 ## Unit Tests
 
-2 `.spec.ts` files:
+6 `.spec.ts` files, including:
 
 - `loader.spec.ts` — Config resolution priority, file reading, Zod validation, error handling
 - `providers-config.spec.ts` — Schema validation, provider structure, dangerous flag detection

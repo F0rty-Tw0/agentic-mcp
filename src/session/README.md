@@ -25,7 +25,7 @@ Session state and session-aware ask orchestration — provides in-memory multi-t
 
 - `data-access/session-store.ts` — `InMemorySessionStore` with locking, turn storage, native session tracking, and provider-scoped listing
 - `data-access/session-native-start.ts` — records a native session id on a store entry, or turns native start off for it
-- `domain-logic/ask-session-flow.ts` — builds session flow state, retries native-session failures with tier-1 fallback, and reruns once without the start flag only when the CLI rejects it as an unknown option; a run it will retry sends no `error` stream event
+- `domain-logic/ask-session-flow.ts` — builds session flow state, retries native-session failures with tier-1 fallback, and reruns once without the start flag only when the CLI rejects it as an unknown option; all runs of one call share one stream (`withAskStream`), and a run it will retry sends no `error` stream event
 - `utils/session-flow-retry.util.ts` — decides when a failed run falls back to tier 1, or retries without the start flag (only when one stderr line, with ANSI colour codes stripped, rejects that flag: `unknown option`, `unrecognized argument`, clap's `unexpected argument '--flag' found`, or yargs' `Unknown argument: flag`); `canSessionFlowRetry` is either
 - `domain-logic/sessions.handler.ts` — renders provider-scoped session listings for MCP tools
 - `utils/session-metadata.util.ts` — merges session mode metadata into MCP responses
@@ -42,3 +42,4 @@ Session behavior is covered by unit tests in this module plus ask integration te
 - A failed resume whose replay starts a new native id, so the next turn resumes it in one run (`ask/domain-logic/ask.handler-copilot-lost-session.test.ts`)
 - A CLI that rejects the start flag as an unknown option: one retry without it, then the session replays without the flag; any other failure on a start run is returned once with no retry (`ask/domain-logic/ask.handler-copilot-start-retry.test.ts`)
 - With `stream_live`, a start-flag rerun or a tier-1 fallback leaves no `error` event from the failed run; a failure that is not retried still ends the stream with `error` (`ask/domain-logic/ask.handler-copilot-retry-stream.test.ts`)
+- A retried call keeps one `streamId`, and its `progress` values keep rising across the runs; without `stream_live`, the rerun does not restart the caller heartbeat (`ask/domain-logic/ask.handler-copilot-retry-progress.test.ts`)

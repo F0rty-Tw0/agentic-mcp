@@ -1,20 +1,24 @@
 import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 
 import { runAskInvocation } from './ask-runner';
+import { withAskStream } from './ask-stream';
 import { createBackgroundJob } from '../../background-jobs/data-access';
 import { buildJobStatusResponse, startBackgroundInvocation } from '../../background-jobs/domain-logic';
 import { SESSION_STORE, appendSessionMetadata, buildSessionFlowState, executeSessionFlow } from '../../session';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { ResolvedProviderEntry } from '../../shared/provider/common';
 import { ValidationError } from '../../shared/validation/common';
-import type { AskToolArgs } from '../common';
+import type { StreamNotifier } from '../../streaming/common';
+import type { AskExecution, AskToolArgs } from '../common';
 
 const runAskInvocationResponse = async (
   context: ResolvedProviderEntry,
   args: AskToolArgs,
   extra?: ProgressContext
 ): Promise<CallToolResult> => {
-  const execution = await runAskInvocation({ context, args, extra });
+  const runInvocation = async (streamNotifier: StreamNotifier): Promise<AskExecution> =>
+    runAskInvocation({ context, args, extra, streamNotifier });
+  const execution = await withAskStream({ context, args, extra }, runInvocation);
 
   return execution.response;
 };

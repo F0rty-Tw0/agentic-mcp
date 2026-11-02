@@ -38,4 +38,4 @@ This exercises the full streaming pipeline from process spawn through notificati
 
 ## Unit Tests
 
-4 `.spec.ts` files covering stream event types, notifier creation, helper functions, and runtime state management.
+7 `.spec.ts` files covering stream event types, notifier creation, helper functions, and runtime state management.

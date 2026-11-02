@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runAskInvocation } from './ask-runner';
 import type { ExecutionResult } from '../../shared/command-execution/common';
-import type * as streamingModule from '../../streaming';
 import type { StreamNotifier } from '../../streaming/common';
 import type { AskExecution, AskToolArgs } from '../common';
 import { ASK_RESOLVED_PROVIDER_ENTRY_STUB } from '../test/stubs/ask-resolved-provider-entry.stub';
@@ -71,15 +70,13 @@ vi.mock('./ask-runner-failure', () => {
   return result;
 });
 
-vi.mock('../../streaming', async (importOriginal) => {
-  const actual = await importOriginal<typeof streamingModule>();
-  const result = { ...actual, createStreamNotifier: vi.fn(() => liveNotifier) };
-
-  return result;
-});
-
 const runFailedInvocation = async (willRetry?: (execution: AskExecution) => boolean): Promise<AskExecution> => {
-  const invocationInput = { context: ASK_RESOLVED_PROVIDER_ENTRY_STUB, args: ASK_ARGS, willRetry };
+  const invocationInput = {
+    context: ASK_RESOLVED_PROVIDER_ENTRY_STUB,
+    args: ASK_ARGS,
+    willRetry,
+    streamNotifier: liveNotifier,
+  };
   const execution = await runAskInvocation(invocationInput);
 
   return execution;
@@ -88,6 +85,7 @@ const runFailedInvocation = async (willRetry?: (execution: AskExecution) => bool
 describe('FEATURE: runAskInvocation', () => {
   beforeEach(() => {
     vi.mocked(liveNotifier.emitError).mockClear();
+    vi.mocked(liveNotifier.stop).mockClear();
   });
 
   describe('GIVEN a failed run', () => {
@@ -107,6 +105,12 @@ describe('FEATURE: runAskInvocation', () => {
       await runFailedInvocation();
 
       expect(liveNotifier.emitError).toHaveBeenCalledExactlyOnceWith('boom', undefined);
+    });
+
+    it('WHEN the run ends THEN the live stream stays open for a retry in the same tool call', async () => {
+      await runFailedInvocation(() => true);
+
+      expect(liveNotifier.stop).not.toHaveBeenCalled();
     });
   });
 });
