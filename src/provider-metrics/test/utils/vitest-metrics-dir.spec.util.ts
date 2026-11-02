@@ -17,7 +17,7 @@ type RemoveMetricsDir = () => Promise<void>;
 const resolveVitestMetricsDir = (project: MetricsProject): string | undefined => {
   const metricsPath = project.config.env?.AGENTIC_MCP_METRICS_PATH;
 
-  if (metricsPath == null || metricsPath === '') return undefined;
+  if (metricsPath == null) return undefined;
 
   const metricsDir = path.dirname(metricsPath);
   const isVitestMetricsDir = VITEST_METRICS_DIR_PATTERN.test(path.basename(metricsDir));
