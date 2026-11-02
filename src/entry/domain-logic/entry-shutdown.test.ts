@@ -51,8 +51,8 @@ const buildFakeProviderConfig = (pidFile: string): string => {
   return configText;
 };
 
-// SIGTERM first lets the server stop its provider group; client.close() alone SIGKILLs the server
-// within 4 s, before its 5 s group grace ends, and orphans a provider that ignores SIGTERM.
+// SIGTERM first lets the server stop its provider group within CHILD_GROUP_KILL_GRACE_MS; client.close()
+// alone escalates to SIGKILL on the server and could orphan a provider that ignores SIGTERM.
 const stopFailedStart = async (client: Client, serverPid: number | null): Promise<void> => {
   if (serverPid !== null) {
     process.kill(serverPid, 'SIGTERM');
