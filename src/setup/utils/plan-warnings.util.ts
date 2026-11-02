@@ -1,14 +1,6 @@
 import { buildMovedConfigWarnings } from './moved-config-warnings.util';
 import { CLIENT_TARGETS } from '../common';
-import type { ClientConfigMergeResult, SetupPlanInput } from '../common';
-
-type PlanWarningsInput = {
-  readonly input: SetupPlanInput;
-  readonly targetPath: string | undefined;
-  readonly isClaudeStateOverwrite: boolean;
-  readonly isInvalidMerge: boolean;
-  readonly mergedConfig: ClientConfigMergeResult;
-};
+import type { ClientConfigMergeResult, PlanWarningsInput, SetupPlanInput } from '../common';
 
 const buildInvalidMergeWarning = (targetPath: string | undefined, mergedConfig: ClientConfigMergeResult): string => {
   const reason = String(mergedConfig.reason);

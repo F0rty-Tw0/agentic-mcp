@@ -16,7 +16,8 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - In merge mode, keeps the flag on a disabled `agentic-mcp` entry (`"disabled": true` or `enabled: false`), with a warning that the entry is marked disabled; `--mode overwrite` rewrites the entry without the flag
 - Supports `--dry-run` to preview changes without writing any file (with `--minimal` it skips the skill install too), `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Exits 1 when aborted (the confirmation prompt is declined or closed, or a non-interactive write lacks `--yes`); with `--output json` it prints `result.status: "aborted"` and the reason. The prompt goes to stderr
-- Exits 1 when the written file fails its read-back check (`verification-failed`); the output is unchanged
+- Exits 1 when the written file fails its read-back check (`verification-failed`), and then skips the Claude Code skill install (`skillResult.status: "skipped"` with the reason)
+- Exits 1 when an existing config is left for a manual edit because setup will not merge into it (invalid JSON or TOML, an unmergeable entry, a TOML entry setup cannot update safely, or `--mode overwrite` on Claude Code's state file); the output is unchanged (`result.status: "manual"`). A client with no known config path (`--client generic` without `--path`) still exits 0, since printing the snippet is its normal outcome
 - Prints truthful output that separates what was configured, what was detected, what remains unproven, and the next command to prove real usage
 
 ## Output Contract
@@ -46,7 +47,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - `utils/setup-abort.util.ts` — Reports an aborted run (exit code 1, JSON `aborted` result)
 - `utils/setup-cli-runner.util.ts` — Runs the minimal and configured flows: consent, apply, skill install, exit code
 - `utils/setup-plan-from-args.util.ts` — Turns the parsed args into a setup plan (target path, tool-call timeout, existing config)
-- `utils/plan-setup.util.ts`, `utils/plan-warnings.util.ts` — Build the setup plan and its warnings
+- `utils/plan-setup.util.ts`, `utils/plan-warnings.util.ts` — Build the setup plan, its target path (`resolveTargetPath`, shared with `setup-plan-from-args`) and its warnings
 - `utils/merge-client-config.util.ts`, `utils/merge-toml-client-config.util.ts` — JSON and TOML document merges
 - `utils/resolve-client-tool-timeout.util.ts` — Derives the client tool-call timeout from the providers config and describes it in the output
 - `utils/moved-config-warnings.util.ts` — Warns when an environment variable points the client at another config file

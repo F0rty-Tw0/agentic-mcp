@@ -14,6 +14,16 @@ import {
 
 const SKIPPED_SKILL_LINE = 'Skill not installed: rerun with --yes to install it\n';
 
+const VERIFICATION_FAILED_SKILL_REASON =
+  'the config write failed its read-back check; fix the config and rerun to install it';
+
+const VERIFICATION_FAILED_RESULT: SetupApplyResult = createSetupApplyResult({
+  status: 'verification-failed',
+  reason: 'Written config is not valid JSON.',
+});
+
+const applyVerificationFailed = async (): Promise<SetupApplyResult> => Promise.resolve(VERIFICATION_FAILED_RESULT);
+
 const runConfirmedPromptSetup = async (writeIntent: SetupWriteIntent): Promise<Mock> => {
   const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
   const promptConfirm = vi.fn().mockResolvedValue(true);
@@ -106,6 +116,41 @@ describe('runConfiguredSetup skill install', () => {
       expect(promptConfirm).toHaveBeenCalledWith(
         `agentic-mcp is already configured in ${DEFAULT_CLAUDE_PATH}. Install the Claude Code skill? [y/N] `
       );
+    });
+  });
+
+  describe('GIVEN a claude-code write whose read-back check fails', () => {
+    it('WHEN running configured setup THEN it does not install the skill', async () => {
+      const installSkill = vi.fn().mockResolvedValue({ status: 'installed', skillPath: DEFAULT_SKILL_PATH });
+      const dependencies = createSetupCliDependencies({ installSkill, applySetupPlan: applyVerificationFailed });
+
+      await runConfiguredSetup({
+        parsedArgs: createParsedSetupArgs({ client: 'claude-code' }),
+        dependencies,
+        detectedProviders: TEST_PROVIDERS,
+      });
+
+      expect(installSkill).not.toHaveBeenCalled();
+    });
+
+    it('WHEN running configured setup with json output THEN skillResult is skipped with the reason', async () => {
+      const stdoutWrite = vi.fn<(text: string) => void>();
+      const dependencies = createSetupCliDependencies({ stdoutWrite, applySetupPlan: applyVerificationFailed });
+      const expectedSkillResult = {
+        status: 'skipped',
+        skillPath: DEFAULT_SKILL_PATH,
+        reason: VERIFICATION_FAILED_SKILL_REASON,
+      };
+
+      await runConfiguredSetup({
+        parsedArgs: createParsedSetupArgs({ client: 'claude-code', output: 'json' }),
+        dependencies,
+        detectedProviders: TEST_PROVIDERS,
+      });
+
+      const parsed: unknown = JSON.parse(readStdoutOutput(stdoutWrite));
+
+      expect(parsed).toStrictEqual(expect.objectContaining({ skillResult: expectedSkillResult }));
     });
   });
 });

@@ -8,6 +8,7 @@ export {
   SETUP_FAILED_EXIT_CODE,
   SKILL_CONSENT_REASON,
   SKILL_DRY_RUN_REASON,
+  SKILL_VERIFICATION_FAILED_REASON,
   SUPPORTED_CLIENTS,
 } from './setup.const';
 
@@ -31,6 +32,8 @@ export type {
   TimeoutValue,
   TomlRewriteCause,
 } from './client-target.type';
+
+export type { PlanWarningsInput } from './plan-warnings.type';
 
 export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord } from './toml-parse.type';
 

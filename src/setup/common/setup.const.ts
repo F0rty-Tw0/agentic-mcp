@@ -24,7 +24,7 @@ export const SUPPORTED_CLIENTS: SupportedClient[] = [
 export const SKILL_CONSENT_REASON = 'rerun with --yes to install it';
 
 // The exit code the other subcommands (prove, the ask CLI) use for a run that did not do its job:
-// setup uses it for an aborted run and for a write that fails its read-back check.
+// setup uses it for an aborted run, for an existing config it will not merge into, and for a write that fails its read-back check.
 export const SETUP_FAILED_EXIT_CODE = 1;
 
 export const SETUP_ABORT_REASONS: Readonly<Record<SetupAbortCause, string>> = {
@@ -33,5 +33,8 @@ export const SETUP_ABORT_REASONS: Readonly<Record<SetupAbortCause, string>> = {
 };
 
 export const SKILL_DRY_RUN_REASON = 'dry run, so nothing was written; rerun without --dry-run to install it';
+
+export const SKILL_VERIFICATION_FAILED_REASON =
+  'the config write failed its read-back check; fix the config and rerun to install it';
 
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;
