@@ -67,8 +67,14 @@ export type StreamNotifier = {
   readonly emitStart: () => void;
   readonly emitDone: (summary: AskStreamExecutionSummary) => void;
   readonly emitError: (error: string, summary?: AskStreamExecutionSummary) => void;
+  readonly flush: () => void;
   readonly stop: () => void;
   readonly enabled: boolean;
+};
+
+export type HeldErrorStreamNotifier = {
+  readonly notifier: StreamNotifier;
+  readonly releaseError: () => void;
 };
 
 export type NotifierState = {

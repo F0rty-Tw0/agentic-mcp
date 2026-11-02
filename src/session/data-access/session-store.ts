@@ -1,19 +1,8 @@
 import { DEFAULT_MAX_CONTEXT_BYTES, DEFAULT_MAX_CONTEXT_TURNS, MAX_SESSIONS, SESSION_TTL_MS } from '../common';
 import type { SessionRecord, SessionTurn } from '../common';
+import { recordNativeSessionId, turnOffNativeStart } from './session-native-start';
+import type { SessionStoreEntry } from '../common/session-store.type';
 import { capTurnsByBytes, cloneRecord, formatTurns, toSessionKey } from '../utils/session-store.util';
-
-type SessionStoreEntry = {
-  readonly id: string;
-  readonly provider: string;
-  turns: SessionTurn[];
-  readonly createdAt: string;
-  // eslint-disable-next-line local/readonly-type-properties -- the store refreshes the access time in place
-  lastAccessedAt: string;
-  // eslint-disable-next-line local/readonly-type-properties -- the store records the native id in place
-  nativeSessionId?: string;
-  // eslint-disable-next-line local/readonly-type-properties -- the store turns native start off in place
-  isNativeStartDisabled?: boolean;
-};
 
 type ContextBudget = {
   readonly maxContextTurns?: number;
@@ -119,13 +108,7 @@ export class InMemorySessionStore {
   }
 
   public setNativeSessionId(provider: string, id: string, nativeSessionId: string): void {
-    const key = toSessionKey(provider, id);
-    const entry = this.entries.get(key);
-
-    if (!entry) return;
-
-    entry.nativeSessionId = nativeSessionId;
-    entry.lastAccessedAt = new Date().toISOString();
+    recordNativeSessionId(this.entries.get(toSessionKey(provider, id)), nativeSessionId);
   }
 
   public getNativeSessionId(provider: string, id: string): string | undefined {
@@ -133,12 +116,7 @@ export class InMemorySessionStore {
   }
 
   public disableNativeStart(provider: string, id: string): void {
-    const entry = this.entries.get(toSessionKey(provider, id));
-
-    if (!entry) return;
-
-    entry.isNativeStartDisabled = true;
-    entry.nativeSessionId = undefined;
+    turnOffNativeStart(this.entries.get(toSessionKey(provider, id)));
   }
 
   public isNativeStartDisabled(provider: string, id: string): boolean {

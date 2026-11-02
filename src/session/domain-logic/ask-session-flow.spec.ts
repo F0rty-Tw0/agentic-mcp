@@ -1,10 +1,16 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildSessionFlowState, executeSessionFlow } from './ask-session-flow';
+import { executeSessionFlow } from './ask-session-flow';
 import type { AskExecution, AskToolArgs } from '../../ask/common';
 import { CommandExecutionError } from '../../shared';
-import type { ProgressContext, ProviderConfig, ResolvedProviderEntry } from '../../shared';
+import type { ProgressContext } from '../../shared';
+import {
+  createAskExecution,
+  createAskToolArgs,
+  createCallToolResult,
+  createResolvedProviderEntry,
+  createSessionFlowState,
+} from '../test/utils/ask-session-flow.spec.util';
 
 const mockRunAskInvocation = vi.hoisted(() => vi.fn<() => Promise<AskExecution>>());
 const mockBuildSessionPrompt = vi.hoisted(() => vi.fn<() => string>());
@@ -40,85 +46,6 @@ vi.mock('../utils/session-context.util', () => {
 });
 
 vi.mock('../data-access', () => Object.fromEntries([['SESSION_STORE', mockSessionStore]]));
-
-const createCallToolResult = (overrides: Partial<CallToolResult> = {}): CallToolResult => {
-  const content: TextContent[] = [{ type: 'text', text: 'response text' }];
-  const result: CallToolResult = {
-    content,
-    isError: false,
-    ...overrides,
-  };
-
-  return result;
-};
-
-const createAskExecution = (overrides: Partial<AskExecution> = {}): AskExecution => {
-  const result: AskExecution = {
-    response: createCallToolResult(),
-    sessionMode: 'none',
-    responseText: 'response text',
-    nativeSessionId: undefined,
-    wasCancelled: false,
-    ...overrides,
-  };
-
-  return result;
-};
-
-const createResolvedProviderEntry = (overrides: Partial<ResolvedProviderEntry> = {}): ResolvedProviderEntry => {
-  const ask = { args: [] };
-  const commands = {
-    ask,
-  };
-  const input = { method: 'flag' } as const;
-  const config: ProviderConfig = {
-    enabled: true,
-    description: 'Test provider',
-    command: 'test-cli',
-    timeout: 30000,
-    env: {},
-    outputFormat: 'text',
-    commands,
-    input,
-  };
-  const result: ResolvedProviderEntry = {
-    name: 'test-provider',
-    binaryPath: '/usr/bin/test-cli',
-    config,
-    ...overrides,
-  };
-
-  return result;
-};
-
-const createAskToolArgs = (overrides: Partial<AskToolArgs> = {}): AskToolArgs => {
-  const result: AskToolArgs = {
-    prompt: 'Hello world',
-    session_id: 'session-abc',
-    ...overrides,
-  };
-
-  return result;
-};
-
-type SessionFlowState = {
-  readonly sessionId: string;
-  readonly prompt: string;
-  readonly nativeSessionId?: string;
-  readonly mode: 'tier1-prepend' | 'tier2-native' | 'tier2-fallback-to-tier1';
-};
-
-const createSessionFlowState = (overrides: Partial<SessionFlowState> = {}): SessionFlowState => {
-  const result: SessionFlowState = {
-    sessionId: 'session-abc',
-    prompt: 'Hello world',
-    nativeSessionId: undefined,
-    mode: 'tier1-prepend',
-    ...overrides,
-  };
-
-  return result;
-};
 
 describe('executeSessionFlow', () => {
   const context = createResolvedProviderEntry();
@@ -270,90 +197,5 @@ describe('executeSessionFlow tier2 fallback', () => {
     await executeSessionFlow({ context, args, extra, state: TIER2_STATE });
 
     expect(mockRunAskInvocation).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('executeSessionFlow prompt validation', () => {
-  const context = createResolvedProviderEntry();
-  const state = createSessionFlowState();
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-    mockRunAskInvocation.mockResolvedValue(createAskExecution());
-  });
-
-  it('GIVEN a session ask without a prompt WHEN executeSessionFlow called THEN it returns a validation error without running', async () => {
-    const args = createAskToolArgs({ prompt: undefined });
-
-    const result = await executeSessionFlow({ context, args, state });
-
-    const content = [{ type: 'text', text: 'Validation error: Prompt is required' }];
-
-    expect(mockRunAskInvocation).not.toHaveBeenCalled();
-    expect(result.response).toStrictEqual({ isError: true, content });
-  });
-
-  it('GIVEN a session ask with an empty prompt WHEN executeSessionFlow called THEN it returns a validation error', async () => {
-    const args = createAskToolArgs({ prompt: '' });
-
-    const result = await executeSessionFlow({ context, args, state });
-
-    expect(mockRunAskInvocation).not.toHaveBeenCalled();
-    expect(result.response.isError).toBe(true);
-  });
-});
-
-describe('buildSessionFlowState', () => {
-  const context = createResolvedProviderEntry();
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it('GIVEN session with existing native session id WHEN buildSessionFlowState called THEN returns tier2-native state', () => {
-    const args = createAskToolArgs({ session_id: 'sess-1', prompt: 'my prompt' });
-
-    mockCreateOrGet.mockReturnValue({});
-    mockGetNativeSessionId.mockReturnValue('native-session-xyz');
-
-    const result = buildSessionFlowState(context, args);
-
-    expect(result.mode).toBe('tier2-native');
-    expect(result.nativeSessionId).toBe('native-session-xyz');
-    expect(result.sessionId).toBe('sess-1');
-    expect(result.prompt).toBe('my prompt');
-  });
-
-  it('GIVEN session without native session id WHEN buildSessionFlowState called THEN returns tier1-prepend state with built prompt', () => {
-    const args = createAskToolArgs({ session_id: 'sess-2', prompt: 'original prompt' });
-
-    mockCreateOrGet.mockReturnValue({});
-    mockGetNativeSessionId.mockReturnValue(undefined);
-    mockGetPrependContext.mockReturnValue('');
-    mockBuildSessionPrompt.mockReturnValue('built prompt');
-
-    const result = buildSessionFlowState(context, args);
-
-    expect(result.mode).toBe('tier1-prepend');
-    expect(result.nativeSessionId).toBeUndefined();
-    expect(result.prompt).toBe('built prompt');
-    expect(result.sessionId).toBe('sess-2');
-  });
-
-  it('GIVEN session without native session id WHEN called THEN calls buildSessionPrompt with prepend context', () => {
-    const args = createAskToolArgs({ session_id: 'sess-3', prompt: 'ask something', context: 'extra ctx' });
-
-    mockCreateOrGet.mockReturnValue({});
-    mockGetNativeSessionId.mockReturnValue(undefined);
-    mockGetPrependContext.mockReturnValue('previous turns text');
-    mockBuildSessionPrompt.mockReturnValue('full prompt');
-
-    buildSessionFlowState(context, args);
-
-    expect(mockBuildSessionPrompt).toHaveBeenCalledWith({
-      sessionTurnsText: 'previous turns text',
-      userContext: 'extra ctx',
-      prompt: 'ask something',
-    });
   });
 });

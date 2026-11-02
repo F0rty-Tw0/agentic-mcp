@@ -33,8 +33,9 @@ const streamingCommandSchema = z.object({
   outputFormat: outputFormatSchema.optional(),
 });
 
-const startWithIdFlagSchema = z.union([z.string().min(1), z.array(z.string()).min(1)]);
-const commandFlagsSchema = z.object({ startWithId: startWithIdFlagSchema.optional() }).catchall(flagValueSchema);
+const START_WITH_ID_COMMAND = 'sessions';
+const START_WITH_ID_SCOPE_MESSAGE = `startWithId is only allowed on commands.${START_WITH_ID_COMMAND}.flags`;
+const commandFlagsSchema = z.object({ startWithId: z.string().min(1).optional() }).catchall(flagValueSchema);
 
 const commandDefSchema = z.object({
   args: z.array(z.string()).optional(),
@@ -44,9 +45,25 @@ const commandDefSchema = z.object({
   placement: z.enum(['end', 'beforePrompt']).optional(),
 });
 
-const commandsSchema = z.record(z.string(), commandDefSchema).refine((commands) => 'ask' in commands, {
-  message: 'commands must include an "ask" command definition',
-});
+type CommandDefMap = Record<string, z.infer<typeof commandDefSchema>>;
+
+const checkStartWithIdScope = (commands: CommandDefMap, context: z.RefinementCtx): void => {
+  for (const [name, command] of Object.entries(commands)) {
+    const isMisplaced = name !== START_WITH_ID_COMMAND && command.flags?.startWithId !== undefined;
+    const issue = {
+      code: 'custom' as const,
+      path: [name, 'flags', 'startWithId'],
+      message: START_WITH_ID_SCOPE_MESSAGE,
+    };
+
+    if (isMisplaced) context.addIssue(issue);
+  }
+};
+
+const commandMapSchema = z.record(z.string(), commandDefSchema);
+const askRequiredIssue = { message: 'commands must include an "ask" command definition' };
+const askCommandsSchema = commandMapSchema.refine((commands) => 'ask' in commands, askRequiredIssue);
+const commandsSchema = askCommandsSchema.superRefine(checkStartWithIdScope);
 
 const inputSchema = z.object({
   method: z.enum(['flag', 'positional', 'stdin']),

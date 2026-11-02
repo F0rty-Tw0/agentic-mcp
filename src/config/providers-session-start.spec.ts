@@ -10,26 +10,34 @@ type JsonRecord = Readonly<Record<string, unknown>>;
 const PROVIDERS_SCHEMA_URL = new URL('./providers.schema.json', import.meta.url);
 const PROVIDERS_JSON_URL = new URL('./providers.json', import.meta.url);
 const START_WITH_ID_SCHEMA_PATH: string[] = ['$defs', 'commandDef', 'properties', 'flags', 'properties', 'startWithId'];
+const OTHER_COMMAND_START_WITH_ID_PATH: string[] = [
+  '$defs',
+  'commands',
+  'additionalProperties',
+  'properties',
+  'flags',
+  'properties',
+  'startWithId',
+];
 
 const isJsonRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null;
 
 const readChild = (node: unknown, key: string): unknown => (isJsonRecord(node) ? node[key] : undefined);
 
-const readStartWithIdDescription = async (): Promise<unknown> => {
+const readSchemaNode = async (nodePath: string[]): Promise<unknown> => {
   const content = await fs.readFile(PROVIDERS_SCHEMA_URL, 'utf8');
   const parsedJson: unknown = JSON.parse(content);
-  const startWithId = START_WITH_ID_SCHEMA_PATH.reduce(readChild, parsedJson);
-  const description = readChild(startWithId, 'description');
+  const node = nodePath.reduce(readChild, parsedJson);
 
-  return description;
+  return node;
 };
 
-const buildProvidersInput = (startWithId: unknown): unknown => {
+const buildProvidersInput = (startWithId: unknown, commandName = 'sessions'): unknown => {
   const flags = { startWithId };
-  const sessions = { flags };
+  const startCommand = { flags };
   const ask: CommandDef = { args: ['run'] };
   const input: ProviderConfig['input'] = { method: 'positional' };
-  const commands = { ask, sessions };
+  const commands = { ask, [commandName]: startCommand };
   const provider = {
     enabled: true,
     description: 'Example provider',
@@ -46,8 +54,8 @@ const buildProvidersInput = (startWithId: unknown): unknown => {
   return result;
 };
 
-const parseStartWithId = (startWithId: unknown): boolean => {
-  const providersInput = buildProvidersInput(startWithId);
+const parseStartWithId = (startWithId: unknown, commandName?: string): boolean => {
+  const providersInput = buildProvidersInput(startWithId, commandName);
   const parsed = providersFileSchema.safeParse(providersInput);
 
   return parsed.success;
@@ -65,9 +73,22 @@ const readBundledCopilotStartFlag = async (): Promise<CommandDef['flags']> => {
 describe('FEATURE: sessions startWithId flag', () => {
   describe('GIVEN providers.schema.json', () => {
     it('WHEN reading the command flags THEN startWithId is documented', async () => {
-      const description = await readStartWithIdDescription();
+      const startWithId = await readSchemaNode(START_WITH_ID_SCHEMA_PATH);
 
-      expect(description).toContain('--session-id=');
+      expect(readChild(startWithId, 'description')).toContain('--session-id=');
+    });
+
+    it('WHEN reading the command flags THEN startWithId is a non-empty string', async () => {
+      const startWithId = await readSchemaNode(START_WITH_ID_SCHEMA_PATH);
+
+      expect(readChild(startWithId, 'type')).toBe('string');
+      expect(readChild(startWithId, 'minLength')).toBe(1);
+    });
+
+    it('WHEN reading a command other than sessions THEN startWithId is not allowed', async () => {
+      const startWithId = await readSchemaNode(OTHER_COMMAND_START_WITH_ID_PATH);
+
+      expect(startWithId).toBe(false);
     });
   });
 
@@ -78,10 +99,22 @@ describe('FEATURE: sessions startWithId flag', () => {
       expect(isValid).toBe(true);
     });
 
-    it('WHEN startWithId is an args array THEN the config is accepted', () => {
+    it('WHEN startWithId is an args array THEN the config is rejected', () => {
       const isValid = parseStartWithId(['--new-session']);
 
-      expect(isValid).toBe(true);
+      expect(isValid).toBe(false);
+    });
+
+    it('WHEN startWithId is set on the ask command THEN the config is rejected', () => {
+      const isValid = parseStartWithId('--session-id=', 'ask');
+
+      expect(isValid).toBe(false);
+    });
+
+    it('WHEN startWithId is set on the review command THEN the config is rejected', () => {
+      const isValid = parseStartWithId('--session-id=', 'review');
+
+      expect(isValid).toBe(false);
     });
 
     it('WHEN startWithId is null THEN the config is rejected', () => {

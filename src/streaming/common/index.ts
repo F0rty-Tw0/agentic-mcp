@@ -5,6 +5,7 @@ export type {
   AskStreamEventPayload,
   AskStreamEventType,
   AskStreamExecutionSummary,
+  HeldErrorStreamNotifier,
   NotifierState,
   StreamNotifier,
 } from './stream-event.type';

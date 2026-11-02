@@ -7,7 +7,8 @@ MCP progress notifications — manages live output streaming from provider CLI p
 - Emits real-time `chunk` events as stdout/stderr data arrives from provider processes
 - Maintains contiguous sequence numbering across all events in a stream
 - Separates events by channel (`stdout` vs `stderr`) for client-side rendering
-- Emits a terminal `done` event when the process completes
+- Emits a terminal `done` event when the process completes, or a terminal `error` event when it fails
+- Holds the `error` event of a run its caller retries (`holdStreamError`), so only the retry's run ends the stream; queued chunks still go out
 - Builds execution summaries with timing and token usage metrics
 - Only activates when the caller sets `stream_live: true` and provides a progress token
 
@@ -23,6 +24,7 @@ MCP progress notifications — manages live output streaming from provider CLI p
 - `domain-logic/notifier.util.ts` — `createStreamNotifier()` and `buildExecutionSummary()`
 - `domain-logic/notifier.helpers.ts` — Stream event type definitions and factory functions
 - `domain-logic/notifier-runtime.ts` — Runtime state management for active streams
+- `domain-logic/held-error-notifier.ts` — `holdStreamError()`: wraps a notifier so its `error` event waits for `releaseError()`
 
 ## Integration Tests
 

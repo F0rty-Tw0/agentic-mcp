@@ -9,7 +9,7 @@ import { ValidationError } from '../../shared/validation/common';
 import type { SessionFlowResult, SessionFlowState } from '../common';
 import { SESSION_STORE } from '../data-access';
 import { buildSessionPrompt } from '../utils/session-context.util';
-import { canFallBackToTier1, canRetryWithoutStartFlag } from '../utils/session-flow-retry.util';
+import { canFallBackToTier1, canRetryWithoutStartFlag, canSessionFlowRetry } from '../utils/session-flow-retry.util';
 
 type SessionExecutionInput = {
   readonly context: ResolvedProviderEntry;
@@ -18,19 +18,18 @@ type SessionExecutionInput = {
   readonly state: SessionFlowState;
 };
 
-const runSingleExecution = async (
-  context: ResolvedProviderEntry,
-  args: AskToolArgs,
-  extra: ProgressContext | undefined,
-  state: SessionFlowState
-): Promise<SessionFlowResult> => {
+const runSingleExecution = async (input: SessionExecutionInput): Promise<SessionFlowResult> => {
+  const { context, args, extra, state } = input;
   const promptArgs: AskToolArgs = { ...args, prompt: state.prompt };
+  const startFlag = resolveStartFlagName(context.config);
+  const willRetry = (execution: SessionFlowResult): boolean => canSessionFlowRetry(execution, state, startFlag, extra);
   const execution = await runAskInvocation({
     context,
     args: promptArgs,
     extra,
     tier2SessionId: state.nativeSessionId,
     startSessionId: state.startSessionId,
+    willRetry,
   });
   const nativeSessionId = state.startSessionId ?? execution.nativeSessionId;
   const result: SessionFlowResult = { ...execution, nativeSessionId, sessionMode: state.mode };
@@ -40,20 +39,16 @@ const runSingleExecution = async (
 
 // Only a run the CLI fails with an unknown-option error naming the start flag (copilot before 1.0.51) is rerun once
 // without it as a replay; any other failure is returned as is, so a run that did work is never repeated.
-const runSessionExecution = async (
-  context: ResolvedProviderEntry,
-  args: AskToolArgs,
-  extra: ProgressContext | undefined,
-  state: SessionFlowState
-): Promise<SessionFlowResult> => {
-  const execution = await runSingleExecution(context, args, extra, state);
+const runSessionExecution = async (input: SessionExecutionInput): Promise<SessionFlowResult> => {
+  const { context, extra, state } = input;
+  const execution = await runSingleExecution(input);
   const startFlag = resolveStartFlagName(context.config);
   const shouldRetry = canRetryWithoutStartFlag(execution, state, startFlag, extra);
 
   if (!shouldRetry) return execution;
 
   const retryState: SessionFlowState = { ...state, startSessionId: undefined };
-  const retryExecution = await runSingleExecution(context, args, extra, retryState);
+  const retryExecution = await runSingleExecution({ ...input, state: retryState });
   const result: SessionFlowResult = { ...retryExecution, hasDroppedStartFlag: true };
 
   return result;
@@ -96,7 +91,7 @@ export const executeSessionFlow = async ({
 }: SessionExecutionInput): Promise<SessionFlowResult> => {
   if (!args.prompt) return buildMissingPromptResult(state);
 
-  const firstExecution = await runSessionExecution(context, args, extra, state);
+  const firstExecution = await runSessionExecution({ context, args, extra, state });
   const shouldFallBack = canFallBackToTier1(firstExecution, state, extra);
 
   if (!shouldFallBack) return firstExecution;
@@ -109,7 +104,7 @@ export const executeSessionFlow = async ({
     nativeSessionId: undefined,
     startSessionId: resolveStartSessionId(context, state.sessionId),
   };
-  const fallbackExecution = await runSessionExecution(context, args, extra, fallbackState);
+  const fallbackExecution = await runSessionExecution({ context, args, extra, state: fallbackState });
   const result: SessionFlowResult = {
     response: fallbackExecution.response,
     responseText: fallbackExecution.responseText,

@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ProgressContext } from '../../shared/mcp-protocol/common';
+import type { ProgressContext, ProgressToken } from '../../shared/mcp-protocol/common';
 import { HEARTBEAT_IDLE_INTERVAL_MS, HEARTBEAT_TICK_MS, STREAM_PROGRESS_START } from '../common';
 import type { AskStreamExecutionSummary, NotifierState, StreamNotifier } from '../common';
-import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime';
+import { emitDone, emitError, emitSystemEvent, flushPendingChunks, queueChunk } from './notifier-runtime';
 import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
 
 type StreamLiveArgs = { readonly stream_live?: boolean };
@@ -12,6 +12,24 @@ type CreateStreamNotifierInput = {
   readonly providerName: string;
   readonly args: StreamLiveArgs;
   readonly extra?: ProgressContext;
+};
+
+type HeartbeatContext = {
+  readonly extra: ProgressContext;
+  readonly progressToken: ProgressToken;
+};
+
+const startIdleHeartbeat = (state: NotifierState, context: HeartbeatContext): NodeJS.Timeout => {
+  const heartbeatTimer = setInterval(() => {
+    const nowMs = Date.now();
+    const silentMs = nowMs - state.lastEmitAtMs;
+
+    if (silentMs < HEARTBEAT_IDLE_INTERVAL_MS) return;
+
+    emitSystemEvent(state, context, 'heartbeat');
+  }, HEARTBEAT_TICK_MS);
+
+  return heartbeatTimer;
 };
 
 export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNotifier => {
@@ -35,14 +53,7 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
   };
   const context = { extra: input.extra, progressToken };
 
-  const heartbeatTimer = setInterval(() => {
-    const nowMs = Date.now();
-    const silentMs = nowMs - state.lastEmitAtMs;
-
-    if (silentMs < HEARTBEAT_IDLE_INTERVAL_MS) return;
-
-    emitSystemEvent(state, context, 'heartbeat');
-  }, HEARTBEAT_TICK_MS);
+  const heartbeatTimer = startIdleHeartbeat(state, context);
 
   const streamNotifier: StreamNotifier = {
     onStdoutChunk: (chunk: string): void => {
@@ -59,6 +70,9 @@ export const createStreamNotifier = (input: CreateStreamNotifierInput): StreamNo
     },
     emitError: (error: string, summary?: AskStreamExecutionSummary): void => {
       emitError(state, context, error, summary);
+    },
+    flush: (): void => {
+      flushPendingChunks(state, context);
     },
     stop: (): void => {
       state.stopped = true;

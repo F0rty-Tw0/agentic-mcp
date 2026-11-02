@@ -24,6 +24,7 @@ const createStreamNotifierStub = (): StreamNotifierStub => {
     emitStart: emitStartSpy,
     emitDone: emitDoneSpy,
     emitError: emitErrorSpy,
+    flush: vi.fn(),
     stop: stopSpy,
     enabled: true,
   };

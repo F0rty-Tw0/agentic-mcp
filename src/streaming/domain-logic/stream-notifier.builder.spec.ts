@@ -4,7 +4,7 @@ import { createStreamNotifier } from './stream-notifier.builder';
 import type { ProgressContext } from '../../shared';
 import { HEARTBEAT_IDLE_INTERVAL_MS } from '../common';
 import type { StreamNotifier } from '../common';
-import { emitDone, emitError, emitSystemEvent, queueChunk } from './notifier-runtime';
+import { emitDone, emitError, emitSystemEvent, flushPendingChunks, queueChunk } from './notifier-runtime';
 import { createNoopStreamNotifier, isStreamEnabled, resolveProgressToken } from '../utils/notifier.helpers';
 
 vi.mock('./notifier-runtime');
@@ -21,6 +21,7 @@ const noopNotifier: StreamNotifier = {
   emitStart: vi.fn(),
   emitDone: vi.fn(),
   emitError: vi.fn(),
+  flush: vi.fn(),
   stop: vi.fn(),
   enabled: false,
 };
@@ -230,6 +231,19 @@ describe('createStreamNotifier', () => {
         expect.objectContaining({ extra, progressToken: 42 }),
         'something failed',
         summary
+      );
+    });
+
+    it('WHEN flush called THEN delegates to runtime flushPendingChunks', () => {
+      const args = { stream_live: true };
+      const notifier = createStreamNotifier({ providerName: 'test', args, extra });
+
+      notifier.flush();
+      notifier.stop();
+
+      expect(flushPendingChunks).toHaveBeenCalledWith(
+        expect.objectContaining({ streamId: 'ask-test-test-uuid-1234' }),
+        expect.objectContaining({ extra, progressToken: 42 })
       );
     });
 

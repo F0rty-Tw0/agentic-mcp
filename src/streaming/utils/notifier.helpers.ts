@@ -121,6 +121,7 @@ export const createNoopStreamNotifier = (): StreamNotifier => {
     emitStart: noop,
     emitDone: noop,
     emitError: noop,
+    flush: noop,
     stop: noop,
     enabled: false,
   };

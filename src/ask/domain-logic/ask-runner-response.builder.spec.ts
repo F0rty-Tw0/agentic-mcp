@@ -59,6 +59,7 @@ const stubStreamNotifier = (): SuccessResponseInput['streamNotifier'] => {
     emitStart: vi.fn(),
     emitDone: vi.fn(),
     emitError: vi.fn(),
+    flush: vi.fn(),
     stop: vi.fn(),
     enabled: false,
   };

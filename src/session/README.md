@@ -24,8 +24,9 @@ Session state and session-aware ask orchestration — provides in-memory multi-t
 ## Key Files
 
 - `data-access/session-store.ts` — `InMemorySessionStore` with locking, turn storage, native session tracking, and provider-scoped listing
-- `domain-logic/ask-session-flow.ts` — builds session flow state, retries native-session failures with tier-1 fallback, and reruns once without the start flag only when the CLI rejects it as an unknown option
-- `utils/session-flow-retry.util.ts` — decides when a failed run falls back to tier 1, or retries without the start flag (only when the output has an unknown-option error naming that flag)
+- `data-access/session-native-start.ts` — records a native session id on a store entry, or turns native start off for it
+- `domain-logic/ask-session-flow.ts` — builds session flow state, retries native-session failures with tier-1 fallback, and reruns once without the start flag only when the CLI rejects it as an unknown option; a run it will retry sends no `error` stream event
+- `utils/session-flow-retry.util.ts` — decides when a failed run falls back to tier 1, or retries without the start flag (only when one stderr line, with ANSI colour codes stripped, rejects that flag: `unknown option`, `unrecognized argument`, clap's `unexpected argument '--flag' found`, or yargs' `Unknown argument: flag`); `canSessionFlowRetry` is either
 - `domain-logic/sessions.handler.ts` — renders provider-scoped session listings for MCP tools
 - `utils/session-metadata.util.ts` — merges session mode metadata into MCP responses
 
@@ -40,3 +41,4 @@ Session behavior is covered by unit tests in this module plus ask integration te
 - Starting a native session with a generated id when the provider sets `commands.sessions.flags.startWithId` (`ask/domain-logic/ask.handler-copilot.test.ts`)
 - A failed resume whose replay starts a new native id, so the next turn resumes it in one run (`ask/domain-logic/ask.handler-copilot-lost-session.test.ts`)
 - A CLI that rejects the start flag as an unknown option: one retry without it, then the session replays without the flag; any other failure on a start run is returned once with no retry (`ask/domain-logic/ask.handler-copilot-start-retry.test.ts`)
+- With `stream_live`, a start-flag rerun or a tier-1 fallback leaves no `error` event from the failed run; a failure that is not retried still ends the stream with `error` (`ask/domain-logic/ask.handler-copilot-retry-stream.test.ts`)

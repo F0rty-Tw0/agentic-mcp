@@ -1,7 +1,7 @@
 import type { CallToolResult, TextContent } from '@modelcontextprotocol/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import { canFallBackToTier1, canRetryWithoutStartFlag } from './session-flow-retry.util';
+import { canFallBackToTier1, canRetryWithoutStartFlag, canSessionFlowRetry } from './session-flow-retry.util';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { SessionFlowResult, SessionFlowState } from '../common';
 
@@ -25,17 +25,17 @@ const START_STATE: SessionFlowState = { sessionId: 'session-a', startSessionId: 
 const SUCCESS_RESPONSE: CallToolResult = { content: [] };
 const START_FLAG = '--session-id';
 
-const createFailedExecution = (text: string): SessionFlowResult => {
+const createFailedExecution = (stderr: string, output = ''): SessionFlowResult => {
+  const outputText = output && ` Output: ${output}`;
+  const text = `copilot command failed Exit code: 2. Stderr: ${stderr}${outputText}`;
   const content: TextContent[] = [{ type: 'text', text }];
   const response: CallToolResult = { content, isError: true };
-  const result = createExecution({ response });
+  const result = createExecution({ response, stderr });
 
   return result;
 };
 
-const REJECTED_EXECUTION = createFailedExecution(
-  "copilot command failed Exit code: 2. Stderr: error: unknown option '--session-id=start-a'\n"
-);
+const REJECTED_EXECUTION = createFailedExecution("error: unknown option '--session-id=start-a'\n");
 
 const createAbortedExtra = (): ProgressContext => {
   const controller = new AbortController();
@@ -90,6 +90,56 @@ describe('FEATURE: canRetryWithoutStartFlag', () => {
     expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
   });
 
+  it('GIVEN a clap-style unexpected argument naming the flag WHEN checked THEN it retries', () => {
+    const execution = createFailedExecution("error: unexpected argument '--session-id=start-a' found");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a coloured rejection naming the flag WHEN checked THEN it retries', () => {
+    const execution = createFailedExecution(
+      "\u001B[31merror:\u001B[0m unknown option '\u001B[33m--session-id=start-a\u001B[0m'"
+    );
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a yargs-style unknown argument naming the bare flag WHEN checked THEN it retries', () => {
+    const execution = createFailedExecution('Unknown argument: session-id');
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a yargs-style unknown argument naming another flag WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution('Unknown argument: yolo');
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN a rejected flag that only contains the start flag name WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution("error: unexpected argument '--session-id-file' found");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN a rejected flag whose name ends with the start flag name WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution("error: unknown option '--my-session-id'");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN another option rejected in stderr and the flag only in the output WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution("error: unknown option '--yolo'", 'argv: --session-id=start-a');
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
+  it('GIVEN a flag rejection only in the output WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution('boom', "error: unknown option '--session-id=start-a'");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
   it('GIVEN a run that passed a start id and failed for another reason WHEN checked THEN it does not retry', () => {
     expect(canRetryWithoutStartFlag(createExecution(), START_STATE, START_FLAG)).toBe(false);
   });
@@ -134,5 +184,19 @@ describe('FEATURE: canRetryWithoutStartFlag', () => {
 
   it('GIVEN an aborted request WHEN checked THEN it does not retry', () => {
     expect(canRetryWithoutStartFlag(REJECTED_EXECUTION, START_STATE, START_FLAG, createAbortedExtra())).toBe(false);
+  });
+});
+
+describe('canSessionFlowRetry', () => {
+  it('GIVEN a start run rejected for the start flag WHEN checked THEN the flow retries', () => {
+    expect(canSessionFlowRetry(REJECTED_EXECUTION, START_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a failed tier2 resume WHEN checked THEN the flow retries', () => {
+    expect(canSessionFlowRetry(createExecution(), TIER2_STATE, START_FLAG)).toBe(true);
+  });
+
+  it('GIVEN a failed tier1 run that is not a flag rejection WHEN checked THEN the flow does not retry', () => {
+    expect(canSessionFlowRetry(createExecution(), START_STATE, START_FLAG)).toBe(false);
   });
 });
