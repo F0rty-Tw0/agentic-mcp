@@ -114,6 +114,12 @@ describe('FEATURE: canRetryWithoutStartFlag', () => {
     expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
   });
 
+  it('GIVEN a rejected flag whose name ends with the start flag name WHEN checked THEN it does not retry', () => {
+    const execution = createFailedExecution("error: unknown option '--my-session-id'");
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(false);
+  });
+
   it('GIVEN another option rejected in stderr and the flag only in the output WHEN checked THEN it does not retry', () => {
     const execution = createFailedExecution("error: unknown option '--yolo'", 'argv: --session-id=start-a');
 
