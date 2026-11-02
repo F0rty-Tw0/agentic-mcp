@@ -34,6 +34,8 @@ export type {
 
 export type { ParsedTomlFailure, ParsedTomlResult, ParsedTomlSuccess, TomlRecord } from './toml-parse.type';
 
+export type { SetupCliFlowInput } from './setup-cli-flow.type';
+
 export type {
   ClientConfigTemplate,
   ConfiguredSetupOutputInput,
