@@ -1,6 +1,7 @@
 import { SETUP_FAILED_EXIT_CODE, SKILL_DRY_RUN_REASON } from '../common';
 import type {
   ConfiguredSetupOutputInput,
+  SetupApplyResult,
   SetupCliFlowInput,
   SetupPlan,
   SkillInstallResult,
@@ -27,6 +28,15 @@ const buildConfiguredOutput = (input: ConfiguredSetupOutputInput): string => {
   if (input.parsedArgs.output === 'json') return formatJsonSetupOutput(input);
 
   return formatHumanSetupOutput(input);
+};
+
+// A manual result with a path is an existing config setup will not merge into; without a path, printing the snippet is the job.
+const isSetupFailed = (result: SetupApplyResult): boolean => {
+  if (result.status === 'verification-failed') return true;
+
+  const isBlockedWrite = result.status === 'manual' && result.path != null;
+
+  return isBlockedWrite;
 };
 
 const installClientSkill = async (
@@ -103,5 +113,7 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
 
   dependencies.stdoutWrite(output);
 
-  if (result.status === 'verification-failed') dependencies.setExitCode(SETUP_FAILED_EXIT_CODE);
+  const hasFailed = isSetupFailed(result);
+
+  if (hasFailed) dependencies.setExitCode(SETUP_FAILED_EXIT_CODE);
 };
