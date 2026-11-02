@@ -13,7 +13,7 @@ MCP client configuration CLI — the `agentic-mcp setup` subcommand that detects
 - Keeps a Claude Code `timeout` the user set, with a note when it is lower than the derived tool-call timeout, since it cuts long runs short
 - Warns, when no `--path` is given, if a variable that moves the client's config (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME`, `OPENCODE_CONFIG`, `XDG_CONFIG_HOME`) points at a file other than the one setup writes, and names that file
 - Keeps an Antigravity `timeoutSeconds` of 0 or below, with a warning, since agy documents no meaning for it; the timeout rule's `keepsNonPositive` flag marks this, and only the agy rule sets it
-- Keeps a disabled `agentic-mcp` entry (`"disabled": true` or `enabled: false`) disabled, with a warning that the client will not start it
+- In merge mode, keeps the flag on a disabled `agentic-mcp` entry (`"disabled": true` or `enabled: false`), with a warning that the entry is marked disabled; `--mode overwrite` rewrites the entry without the flag
 - Supports `--dry-run` to preview changes without writing any file (with `--minimal` it skips the skill install too), `--yes` for non-interactive mode, and `--minimal` for skill-first onboarding
 - Exits 1 when aborted (the confirmation prompt is declined or closed, or a non-interactive write lacks `--yes`); with `--output json` it prints `result.status: "aborted"` and the reason. The prompt goes to stderr
 - Exits 1 when the written file fails its read-back check (`verification-failed`); the output is unchanged
