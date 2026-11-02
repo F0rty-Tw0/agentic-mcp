@@ -8,14 +8,20 @@ import type { ClientTarget, SetupMergeStatus, SetupPlan, SetupPlanInput } from '
 
 const BLOCKING_MERGE_STATUSES: SetupMergeStatus[] = ['invalid-json', 'invalid-toml', 'rewrite-unsafe', 'unmergeable'];
 
-const resolveTargetPath = (input: SetupPlanInput): string | undefined => {
-  if (input.pathOverride != null) return input.pathOverride;
+type TargetPathInput = Pick<SetupPlanInput, 'client' | 'homeDirectory' | 'pathOverride'>;
 
-  const clientPath = CLIENT_TARGETS[input.client].configPath;
+export const resolveTargetPath = (targetPathInput: TargetPathInput): string | undefined => {
+  const { client, homeDirectory, pathOverride } = targetPathInput;
+
+  if (pathOverride != null) return pathOverride;
+
+  const clientPath = CLIENT_TARGETS[client].configPath;
 
   if (clientPath == null) return undefined;
 
-  return path.join(input.homeDirectory, clientPath);
+  const targetPath = path.join(homeDirectory, clientPath);
+
+  return targetPath;
 };
 
 type WriteIntent = SetupPlan['writeIntent'];
