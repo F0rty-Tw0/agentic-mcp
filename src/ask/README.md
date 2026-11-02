@@ -18,8 +18,9 @@ Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to 
 | --------------- | --------------------------------------------------------------------------------- |
 | `common/`       | Flag definitions, tool arg types, session mode types, progress notification types |
 | `domain-logic/` | Core ask execution: handler routing, command building, response formatting        |
-| `session/`      | Session flow execution, metadata tracking, turn history management                |
 | `utils/`        | Command parsing, response parsing, output capping utilities                       |
+
+Session flow (multi-turn runs, metadata, turn history) lives in the separate `src/session/` module.
 
 ## Key Files
 
@@ -30,7 +31,7 @@ Per-provider ask handler — the core feature of agentic-mcp. Routes prompts to 
 - `domain-logic/ask-heartbeat.ts` — Starts the caller heartbeat for `ask_<provider>` and `review_<provider>` calls unless `stream_live` sends its own
 - `domain-logic/ask-command.ts` — Builds the CLI command array from tool arguments
 - `domain-logic/ask-runner-response.builder.ts` — Formats raw output into MCP `CallToolResult`
-- `session/domain-logic/ask-session-flow.ts` — Orchestrates multi-turn session execution
+- `../session/domain-logic/ask-session-flow.ts` — Orchestrates multi-turn session execution (session module)
 
 ## Integration Tests
 

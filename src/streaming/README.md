@@ -14,15 +14,16 @@ MCP progress notifications — manages live output streaming from provider CLI p
 
 ## Structure
 
-| Directory       | Purpose                                                  |
-| --------------- | -------------------------------------------------------- |
-| `common/`       | Stream event types (chunk, done, error)                  |
-| `domain-logic/` | Notifier creation, helpers, and runtime state management |
+| Directory       | Purpose                                                 |
+| --------------- | ------------------------------------------------------- |
+| `common/`       | Stream event types (chunk, done, error)                 |
+| `domain-logic/` | Notifier creation and runtime state management          |
+| `utils/`        | Pure helpers: event envelopes, chunk splitting, summary |
 
 ## Key Files
 
-- `domain-logic/notifier.util.ts` — `createStreamNotifier()` and `buildExecutionSummary()`
-- `domain-logic/notifier.helpers.ts` — Stream event type definitions and factory functions
+- `domain-logic/stream-notifier.builder.ts` — `createStreamNotifier()`
+- `utils/notifier.helpers.ts` — `buildExecutionSummary()`, `withEventEnvelope()`, `splitChunkByBytes()`, `createNoopStreamNotifier()`
 - `domain-logic/notifier-runtime.ts` — Runtime state management for active streams
 - `domain-logic/held-error-notifier.ts` — `holdStreamError()`: wraps a notifier so its `error` event waits for `releaseError()`
 
