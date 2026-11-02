@@ -149,14 +149,6 @@ describe('FEATURE: session flag args', () => {
     expect(result).toStrictEqual(['--session-id', START_SESSION_ID]);
   });
 
-  it('GIVEN a start flag as an array WHEN building start session args THEN appends the id after all parts', () => {
-    const config = buildSessionsConfig({ startWithId: ['--new', '--id'] });
-
-    const result = buildStartSessionArgs(config, START_SESSION_ID);
-
-    expect(result).toStrictEqual(['--new', '--id', START_SESSION_ID]);
-  });
-
   describe('GIVEN a resume flag', () => {
     it('WHEN the flag is a string THEN returns resume flag and session id', () => {
       const config = buildSessionsConfig({ resume: '--resume' });
@@ -224,10 +216,10 @@ describe('FEATURE: session flag args', () => {
       expect(resolveStartFlagName(config)).toBe('--session-id');
     });
 
-    it('THEN an array start flag resolves to the part before the id', () => {
-      const config = buildSessionsConfig({ startWithId: ['--new', '--id'] });
+    it('THEN a plain value start flag resolves as is', () => {
+      const config = buildSessionsConfig({ startWithId: '--session-id' });
 
-      expect(resolveStartFlagName(config)).toBe('--id');
+      expect(resolveStartFlagName(config)).toBe('--session-id');
     });
 
     it('THEN a config without a start flag resolves to undefined', () => {

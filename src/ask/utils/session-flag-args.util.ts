@@ -61,25 +61,16 @@ export const canStartNativeSession = (config: ProviderConfig, startSessionId: st
   return canStart;
 };
 
-const toStartFlagArg = (startFlag: string | string[]): string => {
-  if (typeof startFlag === 'string') return startFlag;
-
-  const lastArg = startFlag.at(-1) ?? '';
-
-  return lastArg;
-};
-
 export const resolveStartFlagName = (config: ProviderConfig): string | undefined => {
   const startFlag = config.commands.sessions?.flags?.[SESSION_START_FLAG_KEY];
 
   if (!startFlag) return;
 
-  const flagArg = toStartFlagArg(startFlag);
-  const isJoinedFlag = flagArg.endsWith(SESSION_FLAG_VALUE_JOINER);
+  const isJoinedFlag = startFlag.endsWith(SESSION_FLAG_VALUE_JOINER);
 
-  if (!isJoinedFlag) return flagArg;
+  if (!isJoinedFlag) return startFlag;
 
-  const flagName = flagArg.slice(0, -SESSION_FLAG_VALUE_JOINER.length);
+  const flagName = startFlag.slice(0, -SESSION_FLAG_VALUE_JOINER.length);
 
   return flagName;
 };
