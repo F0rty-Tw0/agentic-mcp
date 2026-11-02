@@ -116,4 +116,21 @@ describe('FEATURE: setup keeps a disabled agentic-mcp entry disabled', () => {
       expect(result.warnings).toContain(ENABLED_FALSE_WARNING);
     });
   });
+
+  describe('GIVEN a configured codex TOML entry with enabled = false', () => {
+    const configuredText =
+      '[mcp_servers.agentic-mcp]\ncommand = "npx"\nargs = ["-y", "agentic-mcp"]\ntool_timeout_sec = 4260\nstartup_timeout_sec = 60\nenabled = false\n';
+
+    it('WHEN building the merge plan THEN the entry is unchanged and a warning says it is disabled', () => {
+      const result = buildSetupPlan({
+        ...PLAN_INPUT,
+        client: 'codex',
+        agenticServerEntry: CODEX_ENTRY,
+        existingConfigText: configuredText,
+      });
+
+      expect(result.mergeStatusPreview).toBe('unchanged');
+      expect(result.warnings).toStrictEqual([ENABLED_FALSE_WARNING]);
+    });
+  });
 });
