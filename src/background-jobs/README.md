@@ -41,4 +41,4 @@ Exercises the async background job lifecycle end-to-end using real child process
 
 ## Unit Tests
 
-3 `.spec.ts` files covering the job store data access, background domain logic, and text extraction utility.
+4 `.spec.ts` files covering the job store data access, background domain logic, and text extraction utility.

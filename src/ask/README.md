@@ -121,4 +121,4 @@ Tests session management end-to-end: lock contention, sequential turn accumulati
 
 ## Unit Tests
 
-21 `.spec.ts` files covering handler routing, command building, response formatting, session flow, output parsing, and utility functions.
+27 `.spec.ts` files covering handler routing, command building, response formatting, session flow, output parsing, and utility functions.

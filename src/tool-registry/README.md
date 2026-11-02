@@ -35,4 +35,4 @@ These tests exercise `registerAllTools()` indirectly through `createServer()`.
 
 ## Unit Tests
 
-9 `.spec.ts` files covering the tool registry (registration logic, handler wiring, progress-context wiring), the ask and review tool builders (schema generation from provider config), and the `utils/` adapters.
+10 `.spec.ts` files covering the tool registry (registration logic, handler wiring, progress-context wiring), the ask and review tool builders (schema generation from provider config), and the `utils/` adapters.

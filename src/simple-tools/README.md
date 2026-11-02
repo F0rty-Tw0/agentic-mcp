@@ -34,7 +34,7 @@ These tests exercise the full tool invocation path through the MCP server, not j
 
 ## Unit Tests
 
-4 `.spec.ts` files covering each handler (ping, help, list_providers) and the tool builder (schema generation).
+5 `.spec.ts` files covering each handler (ping, help, list_providers) and the tool builder (schema generation).
 
 ## Related Tooling
 

@@ -28,4 +28,4 @@ None. The `provider_metrics` tool is registered and callable via the `server/` i
 
 ## Unit Tests
 
-2 `.spec.ts` files covering the metrics store (recording, retrieval, reset) and the handler (response formatting).
+9 `.spec.ts` files covering the metrics store (recording, retrieval, reset) and the handler (response formatting).

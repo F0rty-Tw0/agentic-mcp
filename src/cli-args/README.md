@@ -27,4 +27,4 @@ None. This module is a pure data transformation (args in, string array out) with
 
 ## Unit Tests
 
-1 `.spec.ts` file covering flag resolution, positional vs stdin modes, sandbox flags, file arguments, leveled flag validation, and edge cases.
+5 `.spec.ts` files covering flag resolution, positional vs stdin modes, sandbox flags, file arguments, leveled flag validation, and edge cases.

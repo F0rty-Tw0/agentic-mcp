@@ -21,7 +21,7 @@ Process spawning and stream collection — executes provider CLIs as child proce
 - `domain-logic/semaphore.ts` — Counting semaphore for concurrency limiting
 - `domain-logic/command-stream-collector.util.ts` — Accumulates stdout/stderr into a result object
 
-**Unit tests:** 7 `.spec.ts` files covering command execution, semaphore behavior, streaming collection, error types, and platform utilities.
+**Unit tests:** 23 `.spec.ts` files covering command execution, semaphore behavior, streaming collection, error types, and platform utilities.
 
 ---
 
@@ -39,7 +39,7 @@ Provider configuration types and environment resolution.
 
 - `domain-logic/provider-env-resolver.ts` — Resolves env vars from provider config's `env` map
 
-**Unit tests:** 1 `.spec.ts` file covering environment variable resolution.
+**Unit tests:** 4 `.spec.ts` files covering environment variable resolution.
 
 ---
 

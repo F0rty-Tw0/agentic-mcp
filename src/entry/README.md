@@ -42,4 +42,4 @@ Exercises the CLI entry point end-to-end by spawning the built binary as a real 
 
 ## Unit Tests
 
-1 `.spec.ts` file covering the entry function routing logic with mocked dependencies.
+5 `.spec.ts` files covering the entry function routing logic with mocked dependencies.
