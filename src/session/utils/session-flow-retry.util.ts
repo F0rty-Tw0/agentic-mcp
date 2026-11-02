@@ -1,3 +1,4 @@
+import { stripAnsi } from '../../shared';
 import type { ProgressContext } from '../../shared/mcp-protocol/common';
 import type { SessionFlowResult, SessionFlowState } from '../common';
 
@@ -34,7 +35,8 @@ const buildFlagTokenPattern = (startFlag: string): RegExp => {
 };
 
 const isStartFlagRejected = (execution: SessionFlowResult, startFlag: string): boolean => {
-  const stderrLines = execution.stderr?.split(/\r?\n/) ?? [];
+  const plainStderr = stripAnsi(execution.stderr ?? '');
+  const stderrLines = plainStderr.split(/\r?\n/);
   const flagPattern = buildFlagTokenPattern(startFlag);
   const isRejectionLine = (line: string): boolean => FLAG_REJECTION_PATTERN.test(line) && flagPattern.test(line);
   const result = stderrLines.some(isRejectionLine);

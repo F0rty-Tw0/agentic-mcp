@@ -96,6 +96,14 @@ describe('FEATURE: canRetryWithoutStartFlag', () => {
     expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
   });
 
+  it('GIVEN a coloured rejection naming the flag WHEN checked THEN it retries', () => {
+    const execution = createFailedExecution(
+      "\u001B[31merror:\u001B[0m unknown option '\u001B[33m--session-id=start-a\u001B[0m'"
+    );
+
+    expect(canRetryWithoutStartFlag(execution, START_STATE, START_FLAG)).toBe(true);
+  });
+
   it('GIVEN a yargs-style unknown argument naming the bare flag WHEN checked THEN it retries', () => {
     const execution = createFailedExecution('Unknown argument: session-id');
 
