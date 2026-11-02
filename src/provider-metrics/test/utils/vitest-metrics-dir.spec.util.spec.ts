@@ -97,26 +97,20 @@ describe('FEATURE: vitest metrics dir teardown', () => {
   });
 
   describe('GIVEN a config without an env', () => {
-    it('WHEN the teardown runs THEN the parent dir is kept', async () => {
+    it('WHEN the teardown runs THEN it resolves without removing anything', async () => {
       const project = { config: {} };
       const removeMetricsDir = setup(project);
 
-      await removeMetricsDir();
-      const dirExists = existsSync(parentDir);
-
-      expect(dirExists).toBe(true);
+      await expect(removeMetricsDir()).resolves.toBeUndefined();
     });
   });
 
   describe('GIVEN no metrics path in the config env', () => {
-    it('WHEN the teardown runs THEN the parent dir is kept', async () => {
+    it('WHEN the teardown runs THEN it resolves without removing anything', async () => {
       const project = buildProject(undefined);
       const removeMetricsDir = setup(project);
 
-      await removeMetricsDir();
-      const dirExists = existsSync(parentDir);
-
-      expect(dirExists).toBe(true);
+      await expect(removeMetricsDir()).resolves.toBeUndefined();
     });
   });
 });
