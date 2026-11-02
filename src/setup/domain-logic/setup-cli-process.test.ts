@@ -13,6 +13,7 @@ const execFileAsync = promisify(execFile);
 
 const BINARY_PATH = 'dist/index.js';
 const TIMEOUT_MS = 30_000;
+const SPAWN_TIMEOUT_MS = TIMEOUT_MS - 5_000;
 const SETUP_ARGS = ['setup', '--client', 'claude-code', '--output', 'json', '--yes'];
 const INVALID_JSON = '{ "mcpServers": ';
 
@@ -36,14 +37,17 @@ const buildSetupEnv = (): NodeJS.ProcessEnv => {
 };
 
 const runSetupProcess = async (): Promise<string> => {
-  const { stdout } = await execFileAsync(process.execPath, [BINARY_PATH, ...SETUP_ARGS], { env: buildSetupEnv() });
+  const options = { env: buildSetupEnv(), timeout: SPAWN_TIMEOUT_MS };
+  const { stdout } = await execFileAsync(process.execPath, [BINARY_PATH, ...SETUP_ARGS], options);
 
   return stdout;
 };
 
 const runSetupExpectingFailure = async (): Promise<SetupExit> => {
   const result = await new Promise<SetupExit>((resolve) => {
-    execFile(process.execPath, [BINARY_PATH, ...SETUP_ARGS], { env: buildSetupEnv() }, (error, stdout) => {
+    const options = { env: buildSetupEnv(), timeout: SPAWN_TIMEOUT_MS };
+
+    execFile(process.execPath, [BINARY_PATH, ...SETUP_ARGS], options, (error, stdout) => {
       resolve({ exitCode: Number(error?.code ?? 0), stdout });
     });
   });
