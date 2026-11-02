@@ -32,6 +32,10 @@ const PROGRESS_NOTIFICATION_SCHEMA = z.object({
 
 const STREAM_EVENT_IDS_SCHEMA = z.object({ streamId: z.string(), sequence: z.number() });
 
+const STREAM_EVENT_TYPE_SCHEMA = z.object({ type: z.string() });
+
+const RETRIED_RUN_COUNT = 2;
+
 let runLogDir = '';
 let runLogPath = '';
 
@@ -80,6 +84,21 @@ const readStreamIds = (progressParams: ProgressParams[]): string[] => {
   const distinctStreamIds = [...streamIdSet];
 
   return distinctStreamIds;
+};
+
+const isStartEvent = (params: ProgressParams): boolean => {
+  const parsed: unknown = JSON.parse(params.message);
+  const { type } = STREAM_EVENT_TYPE_SCHEMA.parse(parsed);
+  const result = type === 'start';
+
+  return result;
+};
+
+const countStartEvents = (progressParams: ProgressParams[]): number => {
+  const startEvents = progressParams.filter(isStartEvent);
+  const startEventCount = startEvents.length;
+
+  return startEventCount;
 };
 
 const toStrictlyIncreasing = (values: number[]): number[] => {
@@ -144,14 +163,18 @@ describe('FEATURE: copilot session retries keep one progress stream per tool cal
     });
 
     it('WHEN the ask streams THEN the progress values strictly increase', async () => {
-      const progressValues = readProgressValues(await askRejectedStartTurn());
+      const progressParams = await askRejectedStartTurn();
+      const progressValues = readProgressValues(progressParams);
 
+      expect(countStartEvents(progressParams)).toBe(RETRIED_RUN_COUNT);
       expect(progressValues).toStrictEqual(toStrictlyIncreasing(progressValues));
     });
 
     it('WHEN the ask streams THEN the event sequence strictly increases', async () => {
-      const sequences = readSequences(await askRejectedStartTurn());
+      const progressParams = await askRejectedStartTurn();
+      const sequences = readSequences(progressParams);
 
+      expect(countStartEvents(progressParams)).toBe(RETRIED_RUN_COUNT);
       expect(sequences).toStrictEqual(toStrictlyIncreasing(sequences));
     });
 
@@ -170,8 +193,10 @@ describe('FEATURE: copilot session retries keep one progress stream per tool cal
     });
 
     it('WHEN the ask streams THEN the progress values strictly increase', async () => {
-      const progressValues = readProgressValues(await askRejectedStartFailedRerunTurn());
+      const progressParams = await askRejectedStartFailedRerunTurn();
+      const progressValues = readProgressValues(progressParams);
 
+      expect(countStartEvents(progressParams)).toBe(RETRIED_RUN_COUNT);
       expect(progressValues).toStrictEqual(toStrictlyIncreasing(progressValues));
     });
   });
@@ -184,8 +209,10 @@ describe('FEATURE: copilot session retries keep one progress stream per tool cal
     });
 
     it('WHEN the follow-up streams THEN the progress values strictly increase', async () => {
-      const progressValues = readProgressValues(await askLostSessionTurn());
+      const progressParams = await askLostSessionTurn();
+      const progressValues = readProgressValues(progressParams);
 
+      expect(countStartEvents(progressParams)).toBe(RETRIED_RUN_COUNT);
       expect(progressValues).toStrictEqual(toStrictlyIncreasing(progressValues));
     });
   });
