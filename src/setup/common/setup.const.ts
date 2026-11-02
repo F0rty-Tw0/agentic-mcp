@@ -34,4 +34,7 @@ export const SETUP_ABORT_REASONS: Readonly<Record<SetupAbortCause, string>> = {
 
 export const SKILL_DRY_RUN_REASON = 'dry run, so nothing was written; rerun without --dry-run to install it';
 
+export const SKILL_VERIFICATION_FAILED_REASON =
+  'the config write failed its read-back check; fix the config and rerun to install it';
+
 export const KNOWN_PROVIDER_COMMANDS = ['claude', 'codex', 'copilot', 'gemini', 'agy', 'opencode'] as const;

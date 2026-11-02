@@ -1,4 +1,4 @@
-import { SETUP_FAILED_EXIT_CODE, SKILL_DRY_RUN_REASON } from '../common';
+import { SETUP_FAILED_EXIT_CODE, SKILL_DRY_RUN_REASON, SKILL_VERIFICATION_FAILED_REASON } from '../common';
 import type {
   ConfiguredSetupOutputInput,
   SetupApplyResult,
@@ -30,6 +30,12 @@ const buildConfiguredOutput = (input: ConfiguredSetupOutputInput): string => {
   return formatHumanSetupOutput(input);
 };
 
+type ClientSkillInput = {
+  readonly flowInput: SetupCliFlowInput;
+  readonly plan: SetupPlan;
+  readonly result: SetupApplyResult;
+};
+
 // A manual result with a path is an existing config setup will not merge into; without a path, printing the snippet is the job.
 const isSetupFailed = (result: SetupApplyResult): boolean => {
   if (result.status === 'verification-failed') return true;
@@ -39,16 +45,18 @@ const isSetupFailed = (result: SetupApplyResult): boolean => {
   return isBlockedWrite;
 };
 
-const installClientSkill = async (
-  input: SetupCliFlowInput,
-  plan: SetupPlan
-): Promise<SkillInstallResult | undefined> => {
-  const { parsedArgs, dependencies } = input;
+const installClientSkill = async (clientSkillInput: ClientSkillInput): Promise<SkillInstallResult | undefined> => {
+  const { flowInput, plan, result } = clientSkillInput;
+  const { parsedArgs, dependencies } = flowInput;
   const hasSkill = hasClientSkill(parsedArgs.client);
 
   if (!hasSkill) return undefined;
 
   if (plan.writeIntent === 'skip') return undefined;
+
+  if (result.status === 'verification-failed') {
+    return buildSkippedSkillResult(dependencies.homeDirectory, SKILL_VERIFICATION_FAILED_REASON);
+  }
 
   // A plan that needs consent only gets here once --yes or the prompt gave it; any other plan needs --yes.
   const isConsentGated = isConsentRequired(plan);
@@ -108,7 +116,7 @@ export const runConfiguredSetup = async (input: SetupCliFlowInput): Promise<void
   }
 
   const result = await dependencies.applySetupPlan(plan);
-  const skillResult = await installClientSkill(input, plan);
+  const skillResult = await installClientSkill({ flowInput: input, plan, result });
   const output = buildConfiguredOutput({ parsedArgs, plan, result, detectedProviders, skillResult });
 
   dependencies.stdoutWrite(output);
